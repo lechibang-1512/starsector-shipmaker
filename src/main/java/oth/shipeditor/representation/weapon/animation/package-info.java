@@ -1,0 +1,1 @@
+package oth.shipeditor.representation.weapon.animation;

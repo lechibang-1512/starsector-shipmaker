@@ -1,0 +1,12 @@
+package oth.shipeditor.communication.events.viewer.layers;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import oth.shipeditor.components.viewer.layers.LayerPainter;
+
+import java.awt.geom.Point2D;
+
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
+public record LayerRotationQueued(LayerPainter layer, Point2D worldTarget) implements LayerEvent{
+
+}

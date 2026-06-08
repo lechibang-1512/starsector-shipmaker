@@ -1,0 +1,1 @@
+package oth.shipeditor.components.instrument.ship.variant;
