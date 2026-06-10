@@ -1,0 +1,249 @@
+package shipeditor.components.viewer.painters.points.ship;
+
+import java.awt.KeyEventDispatcher;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+import shipeditor.communication.EventBus;
+import shipeditor.communication.events.viewer.ViewerRepaintQueued;
+import shipeditor.communication.events.viewer.points.LaunchBayAddConfirmed;
+import shipeditor.communication.events.viewer.points.LaunchBayRemoveConfirmed;
+import shipeditor.communication.events.viewer.points.PointCreationQueued;
+import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.viewer.PrimaryViewer;
+import shipeditor.components.viewer.entities.BaseWorldPoint;
+import shipeditor.components.viewer.entities.WorldPoint;
+import shipeditor.components.viewer.entities.bays.LaunchBay;
+import shipeditor.components.viewer.entities.bays.LaunchPortPoint;
+import shipeditor.components.viewer.layers.ship.ShipPainter;
+import shipeditor.components.viewer.painters.points.MirrorablePointPainter;
+import shipeditor.undo.EditDispatch;
+import shipeditor.utility.overseers.StaticController;
+import shipeditor.utility.graphics.opengl.SpriteRenderer;
+import shipeditor.utility.graphics.opengl.ShapeRenderer;
+import org.joml.Matrix4f;
+
+import java.awt.event.KeyEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.List;
+import java.awt.KeyboardFocusManager;
+import shipeditor.utility.graphics.GraphicConstants;
+
+@Log4j2
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
+public class LaunchBayPainter extends MirrorablePointPainter {
+
+    private final List<LaunchPortPoint> portsIndex;
+
+    @Getter
+    private final List<LaunchBay> baysList;
+
+    @Getter
+    private static boolean addPortHotkeyPressed;
+
+    @Getter
+    private static boolean addBayHotkeyPressed;
+
+    private static final int addPortHotkey = KeyEvent.VK_SHIFT;
+    private static final int addBayHotkey = KeyEvent.VK_CONTROL;
+
+    private KeyEventDispatcher hotkeyDispatcher;
+
+    public LaunchBayPainter(ShipPainter parent) {
+        super(parent);
+        this.portsIndex = new ArrayList<>();
+        this.baysList = new ArrayList<>();
+        this.initHotkeys();
+    }
+
+    @Override
+    public LaunchPortPoint getSelected() {
+        return (LaunchPortPoint) super.getSelected();
+    }
+
+    @Override
+    protected EditorInstrument getInstrumentType() {
+        return EditorInstrument.LAUNCH_BAYS;
+    }
+
+    @Override
+    public void cleanupListeners() {
+        super.cleanupListeners();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(hotkeyDispatcher);
+    }
+
+    @Override
+    protected void handleCreation(PointCreationQueued event) {
+        ShipPainter parentLayer = (ShipPainter) this.getParentLayer();
+        Point2D position = event.position();
+        String generatedID = this.generateUniqueBayID();
+        if (addPortHotkeyPressed) {
+            LaunchPortPoint selected = this.getSelected();
+            if (selected != null) {
+                LaunchBay selectedBay = selected.getParentBay();
+                LaunchPortPoint newPort = new LaunchPortPoint(position, parentLayer, selectedBay);
+                EditDispatch.postPointAdded(this, newPort);
+            } else {
+                LaunchBay newBay = new LaunchBay(generatedID, this);
+                LaunchPortPoint newPort = new LaunchPortPoint(position, parentLayer, newBay);
+                EditDispatch.postPointAdded(this, newPort);
+                this.setSelected(newPort);
+            }
+        } else if (addBayHotkeyPressed) {
+            LaunchBay newBay = new LaunchBay(generatedID, this);
+            LaunchPortPoint newPort = new LaunchPortPoint(position, parentLayer, newBay);
+            EditDispatch.postPointAdded(this, newPort);
+        }
+    }
+
+    public String generateUniqueBayID() {
+        ShipPainter parentLayer = (ShipPainter) getParentLayer();
+        return parentLayer.generateUniqueSlotID("LB");
+    }
+
+    private void initHotkeys() {
+        hotkeyDispatcher = ke -> {
+            if (!this.getParentLayer().isLayerActive()) {
+                return false;
+            }
+            int keyCode = ke.getKeyCode();
+            boolean isPortHotkey = (keyCode == addPortHotkey);
+            boolean isBayHotkey = (keyCode == addBayHotkey);
+            switch (ke.getID()) {
+                case KeyEvent.KEY_PRESSED:
+                    if (isPortHotkey) {
+                        addPortHotkeyPressed = true;
+                        EventBus.publish(new ViewerRepaintQueued());
+                    } else if (isBayHotkey) {
+                        addBayHotkeyPressed = true;
+                        EventBus.publish(new ViewerRepaintQueued());
+                    }
+                    break;
+                case KeyEvent.KEY_RELEASED:
+                    if (isPortHotkey) {
+                        addPortHotkeyPressed = false;
+                        EventBus.publish(new ViewerRepaintQueued());
+                    } else if (isBayHotkey) {
+                        addBayHotkeyPressed = false;
+                        EventBus.publish(new ViewerRepaintQueued());
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return false;
+        };
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(hotkeyDispatcher);
+    }
+
+    @Override
+    protected void handlePointSelectionEvent(BaseWorldPoint point) {
+        if (addPortHotkeyPressed) return;
+        super.handlePointSelectionEvent(point);
+    }
+
+    @Override
+    public List<LaunchPortPoint> getPointsIndex() {
+        return portsIndex;
+    }
+
+    public void addBay(LaunchBay bay) {
+        baysList.add(bay);
+        EventBus.publish(new LaunchBayAddConfirmed(bay, -1));
+    }
+
+    public void insertBay(LaunchBay bay, int index) {
+        baysList.add(index, bay);
+        EventBus.publish(new LaunchBayAddConfirmed(bay, index));
+    }
+
+    public void removeBay(LaunchBay bay) {
+        baysList.remove(bay);
+        EventBus.publish(new LaunchBayRemoveConfirmed(bay));
+    }
+
+    /**
+     * Assumes that all UI-side preparations are already made and firing events is not necessary.
+     */
+    public LaunchBay transferPointToNewBay(LaunchPortPoint portPoint) {
+        LaunchBay newBay = new LaunchBay(this.generateUniqueBayID(), this);
+        baysList.add(newBay);
+        return newBay;
+    }
+
+    @Override
+    protected void addPointToIndex(BaseWorldPoint point) {
+        if (point instanceof LaunchPortPoint checked) {
+            LaunchBay targetBay = checked.getParentBay();
+            if (!baysList.contains(targetBay)) {
+                this.addBay(targetBay);
+            }
+            List<LaunchPortPoint> portPoints = targetBay.getPortPoints();
+            portPoints.add(checked);
+            portsIndex.add(checked);
+            this.setSelected(checked);
+        } else {
+            throwIllegalPoint();
+        }
+    }
+
+    @Override
+    protected void removePointFromIndex(BaseWorldPoint point) {
+        if (point instanceof LaunchPortPoint checked) {
+            portsIndex.remove(checked);
+            LaunchBay parentBay = checked.getParentBay();
+            List<LaunchPortPoint> portPoints = parentBay.getPortPoints();
+            portPoints.remove(checked);
+            if (portPoints.isEmpty()) {
+                this.removeBay(parentBay);
+            }
+        } else {
+            throwIllegalPoint();
+        }
+    }
+
+    @Override
+    public int getIndexOfPoint(BaseWorldPoint point) {
+        if (point instanceof LaunchPortPoint checked) {
+            return portsIndex.indexOf(checked);
+        } else {
+            throwIllegalPoint();
+            return -1;
+        }
+    }
+
+    @Override
+    protected Class<? extends BaseWorldPoint> getTypeReference() {
+        return LaunchPortPoint.class;
+    }
+
+    @Override
+    public void insertPoint(BaseWorldPoint toInsert, int precedingIndex) {
+        throwIllegalPoint();
+    }
+
+    @Override
+    protected void paintPainterContent(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
+        if (!isInteractionEnabled()) return;
+        Point2D finalWorldCursor = StaticController.getFinalWorldCursor();
+        WorldPoint selected = this.getSelected();
+        PrimaryViewer viewer = StaticController.getViewer();
+        if (selected != null && viewer.isCursorInViewer()) {
+            org.joml.Vector2f start = new org.joml.Vector2f((float) selected.getPosition().getX(), (float) selected.getPosition().getY());
+            org.joml.Vector2f end = new org.joml.Vector2f((float) finalWorldCursor.getX(), (float) finalWorldCursor.getY());
+
+            org.lwjgl.opengl.GL11.glLineWidth(4.0f);
+            shapeRenderer.drawLine(start, end, new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 1.0f));
+
+            org.lwjgl.opengl.GL11.glLineWidth(2.0f);
+            shapeRenderer.drawLine(start, end, new org.joml.Vector4f(0.75f, 0.75f, 0.75f, 1.0f));
+
+            org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
+        }
+    }
+
+}

@@ -1,0 +1,219 @@
+package shipeditor.undo.edits;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.Getter;
+import shipeditor.communication.EventBus;
+import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
+import shipeditor.components.viewer.layers.LayerPainter;
+import shipeditor.components.viewer.layers.ship.ShipPainter;
+import shipeditor.components.viewer.painters.points.ship.CenterPointPainter;
+import shipeditor.undo.AbstractEdit;
+import shipeditor.undo.Edit;
+import shipeditor.utility.graphics.Sprite;
+import shipeditor.utility.overseers.StaticController;
+
+import java.awt.geom.Point2D;
+import java.util.Deque;
+
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
+public final class LayerEdits {
+
+    private LayerEdits() {
+    }
+
+    public static class AnchorOffsetEdit extends AbstractEdit implements LayerEdit {
+        @Getter
+        private LayerPainter layerPainter;
+        private final Point2D oldOffset;
+        private final Point2D updatedOffset;
+
+        public AnchorOffsetEdit(LayerPainter painter, Point2D old, Point2D updated) {
+            this.layerPainter = painter;
+            this.oldOffset = old;
+            this.updatedOffset = updated;
+            this.setFinished(false);
+        }
+
+        @Override
+        public void undo() {
+            undoSubEdits();
+            layerPainter.setAnchor(oldOffset);
+            var repainter = StaticController.getScheduler();
+            repainter.queueLayerPropertiesRepaint();
+            repainter.queueCenterPanelsRepaint();
+        }
+
+        @Override
+        public void redo() {
+            layerPainter.setAnchor(updatedOffset);
+            redoSubEdits();
+            var repainter = StaticController.getScheduler();
+            repainter.queueLayerPropertiesRepaint();
+            repainter.queueCenterPanelsRepaint();
+        }
+
+        @Override
+        public String getName() {
+            return "Anchor Offset";
+        }
+
+        @Override
+        public void cleanupReferences() {
+            Deque<Edit> subEdits = this.getSubEdits();
+            subEdits.forEach(edit -> {
+                if (edit instanceof AnchorOffsetEdit checked) {
+                    checked.cleanupReferences();
+                }
+            });
+            this.layerPainter = null;
+        }
+    }
+
+    public static class LayerRotationEdit extends AbstractEdit implements LayerEdit {
+        @Getter
+        private LayerPainter layerPainter;
+        private final double oldRotation;
+        private final double updatedRotation;
+
+        public LayerRotationEdit(LayerPainter painter, double old, double updated) {
+            this.layerPainter = painter;
+            this.oldRotation = old;
+            this.updatedRotation = updated;
+            this.setFinished(false);
+        }
+
+        @Override
+        public void undo() {
+            undoSubEdits();
+            layerPainter.setRotationRadians(oldRotation);
+            var repainter = StaticController.getScheduler();
+            repainter.queueLayerPropertiesRepaint();
+            repainter.queueCenterPanelsRepaint();
+        }
+
+        @Override
+        public void redo() {
+            layerPainter.setRotationRadians(updatedRotation);
+            redoSubEdits();
+            var repainter = StaticController.getScheduler();
+            repainter.queueLayerPropertiesRepaint();
+            repainter.queueCenterPanelsRepaint();
+        }
+
+        @Override
+        public String getName() {
+            return "Rotate Layer";
+        }
+
+        @Override
+        public void cleanupReferences() {
+            Deque<Edit> subEdits = this.getSubEdits();
+            subEdits.forEach(edit -> {
+                if (edit instanceof LayerRotationEdit checked) {
+                    checked.cleanupReferences();
+                }
+            });
+            this.layerPainter = null;
+        }
+    }
+
+    public static class ModuleAnchorEdit extends AbstractEdit implements LayerEdit {
+        @Getter
+        private CenterPointPainter centersPainter;
+        private final Point2D oldAnchor;
+        private final Point2D updatedAnchor;
+
+        public ModuleAnchorEdit(CenterPointPainter painter, Point2D old, Point2D updated) {
+            this.centersPainter = painter;
+            this.oldAnchor = old;
+            this.updatedAnchor = updated;
+            this.setFinished(false);
+        }
+
+        @Override
+        public void undo() {
+            undoSubEdits();
+            centersPainter.setModuleAnchorOffset(oldAnchor);
+            var repainter = StaticController.getScheduler();
+            repainter.queueViewerRepaint();
+            repainter.queueCenterPanelsRepaint();
+            repainter.queueModulesRepaint();
+        }
+
+        @Override
+        public void redo() {
+            centersPainter.setModuleAnchorOffset(updatedAnchor);
+            redoSubEdits();
+            var repainter = StaticController.getScheduler();
+            repainter.queueViewerRepaint();
+            repainter.queueCenterPanelsRepaint();
+            repainter.queueModulesRepaint();
+        }
+
+        @Override
+        public LayerPainter getLayerPainter() {
+            return centersPainter.getParentLayer();
+        }
+
+        @Override
+        public String getName() {
+            return "Module Anchor Change";
+        }
+
+        @Override
+        public void cleanupReferences() {
+            Deque<Edit> subEdits = this.getSubEdits();
+            subEdits.forEach(edit -> {
+                if (edit instanceof AnchorOffsetEdit checked) {
+                    checked.cleanupReferences();
+                }
+            });
+            this.centersPainter = null;
+        }
+    }
+
+    public static class SpriteSwapEdit extends AbstractEdit implements LayerEdit {
+        private LayerPainter layer;
+        private final Sprite oldSprite;
+        private final Sprite newSprite;
+
+        public SpriteSwapEdit(LayerPainter layer, Sprite oldSprite, Sprite newSprite) {
+            this.layer = layer;
+            this.oldSprite = oldSprite;
+            this.newSprite = newSprite;
+        }
+
+        @Override
+        public void undo() {
+            layer.reconfigureSpriteCircumstance(oldSprite);
+            if (layer instanceof ShipPainter shipPainter) {
+                shipPainter.setBaseHullSprite(oldSprite);
+            }
+            EventBus.publish(new ActiveLayerUpdated(layer.getParentLayer()));
+        }
+
+        @Override
+        public void redo() {
+            layer.reconfigureSpriteCircumstance(newSprite);
+            if (layer instanceof ShipPainter shipPainter) {
+                shipPainter.setBaseHullSprite(newSprite);
+            }
+            EventBus.publish(new ActiveLayerUpdated(layer.getParentLayer()));
+        }
+
+        @Override
+        public String getName() {
+            return "Sprite Swap";
+        }
+
+        @Override
+        public LayerPainter getLayerPainter() {
+            return layer;
+        }
+
+        @Override
+        public void cleanupReferences() {
+            this.layer = null;
+        }
+    }
+}

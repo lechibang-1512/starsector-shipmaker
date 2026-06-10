@@ -1,0 +1,38 @@
+package shipeditor.utility.objects;
+
+import java.awt.geom.Dimension2D;
+
+@SuppressWarnings("ParameterHidesMemberVariable")
+public class Size2D extends Dimension2D {
+
+    private double width;
+
+    private double height;
+
+    public Size2D(double width, double height) {
+        this.height = height;
+        this.width = width;
+    }
+
+    @Override
+    public double getWidth() {
+        return width;
+    }
+
+    @Override
+    public double getHeight() {
+        return height;
+    }
+
+    @Override
+    public void setSize(double width, double height) {
+        this.height = height;
+        this.width = width;
+    }
+
+    @Override
+    public Object clone() {
+        return super.clone();
+    }
+
+}

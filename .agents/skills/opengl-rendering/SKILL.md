@@ -1,0 +1,82 @@
+---
+name: opengl-rendering
+description: Core guidelines, coordinate transformation mathematics, high-performance drawing techniques, and state recovery patterns for OpenGL rendering in Starsector Ship Editor.
+---
+
+# OpenGL Rendering in Starsector Ship Editor
+
+This skill provides comprehensive instructions for agents modifying or adding drawing capabilities using the custom LWJGL 3 OpenGL pipeline.
+
+## Skill Directory Structure
+
+This skill is organized as follows:
+- **`SKILL.md`**: Main instructions (this file).
+- **`resources/`**: Documents, assets, and guides.
+  - [rendering_migration_guide.md](file:///media/lechibang/WORK1/projects/starsector-shipmaker/.agents/skills/opengl-rendering/resources/rendering_migration_guide.md): The full details of the OpenGL migration, coordinate spaces, shaders, and quads.
+- **`examples/`**: Code references.
+  - [RenderingPatternsReference.java](file:///media/lechibang/WORK1/projects/starsector-shipmaker/.agents/skills/opengl-rendering/examples/RenderingPatternsReference.java): Reference implementation of lookup tables, memory buffers, double-pass opacity, and robust state recovery.
+- **`scripts/`**: Tooling.
+  - [rebuild_and_run.sh](file:///media/lechibang/WORK1/projects/starsector-shipmaker/.agents/skills/opengl-rendering/scripts/rebuild_and_run.sh): Script to automate compilation, packaging, and execution.
+
+## Rendering Architecture Overview
+
+The rendering context is integrated within Swing components:
+- **`PrimaryViewer.java`**: Host container enclosing the `AWTGLCanvas`. Sets up the viewport, projection, and view matrices, then triggers repaints.
+- **`PaintOrderController.java`**: Orchestrates the draw order (background -> grid axes -> layers -> guides -> hotkeys).
+- **`SpriteRenderer.java`**: Handles textured sprite quads.
+- **`ShapeRenderer.java`**: Handles UI, overlays, grids, lines, rectangles, and circle geometry.
+
+## Coordinate & Transformation Math
+
+Always ensure correct coordinate mapping between World Space and Screen/NDC spaces:
+- **Viewport/Projection**: OpenGL Y-coordinates increase upwards, while Swing/AWT increases downwards. An orthographic projection maps NDC space to screen pixels:
+  ```java
+  projectionMatrix.setOrtho(0.0f, getWidth(), getHeight(), 0.0f, -1.0f, 1.0f);
+  ```
+- **World-to-Screen**: Camera translation/zoom are tracked as `AffineTransform` and mapped to `Matrix4f` using column-major mapping (translations mapped to column 3).
+- **Rotations**: To rotate a sprite around a custom anchor point in world coordinates:
+  $$M = T(\text{rotAnchor}) \cdot R(\theta) \cdot T(\text{position} - \text{rotAnchor}) \cdot S(\text{size})$$
+
+## Best Practices for High-Performance Rendering
+
+To maintain a smooth 60 FPS viewport, adhere to the following rules:
+1. **Trig-Free Render Loops**: Never compute `Math.cos` or `Math.sin` inside render calls. Utilize pre-calculated unit-circle coordinates:
+   ```java
+   private static final int CIRCLE_SEGMENTS = 64;
+   private static final float[] UNIT_CIRCLE_COS = new float[CIRCLE_SEGMENTS];
+   private static final float[] UNIT_CIRCLE_SIN = new float[CIRCLE_SEGMENTS];
+   static {
+       for (int i = 0; i < CIRCLE_SEGMENTS; i++) {
+           double theta = 2.0 * Math.PI * i / CIRCLE_SEGMENTS;
+           UNIT_CIRCLE_COS[i] = (float) Math.cos(theta);
+           UNIT_CIRCLE_SIN[i] = (float) Math.sin(theta);
+       }
+   }
+   ```
+2. **Allocation-Free Drawing**: Avoid allocating memory (like direct arrays or FloatBuffers) dynamically during rendering frames. Instead, allocate a persistent native buffer at initialization and reuse it:
+   ```java
+   private final java.nio.FloatBuffer circleBuffer = org.lwjgl.system.MemoryUtil.memAllocFloat(CIRCLE_SEGMENTS * 3 * 2);
+   ```
+   *Remember to free the memory in the `cleanup()` method of the renderer.*
+3. **Double-Pass Opacity Rendering**: For UI elements like collision/shield bubbles, perform rendering in two passes for high visual fidelity:
+   - **Pass 1 (Interior Fill)**: Use low opacity (e.g. `parentPainter.getPaintOpacity()`).
+   - **Pass 2 (Boundary Ring Outline)**: Draw the outline with a distinct line width (e.g. `glLineWidth(3.0f)`) and higher opacity (e.g. `0.5f`).
+
+## Robust Drawing State & Error Recovery
+
+Any Swing paint error or unhandled runtime exception can break the `begin()`/`end()` drawing state block. To prevent cascading rendering crashes (`IllegalStateException` loops), `ShapeRenderer` utilizes automatic recovery:
+- If `begin()` is called while `isDrawing == true`, the renderer logs a warning, forces the unclosed batch to end (calls `end()`), resets OpenGL state, and resumes a new batch safely.
+  ```java
+  public void begin(Matrix4f projection, Matrix4f view) {
+      if (isDrawing) {
+          log.warn("ShapeRenderer was already drawing! Forcing end of previous batch to recover.");
+          try {
+              end();
+          } catch (Exception e) {
+              isDrawing = false;
+          }
+      }
+      isDrawing = true;
+      // Bind shader and VAO...
+  }
+  ```

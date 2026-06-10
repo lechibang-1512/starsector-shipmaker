@@ -1,1 +1,0 @@
-package oth.shipeditor.representation.ship;

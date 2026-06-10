@@ -1,0 +1,52 @@
+package shipeditor.utility.components.rendering;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import shipeditor.utility.components.containers.trees.SortableTree;
+
+import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
+public class SortableTreeCellRenderer extends TreePanelCellRenderer {
+
+    private final SortableTree sortableTree;
+    private boolean isTargetNode;
+    private boolean isTargetNodeLeaf;
+
+    public SortableTreeCellRenderer(SortableTree tree) {
+        this.sortableTree = tree;
+    }
+
+    @SuppressWarnings("ParameterHidesMemberVariable")
+    @Override
+    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected,
+                                                  boolean expanded, boolean leaf,
+                                                  int row, boolean hasFocus) {
+        if (value instanceof TreeNode treeNode) {
+            DefaultMutableTreeNode parent = (DefaultMutableTreeNode) treeNode.getParent();
+            isTargetNode = value.equals(sortableTree.getDropTargetNode());
+            isTargetNodeLeaf = isTargetNode && treeNode.isLeaf() && !parent.isRoot();
+        }
+        return super.getTreeCellRendererComponent(
+                tree, value, selected, expanded, leaf, row, hasFocus);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (isTargetNode) {
+            g.setColor(Color.BLACK);
+            if (isTargetNodeLeaf) {
+                g.drawLine(0, 0, getSize().width, 0);
+            } else {
+                g.drawRect(0, 0, getSize().width - 1, getSize().height - 1);
+            }
+        }
+    }
+
+}

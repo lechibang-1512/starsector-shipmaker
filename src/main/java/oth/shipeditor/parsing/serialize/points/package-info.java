@@ -1,1 +1,0 @@
-package oth.shipeditor.parsing.serialize.points;

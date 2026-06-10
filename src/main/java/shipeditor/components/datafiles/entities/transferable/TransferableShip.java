@@ -1,0 +1,23 @@
+package shipeditor.components.datafiles.entities.transferable;
+
+import shipeditor.components.datafiles.entities.ShipCSVEntry;
+
+import java.awt.datatransfer.DataFlavor;
+
+public class TransferableShip extends TransferableEntry {
+
+    public TransferableShip(ShipCSVEntry data, Object source) {
+        super(data, source);
+    }
+
+    @Override
+    protected DataFlavor getTypeFlavor() {
+        return TRANSFERABLE_SHIP;
+    }
+
+    @Override
+    public ShipCSVEntry getNodeData() {
+        return (ShipCSVEntry) super.getNodeData();
+    }
+
+}

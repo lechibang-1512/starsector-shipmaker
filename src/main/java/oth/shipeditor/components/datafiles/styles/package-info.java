@@ -1,1 +1,0 @@
-package oth.shipeditor.components.datafiles.styles;

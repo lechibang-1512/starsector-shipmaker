@@ -36,3 +36,8 @@ Graphic Editing: For anything drawn on the map, use the custom point painting an
 Code Cleanliness & Refactoring
 Always remove unused imports, especially when refactoring complex Swing components, layout managers, or EventBus listeners.
 When removing redundant UI elements or panels, ensure that all helper types, enums (e.g., LeftsideTabType), and obsolete listeners are completely purged and deleted from the codebase. Do not leave dead code blocks.
+Lombok & Inheritance
+When extending classes that use Lombok `@Getter` annotations (e.g., `LayerPainter`), be careful of field shadowing. Always use polymorphic getter methods (like `getSprite()`) in the base class rather than direct field access (`this.sprite`) to ensure subclasses that override the getter function correctly instead of encountering `NullPointerException`s on uninitialized base class fields.
+Maven & Environment Quirks
+This project requires JDK 17-21 to compile successfully. The configured Lombok version (1.18.36) crashes on JDK 25 with a `TypeTag :: UNKNOWN` ExceptionInInitializerError.
+If compiling on a Fedora-based OS where the system default is Java 25, be aware that Fedora's `mvn` wrapper script completely ignores `update-alternatives` and uses `/etc/java/maven.conf` if `JAVA_HOME` is not explicitly set in the environment. To ensure a successful build without modifying the global system, always advise setting `JAVA_HOME=/usr/lib/jvm/java-21-temurin-jdk` in a `~/.mavenrc` file so Maven correctly invokes Java 21 for the compiler and Lombok annotation processor.

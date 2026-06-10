@@ -54,6 +54,13 @@ ship_editor_settings.json
 
 ### CodeQL ###
 /codeql/
+codeql-database/
+codeql-runner/
+
+### SpotBugs ###
+.spotbugs
+.spotbugs/
+spotbugs/
 
 ### Archives ###
 *.zip

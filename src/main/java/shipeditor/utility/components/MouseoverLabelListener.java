@@ -1,0 +1,74 @@
+package shipeditor.utility.components;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import lombok.Getter;
+import shipeditor.utility.themes.Themes;
+
+import javax.swing.JComponent;
+import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
+import java.awt.Color;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+@Getter
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
+public class MouseoverLabelListener extends MouseAdapter {
+
+    private final JComponent component;
+
+    private final JPopupMenu popupMenu;
+
+    private final Color highlight;
+
+    private final Runnable action;
+
+    public MouseoverLabelListener(JPopupMenu menu, JComponent inputComponent) {
+        this(menu, null, inputComponent, Themes.getPanelHighlightColor());
+    }
+
+    MouseoverLabelListener(JPopupMenu menu, JComponent inputComponent, Color color) {
+        this(menu, null, inputComponent, color);
+    }
+
+    private MouseoverLabelListener(JPopupMenu menu, Runnable clickAction, JComponent inputComponent, Color color) {
+        this.component = inputComponent;
+        this.action = clickAction;
+        this.popupMenu = menu;
+        this.highlight = color;
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+        super.mouseEntered(e);
+        if (!component.isEnabled()) {
+            return;
+        }
+        JPopupMenu menu = getPopupMenu();
+        if (menu != null) {
+            if (!menu.isEnabled()) return;
+        }
+        component.setBackground(highlight);
+        component.setOpaque(true);
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+        super.mouseExited(e);
+        component.setBackground(Themes.getPanelBackgroundColor());
+        component.setOpaque(false);
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        JPopupMenu menu = getPopupMenu();
+        if (menu != null && SwingUtilities.isRightMouseButton(e)) {
+            if (!menu.isEnabled() || !component.isEnabled()) return;
+            menu.show(component, e.getX(), e.getY());
+        } else if (SwingUtilities.isLeftMouseButton(e) && action != null) {
+            action.run();
+        }
+    }
+
+}
