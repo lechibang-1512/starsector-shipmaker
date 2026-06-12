@@ -1,6 +1,5 @@
 package shipeditor.components.viewer.entities;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -8,14 +7,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
 import lombok.Setter;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.painters.points.ship.CenterPointPainter;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.Utility;
 import shipeditor.utility.graphics.ColorUtilities;
-import shipeditor.utility.graphics.DrawUtilities;
 import shipeditor.utility.text.StringValues;
 
 import java.awt.Color;

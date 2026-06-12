@@ -2,10 +2,12 @@ package shipeditor.parsing.loading;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.HullmodFoldersWalked;
+import shipeditor.communication.events.files.FileEvents.HullmodFoldersWalked;
 import shipeditor.components.datafiles.entities.HullmodCSVEntry;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
+import shipeditor.utility.text.StringConstants;
+import shipeditor.utility.text.StringValues;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -15,13 +17,14 @@ import java.util.Map;
 public class LoadHullmodDataAction extends LoadCSVDataAction<HullmodCSVEntry> {
 
     LoadHullmodDataAction() {
-        super("HULLMOD_CSV");
+        super(StringConstants.HULLMOD_CSV_TYPE);
     }
 
     @Override
     protected void publishResult(Map<Path, List<HullmodCSVEntry>> entriesByPackage) {
         GameDataRepository gameData = SettingsManager.getGameData();
         gameData.setHullmodEntriesByPackage(entriesByPackage);
+        gameData.setHullmodDataLoaded(true);
         EventBus.publish(new HullmodFoldersWalked(entriesByPackage));
     }
 
@@ -32,7 +35,7 @@ public class LoadHullmodDataAction extends LoadCSVDataAction<HullmodCSVEntry> {
 
     @Override
     public String getTaskName() {
-        return "Hullmods";
+        return StringValues.TASK_HULLMODS;
     }
 
 }

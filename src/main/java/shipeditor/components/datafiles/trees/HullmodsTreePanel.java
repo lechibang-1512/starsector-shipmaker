@@ -2,11 +2,11 @@ package shipeditor.components.datafiles.trees;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.HullmodFoldersWalked;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
+import shipeditor.communication.events.files.FileEvents.HullmodFoldersWalked;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
 import shipeditor.components.datafiles.entities.HullmodCSVEntry;
 import shipeditor.components.datafiles.entities.OrdnancedCSVEntry;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
@@ -78,7 +78,7 @@ class HullmodsTreePanel extends CSVDataTreePanel<HullmodCSVEntry>{
     @Override
     protected void initWalkerListening() {
         EventBus.subscribe(this, event -> {
-            if (event instanceof HullmodFoldersWalked checked) {
+            if (event instanceof HullmodFoldersWalked) {
                 this.queueReload();
             }
         });

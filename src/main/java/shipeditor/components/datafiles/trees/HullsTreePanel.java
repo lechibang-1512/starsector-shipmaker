@@ -2,23 +2,16 @@ package shipeditor.components.datafiles.trees;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.GameDataPanelResized;
-import shipeditor.communication.events.components.SelectShipDataEntry;
-import shipeditor.communication.events.files.HullTreeEntryCleared;
-import shipeditor.communication.events.files.HullTreeReloadQueued;
-import shipeditor.components.datafiles.OpenDataTarget;
+import shipeditor.components.ComponentEnums.OpenDataTarget;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.parsing.FileUtilities;
-import shipeditor.parsing.loading.FileLoading;
 import shipeditor.persistence.GameDataPackage;
 import shipeditor.persistence.Settings;
 import shipeditor.persistence.SettingsManager;
-import shipeditor.representation.ship.HullSize;
+import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.representation.ship.HullSpecFile;
 import shipeditor.representation.ship.SkinSpecFile;
-import shipeditor.utility.components.ComponentUtilities;
-import shipeditor.utility.objects.Pair;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.text.StringValues;
 
@@ -29,7 +22,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.JTree;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
@@ -49,12 +41,14 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import shipeditor.utility.components.UIConstants;
+import shipeditor.communication.events.components.ComponentEvents.SelectShipDataEntry;
+import shipeditor.communication.events.components.ComponentEvents.GameDataPanelResized;
+import shipeditor.communication.events.files.FileEvents.HullTreeEntryCleared;
+import shipeditor.communication.events.files.FileEvents.HullTreeReloadQueued;
 
 @Log4j2
 public
 class HullsTreePanel extends DataTreePanel {
-
-    private ShipCSVEntry cachedEntry;
 
     public HullsTreePanel() {
         super("Hull file packages");
@@ -86,7 +80,6 @@ class HullsTreePanel extends DataTreePanel {
         JTree tree = getTree();
         EventBus.subscribe(this, event -> {
             if (event instanceof HullTreeEntryCleared) {
-                cachedEntry = null;
                 resetInfoPanel();
                 repaint();
                 tree.repaint();
@@ -130,7 +123,7 @@ class HullsTreePanel extends DataTreePanel {
     protected JPanel createSearchContainer() {
         JPanel searchContainer = new JPanel(new GridBagLayout());
         searchContainer.setBorder(UIConstants.EMPTY_BORDER);
-        JTextField searchField = HullsTreePanel.getSearchField();
+        JTextField searchField = this.getSearchField();
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.weightx = 1.0;
@@ -138,26 +131,33 @@ class HullsTreePanel extends DataTreePanel {
         searchContainer.add(searchField, gridBagConstraints);
         JButton searchButton = new JButton(StringValues.SEARCH);
         searchButton.addActionListener(e -> reload());
+        searchField.addActionListener(e -> searchButton.doClick());
         searchContainer.add(searchButton);
         return searchContainer;
     }
 
-    private static JTextField getSearchField() {
+    private JTextField getSearchField() {
         JTextField searchField = new JTextField();
         searchField.setToolTipText("Input is checked against displayed filename and base hull ID as a substring.");
+        javax.swing.Timer timer = new javax.swing.Timer(300, e -> {
+            ShipFilterPanel.setCurrentTextFilter(searchField.getText());
+            this.reload();
+        });
+        timer.setRepeats(false);
+
         Document document = searchField.getDocument();
         document.addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                ShipFilterPanel.setCurrentTextFilter(searchField.getText());
+                timer.restart();
             }
             @Override
             public void removeUpdate(DocumentEvent e) {
-                ShipFilterPanel.setCurrentTextFilter(searchField.getText());
+                timer.restart();
             }
             @Override
             public void changedUpdate(DocumentEvent e) {
-                ShipFilterPanel.setCurrentTextFilter(searchField.getText());
+                timer.restart();
             }
         });
         return searchField;
@@ -165,14 +165,24 @@ class HullsTreePanel extends DataTreePanel {
 
     private void initComponentListeners() {
         JTree tree = getTree();
-        tree.addMouseListener(new ContextMenuListener());
+        tree.addMouseListener(createContextMenuListener());
         tree.addTreeSelectionListener(e -> {
             TreePath selectedNode = e.getNewLeadSelectionPath();
             if (selectedNode == null) return;
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectedNode.getLastPathComponent();
             if (node.getUserObject() instanceof ShipCSVEntry checked) {
-                updateEntryPanel(checked);
-                EventBus.publish(new GameDataPanelResized(this.getMinimumSize()));
+                JPanel rightPanel = getRightPanel();
+                rightPanel.removeAll();
+                rightPanel.add(new javax.swing.JLabel("Loading..."));
+                rightPanel.revalidate();
+                rightPanel.repaint();
+                
+                checked.lazyLoadSpecAndSkins().thenAccept(v -> {
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        updateEntryPanel(checked);
+                        EventBus.publish(new GameDataPanelResized(this.getMinimumSize()));
+                    });
+                });
             }
         });
         tree.addMouseListener(new DoubleClickLayerLoader());
@@ -190,8 +200,6 @@ class HullsTreePanel extends DataTreePanel {
         rightPanel.add(shipFilesPanel, constraints);
 
         createRightPanelDataTable(selected);
-
-        cachedEntry = selected;
 
         rightPanel.revalidate();
         rightPanel.repaint();
@@ -278,16 +286,18 @@ class HullsTreePanel extends DataTreePanel {
     JPopupMenu getContextMenu() {
         JPopupMenu menu = super.getContextMenu();
         DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
+        JMenuItem loadAsLayer = new JMenuItem("Load as ship layer");
+        loadAsLayer.addActionListener(new HullsTreePanel.LoadLayerFromTree());
+        menu.insert(loadAsLayer, 0);
+        menu.insert(new JPopupMenu.Separator(), 1);
+
         if (cachedSelectForMenu.getUserObject() instanceof ShipCSVEntry checked) {
             JMenuItem openSkin = HullsTreePanel.addOpenSkinOption(checked);
             if (openSkin != null) {
+                menu.addSeparator();
                 menu.add(openSkin);
             }
         }
-        menu.addSeparator();
-        JMenuItem loadAsLayer = new JMenuItem("Load as ship layer");
-        loadAsLayer.addActionListener(new HullsTreePanel.LoadLayerFromTree());
-        menu.add(loadAsLayer);
         return menu;
     }
 
@@ -356,10 +366,6 @@ class HullsTreePanel extends DataTreePanel {
             TreePath pathForLocation = tree.getPathForLocation(eventPoint.x, eventPoint.y);
             if (pathForLocation == null) return;
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) pathForLocation.getLastPathComponent();
-            TreePath selectionPath = tree.getSelectionPath();
-            if (selectionPath == null) return;
-            Object selected = selectionPath.getLastPathComponent();
-            if (node == null || !(selected instanceof DefaultMutableTreeNode checkedNode) || node != checkedNode) return;
             if (node.getUserObject() instanceof ShipCSVEntry checked) {
                 checked.loadLayerFromEntry();
             }

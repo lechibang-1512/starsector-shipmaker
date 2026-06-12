@@ -1,14 +1,12 @@
 package shipeditor.components.viewer.entities;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.painters.points.ship.BoundPointsPainter;
-import shipeditor.utility.graphics.DrawUtilities;
 import shipeditor.utility.graphics.ShapeUtilities;
 import shipeditor.utility.text.StringValues;
 

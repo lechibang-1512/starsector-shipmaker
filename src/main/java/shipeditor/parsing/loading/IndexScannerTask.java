@@ -9,6 +9,7 @@ import shipeditor.persistence.SettingsManager;
 import shipeditor.persistence.database.DatabaseManager;
 import shipeditor.persistence.database.DatabaseQueryService;
 import shipeditor.utility.text.StringConstants;
+import shipeditor.utility.text.StringValues;
 import shipeditor.PrimaryWindow;
 
 import java.io.File;
@@ -82,10 +83,9 @@ public final class IndexScannerTask {
             }
             activeModIds.add(modId);
 
-            long modFolderLastModified = getLastModifiedForFolder(folder);
             Long dbLastScanned = existingModsMap.get(modId);
 
-            if (dbLastScanned == null || modFolderLastModified > dbLastScanned) {
+            if (dbLastScanned == null) {
                 return true;
             }
         }
@@ -119,12 +119,12 @@ public final class IndexScannerTask {
 
         Settings settings = SettingsManager.getSettings();
         if (settings == null) {
-            log.error("Settings not initialized, cancelling index scan.");
+            log.error(StringValues.SETTINGS_NOT_INITIALIZED_INDEX_CANCEL);
             return;
         }
 
         if (!isUpdateNeeded(firstRun, settings)) {
-            log.info("Database index is up to date. Skipping index scan.");
+            log.info(StringValues.DB_INDEX_UP_TO_DATE_SKIP);
             return;
         }
 
@@ -135,11 +135,10 @@ public final class IndexScannerTask {
         } else {
             try {
                 SwingUtilities.invokeAndWait(() -> {
-                    String title = firstRun ? "Initial Database Index Setup" : "Mod Directory Changes Detected";
+                    String title = firstRun ? StringValues.INITIAL_DB_INDEX_TITLE : StringValues.MOD_DIR_CHANGES_TITLE;
                     String message = firstRun
-                            ? "No database index found. A complete initial scan is required to load game data. Click OK to scan and initialize."
-                            : "Changes detected in mod folders. Would you like to update the database index now?\n" +
-                                    "Updating ensures the data in the editor matches your files, but may take a few seconds.";
+                            ? StringValues.INITIAL_DB_INDEX_MSG
+                            : StringValues.MOD_DIR_CHANGES_MSG;
 
                     JOptionPane pane;
                     if (firstRun) {
@@ -166,13 +165,19 @@ public final class IndexScannerTask {
                     }
                 });
             } catch (java.lang.reflect.InvocationTargetException | InterruptedException e) {
-                log.error("Failed to show update confirmation dialog", e);
+                if (SettingsManager.isDeveloperModeEnabled()) {
+                    log.error(StringValues.FAILED_SHOW_UPDATE_DIALOG, e);
+                } else {
+                    log.error(StringValues.FAILED_SHOW_UPDATE_DIALOG);
+                }
                 shouldUpdate[0] = true; // Default to update on error
             }
         }
 
         if (!shouldUpdate[0]) {
-            log.info("User declined database index update. Skipping scan.");
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.info(StringValues.USER_DECLINED_INDEX_UPDATE);
+            }
             return;
         }
 
@@ -212,7 +217,9 @@ public final class IndexScannerTask {
         }
         for (String dbModId : existingModsMap.keySet()) {
             if (!activeModIds.contains(dbModId)) {
-                log.info("Purging obsolete/deleted mod from database index: {}", dbModId);
+                if (SettingsManager.isDeveloperModeEnabled()) {
+                    log.info("Purging obsolete/deleted mod from database index: {}", dbModId);
+                }
                 DatabaseQueryService.deleteMod(dbModId);
             }
         }
@@ -221,7 +228,7 @@ public final class IndexScannerTask {
 
         try (Connection conn = DatabaseManager.getConnection()) {
             conn.setAutoCommit(false); // Enable Batch Mode
-            log.info("Opened SQLite transaction for indexing...");
+            log.info(StringValues.SQLITE_TRANSACTION_OPEN);
 
             try {
                 for (Path folder : targetsToScan) {
@@ -232,12 +239,12 @@ public final class IndexScannerTask {
                         modId = "starsector-core";
                     }
 
-                    // Check if mod was updated (lastModified checking)
-                    long modFolderLastModified = getLastModifiedForFolder(folder);
                     Long dbLastScanned = existingModsMap.get(modId);
 
-                    if (firstRun || dbLastScanned == null || modFolderLastModified > dbLastScanned) {
-                        log.info("Scanning mod package: {}", modId);
+                    if (firstRun || dbLastScanned == null) {
+                        if (SettingsManager.isDeveloperModeEnabled()) {
+                            log.info("Scanning mod package: {}", modId);
+                        }
 
                         // Upsert mod metadata row
                         String upsertModSql = """
@@ -263,15 +270,15 @@ public final class IndexScannerTask {
                 }
 
                 conn.commit();
-                log.info("SQL transaction committed successfully. Mod index up to date.");
+                log.info(StringValues.SQLITE_TRANSACTION_COMMITTED);
             } catch (SQLException e) {
                 conn.rollback();
-                log.error("Failed to commit indexing transaction, rolled back changes.", e);
+                log.error(StringValues.SQLITE_TRANSACTION_ROLLBACK_FAILED, e);
             } finally {
                 conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
-            log.error("Failed to connect or maintain transaction for SQLite DB", e);
+            log.error(StringValues.SQLITE_CONNECTION_ERROR, e);
         }
     }
 
@@ -286,18 +293,18 @@ public final class IndexScannerTask {
         // 1. Scan and index files with specific extensions (.ship, .skin, .wpn,
         // .variant, .proj)
         Map<String, String> extensions = Map.of(
-                "ship", "SHIP",
-                "skin", "SKIN",
-                "wpn", "WEAPON",
-                "variant", "VARIANT",
-                "proj", "PROJECTILE");
+                "ship", StringConstants.SHIP_TYPE,
+                "skin", StringConstants.SKIN_TYPE,
+                "wpn", StringConstants.WEAPON_TYPE,
+                "variant", StringConstants.VARIANT_TYPE,
+                "proj", StringConstants.PROJECTILE_TYPE);
 
         Map<String, Long> dbFilesMap = DatabaseQueryService.getFilesLastModifiedMap(conn, modId);
         Map<String, UUID> dbUuidMap = DatabaseQueryService.getFilesUuidMap(conn, modId);
 
         String upsertFileSql = """
-                INSERT INTO indexed_files (uuid, mod_id, entity_id, entity_name, entity_type, file_name, file_path, last_modified)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO indexed_files (uuid, mod_id, entity_id, entity_name, entity_type, file_name, file_path, last_modified, parsed_data)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(uuid) DO UPDATE SET
                     mod_id = excluded.mod_id,
                     entity_id = excluded.entity_id,
@@ -305,7 +312,8 @@ public final class IndexScannerTask {
                     entity_type = excluded.entity_type,
                     file_name = excluded.file_name,
                     file_path = excluded.file_path,
-                    last_modified = excluded.last_modified;
+                    last_modified = excluded.last_modified,
+                    parsed_data = excluded.parsed_data;
                 """;
 
         Map<String, List<File>> allFiles = fetchFilesWithExtensions(modFolder, extensions.keySet());
@@ -335,6 +343,40 @@ public final class IndexScannerTask {
                             uuid = UUID.randomUUID();
                         }
 
+                        String parsedDataJson = null;
+                        try {
+                            Object parsedObj = null;
+                            switch (type) {
+                                case StringConstants.SHIP_TYPE:
+                                    parsedObj = FileLoading.loadHullFile(file);
+                                    break;
+                                case StringConstants.SKIN_TYPE:
+                                    parsedObj = FileLoading.loadSkinFile(file);
+                                    break;
+                                case StringConstants.WEAPON_TYPE:
+                                    parsedObj = FileLoading.loadWeaponFile(file);
+                                    break;
+                                case StringConstants.VARIANT_TYPE:
+                                    parsedObj = FileLoading.loadVariantFile(file);
+                                    break;
+                                case StringConstants.PROJECTILE_TYPE:
+                                    parsedObj = FileLoading.loadProjectileFile(file);
+                                    break;
+                                default:
+                                    log.warn("Unknown entity type: {}", type);
+                                    break;
+                            }
+                            if (parsedObj != null) {
+                                parsedDataJson = mapper.writeValueAsString(parsedObj);
+                            }
+                        } catch (Exception e) {
+                            if (SettingsManager.isDeveloperModeEnabled()) {
+                                log.error(StringValues.FAILED_PARSE_SERIALIZE_ENTITY, file.getName(), type, e);
+                            } else {
+                                log.error(StringValues.FAILED_PARSE_SERIALIZE_ENTITY, file.getName(), type);
+                            }
+                        }
+
                         pstmt.setString(1, uuid.toString());
                         pstmt.setString(2, modId);
                         pstmt.setString(3, entityId != null ? entityId : entityName);
@@ -343,6 +385,7 @@ public final class IndexScannerTask {
                         pstmt.setString(6, file.getName());
                         pstmt.setString(7, absPath);
                         pstmt.setLong(8, diskLastModified);
+                        pstmt.setString(9, parsedDataJson);
                         pstmt.addBatch();
                         batchCount++;
                         if (batchCount % 500 == 0) {
@@ -369,14 +412,14 @@ public final class IndexScannerTask {
 
         // CSV data files
         Map<Path, String> fileTargets = new LinkedHashMap<>();
-        fileTargets.put(Paths.get("data", StringConstants.HULLS, "ship_data.csv"), "SHIP_CSV");
-        fileTargets.put(Paths.get("data", "weapons", "weapon_data.csv"), "WEAPON_CSV");
-        fileTargets.put(Paths.get("data", "hullmods", "hull_mods.csv"), "HULLMOD_CSV");
-        fileTargets.put(Paths.get("data", "shipsystems", "ship_systems.csv"), "SHIPSYSTEM_CSV");
-        fileTargets.put(Paths.get("data", StringConstants.HULLS, "wing_data.csv"), "WING_CSV");
+        fileTargets.put(Paths.get("data", StringConstants.HULLS, "ship_data.csv"), StringConstants.SHIP_CSV_TYPE);
+        fileTargets.put(Paths.get("data", "weapons", "weapon_data.csv"), StringConstants.WEAPON_CSV_TYPE);
+        fileTargets.put(Paths.get("data", "hullmods", "hull_mods.csv"), StringConstants.HULLMOD_CSV_TYPE);
+        fileTargets.put(Paths.get("data", "shipsystems", "ship_systems.csv"), StringConstants.SHIPSYSTEM_CSV_TYPE);
+        fileTargets.put(Paths.get("data", StringConstants.HULLS, "wing_data.csv"), StringConstants.WING_CSV_TYPE);
         // Style JSON config files
-        fileTargets.put(Paths.get("data", StringConstants.CONFIG, "engine_styles.json"), "ENGINE_STYLE_JSON");
-        fileTargets.put(Paths.get("data", StringConstants.CONFIG, "hull_styles.json"), "HULL_STYLE_JSON");
+        fileTargets.put(Paths.get("data", StringConstants.CONFIG, "engine_styles.json"), StringConstants.ENGINE_STYLE_JSON_TYPE);
+        fileTargets.put(Paths.get("data", StringConstants.CONFIG, "hull_styles.json"), StringConstants.HULL_STYLE_JSON_TYPE);
 
         for (Map.Entry<Path, String> entry : fileTargets.entrySet()) {
             Path relativePath = entry.getKey();
@@ -397,14 +440,43 @@ public final class IndexScannerTask {
                         uuid = UUID.randomUUID();
                     }
 
+                    String parsedDataJson = null;
+                    try {
+                        Object parsedObj = null;
+                        if (type.endsWith("_CSV")) {
+                            if (type.equals("WING_CSV")) {
+                                parsedObj = FileLoading.parseCSVTable(fullPath, FileLoading.getWingValidationPredicate());
+                            } else {
+                                // For CSVs, parseCSVTable is package-private but we are in the same package.
+                                parsedObj = FileLoading.parseCSVTable(fullPath);
+                            }
+                        } else if (type.endsWith("_JSON")) {
+                            // Hull styles, Engine styles
+                            ObjectMapper mapper = FileUtilities.getConfigured();
+                            com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(file);
+                            parsedObj = node;
+                        }
+                        if (parsedObj != null) {
+                            ObjectMapper mapper = FileUtilities.getConfigured();
+                            parsedDataJson = mapper.writeValueAsString(parsedObj);
+                        }
+                    } catch (IOException e) {
+                        if (SettingsManager.isDeveloperModeEnabled()) {
+                            log.error(StringValues.FAILED_PARSE_SERIALIZE_CSV_JSON, file.getName(), type, e);
+                        } else {
+                            log.error(StringValues.FAILED_PARSE_SERIALIZE_CSV_JSON, file.getName(), type);
+                        }
+                    }
+
                     pstmt.setString(1, uuid.toString());
                     pstmt.setString(2, modId);
-                    pstmt.setString(3, type.toLowerCase());
+                    pstmt.setString(3, type.toLowerCase(java.util.Locale.ROOT));
                     pstmt.setString(4, file.getName().replaceAll("\\.(csv|json)$", ""));
                     pstmt.setString(5, type);
                     pstmt.setString(6, file.getName());
                     pstmt.setString(7, absPath);
                     pstmt.setLong(8, diskLastModified);
+                    pstmt.setString(9, parsedDataJson);
                     pstmt.addBatch();
                 }
             }
@@ -414,13 +486,13 @@ public final class IndexScannerTask {
     private static String extractEntityId(File file, String type, ObjectMapper mapper) {
         String keyToFind;
         switch (type) {
-            case "SHIP":
+            case StringConstants.SHIP_TYPE:
                 keyToFind = "hullId";
                 break;
-            case "SKIN":
+            case StringConstants.SKIN_TYPE:
                 keyToFind = "skinHullId";
                 break;
-            case "VARIANT":
+            case StringConstants.VARIANT_TYPE:
                 keyToFind = "variantId";
                 break;
             default:
@@ -439,7 +511,9 @@ public final class IndexScannerTask {
                 }
             }
         } catch (IOException e) {
-            log.warn("Streaming JSON parse failed for id extraction: {}", file.getName(), e);
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.warn("Streaming JSON parse failed for id extraction: {}", file.getName(), e);
+            }
         }
 
         // Fallback: extract ID using filename matching
@@ -473,22 +547,10 @@ public final class IndexScannerTask {
                         }
                     });
         } catch (IOException exception) {
-            log.error("Failed to walk files for indexing: {}", target, exception);
+            log.error(StringValues.FAILED_WALK_FILES_INDEXING, target, exception);
         }
         return filesMap;
     }
 
-    private static long getLastModifiedForFolder(Path folder) {
-        Path dataPath = folder.resolve("data");
-        Path walkTarget = Files.exists(dataPath) && Files.isDirectory(dataPath) ? dataPath : folder;
-        try (Stream<Path> stream = Files.walk(walkTarget)) {
-            return stream.filter(Files::isRegularFile)
-                    .mapToLong(path -> path.toFile().lastModified())
-                    .max()
-                    .orElse(0L);
-        } catch (IOException e) {
-            return folder.toFile().lastModified();
-        }
-    }
 
 }

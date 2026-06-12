@@ -5,20 +5,19 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
-import shipeditor.components.viewer.painters.PainterVisibility;
+import shipeditor.components.viewer.ViewerEnums.PainterVisibility;
 import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
 
-import java.awt.geom.AffineTransform;
 import java.util.*;
 import java.util.function.Predicate;
 

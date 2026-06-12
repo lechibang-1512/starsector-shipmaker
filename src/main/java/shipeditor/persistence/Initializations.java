@@ -13,14 +13,10 @@ import shipeditor.utility.Errors;
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
-import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -190,7 +186,7 @@ public final class Initializations {
     private static List<Path> getPotentialGameFolders() {
         List<Path> paths = new ArrayList<>();
 
-        String os = System.getProperty("os.name").toLowerCase();
+        String os = System.getProperty("os.name").toLowerCase(java.util.Locale.ROOT);
         boolean isWindows = os.contains("win");
         boolean isMac = os.contains("mac");
 

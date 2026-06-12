@@ -1,10 +1,10 @@
 package shipeditor.parsing.saving;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.saving.HullSaveQueued;
-import shipeditor.communication.events.files.saving.ProjectileSaveQueued;
-import shipeditor.communication.events.files.saving.VariantSaveQueued;
-import shipeditor.communication.events.files.saving.WeaponSaveQueued;
+import shipeditor.communication.events.files.FileEvents.HullSaveQueued;
+import shipeditor.communication.events.files.FileEvents.VariantSaveQueued;
+import shipeditor.communication.events.files.FileEvents.WeaponSaveQueued;
+import shipeditor.communication.events.files.FileEvents.ProjectileSaveQueued;
 
 public final class SaveCoordinator {
 
@@ -22,7 +22,7 @@ public final class SaveCoordinator {
                 SaveWeaponAction.saveWeaponFromLayer(checked.weaponLayer());
             } else if (event instanceof ProjectileSaveQueued checked) {
                 SaveProjectileAction.saveProjectileFromLayer(checked.projectileLayer());
-            } else if (event instanceof shipeditor.communication.events.files.saving.CSVSaveQueued checked) {
+            } else if (event instanceof shipeditor.communication.events.files.FileEvents.CSVSaveQueued checked) {
                 SaveCSVAction.saveCSVEntry(checked.entry());
             }
         });

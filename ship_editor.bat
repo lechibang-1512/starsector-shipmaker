@@ -8,7 +8,7 @@ if exist "%~dp0ship_editor.jar" (
     cd /d "%~dp0"
 )
 
-set JVM_OPTS=-Xmx1g -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20
+set JVM_OPTS=-Xmx4g -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20
 
 if "%~1"=="--cli" (
     if exist "jre\bin\java.exe" (

@@ -1,6 +1,5 @@
 package shipeditor.components.viewer.entities.engine;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -9,7 +8,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.jhlabs.image.HSBAdjustFilter;
 import lombok.Getter;
 import lombok.Setter;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.AngledPoint;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.parsing.loading.FileLoading;
@@ -19,13 +18,10 @@ import shipeditor.representation.GameDataRepository;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.objects.Size2D;
 import shipeditor.utility.Utility;
-import shipeditor.utility.graphics.DrawUtilities;
 
 import java.awt.Color;
-import java.awt.Paint;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.util.Map;
@@ -33,8 +29,6 @@ import java.util.Map;
 @SuppressWarnings({"ClassWithTooManyFields", "ClassWithTooManyMethods"})
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class EnginePoint extends AngledPoint implements EngineData {
-
-    private static final Paint SIZING_RECTANGLE = new Color(0, 0, 0, 20);
 
     @Setter
     private double angle;
@@ -269,13 +263,11 @@ public class EnginePoint extends AngledPoint implements EngineData {
         if (flameTextureId == 0 && flameColored != null) {
             flameTextureId = shipeditor.utility.graphics.opengl.TextureLoader.loadTexture(flameColored);
         }
-        if (baseFlameCoreTextureId == 0 && FLAME_CORE != null) {
-            baseFlameCoreTextureId = shipeditor.utility.graphics.opengl.TextureLoader.loadTexture(FLAME_CORE);
-        }
+        int coreTextureId = getBaseFlameCoreTextureId();
 
         Point2D position = this.getPosition();
         double rawAngle = this.getAngle();
-        EnginePoint.drawFlameStaticallyGL(spriteRenderer, projection, view, position, rawAngle, this.getWidth(), this.getLength(), flameTextureId, baseFlameCoreTextureId);
+        EnginePoint.drawFlameStaticallyGL(spriteRenderer, projection, view, position, rawAngle, this.getWidth(), this.getLength(), flameTextureId, coreTextureId);
     }
 
     public static void drawFlameStaticallyGL(SpriteRenderer spriteRenderer, Matrix4f projection, Matrix4f view, Point2D position,

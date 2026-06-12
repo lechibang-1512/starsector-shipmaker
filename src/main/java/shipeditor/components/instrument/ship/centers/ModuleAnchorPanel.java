@@ -8,7 +8,6 @@ import lombok.Setter;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.painters.points.ship.CenterPointPainter;
-import shipeditor.undo.EditDispatch;
 import shipeditor.utility.components.widgets.PointLocationWidget;
 import shipeditor.utility.components.widgets.Spinners;
 import shipeditor.utility.components.widgets.TwinSpinnerPanel;

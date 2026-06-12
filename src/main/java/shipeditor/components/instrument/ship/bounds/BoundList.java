@@ -4,7 +4,7 @@ import javax.swing.ListModel;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.points.BoundPointsSorted;
+import shipeditor.communication.events.viewer.points.PointEvents.BoundPointsSorted;
 import shipeditor.components.viewer.entities.BoundPoint;
 import shipeditor.utility.components.containers.PointList;
 import shipeditor.utility.text.StringValues;

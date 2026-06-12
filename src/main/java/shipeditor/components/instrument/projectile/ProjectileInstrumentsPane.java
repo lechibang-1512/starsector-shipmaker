@@ -1,7 +1,7 @@
 package shipeditor.components.instrument.projectile;
 
 import shipeditor.components.instrument.AbstractInstrumentsPane;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;

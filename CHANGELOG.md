@@ -1,5 +1,48 @@
 # Changelog
-## [0.0.1d] - 2026-06-10
+
+## [0.0.1e] - 2026-06-11
+
+### Features
+- **Variant Data**: Implement new UI components and controllers for variant data management and tree navigation. Decoupled the monolithic `DataTreePanel` and `VariantMainPanel` into smaller controllers and builders (`VariantChooserPanel`, `VariantOrdnancePanel`, `DataTreeContextMenuController`, `DataTreeSearchController`, `DataTreeTableBuilder`, `DataTreeVariantPanelBuilder`, `WeaponTreeContextMenuController`, `WeaponsTreeCellRenderer`).
+- **UI Enhancements**: Display installable slot compatibility for weapons in the `WeaponsTreePanel`. Improved tree panel interactivity with double-click loading, updated context menu layouts, standardized search field handling, and search debouncing. Consolidated toolbar buttons into a hover-activated dropdown menu.
+- **Data Caching & Filters**: Implement persistent parsed data caching in SQLite database using a new `parsed_data` column on the `indexed_files` table, speeding up subsequent startups by bypassing filesystem reads. Updated filter UI to require a manual "Apply filters" button click. Added `TestDB.java` for SQLite DB record verification.
+- **CSV & Enum Hardening**: Added try-catch blocks to silently ignore unrecognized values from unofficial mods for several enums (`ShipTypeHints`, `WeaponRenderHints`, `HullSize`, `FireMode`, `WeaponMount`, `WeaponSize`, `WeaponType`), defaulting to fallback values. Added custom table cell editors (comboxboxes/dropdowns) for CSV data properties (`shield type`, `tech/manufacturer`, `formation`, `role`, `type`, `system id`) and improved parsing robustness for colors.
+- **Launch Bays**: Rewrote coordinate translation logic in `LaunchBayPainter` to translate world coordinates into screen coordinates, bypassing affine transform scaling and zoom bugs. Implemented a direct raw mouse event listener for selection interactions. Updated `LaunchPortPoint` selection highlight color to orange.
+- **Agent Skills**: Formally structured the `starsector-architecture` skill directory. Added reference examples for EventBus subscriptions, templates for event creation, and improved the `find_leaking_subscribers.sh` regex pattern.
+
+### Bug Fixes
+- **Race Conditions & Initialization**: Resolve data loading race conditions and variant initialization errors:
+  - Set loading flags directly in `DataLoadingAction` subclasses instead of relying on UI panel visibility.
+  - Remove hard-abort guard in `ShipPainter.installVariant()` that blocked variant selection.
+  - Replace blocking `JOptionPane` popup spam in `ShipVariant.initialize()` with `log.error()` for missing weapons, hullmods, and wings, allowing variants to load with whatever data is available.
+  - Remove false `isShipDataLoaded()` dependency in `WingsTreePanel.populateEntries()`.
+  - Add null-safe color fallbacks in `Themes.java` for headless mode.
+  - Add null-safe fallbacks in `ComponentUtilities.createIconFromImage()`, `ImageCache.loadImage()`, and `WingCSVEntry.retrieveSpec()` to prevent NPEs during icon loading and sprite resolution.
+- **Concurrency & Thread Safety**: Diagnosed and patched `HashMap` corruption across the repository and `EventBus`:
+  - Wrapped `EventBus` map compound operations (`computeIfAbsent` and `remove` on `lifecycleSubscribers`) in explicit `synchronized` blocks.
+  - Converted in-memory repository lookup maps to thread-safe `ConcurrentHashMap` instances and declared them `volatile`.
+  - Replaced dual-cache lookup maps with a single atomic `csvCacheByPath` map storing `CachedCSVData` records.
+  - Implemented double-buffering for loading repository maps by instantiating new map instances in background threads and swapping references on the EDT.
+
+### Refactoring & Performance
+- **Codebase Cleanup**: Pruned unused methods and stripped out unused imports (`AffineTransform`, `SkinSpecFile`, `FileLoading`, `BusEvent`) across representation objects and UI panels. Deleted unused `DynamicMenuListener.java`. Removed `module-info.java` to migrate to classpath-based dependency management. Modularized `WeaponFirePanel` into specialized handler classes to improve maintainability. Added Jackson polymorphic deserialization to `ArticlePart` and improved `JsonProcessor` robustness. Implemented async icon loading with caching for CSV entries (`HullmodCSVEntry`, `ShipCSVEntry`, `WingCSVEntry`) to prevent UI blocking during tree panel rendering.
+- **Event & Enum Consolidation**: 
+  - Consolidated over 40 granular communication events into nested records inside category-based classes (`LayerEvents.java`, `PointEvents.java`, `ComponentEvents.java`, `ControlEvents.java`, `FileEvents.java`).
+  - Merged separate serializer and deserializer classes into `CustomSerializers.java` and `CustomDeserializers.java`.
+  - Consolidated representation enums into `RepresentationEnums.java` and `WeaponEnums.java`, and utility enums into `UtilityEnums.java`.
+- **UI & Menu Reorganization**: Rewrote the UI layout for `AbstractFilterPanel` shifting from a flat layout to a `JTabbedPane` for distinct filter categories. Replaced legacy `VariantDataPanel` with specific sub-panels in the UI routing and added FlatLaf `JTabbedPane` custom client properties for the ship instrument tabs. Reorganized menus to include a Data menu, moving preferences and reset options to the File menu. Moved ship and weapon filter panels into dedicated tabs within the `GameDataPanel`, removing them from the menu bar and toolbar. Standardized `JFileChooser` parent windows. Consolidated secondary data panels (Hullmods, Shipsystems, Wings, Projectiles, and styles) into a dropdown selector within a unified 'Data' tab inside the `GameDataPanel`. Implemented utility helper `wrapTextWithHtml` to automatically wrap long tab titles in `ViewerLayersPanel` and multi-line tooltips.
+- **Data Loading Robustness**: Reordered the execution of data loading actions in `FileLoading.java` so `loadWeapons` and `loadHullmods` finish before `loadShips`. Configured the SpotBugs Maven plugin via `spotbugs-exclude.xml` and fixed a system environment string comparison bug by explicitly using `Locale.ROOT`. Swapped CSV loading fallback order from UTF-8 to ISO-8859-1 for better compatibility.
+- **CSV Serialization**: Detailed the character-by-character comment stripping algorithm designed to avoid catastrophic regex backtracking.
+- **Developer Logging**: Introduced a `developerMode` settings option and wrapped trace/verbose loader log statements to prevent output pollution in production.
+
+### Chores, Docs & Build
+- **Documentation**: Bootstrapped initial technical documents outlining the database schema and Jackson processor logic. Massive restructuring of legacy documentation by migrating standard markdown files from the `doc/` directory into dedicated skill directories with YAML frontmatter. Added strict guidelines on thread safety, volatile collection visibility, and EventBus map synchronization to the architecture skill. Documented all findings in `known-issues.md`.
+- **Testing**: Added `jqwik` and `junit-jupiter` dependencies to `pom.xml` for property-based testing. Wrote `CliLoadingTest.java` and `DatabaseLoadingIntegrationTest.java` for headless data pipeline verification. Added integration tests for parsing Starsector game files.
+- **Release Tooling**: Created an interactive GUI-based release script (`scripts/release.py`) that automates version bumping in source files, prompts for `CHANGELOG.md` entries, builds the application, and handles Git tagging.
+- **Build**: Increased JVM memory limit to 4GB.
+
+
+## [0.0.1d] - 2026-06-11
 
 ### Features
 - **First-Time Setup & Reset**: Added `FirstTimeSetupDialog` for game directory selection with `/run/media` auto-detection, and provided an option to clear app data via the Tools menu.

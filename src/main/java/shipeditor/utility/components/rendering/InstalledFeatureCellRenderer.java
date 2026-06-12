@@ -3,11 +3,11 @@ package shipeditor.utility.components.rendering;
 import shipeditor.components.datafiles.entities.CSVEntry;
 import shipeditor.components.instrument.ship.shared.InstalledFeatureList;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
-import shipeditor.components.viewer.painters.points.ship.features.FeatureOverrideState;
+import shipeditor.components.viewer.ViewerEnums.FeatureOverrideState;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
-import shipeditor.representation.SizeEnum;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.RepresentationEnums.SizeEnum;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.text.StringValues;
 
 import javax.swing.JLabel;

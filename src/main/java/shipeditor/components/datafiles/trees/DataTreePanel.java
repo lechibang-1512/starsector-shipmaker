@@ -4,83 +4,58 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.CSVEntryIDChanged;
-import shipeditor.communication.events.components.DataTreesReloadQueued;
-import shipeditor.components.datafiles.OpenDataTarget;
+import shipeditor.components.ComponentEnums.OpenDataTarget;
 import shipeditor.components.datafiles.entities.CSVEntry;
-import shipeditor.components.viewer.layers.ship.FeaturesOverseer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
-import shipeditor.parsing.FileUtilities;
 import shipeditor.persistence.GameDataPackage;
 import shipeditor.persistence.SettingsManager;
-import shipeditor.representation.ship.VariantFile;
 import shipeditor.utility.components.ComponentUtilities;
-import shipeditor.utility.components.MouseoverLabelListener;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 
-import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.ToolTipManager;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.*;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.Point;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureListener;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import shipeditor.utility.components.UIConstants;
 
 @SuppressWarnings("ClassWithTooManyMethods")
 @Log4j2
-@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
+@SuppressFBWarnings({ "EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP" })
 public abstract class DataTreePanel extends JPanel {
 
     @Getter
     private DefaultMutableTreeNode rootNode;
 
+    @lombok.Setter
     @Getter
     private DefaultMutableTreeNode cachedSelectForMenu;
 
     @Getter
     private JTree tree;
-
-    private JTextField searchField;
 
     @Getter
     private JPanel rightPanel;
@@ -91,7 +66,7 @@ public abstract class DataTreePanel extends JPanel {
         this.setLayout(new BorderLayout());
         JPanel topContainer = createTopPanel();
         if (topContainer != null) {
-            topContainer.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0,  Themes.getBorderColor()));
+            topContainer.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Themes.getBorderColor()));
             this.add(topContainer, BorderLayout.PAGE_START);
         }
         JPanel treePanel = createTreePanel(rootName);
@@ -117,80 +92,18 @@ public abstract class DataTreePanel extends JPanel {
         }
     }
 
-    private static JLabel createVariantFileLabel(VariantFile variantFile) {
-        Path variantFilePath = variantFile.getVariantFilePath();
-        JLabel variantLabel = new JLabel("Variant file : " + variantFilePath.getFileName());
-        variantLabel.setToolTipText(String.valueOf(variantFilePath));
-        variantLabel.setBorder(ComponentUtilities.createLabelSimpleBorder(ComponentUtilities.createLabelInsets()));
-        JPopupMenu pathContextMenu = ComponentUtilities.createPathContextMenu(variantFilePath);
-        variantLabel.addMouseListener(new MouseoverLabelListener(pathContextMenu, variantLabel));
-        return variantLabel;
-    }
-
-    private static void outfitVariantLabelWithSelector(VariantFile variant, JPanel variantLine,
-                                                       ButtonGroup group, JLabel variantFileLabel) {
-        JRadioButton selector = new JRadioButton();
-        selector.setBorder(new EmptyBorder(0, 0, 2, 4));
-        selector.addActionListener(e -> FeaturesOverseer.setModuleForInstall(variant));
-        selector.setToolTipText("Select variant or drag label to be installed as module");
-        group.add(selector);
-        variantLine.add(selector);
-
-        DragSource dragSource = DragSource.getDefaultDragSource();
-        DragGestureListener gestureListener = new LabelDragListener(variant, variantFileLabel);
-        dragSource.createDefaultDragGestureRecognizer(variantFileLabel,
-                DnDConstants.ACTION_COPY, gestureListener);
-    }
-
-    static JPanel createVariantsPanel(Collection<VariantFile> variantFiles, boolean withSelector) {
-        JPanel variantsPanel = new JPanel();
-        variantsPanel.setLayout(new FlowLayout(FlowLayout.LEADING, 0, 0));
-        ComponentUtilities.outfitPanelWithTitle(variantsPanel, new Insets(1, 0, 0, 0), "Variants");
-        variantsPanel.setAlignmentX(LEFT_ALIGNMENT);
-
-        JPanel labelContainer = new JPanel();
-        labelContainer.setAlignmentX(LEFT_ALIGNMENT);
-        labelContainer.setBorder(new EmptyBorder(2, 0, 0, 0));
-        labelContainer.setLayout(new BoxLayout(labelContainer, BoxLayout.PAGE_AXIS));
-
-        if (variantFiles.isEmpty()) throw new IllegalArgumentException("Empty variants list!");
-
-        ButtonGroup group = new ButtonGroup();
-        variantFiles.forEach(variant -> {
-            JPanel variantLine = new JPanel();
-            variantLine.setAlignmentX(LEFT_ALIGNMENT);
-            variantLine.setLayout(new BoxLayout(variantLine, BoxLayout.LINE_AXIS));
-
-            JLabel variantFileLabel = DataTreePanel.createVariantFileLabel(variant);
-            if (withSelector) {
-                DataTreePanel.outfitVariantLabelWithSelector(variant, variantLine,
-                        group, variantFileLabel);
-            }
-            variantLine.add(variantFileLabel);
-            labelContainer.add(variantLine);
-            labelContainer.add(Box.createVerticalStrut(2));
-        });
-
-        if (withSelector) {
-            Enumeration<AbstractButton> elements = group.getElements();
-            AbstractButton abstractButton = elements.nextElement();
-            abstractButton.doClick();
-        }
-
-        variantsPanel.add(labelContainer);
-        return variantsPanel;
-    }
-
     static boolean isCurrentSkinNotEligible() {
         var activeLayer = StaticController.getActiveLayer();
         var isShipLayer = activeLayer instanceof ShipLayer;
         ShipLayer shipLayer;
         if (isShipLayer) {
             shipLayer = (ShipLayer) activeLayer;
-        } else return true;
+        } else
+            return true;
 
         ShipPainter shipPainter = shipLayer.getPainter();
-        if (shipPainter == null || shipPainter.isUninitialized()) return true;
+        if (shipPainter == null || shipPainter.isUninitialized())
+            return true;
         var skin = shipPainter.getActiveSkin();
         return skin == null || skin.isBase();
     }
@@ -210,63 +123,13 @@ public abstract class DataTreePanel extends JPanel {
         rightPanel.repaint();
     }
 
-    private static JScrollPane createTableFromMap(Map<String, String> data, CSVEntry csvEntry) {
-        Set<Map.Entry<String, String>> entries = data.entrySet();
-        Object[][] tableData = entries.stream()
-                .map(entry -> new Object[]{entry.getKey(), entry.getValue()})
-                .toArray(Object[][]::new);
-        DefaultTableModel model = new DefaultTableModel(tableData, new Object[]{"Property", "Value"}) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 1; // Make the value column editable.
-            }
-        };
-        model.addTableModelListener(e -> {
-            if (e.getType() == javax.swing.event.TableModelEvent.UPDATE) {
-                int row = e.getFirstRow();
-                int column = e.getColumn();
-                if (column == 1) {
-                    String property = (String) model.getValueAt(row, 0);
-                    String newValue = (String) model.getValueAt(row, 1);
-                    // Detect ID column change and fire sync event
-                    String cleanProperty = property.replace("\uFEFF", "").trim();
-                    if ("id".equalsIgnoreCase(cleanProperty) && csvEntry != null) {
-                        String oldValue = data.get(property);
-                        if (oldValue != null && !oldValue.equals(newValue)) {
-                            data.put(property, newValue);
-                            EventBus.publish(
-                                    new CSVEntryIDChanged(oldValue.trim(), newValue.trim(), csvEntry)
-                            );
-                            return;
-                        }
-                    }
-                    data.put(property, newValue);
-                }
-            }
-        });
-        JTable table = new JTable(model) {
-            public String getToolTipText(MouseEvent event) {
-                String tip = null;
-                Point p = event.getPoint();
-                int rowIndex = rowAtPoint(p);
-                int colIndex = columnAtPoint(p);
-                try {
-                    Object valueAt = getValueAt(rowIndex, colIndex);
-                    tip = valueAt.toString();
-                } catch (RuntimeException ignored) {}
-                return tip;
-            }
-        };
-        return new JScrollPane(table);
-    }
-
     private JSplitPane createContentSplitter(JPanel treeContainer) {
         rightPanel = new JPanel(new GridBagLayout());
         rightPanel.add(new JLabel(StringValues.NO_ENTRY_SELECTED));
-        
+
         treeContainer.setMinimumSize(new Dimension(120, 100));
         rightPanel.setMinimumSize(new Dimension(120, 100));
-        
+
         JSplitPane treeSplitter = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         treeSplitter.setOneTouchExpandable(true);
         float resizeWeight = getSplitterResizeWeight();
@@ -296,27 +159,7 @@ public abstract class DataTreePanel extends JPanel {
 
     @SuppressWarnings("WeakerAccess")
     protected JPanel createSearchContainer() {
-        JPanel searchContainer = new JPanel(new GridBagLayout());
-        searchContainer.setBorder(UIConstants.EMPTY_BORDER);
-        searchField = new JTextField();
-        // Set the constraints for the search field.
-        GridBagConstraints gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.weightx = 1.0; // Allow horizontal expansion.
-        gridBagConstraints.insets = new Insets(0, 0, 0, 0); // Set padding.
-        // Add the search field to the container with the specified constraints.
-        searchContainer.add(searchField, gridBagConstraints);
-        JButton searchButton = new JButton(StringValues.SEARCH);
-        searchButton.addActionListener(e -> {
-            String query = searchField.getText();
-            if (query.isEmpty()) return;
-            List<DefaultMutableTreeNode> nodes = getMatchingNodes(query);
-            if (!nodes.isEmpty()) {
-                selectMatchedNodes(nodes);
-            }
-        });
-        searchContainer.add(searchButton);
-        return searchContainer;
+        return new DataTreeSearchController(this, tree).createSearchContainer();
     }
 
     static GridBagConstraints getDefaultConstraints() {
@@ -356,9 +199,11 @@ public abstract class DataTreePanel extends JPanel {
         JTree customTree = new JTree(getRootNode()) {
             @Override
             public String getToolTipText(MouseEvent event) {
-                if (getRowForLocation(event.getX(), event.getY()) == -1) return null;
+                if (getRowForLocation(event.getX(), event.getY()) == -1)
+                    return null;
                 TreePath currPath = getPathForLocation(event.getX(), event.getY());
-                if (currPath == null) return null;
+                if (currPath == null)
+                    return null;
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) currPath.getLastPathComponent();
                 Object entry = node.getUserObject();
                 return getTooltipForEntry(entry);
@@ -372,33 +217,6 @@ public abstract class DataTreePanel extends JPanel {
     }
 
     @SuppressWarnings("UnnecessaryLocalVariable")
-    private List<DefaultMutableTreeNode> getMatchingNodes(String input) {
-        Enumeration<TreeNode> allNodes = this.rootNode.depthFirstEnumeration();
-        Spliterator<TreeNode> spliterator = Spliterators.spliteratorUnknownSize(
-                allNodes.asIterator(), Spliterator.ORDERED);
-        Stream<TreeNode> stream = StreamSupport.stream(spliterator, false);
-        List<DefaultMutableTreeNode> result = stream
-                .filter(node -> node instanceof DefaultMutableTreeNode)
-                .map(node -> (DefaultMutableTreeNode) node)
-                .filter(node -> {
-                    Object userObject = node.getUserObject();
-                    if (userObject == null) return false;
-                    String toString = userObject.toString().toLowerCase(Locale.ROOT);
-                    return toString.matches(".*" + input.toLowerCase() + ".*");
-                })
-                .collect(Collectors.toList());
-        return result;
-    }
-
-    private void selectMatchedNodes(List<DefaultMutableTreeNode> nodes) {
-        TreePath[] paths = new TreePath[nodes.size()];
-        for (int i = 0; i < nodes.size(); i++) {
-            DefaultMutableTreeNode node = nodes.get(i);
-            paths[i] = new TreePath(node.getPath());
-        }
-        tree.setSelectionPaths(paths);
-        tree.scrollPathToVisible(paths[0]);
-    }
 
     public abstract void reload();
 
@@ -421,15 +239,13 @@ public abstract class DataTreePanel extends JPanel {
 
             if (SettingsManager.isCoreFolder(firstDataPackage)) {
                 return -1;
-            }
-            else if (SettingsManager.isCoreFolder(secondDataPackage)) {
+            } else if (SettingsManager.isCoreFolder(secondDataPackage)) {
                 return 1;
             }
 
             if (firstDataPackage.isPinned() && !secondDataPackage.isPinned()) {
                 return -1;
-            }
-            else if (!firstDataPackage.isPinned() && secondDataPackage.isPinned()) {
+            } else if (!firstDataPackage.isPinned() && secondDataPackage.isPinned()) {
                 return 1;
             }
 
@@ -497,7 +313,7 @@ public abstract class DataTreePanel extends JPanel {
 
     void createRightPanelDataTable(CSVEntry entry) {
         Map<String, String> data = entry.getRowData();
-        JScrollPane tableContainer = DataTreePanel.createTableFromMap(data, entry);
+        JScrollPane tableContainer = DataTreeTableBuilder.createTableFromMap(data, entry);
         this.addContentToRightPanel(tableContainer, entry);
     }
 
@@ -513,7 +329,7 @@ public abstract class DataTreePanel extends JPanel {
         JPanel tableContainer = new JPanel();
         tableContainer.setLayout(new BorderLayout());
 
-        JPanel buttonsContainer = DataTreePanel.createTableButtons(entry);
+        JPanel buttonsContainer = DataTreeTableBuilder.createTableButtons(entry);
 
         ComponentUtilities.outfitPanelWithTitle(buttonsContainer,
                 new Insets(1, 0, 0, 0), "CSV Data");
@@ -524,35 +340,6 @@ public abstract class DataTreePanel extends JPanel {
         rightPanel.add(tableContainer, otherConstraints);
         rightPanel.revalidate();
         rightPanel.repaint();
-    }
-
-    private static JPanel createTableButtons(CSVEntry entry) {
-        JPanel buttonsContainer = new JPanel();
-        buttonsContainer.setLayout(new GridLayout(1, 3));
-
-        JButton openTableButton = new JButton("Open table");
-        openTableButton.addActionListener(e -> {
-            Path toOpen = entry.getTableFilePath();
-            FileUtilities.openPathInDesktop(toOpen);
-        });
-        buttonsContainer.add(openTableButton);
-
-        JButton openFolderButton = new JButton("Open folder");
-        openFolderButton.addActionListener(e -> {
-            Path toOpen = entry.getTableFilePath().getParent();
-            if (toOpen != null) {
-                FileUtilities.openPathInDesktop(toOpen);
-            }
-        });
-        buttonsContainer.add(openFolderButton);
-
-        JButton saveCsvButton = new JButton("Save CSV");
-        saveCsvButton.addActionListener(e -> shipeditor.communication.EventBus.publish(
-                new shipeditor.communication.events.files.saving.CSVSaveQueued(entry)
-        ));
-        buttonsContainer.add(saveCsvButton);
-
-        return buttonsContainer;
     }
 
     static void configureCellRendererColors(Object userObject, JLabel stamp) {
@@ -571,6 +358,10 @@ public abstract class DataTreePanel extends JPanel {
     protected abstract String getTooltipForEntry(Object entry);
 
     protected abstract Class<?> getEntryClass();
+
+    public java.awt.event.MouseAdapter createContextMenuListener() {
+        return new DataTreeContextMenuController(this, tree, getEntryClass());
+    }
 
     JPopupMenu getContextMenu() {
         JPopupMenu menu = new JPopupMenu();
@@ -591,7 +382,7 @@ public abstract class DataTreePanel extends JPanel {
     }
 
     protected abstract void openEntryPath(OpenDataTarget target);
-    
+
     private ActionListener getCollapseAction() {
         return e -> {
             Class<?> entryClass = getEntryClass();
@@ -602,68 +393,6 @@ public abstract class DataTreePanel extends JPanel {
                 }
             }
         };
-    }
-
-    @SuppressWarnings("PackageVisibleInnerClass")
-    class ContextMenuListener extends MouseAdapter {
-        @Override
-        public void mousePressed(MouseEvent e) {
-            if(e.getButton() == MouseEvent.BUTTON3){
-                TreePath pathForLocation = tree.getPathForLocation(e.getPoint().x, e.getPoint().y);
-                if(pathForLocation != null){
-                    cachedSelectForMenu = (DefaultMutableTreeNode) pathForLocation.getLastPathComponent();
-                    JPopupMenu contextMenu = createContextMenu();
-                    showMenuIfMatching(contextMenu, pathForLocation, e);
-                } else{
-                    cachedSelectForMenu = null;
-                }
-            }
-            super.mousePressed(e);
-        }
-
-        private void showMenuIfMatching(JPopupMenu contextMenu, TreePath pathForLocation, MouseEvent e) {
-            Class<?> entryClass = getEntryClass();
-            Object userObject = cachedSelectForMenu.getUserObject();
-            if (entryClass.isInstance(userObject)) {
-                tree.setSelectionPath(pathForLocation);
-                contextMenu.show(tree, e.getPoint().x, e.getPoint().y);
-            } else if (userObject instanceof GameDataPackage dataPackage && !SettingsManager.isCoreFolder(dataPackage)) {
-                JPopupMenu menu = new JPopupMenu();
-
-                if (dataPackage.isPinned()) {
-                    JMenuItem unpinPackage = new JMenuItem("Unpin package");
-                    unpinPackage.addActionListener(event -> {
-                        dataPackage.setPinned(false);
-                        SettingsManager.updateFileFromRuntime();
-                        EventBus.publish(new DataTreesReloadQueued());
-                    });
-                    menu.add(unpinPackage);
-                } else {
-                    JMenuItem pinPackage = new JMenuItem("Pin package");
-                    pinPackage.addActionListener(event -> {
-                        dataPackage.setPinned(true);
-                        SettingsManager.updateFileFromRuntime();
-                        EventBus.publish(new DataTreesReloadQueued());
-                    });
-                    menu.add(pinPackage);
-                }
-
-                JMenuItem disablePackage = new JMenuItem("Disable package");
-                disablePackage.addActionListener(event -> {
-                    dataPackage.setDisabled(true);
-                    SettingsManager.updateFileFromRuntime();
-                    EventBus.publish(new DataTreesReloadQueued());
-                });
-                menu.add(disablePackage);
-
-                menu.show(tree, e.getPoint().x, e.getPoint().y);
-            }
-        }
-
-        private JPopupMenu createContextMenu() {
-            return getContextMenu();
-        }
-
     }
 
 }

@@ -6,19 +6,19 @@ import shutil
 import zipfile
 import subprocess
 import argparse
+import datetime
 
 # Files to update version in
 POM_PATH = "pom.xml"
-SETTINGS_MANAGER_PATH = "src/main/java/oth/shipeditor/persistence/SettingsManager.java"
-MAIN_PATH = "src/main/java/oth/shipeditor/Main.java"
+SETTINGS_MANAGER_PATH = "src/main/java/shipeditor/persistence/SettingsManager.java"
+MAIN_PATH = "src/main/java/shipeditor/Main.java"
 CHANGELOG_PATH = "CHANGELOG.md"
 
 # Files/folders to package in release zip
 MANDATORY_RELEASE_FILES = {
-    "ship_editor.jar": "",  # from project root, to zip root
-    "scripts/launchers/ship_editor.bat": "ship_editor.bat",
-    "scripts/launchers/ship_editor.sh": "ship_editor.sh",
-    "scripts/launchers/ship_editor.command": "ship_editor.command",
+    "ship_editor.bat": "ship_editor.bat",
+    "ship_editor.sh": "ship_editor.sh",
+    "ship_editor.command": "ship_editor.command",
     "CHANGELOG.md": "CHANGELOG.md",
     "LICENSE": "LICENSE",
     "README.md": "README.md"
@@ -53,7 +53,7 @@ def get_current_version():
         content = f.read()
     
     match = re.search(
-        r'<groupId>oth\.shipeditor</groupId>\s*<artifactId>ship_editor</artifactId>\s*<version>([^<]+)</version>', 
+        r'<artifactId>ship_editor</artifactId>\s*<version>([^<]+)</version>', 
         content
     )
     if match:
@@ -66,31 +66,12 @@ def get_current_version():
     
     return None
 
-def suggest_next_version(current):
-    """Suggest a logical next version (e.g. 0.0.1c -> 0.0.1d, 1.2.3 -> 1.2.4)."""
-    # 1. Match trailing letter (e.g. 0.0.1c)
-    match_letter = re.match(r"^(.*)([a-zA-Z])$", current)
-    if match_letter:
-        prefix, letter = match_letter.groups()
-        next_letter = chr(ord(letter.lower()) + 1)
-        if letter.isupper():
-            next_letter = next_letter.upper()
-        return prefix + next_letter
-    
-    # 2. Match trailing integer (e.g. 1.2.3)
-    match_number = re.match(r"^(.*?)(\d+)$", current)
-    if match_number:
-        prefix, number = match_number.groups()
-        return prefix + str(int(number) + 1)
-    
-    return current
-
 def update_version_in_files(new_version):
     """Replace version strings in pom.xml and Java source files."""
     # 1. pom.xml
     replace_in_file(
         POM_PATH,
-        r'(<groupId>oth\.shipeditor</groupId>\s*<artifactId>ship_editor</artifactId>\s*<version>)([^<]+)(</version>)',
+        r'(<artifactId>ship_editor</artifactId>\s*<version>)([^<]+)(</version>)',
         rf'\g<1>{new_version}\g<3>'
     )
     
@@ -122,19 +103,31 @@ def replace_in_file(filepath, pattern, replacement):
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(new_content)
 
-def check_changelog(version):
-    """Check if CHANGELOG.md contains the target version section."""
+def update_changelog(target_version, target_date, changelog_lines=None):
+    """Replaces ## [Unreleased] with ## [target_version] - target_date."""
     if not os.path.exists(CHANGELOG_PATH):
         print(f"Warning: {CHANGELOG_PATH} not found.")
-        return False
+        return
     with open(CHANGELOG_PATH, "r", encoding="utf-8") as f:
         content = f.read()
     
-    # Matches line like ## [0.0.1c] or ## [0.0.1c] - 2026-06-08
-    pattern = rf"##\s*\[{re.escape(version)}\]"
-    if re.search(pattern, content):
-        return True
-    return False
+    # If the target version is already there, don't inject again
+    if re.search(rf"##\s*\[{re.escape(target_version)}\]", content):
+        print(f"CHANGELOG.md already has section for {target_version}.")
+        return
+
+    if "## [Unreleased]" in content:
+        changelog_body = ""
+        if changelog_lines:
+            changelog_body = "\n\n### Features\n" + "\n".join(changelog_lines)
+            
+        new_header = f"## [Unreleased]\n\n## [{target_version}] - {target_date}{changelog_body}"
+        content = content.replace("## [Unreleased]", new_header, 1)
+        with open(CHANGELOG_PATH, "w", encoding="utf-8") as f:
+            f.write(content)
+        print("Automatically updated CHANGELOG.md with version and date.")
+    else:
+        print("Warning: '## [Unreleased]' not found in CHANGELOG.md. Skipping automated update.")
 
 def build_project():
     """Run Maven clean package."""
@@ -153,6 +146,14 @@ def package_release(version):
     folder_prefix = f"ship-editor-{version}"
     
     with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        # Dynamically add the freshly built jar
+        jar_src = f"target/ship_editor-{version}.jar"
+        if not os.path.exists(jar_src):
+            print(f"Error: Built JAR '{jar_src}' is missing. Did the build fail?")
+            sys.exit(1)
+        zipf.write(jar_src, os.path.join(folder_prefix, "ship_editor.jar"))
+        print(f"  + Added: {jar_src} -> {folder_prefix}/ship_editor.jar")
+        
         for src_path, zip_rel_path in MANDATORY_RELEASE_FILES.items():
             if not os.path.exists(src_path):
                 print(f"Error: Mandatory release component '{src_path}' is missing.")
@@ -170,11 +171,118 @@ def package_release(version):
     print(f"Successfully created release package: {zip_filename}")
     return zip_filename
 
+def restore_backups(backups: dict):
+    """Restores original file contents from backups."""
+    print("\nRestoring original version strings...")
+    for path, content in backups.items():
+        if os.path.exists(path) or content is not None:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+def commit_changes(target_version: str):
+    """Commits the bumped version files to git."""
+    print("\nCommitting version changes...")
+    run_cmd(f"git add {POM_PATH} {SETTINGS_MANAGER_PATH} {MAIN_PATH} {CHANGELOG_PATH}")
+    
+    diff_res = run_cmd("git diff --cached --name-only")
+    if diff_res.stdout.strip():
+        run_cmd(f'git commit -m "Release v{target_version}"')
+        print(f"Successfully committed v{target_version} in git.")
+    else:
+        print("No changes to commit (files already match target version).")
+
+def interactive_console(current_version):
+    import tkinter as tk
+    from tkinter import ttk
+    from tkinter import messagebox
+    
+    root = tk.Tk()
+    root.title("Release Configuration")
+    
+    window_width = 500
+    window_height = 450
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x_cordinate = int((screen_width/2) - (window_width/2))
+    y_cordinate = int((screen_height/2) - (window_height/2))
+    root.geometry(f"{window_width}x{window_height}+{x_cordinate}+{y_cordinate}")
+    
+    target_version_var = tk.StringVar()
+    target_date_var = tk.StringVar()
+    
+    suggested = ""
+    m = re.match(r"^(\d+)\.(\d+)\.(\d+)-(.*)$", current_version)
+    if m:
+        suggested = f"{m.group(1)}.{m.group(2)}.{m.group(3)}-{m.group(4)}"
+    else:
+        m = re.match(r"^(\d+)\.(\d+)\.(\d+)([a-zA-Z]*)$", current_version)
+        if m:
+            suggested = f"{m.group(1)}.{m.group(2)}.{m.group(3)}-{m.group(4)}"
+            
+    target_version_var.set(suggested if suggested else current_version)
+    target_date_var.set(datetime.datetime.now().strftime("%Y-%m-%d"))
+    
+    frame = ttk.Frame(root, padding="15")
+    frame.pack(fill=tk.BOTH, expand=True)
+    
+    ttk.Label(frame, text=f"Current version: {current_version}", font=("Helvetica", 10, "bold")).pack(anchor=tk.W, pady=(0, 15))
+    
+    ttk.Label(frame, text="Target Version (e.g. x.y.z-[suffix]):").pack(anchor=tk.W)
+    version_entry = ttk.Entry(frame, textvariable=target_version_var, width=40)
+    version_entry.pack(anchor=tk.W, pady=(0, 10))
+    
+    ttk.Label(frame, text="Release Date (YYYY-MM-DD):").pack(anchor=tk.W)
+    date_entry = ttk.Entry(frame, textvariable=target_date_var, width=40)
+    date_entry.pack(anchor=tk.W, pady=(0, 10))
+    
+    ttk.Label(frame, text="Changelog Entries (each line will be bulleted):").pack(anchor=tk.W)
+    changelog_text = tk.Text(frame, height=10, width=50)
+    changelog_text.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
+    
+    result = {'version': None, 'date': None, 'changelog': []}
+    
+    def on_submit():
+        v = target_version_var.get().strip()
+        d = target_date_var.get().strip()
+        if not v or not d:
+            messagebox.showerror("Error", "Version and Date cannot be empty.")
+            return
+            
+        lines = changelog_text.get("1.0", tk.END).strip().split('\n')
+        parsed_lines = []
+        for line in lines:
+            line = line.strip()
+            if line:
+                if not line.startswith("-"):
+                    line = f"- {line}"
+                parsed_lines.append(line)
+                
+        result['version'] = v
+        result['date'] = d
+        result['changelog'] = parsed_lines
+        root.destroy()
+        
+    def on_cancel():
+        root.destroy()
+        
+    btn_frame = ttk.Frame(frame)
+    btn_frame.pack(fill=tk.X)
+    
+    ttk.Button(btn_frame, text="Submit", command=on_submit).pack(side=tk.RIGHT, padx=(5, 0))
+    ttk.Button(btn_frame, text="Cancel", command=on_cancel).pack(side=tk.RIGHT)
+    
+    version_entry.focus()
+    root.bind('<Escape>', lambda e: on_cancel())
+    
+    root.mainloop()
+    
+    return result['version'], result['date'], result['changelog']
+
 def main():
     parser = argparse.ArgumentParser(description="Manage project releases locally without GitHub dependency.")
-    parser.add_argument("--version", help="The target release version (e.g. 0.0.1d).")
+    parser.add_argument("--version", help="The target release version (e.g. 0.0.1-d). Skips interactive console.")
     parser.add_argument("--dry-run", action="store_true", help="Compile and package the zip, but revert version changes and skip Git operations.")
-    parser.add_argument("--no-git", action="store_true", help="Bump version and build/package, but skip Git commit and tag operations.")
+    parser.add_argument("--no-git", action="store_true", help="Bump version and build/package, but skip Git commit operations.")
     parser.add_argument("--allow-dirty", action="store_true", help="Allow release script to run even with uncommitted changes.")
     
     args = parser.parse_args()
@@ -188,10 +296,9 @@ def main():
         sys.exit(1)
         
     # 2. Check Git Clean status
-    if not args.allow_dirty and not args.dry_run:
-        if not is_git_clean():
-            print("Error: Git repository has uncommitted changes. Please commit, stash, or run with --allow-dirty.", file=sys.stderr)
-            sys.exit(1)
+    if not args.allow_dirty and not args.dry_run and not is_git_clean():
+        print("Error: Git repository has uncommitted changes. Please commit, stash, or run with --allow-dirty.", file=sys.stderr)
+        sys.exit(1)
             
     # 3. Determine versions
     current_version = get_current_version()
@@ -199,88 +306,53 @@ def main():
         print("Error: Could not extract current version from pom.xml.", file=sys.stderr)
         sys.exit(1)
         
-    print(f"Current version: {current_version}")
-    
     if args.version:
         target_version = args.version
+        target_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        changelog_lines = []
+        print(f"Current version: {current_version}")
     else:
-        suggested = suggest_next_version(current_version)
-        try:
-            user_input = input(f"Enter target release version [{suggested}]: ").strip()
-            target_version = user_input if user_input else suggested
-        except (KeyboardInterrupt, EOFError):
-            print("\nAborted.")
+        target_version, target_date, changelog_lines = interactive_console(current_version)
+        if not target_version:
+            print("\nAborted by user.")
             sys.exit(1)
             
-    if not target_version:
-        print("Error: Target version cannot be empty.", file=sys.stderr)
-        sys.exit(1)
-        
-    # 4. Check CHANGELOG.md
-    if not check_changelog(target_version):
-        print(f"Warning: No changelog section found in {CHANGELOG_PATH} for version '{target_version}'.")
-        try:
-            confirm = input("Do you want to proceed anyway? (y/N): ").strip().lower()
-            if confirm != 'y':
-                print("Aborted. Please update CHANGELOG.md first.")
-                sys.exit(0)
-        except (KeyboardInterrupt, EOFError):
-            print("\nAborted.")
-            sys.exit(1)
+    print(f"Target release version: {target_version}")
+    print(f"Target release date: {target_date}")
 
     original_files_backup = {}
     
     try:
-        # 5. Update Versions
+        # 4. Update Versions
         print(f"Bumping version from {current_version} to {target_version}...")
-        for path in [POM_PATH, SETTINGS_MANAGER_PATH, MAIN_PATH]:
-            with open(path, "r", encoding="utf-8") as f:
-                original_files_backup[path] = f.read()
+        for path in [POM_PATH, SETTINGS_MANAGER_PATH, MAIN_PATH, CHANGELOG_PATH]:
+            if os.path.exists(path):
+                with open(path, "r", encoding="utf-8") as f:
+                    original_files_backup[path] = f.read()
                 
         update_version_in_files(target_version)
+        update_changelog(target_version, target_date, changelog_lines)
         
-        # 6. Build
+        # 5. Build
         build_project()
         
-        # 7. Package
+        # 6. Package
         package_release(target_version)
         
     except Exception as e:
         print(f"\nAn error occurred during build/packaging: {e}", file=sys.stderr)
-        # Restore backups
-        print("Restoring original source files...")
-        for path, content in original_files_backup.items():
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content)
+        restore_backups(original_files_backup)
         sys.exit(1)
         
-    # 8. Git Operations / Reverts
+    # 7. Git Operations / Reverts
     if args.dry_run:
-        print("\nDry-run mode: Restoring original version strings...")
-        for path, content in original_files_backup.items():
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content)
+        print("\nDry-run mode active.")
+        restore_backups(original_files_backup)
         print("Dry-run complete. Built archive is preserved in releases/.")
+    elif args.no_git:
+        print("\nSkipping Git operations as requested (--no-git).")
     else:
-        if args.no_git:
-            print("\nSkipping Git operations as requested (--no-git).")
-        else:
-            print("\nCommitting version changes and creating Git tag...")
-            # Git add
-            run_cmd(f"git add {POM_PATH} {SETTINGS_MANAGER_PATH} {MAIN_PATH}")
-            # Check if there are staged changes to commit
-            diff_res = run_cmd("git diff --cached --name-only")
-            if diff_res.stdout.strip():
-                run_cmd(f'git commit -m "Release v{target_version}"')
-            else:
-                print("No changes to commit (files already match target version).")
-            # Git tag (check if tag already exists and handle/re-tag)
-            tag_check = run_cmd(f'git tag -l "v{target_version}"')
-            if tag_check.stdout.strip():
-                print(f"Warning: Git tag v{target_version} already exists. Re-tagging...")
-                run_cmd(f'git tag -d "v{target_version}"')
-            run_cmd(f'git tag -a "v{target_version}" -m "Release v{target_version}"')
-            print(f"Successfully committed and tagged v{target_version} in git.")
+        commit_changes(target_version)
             
     print("\nRelease management workflow completed successfully!")
 

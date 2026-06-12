@@ -7,7 +7,6 @@ import lombok.Setter;
 
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
-import java.awt.Container;
 import java.awt.GridBagLayout;
 
 /** * Container for holding and accessing spinners. Callers are responsible for setting references.

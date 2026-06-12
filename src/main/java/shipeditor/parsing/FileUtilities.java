@@ -31,7 +31,6 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.Desktop;
-import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -100,12 +99,19 @@ public final class FileUtilities {
             FileLoading.openShip.setEnabled(hullState);
         }
     }
-
     public static void openPathInDesktop(Path toOpen) {
+        if (toOpen == null) {
+            log.warn("Attempted to open null path in desktop.");
+            return;
+        }
         FileUtilities.openPathInDesktop(toOpen.toFile());
     }
 
     public static void openPathInDesktop(File toOpen) {
+        if (toOpen == null) {
+            log.warn("Attempted to open null file in desktop.");
+            return;
+        }
         try {
             Desktop.getDesktop().open(toOpen);
         } catch (IOException | IllegalArgumentException ex) {

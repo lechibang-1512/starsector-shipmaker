@@ -9,7 +9,7 @@ import shipeditor.components.datafiles.entities.HullmodCSVEntry;
 import shipeditor.components.datafiles.entities.WingCSVEntry;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
-import shipeditor.representation.ship.HullSize;
+import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.representation.ship.HullSpecFile;
 import shipeditor.representation.ship.HullStyle;
 import shipeditor.utility.graphics.ColorUtilities;
@@ -51,7 +51,17 @@ public class ShipHull {
         }
         this.hullName = specFile.getHullName();
         this.hullID = specFile.getHullId();
-        this.hullSize = HullSize.valueOf(specFile.getHullSize());
+        if (specFile.getHullSize() == null) {
+            log.warn("Missing hull size in spec file for {}, defaulting to DEFAULT", specFile.getHullId());
+            this.hullSize = HullSize.DEFAULT;
+        } else {
+            try {
+                this.hullSize = HullSize.valueOf(specFile.getHullSize());
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid hull size '{}' in spec file for {}, defaulting to DEFAULT", specFile.getHullSize(), specFile.getHullId());
+                this.hullSize = HullSize.DEFAULT;
+            }
+        }
         this.loadHullStyle(specFile);
 
         var deserializedCoversColor = specFile.getCoversColor();

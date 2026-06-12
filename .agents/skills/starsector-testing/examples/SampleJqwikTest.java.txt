@@ -1,0 +1,31 @@
+package shipeditor.utility;
+
+import net.jqwik.api.*;
+import net.jqwik.api.constraints.DoubleRange;
+import net.jqwik.api.constraints.IntRange;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class SampleJqwikTest {
+
+    @Property
+    void testClampAngle(@ForAll @DoubleRange(min = -720.0, max = 720.0) double angle) {
+        double normalized = Utility.clampAngleWithRounding(angle);
+        assertTrue(normalized >= 0.0 && normalized < 360.0);
+    }
+
+    @Property
+    void testParseIntegerOrDefault(
+            @ForAll @IntRange(min = -10000, max = 10000) int val,
+            @ForAll("invalidStrings") String invalid) {
+        
+        assertEquals(val, Utility.parseIntegerOrDefault(String.valueOf(val), 999));
+        assertEquals(999, Utility.parseIntegerOrDefault(invalid, 999));
+    }
+
+    @Provide
+    Arbitrary<String> invalidStrings() {
+        return Arbitraries.strings().alpha().numeric().ofLength(5)
+                .filter(s -> !s.matches("-?\\d+"));
+    }
+}

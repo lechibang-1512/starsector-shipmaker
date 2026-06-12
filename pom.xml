@@ -6,7 +6,7 @@
 
     <groupId>shipeditor</groupId>
     <artifactId>ship_editor</artifactId>
-    <version>0.0.1d</version>
+    <version>0.0.1e</version>
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -168,6 +168,18 @@
             <artifactId>spotbugs-annotations</artifactId>
             <version>4.8.3</version>
         </dependency>
+        <dependency>
+            <groupId>net.jqwik</groupId>
+            <artifactId>jqwik</artifactId>
+            <version>1.9.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.10.3</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <properties>
@@ -223,6 +235,7 @@
                     <effort>Max</effort>
                     <threshold>Low</threshold>
                     <xmlOutput>true</xmlOutput>
+                    <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
                 </configuration>
             </plugin>
             <plugin>
@@ -244,7 +257,7 @@
                             <executable>java</executable>
                             <longClasspath>true</longClasspath>
                             <arguments>
-                                <argument>-Xmx512m</argument>
+                                <argument>-Xmx4g</argument>
                                 <argument>-XX:+UseG1GC</argument>
                                 <argument>-XX:+UseStringDeduplication</argument>
                                 <argument>-XX:MinHeapFreeRatio=10</argument>
@@ -280,6 +293,9 @@
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>shipeditor.Main</mainClass>
+                                    <manifestEntries>
+                                        <Multi-Release>true</Multi-Release>
+                                    </manifestEntries>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer implementation="org.apache.logging.log4j.maven.plugins.shade.transformer.Log4j2PluginCacheFileTransformer"/>
@@ -310,4 +326,4 @@
         </plugins>
     </build>
 
-</project>
+</project> 

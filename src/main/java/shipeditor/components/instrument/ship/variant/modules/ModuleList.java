@@ -3,7 +3,6 @@ package shipeditor.components.instrument.ship.variant.modules;
 import javax.swing.ListModel;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.SelectShipDataEntry;
 import shipeditor.components.datafiles.entities.CSVEntry;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
 import shipeditor.components.instrument.ship.shared.InstalledFeatureList;
@@ -16,6 +15,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.util.Map;
 import java.util.function.Consumer;
+import shipeditor.communication.events.components.ComponentEvents.SelectShipDataEntry;
 
 public final class ModuleList extends InstalledFeatureList {
 

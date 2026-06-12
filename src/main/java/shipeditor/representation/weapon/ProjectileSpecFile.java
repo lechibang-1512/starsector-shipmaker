@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Getter;
 import lombok.Setter;
-import shipeditor.parsing.deserialize.Point2DDeserializer;
+import shipeditor.parsing.deserialize.CustomDeserializers.Point2DDeserializer;
 import shipeditor.utility.text.StringConstants;
 
 import java.awt.geom.Point2D;

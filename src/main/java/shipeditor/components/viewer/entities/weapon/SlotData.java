@@ -1,8 +1,8 @@
 package shipeditor.components.viewer.entities.weapon;
 
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 
 public interface SlotData {
 

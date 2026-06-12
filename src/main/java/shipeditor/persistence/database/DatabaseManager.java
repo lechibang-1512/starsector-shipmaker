@@ -167,6 +167,7 @@ public final class DatabaseManager {
                 file_name TEXT NOT NULL,
                 file_path TEXT NOT NULL,
                 last_modified INTEGER NOT NULL,
+                parsed_data TEXT,
                 FOREIGN KEY(mod_id) REFERENCES mods(id) ON DELETE CASCADE
             );
             """;
@@ -183,6 +184,21 @@ public final class DatabaseManager {
             stmt.execute(createFilesTable);
             stmt.execute(createIndexEntityId);
             stmt.execute(createIndexEntityType);
+
+            // Add parsed_data column to existing databases
+            try (ResultSet rs = stmt.executeQuery("PRAGMA table_info(indexed_files);")) {
+                boolean hasParsedData = false;
+                while(rs.next()) {
+                    if ("parsed_data".equals(rs.getString("name"))) {
+                        hasParsedData = true;
+                        break;
+                    }
+                }
+                if (!hasParsedData) {
+                    stmt.execute("ALTER TABLE indexed_files ADD COLUMN parsed_data TEXT;");
+                    log.info("Added parsed_data column to indexed_files table.");
+                }
+            }
 
             log.info("Database tables and indexes verified/created successfully.");
         } catch (SQLException e) {

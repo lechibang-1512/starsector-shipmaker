@@ -1,6 +1,6 @@
 package shipeditor.components.datafiles.entities;
 
-import shipeditor.representation.ship.HullSize;
+import shipeditor.representation.RepresentationEnums.HullSize;
 
 import javax.swing.JLabel;
 

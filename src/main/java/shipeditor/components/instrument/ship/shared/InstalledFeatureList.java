@@ -5,8 +5,6 @@ import javax.swing.ListModel;
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.SelectWeaponDataEntry;
-import shipeditor.communication.events.viewer.points.PointSelectQueued;
 import shipeditor.components.datafiles.entities.CSVEntry;
 import shipeditor.components.datafiles.entities.WeaponCSVEntry;
 import shipeditor.components.viewer.entities.weapon.SlotData;
@@ -30,6 +28,8 @@ import java.awt.event.MouseEvent;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import shipeditor.communication.events.components.ComponentEvents.SelectWeaponDataEntry;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued;
 
 public class InstalledFeatureList extends SortableList<InstalledFeature> {
 
@@ -188,8 +188,8 @@ public class InstalledFeatureList extends SortableList<InstalledFeature> {
                 if (slotPainter != null) {
                     var slotPoint = slotPainter.getSlotByID(feature.getSlotID());
                     if (slotPoint != null) {
-                        EventBus.publish(new shipeditor.communication.events.viewer.points.PointSelectQueued(slotPoint));
-                        EventBus.publish(new shipeditor.communication.events.viewer.control.FeatureInstallQueued(null));
+                        EventBus.publish(new shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued(slotPoint));
+                        EventBus.publish(new shipeditor.communication.events.viewer.control.ControlEvents.FeatureInstallQueued(null));
                     }
                 }
             }));

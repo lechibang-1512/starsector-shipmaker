@@ -1,14 +1,14 @@
 package shipeditor.utility.overseers;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 
 import javax.swing.Timer;
 import java.util.EnumMap;
 import java.util.Map;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
 public class EventScheduler {
 

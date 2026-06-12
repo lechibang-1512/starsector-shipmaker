@@ -26,9 +26,9 @@ public final class PrimaryMenuBar extends JMenuBar {
         viewMenu.setIcon(FontIcon.of(BoxiconsRegular.SHOW, 16, Themes.getIconColor()));
         this.add(viewMenu);
 
-        JMenu toolsMenu = PrimaryMenuBar.createToolsMenu();
-        toolsMenu.setIcon(FontIcon.of(BoxiconsRegular.WRENCH, 16, Themes.getIconColor()));
-        this.add(toolsMenu);
+        JMenu dataMenu = PrimaryMenuBar.createDataMenu();
+        dataMenu.setIcon(FontIcon.of(BoxiconsRegular.DATA, 16, Themes.getIconColor()));
+        this.add(dataMenu);
 
         JMenu windowMenu = PrimaryMenuBar.createWindowMenu();
         windowMenu.setIcon(FontIcon.of(BoxiconsRegular.WINDOWS, 16, Themes.getIconColor()));
@@ -57,10 +57,10 @@ public final class PrimaryMenuBar extends JMenuBar {
         return editMenu;
     }
 
-    private static JMenu createToolsMenu() {
-        ToolsMenu toolsMenu = new ToolsMenu();
-        toolsMenu.initialize();
-        return toolsMenu;
+    private static JMenu createDataMenu() {
+        DataMenu dataMenu = new DataMenu();
+        dataMenu.initialize();
+        return dataMenu;
     }
 
     private static JMenu createWindowMenu() {

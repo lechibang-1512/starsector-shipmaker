@@ -41,7 +41,7 @@ public class SaveCSVAction {
         for (Map<String, String> row : rawData) {
             String rowIdValue = null;
             for (Map.Entry<String, String> cell : row.entrySet()) {
-                String cleanKey = cell.getKey().replace("\uFEFF", "").trim().toLowerCase();
+                String cleanKey = cell.getKey().replace("\uFEFF", "").trim().toLowerCase(java.util.Locale.ROOT);
                 if ("id".equals(cleanKey)) {
                     rowIdValue = cell.getValue();
                     break;
@@ -90,8 +90,9 @@ public class SaveCSVAction {
                     // This custom serializer ensures we bypass any unwanted default map
                     // serializations
                     // and write exactly the entries expected by the CSV schema.
-                    for (Object key : value.keySet()) {
-                        Object val = value.get(key);
+                    for (Map.Entry<?, ?> entry : value.entrySet()) {
+                        Object key = entry.getKey();
+                        Object val = entry.getValue();
                         if (val != null) {
                             gen.writeStringField(key.toString(), val.toString());
                         } else {
@@ -127,7 +128,7 @@ public class SaveCSVAction {
         for (Map<String, String> row : rawData) {
             String rowIdValue = null;
             for (Map.Entry<String, String> cell : row.entrySet()) {
-                String cleanKey = cell.getKey().replace("\uFEFF", "").trim().toLowerCase();
+                String cleanKey = cell.getKey().replace("\uFEFF", "").trim().toLowerCase(java.util.Locale.ROOT);
                 if ("id".equals(cleanKey)) {
                     rowIdValue = cell.getValue();
                     break;

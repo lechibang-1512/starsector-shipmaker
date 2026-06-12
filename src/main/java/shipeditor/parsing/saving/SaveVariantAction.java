@@ -6,7 +6,7 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import shipeditor.components.datafiles.entities.HullmodCSVEntry;
 import shipeditor.components.datafiles.entities.WingCSVEntry;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
-import shipeditor.components.viewer.painters.points.ship.features.FireMode;
+import shipeditor.components.viewer.ViewerEnums.FireMode;
 import shipeditor.components.viewer.painters.points.ship.features.FittedWeaponGroup;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
 import shipeditor.parsing.FileUtilities;

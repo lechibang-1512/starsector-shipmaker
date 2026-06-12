@@ -7,10 +7,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.points.InstrumentModeChanged;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.ShieldCenterPoint;
@@ -28,6 +26,8 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.awt.KeyboardFocusManager;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
 
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class ShieldPointPainter extends SinglePointPainter {
@@ -94,7 +94,7 @@ public class ShieldPointPainter extends SinglePointPainter {
         EventBus.subscribe(this, modeListener);
         // Subscribe to raw mouse moved and compute radius drag internally.
         BusEventListener rawMouseMovedListener = event -> {
-            if (event instanceof shipeditor.communication.events.viewer.control.ViewerRawMouseMoved checked && isInteractionEnabled()) {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseMoved checked && isInteractionEnabled()) {
                 if (!shieldRadiusHotkeyPressed) return;
                 java.awt.geom.AffineTransform screenToWorld = shipeditor.utility.overseers.StaticController.getScreenToWorld();
                 java.awt.event.MouseEvent me = checked.mouseEvent();

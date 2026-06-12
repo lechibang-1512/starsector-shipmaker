@@ -4,7 +4,7 @@ import shipeditor.Main;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.persistence.Settings;
 import shipeditor.persistence.SettingsManager;
-import shipeditor.utility.themes.Theme;
+import shipeditor.utility.UtilityEnums.Theme;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -68,6 +68,13 @@ public class PreferencesDialog extends JDialog {
                 settings.setShowLoadingErrors(toggleFileErrorPopups.isSelected())
         );
         panel.add(toggleFileErrorPopups);
+
+        JCheckBox toggleDeveloperMode = new JCheckBox("Enable developer messages/logs");
+        toggleDeveloperMode.setSelected(SettingsManager.isDeveloperModeEnabled());
+        toggleDeveloperMode.addActionListener(event ->
+                settings.setDeveloperMode(toggleDeveloperMode.isSelected())
+        );
+        panel.add(toggleDeveloperMode);
 
         JButton openSettings = new JButton("Open settings file");
         openSettings.addActionListener(e -> {

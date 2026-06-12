@@ -11,8 +11,8 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.points.AnchorOffsetQueued;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.communication.events.viewer.points.PointEvents.AnchorOffsetQueued;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.LayerPainter;
 
 import shipeditor.undo.UndoOverseer;
@@ -20,12 +20,8 @@ import shipeditor.utility.overseers.MiscCaching;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.Utility;
 import shipeditor.utility.graphics.ColorUtilities;
-import shipeditor.utility.graphics.DrawUtilities;
-import shipeditor.utility.graphics.ShapeUtilities;
 
 import java.awt.Color;
-import java.awt.Point;
-import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 
@@ -149,13 +145,7 @@ public class BaseWorldPoint implements WorldPoint, OpenGLPainter {
         return result;
     }
 
-    @SuppressWarnings("SameParameterValue")
-    private Shape getShapeForPoint(AffineTransform worldToScreen, float worldSize, float screenSize) {
-        Shape circle = ShapeUtilities.createCircle(position, (float) (worldSize * paintSizeMultiplier));
 
-        return ShapeUtilities.ensureDynamicScaleShape(worldToScreen,
-                position, circle, screenSize * paintSizeMultiplier);
-    }
 
     public void setPosition(double x, double y) {
         this.position.setLocation(x, y);

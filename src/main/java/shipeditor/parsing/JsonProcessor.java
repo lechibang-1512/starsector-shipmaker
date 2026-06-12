@@ -20,11 +20,13 @@ public final class JsonProcessor {
 
     public static String straightenMalformed(File input) {
         String text = JsonProcessor.readFile(input);
+        return straightenMalformedText(text);
+    }
 
+    public static String straightenMalformedText(String text) {
         String preprocessed = JsonProcessor.correctCommentsUnquotedValuesAndSeparators(text);
         preprocessed = JsonProcessor.correctNumberLetterSignums(preprocessed);
         preprocessed = JsonProcessor.correctTrailingPeriods(preprocessed);
-
         return preprocessed;
     }
 

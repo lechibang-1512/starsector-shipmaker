@@ -3,8 +3,8 @@ package shipeditor.components.instrument.ship.shared;
 import javax.swing.ListModel;
 
 import shipeditor.components.datafiles.entities.WingCSVEntry;
-import shipeditor.components.datafiles.entities.transferable.TransferableEntry;
-import shipeditor.components.datafiles.entities.transferable.TransferableWing;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableEntry;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableWing;
 import shipeditor.utility.components.containers.OrdnancedEntryList;
 
 import javax.swing.JMenuItem;

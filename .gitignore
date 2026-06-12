@@ -37,8 +37,8 @@ build/
 .vscode/
 
 ### Mac OS ###
-.DS_Store!/src/main/resources/legion_xiv.png
-!/.idea/
+.DS_Store
+!/src/main/resources/legion_xiv.png
 
 ### Runtime / Settings ###
 ship_editor_settings.json
@@ -50,8 +50,13 @@ ship_editor_settings.json
 ### Tools / Agents ###
 .agents/maven/
 
-.*class 
+*.class 
 
+### OS / Temp Files ###
+*.swp
+*.bak
+*.tmp
+*~
 ### CodeQL ###
 /codeql/
 codeql-database/
@@ -64,3 +69,13 @@ spotbugs/
 
 ### Archives ###
 *.zip
+
+### Python ###
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+.env

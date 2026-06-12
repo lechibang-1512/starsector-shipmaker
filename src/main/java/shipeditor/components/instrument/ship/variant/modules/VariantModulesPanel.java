@@ -1,9 +1,8 @@
 package shipeditor.components.instrument.ship.variant.modules;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
-import shipeditor.communication.events.viewer.points.PointSelectedConfirmed;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectedConfirmed;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.instrument.ship.AbstractShipPropertiesPanel;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
@@ -25,6 +24,7 @@ import java.awt.Color;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
 public class VariantModulesPanel extends AbstractShipPropertiesPanel {
 

@@ -1,18 +1,20 @@
 package shipeditor.components.viewer.control;
+import shipeditor.components.viewer.ViewerEnums.PointSelectionMode;
+
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.DeleteButtonPressed;
-import shipeditor.communication.events.viewer.control.*;
-import shipeditor.communication.events.viewer.layers.LayerRotationQueued;
-import shipeditor.communication.events.viewer.control.FeatureInstallQueued;
-import shipeditor.communication.events.viewer.points.PointCreationQueued;
-import shipeditor.communication.events.viewer.points.PointDragQueued;
-import shipeditor.communication.events.viewer.points.PointRemoveQueued;
-import shipeditor.communication.events.viewer.points.PointSelectQueued;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMousePressed;
+import shipeditor.communication.events.viewer.control.ControlEvents.FeatureInstallQueued;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerCursorMoved;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseMoved;
+import shipeditor.communication.events.viewer.control.ControlEvents.LayerAnchorDragged;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseDragged;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerRotationQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.PointDragQueued;
 import shipeditor.components.viewer.PrimaryViewer;
 import shipeditor.components.viewer.ViewerDropReceiver;
 import shipeditor.components.viewer.layers.LayerManager;
@@ -37,6 +39,17 @@ import java.awt.geom.Point2D;
 import javax.swing.InputMap;
 import javax.swing.ActionMap;
 import java.awt.KeyboardFocusManager;
+import shipeditor.communication.events.components.ComponentEvents.DeleteButtonPressed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.PointRemoveQueued;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerMouseReleased;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerZoomChanged;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransformChanged;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerRotationToggled;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerRotationSet;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransformsReset;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransformRotated;
 
 /** * should not publish a plethora of different events that are opinionated as to what their receivers should do.
  * Instead, its sole purpose should be collecting input control data and publishing it on event bus;

@@ -1,14 +1,13 @@
 package shipeditor.components.instrument.ship.bays;
 
 import shipeditor.components.instrument.ship.shared.AbstractSlotValuesPanel;
-import shipeditor.components.viewer.entities.WorldPoint;
 import shipeditor.components.viewer.entities.weapon.SlotData;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.overseers.StaticController;
 
@@ -36,10 +35,7 @@ public class BayDataControlPane extends AbstractSlotValuesPanel {
             if (shipPainter.isUninitialized()) return null;
             var bayPainter = shipPainter.getBayPainter();
 
-            WorldPoint selected = bayPainter.getSelected();
-            if (selected instanceof SlotData slotData) {
-                return slotData;
-            }
+            return (SlotData) bayPainter.getSelected();
         }
         return null;
     }

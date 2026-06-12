@@ -3,7 +3,7 @@ package shipeditor.components.instrument;
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.utility.Utility;
-import shipeditor.utility.components.widgets.IncrementType;
+import shipeditor.utility.UtilityEnums.IncrementType;
 import shipeditor.utility.components.widgets.PointLocationWidget;
 import shipeditor.utility.components.widgets.Spinners;
 import shipeditor.utility.components.widgets.TwinSpinnerPanel;

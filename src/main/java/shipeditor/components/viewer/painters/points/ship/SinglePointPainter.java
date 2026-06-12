@@ -1,6 +1,5 @@
 package shipeditor.components.viewer.painters.points.ship;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -11,9 +10,7 @@ import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.WorldPoint;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.painters.points.AbstractPointPainter;
-import shipeditor.utility.Utility;
 
-import java.awt.geom.AffineTransform;
 
 @Getter
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})

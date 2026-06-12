@@ -1,6 +1,7 @@
 package shipeditor.components.viewer.layers.weapon;
+import shipeditor.components.viewer.ViewerEnums.WeaponRenderOrdering;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
+
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -13,9 +14,8 @@ import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.painters.points.weapon.ProjectilePainter;
 import shipeditor.components.viewer.painters.points.weapon.WeaponOffsetPainter;
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.representation.weapon.WeaponRenderHints;
-import shipeditor.representation.weapon.WeaponSpecFile;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponRenderHints;
 import shipeditor.utility.graphics.Sprite;
 
 import java.awt.geom.Point2D;

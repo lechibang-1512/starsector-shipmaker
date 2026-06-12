@@ -1,7 +1,7 @@
 package shipeditor.components.instrument.weapon;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.components.viewer.entities.weapon.OffsetPoint;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.weapon.WeaponLayer;
@@ -109,8 +109,8 @@ class WeaponOffsetsPanel extends JPanel {
             if (event instanceof LayerWasSelected checked) {
                 ViewerLayer selected = checked.selected();
                 refreshPanel(selected);
-            } else if (event instanceof shipeditor.communication.events.viewer.points.PointAddConfirmed ||
-                       event instanceof shipeditor.communication.events.viewer.points.PointRemovedConfirmed) {
+            } else if (event instanceof shipeditor.communication.events.viewer.points.PointEvents.PointAddConfirmed ||
+                       event instanceof shipeditor.communication.events.viewer.points.PointEvents.PointRemovedConfirmed) {
                 refreshTableModel();
             } else if (event instanceof shipeditor.communication.events.viewer.ViewerRepaintQueued) {
                 if (cachedPainter != null && offsetsTable != null) {

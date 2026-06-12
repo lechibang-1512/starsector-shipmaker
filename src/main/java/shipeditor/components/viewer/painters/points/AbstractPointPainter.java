@@ -13,22 +13,26 @@ import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.BusEvent;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.layers.PainterOpacityChangeQueued;
-import shipeditor.communication.events.viewer.points.*;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectedConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointDragQueued;
 import shipeditor.components.viewer.control.ControlPredicates;
-import shipeditor.components.viewer.control.PointSelectionMode;
+import shipeditor.components.viewer.ViewerEnums.PointSelectionMode;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.WorldPoint;
-import shipeditor.components.viewer.painters.PainterVisibility;
+import shipeditor.components.viewer.ViewerEnums.PainterVisibility;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.Utility;
 import shipeditor.utility.overseers.StaticController;
 
-import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
+import shipeditor.communication.events.viewer.points.PointEvents.PointAddConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.PointRemovedConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointRemoveQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.PainterOpacityChangeQueued;
 
 @SuppressWarnings({"ClassWithTooManyMethods", "OverlyComplexClass"})
 @Log4j2

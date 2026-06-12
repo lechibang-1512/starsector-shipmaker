@@ -1,10 +1,9 @@
 package shipeditor.components.instrument.ship.variant;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.components.datafiles.entities.WingCSVEntry;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.instrument.ship.shared.WingsList;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
@@ -29,8 +28,9 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
-class VariantWingsPanel extends JPanel {
+public class VariantWingsPanel extends JPanel {
 
     private final WingsList wingsList;
 
@@ -50,7 +50,7 @@ class VariantWingsPanel extends JPanel {
 
     private JLabel fittedWingsCount;
 
-    VariantWingsPanel() {
+    public VariantWingsPanel() {
         this.setLayout(new BorderLayout());
 
         BiConsumer<ShipVariant, List<WingCSVEntry>> sortSetter = ShipVariant::setWings;

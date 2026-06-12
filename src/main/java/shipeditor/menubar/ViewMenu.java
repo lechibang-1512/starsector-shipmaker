@@ -2,8 +2,7 @@ package shipeditor.menubar;
 
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.ViewerBackgroundChanged;
-import shipeditor.communication.events.viewer.control.ViewerGuidesToggled;
-import shipeditor.communication.events.viewer.control.ViewerRotationToggled;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerGuidesToggled;
 import shipeditor.components.viewer.PaintOrderController;
 import shipeditor.persistence.Settings;
 import shipeditor.persistence.SettingsManager;
@@ -14,6 +13,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import java.awt.Color;
 import java.awt.event.ActionListener;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerRotationToggled;
 
 class ViewMenu extends JMenu {
 

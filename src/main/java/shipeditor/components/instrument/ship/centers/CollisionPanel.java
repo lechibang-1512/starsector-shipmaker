@@ -1,15 +1,15 @@
 package shipeditor.components.instrument.ship.centers;
 
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.ShipCenterPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
-import shipeditor.components.viewer.painters.PainterVisibility;
+import shipeditor.components.viewer.ViewerEnums.PainterVisibility;
 import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 import shipeditor.components.viewer.painters.points.ship.CenterPointPainter;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.components.ComponentUtilities;
-import shipeditor.utility.components.widgets.IncrementType;
+import shipeditor.utility.UtilityEnums.IncrementType;
 import shipeditor.utility.components.widgets.PointLocationWidget;
 import shipeditor.utility.components.widgets.Spinners;
 import shipeditor.utility.objects.Pair;

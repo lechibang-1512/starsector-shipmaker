@@ -8,7 +8,7 @@ import shipeditor.persistence.Settings;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.utility.Errors;
 import shipeditor.utility.text.StringConstants;
-import shipeditor.utility.themes.Theme;
+import shipeditor.utility.UtilityEnums.Theme;
 import shipeditor.utility.themes.Themes;
 
 import javax.swing.JPopupMenu;
@@ -28,7 +28,7 @@ import java.util.function.Function;
 @Log4j2
 public final class Main {
 
-    public static final String VERSION = "0.0.1d";
+    public static final String VERSION = "0.0.1e";
 
     private Main() {}
 
@@ -38,20 +38,20 @@ public final class Main {
         }
 
         long maxMemory = Runtime.getRuntime().maxMemory();
-        long threshold = 1100L * 1024L * 1024L;
+        long threshold = 3900L * 1024L * 1024L;
 
-        if (maxMemory > threshold) {
-            log.info("Max memory available is {} MB, which exceeds the 1 GB limit. Relaunching JVM with -Xmx1g...", maxMemory / (1024 * 1024));
+        if (maxMemory < threshold) {
+            log.info("Max memory available is {} MB, which is less than the 4 GB required. Relaunching JVM with -Xmx4g...", maxMemory / (1024 * 1024));
             try {
                 String javaHome = System.getProperty("java.home");
                 String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
-                if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                if (System.getProperty("os.name").toLowerCase(java.util.Locale.ROOT).contains("win")) {
                     javaBin += ".exe";
                 }
 
                 List<String> command = new ArrayList<>();
                 command.add(javaBin);
-                command.add("-Xmx1g");
+                command.add("-Xmx4g");
                 command.add("-XX:+UseG1GC");
                 command.add("-XX:+UseStringDeduplication");
                 command.add("-XX:MinHeapFreeRatio=10");
@@ -89,7 +89,7 @@ public final class Main {
 
                 System.exit(process.exitValue());
             } catch (java.io.IOException | java.net.URISyntaxException | SecurityException e) {
-                log.error("Failed to relaunch JVM with -Xmx1g", e);
+                log.error("Failed to relaunch JVM with -Xmx4g", e);
             }
         }
     }

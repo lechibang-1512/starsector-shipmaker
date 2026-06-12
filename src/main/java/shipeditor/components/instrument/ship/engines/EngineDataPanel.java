@@ -1,9 +1,8 @@
 package shipeditor.components.instrument.ship.engines;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
-import shipeditor.communication.events.files.EngineStylesLoaded;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.communication.events.files.FileEvents.EngineStylesLoaded;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.instrument.LayerPropertiesPanel;
 import shipeditor.components.viewer.entities.engine.EngineData;
 import shipeditor.components.viewer.entities.engine.EngineDataOverride;
@@ -34,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
 public class EngineDataPanel extends LayerPropertiesPanel {
 

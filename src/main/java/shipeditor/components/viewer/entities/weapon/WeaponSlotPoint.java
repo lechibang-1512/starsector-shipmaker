@@ -1,6 +1,5 @@
 package shipeditor.components.viewer.entities.weapon;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -8,17 +7,17 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
 import lombok.Setter;
-import shipeditor.components.CoordsDisplayMode;
+import shipeditor.components.ComponentEnums.CoordsDisplayMode;
 import shipeditor.components.datafiles.entities.CSVEntry;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.AngledPoint;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
-import shipeditor.representation.ship.ShipTypeHints;
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.RepresentationEnums.ShipTypeHints;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.Utility;
 import shipeditor.utility.graphics.ColorUtilities;

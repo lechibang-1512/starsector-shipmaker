@@ -2,7 +2,6 @@ package shipeditor.components.instrument.weapon;
 
 import com.formdev.flatlaf.ui.FlatLineBorder;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.LayerTabUpdated;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.weapon.WeaponLayer;
 import shipeditor.representation.weapon.WeaponSpecFile;
@@ -24,9 +23,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import shipeditor.communication.events.components.ComponentEvents.LayerTabUpdated;
 
 public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
 

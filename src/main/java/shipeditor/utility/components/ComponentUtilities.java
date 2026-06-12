@@ -5,7 +5,6 @@ import com.formdev.flatlaf.ui.FlatRoundBorder;
 
 import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.LoadingActionFired;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.parsing.loading.FileLoading;
@@ -54,6 +53,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import shipeditor.communication.events.components.ComponentEvents.LoadingActionFired;
 
 @SuppressWarnings("ClassWithTooManyMethods")
 public final class ComponentUtilities {
@@ -133,6 +133,13 @@ public final class ComponentUtilities {
 
     @SuppressWarnings("WeakerAccess")
     public static JLabel createIconFromImage(BufferedImage image, String tooltip, int maxSize) {
+        if (image == null) {
+            JLabel fallbackLabel = new JLabel("?");
+            if (tooltip != null && !tooltip.isEmpty()) {
+                fallbackLabel.setToolTipText(tooltip);
+            }
+            return fallbackLabel;
+        }
         Image clamped = ComponentUtilities.resizeImageToSquareLimit(image, maxSize);
         JLabel imageLabel = ComponentUtilities.createIconLabelWithBorder(new ImageIcon(clamped));
         if (tooltip != null && !tooltip.isEmpty()) {

@@ -1,11 +1,9 @@
 package shipeditor.components.instrument.ship.variant;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
-import shipeditor.communication.events.components.WeaponEntryPicked;
-import shipeditor.communication.events.viewer.points.PointSelectedConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectedConfirmed;
 import shipeditor.components.datafiles.entities.WeaponCSVEntry;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.FeaturesOverseer;
@@ -13,7 +11,6 @@ import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipHull;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
-import shipeditor.components.viewer.layers.weapon.WeaponPainter;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.dialog.DialogUtilities;
@@ -31,6 +28,8 @@ import java.awt.BorderLayout;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.List;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
+import shipeditor.communication.events.components.ComponentEvents.WeaponEntryPicked;
 
 public class VariantWeaponsPanel extends AbstractVariantPanel {
 

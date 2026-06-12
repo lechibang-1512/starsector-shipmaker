@@ -1,6 +1,7 @@
 package shipeditor.components.viewer.painters.points.ship.features;
+import shipeditor.components.viewer.ViewerEnums.FeatureOverrideState;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
+
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -21,11 +22,11 @@ import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.components.viewer.layers.weapon.WeaponPainter;
 import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 import shipeditor.representation.GameDataRepository;
-import shipeditor.representation.SizeEnum;
+import shipeditor.representation.RepresentationEnums.SizeEnum;
 import shipeditor.representation.ship.VariantFile;
-import shipeditor.representation.weapon.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.representation.weapon.WeaponSpecFile;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.Utility;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.text.StringConstants;

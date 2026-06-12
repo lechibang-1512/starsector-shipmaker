@@ -1,8 +1,8 @@
 package shipeditor.components.datafiles.trees;
 
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
-import shipeditor.components.datafiles.entities.transferable.TransferableEntry;
-import shipeditor.components.datafiles.entities.transferable.TransferableVariant;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableEntry;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableVariant;
 import shipeditor.components.viewer.ViewerDragListener;
 import shipeditor.components.viewer.ViewerDropReceiver;
 import shipeditor.representation.GameDataRepository;

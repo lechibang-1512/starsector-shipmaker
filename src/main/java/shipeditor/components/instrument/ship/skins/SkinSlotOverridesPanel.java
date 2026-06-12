@@ -1,10 +1,9 @@
 package shipeditor.components.instrument.ship.skins;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotOverride;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
 import shipeditor.components.viewer.layers.ViewerLayer;
@@ -12,12 +11,11 @@ import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipSkin;
 import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.components.ComponentUtilities;
 
-import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -39,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import shipeditor.utility.components.UIConstants;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
 /** * Panel for viewing and editing weapon slot overrides defined in skin files.
  * When a skin is active, displays all weapon slots and shows which properties

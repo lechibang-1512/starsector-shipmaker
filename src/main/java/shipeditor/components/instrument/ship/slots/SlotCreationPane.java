@@ -1,9 +1,11 @@
 package shipeditor.components.instrument.ship.slots;
+import shipeditor.components.ComponentEnums.SlotCreationMode;
+
 
 import lombok.Getter;
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.widgets.Spinners;
 import shipeditor.utility.objects.Pair;

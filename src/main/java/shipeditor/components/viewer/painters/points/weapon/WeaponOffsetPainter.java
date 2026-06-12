@@ -1,6 +1,5 @@
 package shipeditor.components.viewer.painters.points.weapon;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -8,17 +7,16 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
 import lombok.Setter;
-import shipeditor.communication.events.viewer.points.PointCreationQueued;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.weapon.OffsetPoint;
 import shipeditor.components.viewer.layers.weapon.WeaponPainter;
 import shipeditor.components.viewer.painters.points.AngledPointPainter;
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.utility.Utility;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 
 import java.util.ArrayList;
 import java.util.List;
+import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
 
 @Getter
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
@@ -125,19 +123,19 @@ public class WeaponOffsetPainter extends AngledPointPainter {
         shipeditor.communication.BusEventListener rawMouseListener = event -> {
             if (!isInteractionEnabled() || !isControlHotkeyPressed()) return;
             
-            if (event instanceof shipeditor.communication.events.viewer.control.ViewerRawMouseDragged checked) {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseDragged checked) {
                 java.awt.event.MouseEvent me = checked.mouseEvent();
                 if (shipeditor.components.viewer.control.ControlPredicates.changeAnglePredicate.test(me)) {
                     java.awt.geom.Point2D worldTarget = computeWorldTarget(me);
                     super.changePointAngleByTarget(worldTarget);
                 }
-            } else if (event instanceof shipeditor.communication.events.viewer.control.ViewerRawMouseMoved checked) {
+            } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseMoved checked) {
                 java.awt.event.MouseEvent me = checked.mouseEvent();
                 if (shipeditor.components.viewer.control.ControlPredicates.changeAnglePredicate.test(me)) {
                     java.awt.geom.Point2D worldTarget = computeWorldTarget(me);
                     super.changePointAngleByTarget(worldTarget);
                 }
-            } else if (event instanceof shipeditor.communication.events.viewer.control.ViewerRawMousePressed checked) {
+            } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMousePressed checked) {
                 java.awt.event.MouseEvent me = checked.mouseEvent();
                 if (shipeditor.components.viewer.control.ControlPredicates.changeAnglePredicate.test(me)) {
                     java.awt.geom.Point2D worldTarget = computeWorldTarget(me);

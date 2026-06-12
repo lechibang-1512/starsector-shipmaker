@@ -5,7 +5,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.parsing.loading.FileLoading;
-import shipeditor.representation.ship.HullSize;
+import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.text.StringConstants;
@@ -91,13 +91,44 @@ public class HullmodCSVEntry implements OrdnancedCSVEntry {
         return getIconLabel(32);
     }
 
+    private JLabel cachedIconLabel;
+    private boolean isIconLoading = false;
+
     @Override
     public JLabel getIconLabel(int maxSize) {
-        Map<String, String> csvData = this.getRowData();
-        String name = csvData.get("name");
-        File imageFile = this.fetchHullmodSpriteFile();
-        BufferedImage iconImage = FileLoading.loadSpriteAsImage(imageFile);
-        return ComponentUtilities.createIconFromImage(iconImage, name, maxSize);
+        if (cachedIconLabel != null && !isIconLoading) {
+            return cachedIconLabel;
+        }
+        if (cachedIconLabel == null) {
+            cachedIconLabel = new JLabel("...");
+        }
+        if (!isIconLoading) {
+            isIconLoading = true;
+            Map<String, String> csvData = this.getRowData();
+            String name = csvData.get("name");
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    File imageFile = this.fetchHullmodSpriteFile();
+                    BufferedImage iconImage = FileLoading.loadSpriteAsImage(imageFile);
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        cachedIconLabel = ComponentUtilities.createIconFromImage(iconImage, name, maxSize);
+                        isIconLoading = false;
+                        shipeditor.communication.EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.WindowRepaintQueued());
+                    });
+                } catch (Exception ex) {
+                    log.error("Failed to load hullmod icon: " + name, ex);
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        cachedIconLabel = new JLabel("?");
+                        if (name != null && !name.isEmpty()) {
+                            cachedIconLabel.setToolTipText(name);
+                        }
+                        isIconLoading = false;
+                        shipeditor.communication.EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.WindowRepaintQueued());
+                    });
+                }
+            });
+        }
+        return cachedIconLabel;
     }
 
     private File fetchHullmodSpriteFile() {

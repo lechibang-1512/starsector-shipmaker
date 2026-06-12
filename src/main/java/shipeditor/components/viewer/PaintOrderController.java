@@ -15,14 +15,10 @@ import shipeditor.components.viewer.painters.points.ship.MarkPointsPainter;
 import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
-import shipeditor.utility.graphics.opengl.ViewerTransform;
-import shipeditor.utility.overseers.MiscCaching;
 
 import javax.swing.Timer;
-import java.awt.geom.AffineTransform;
 import java.util.List;
 import org.joml.Matrix4f;
-import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})

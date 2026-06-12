@@ -4,8 +4,7 @@ import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.BusEvent;
 import shipeditor.communication.events.Events;
-import shipeditor.communication.events.viewer.control.ViewerMouseReleased;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
 import shipeditor.components.datafiles.entities.HullmodCSVEntry;
 import shipeditor.components.datafiles.entities.InstallableEntry;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
@@ -29,32 +28,27 @@ import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
 import shipeditor.components.viewer.painters.points.ship.features.FittedWeaponGroup;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
 import shipeditor.representation.ship.EngineStyle;
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
-import shipeditor.undo.edits.*;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.undo.edits.LayerEdits.*;
 import shipeditor.undo.edits.HullmodEdits.*;
 import shipeditor.undo.edits.WingEdits.*;
-import shipeditor.undo.edits.features.*;
 import shipeditor.undo.edits.features.FeatureEdits.*;
-import shipeditor.undo.edits.points.*;
 import shipeditor.undo.edits.points.PointEdits.*;
-import shipeditor.undo.edits.points.engines.*;
 import shipeditor.undo.edits.points.engines.EngineEdits.*;
-import shipeditor.undo.edits.points.slots.*;
 import shipeditor.undo.edits.points.slots.SlotEdits.*;
 import shipeditor.utility.Utility;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.objects.Size2D;
 import shipeditor.utility.overseers.StaticController;
 
-import javax.swing.Timer;
 import java.awt.geom.Point2D;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerMouseReleased;
 
 /** * Convenience class meant to free viewer classes from burden of also implementing all the edit dispatch methods.*/
 @SuppressWarnings({"OverlyCoupledClass", "ClassWithTooManyMethods"})
@@ -423,7 +417,7 @@ public final class EditDispatch {
         int oldIndex = oldParentWeapons.indexOf(feature.getSlotID());
 
         Edit groupsSortEdit = new WeaponGroupsSortEdit(feature, targetGroup, oldParent,
-                targetIndex, oldIndex);
+                targetIndex, oldIndex, false);
         UndoOverseer.post(groupsSortEdit);
 
         groupsSortEdit.redo();

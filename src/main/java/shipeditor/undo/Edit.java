@@ -1,4 +1,6 @@
 package shipeditor.undo;
+import shipeditor.utility.UtilityEnums.EditCategory;
+
 
 /** * Entity interface for the Undo/Redo functionality; this is essentially Command Pattern.*/
 public interface Edit {

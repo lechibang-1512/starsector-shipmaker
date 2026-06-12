@@ -13,6 +13,7 @@ This skill is organized as follows:
 - **`SKILL.md`**: Main instructions (this file).
 - **`resources/`**: Documents, assets, and guides.
   - [rendering_migration_guide.md](file:///media/lechibang/WORK1/projects/starsector-shipmaker/.agents/skills/opengl-rendering/resources/rendering_migration_guide.md): The full details of the OpenGL migration, coordinate spaces, shaders, and quads.
+  - [rendering_pipeline.md](file:///media/lechibang/WORK1/projects/starsector-shipmaker/.agents/skills/opengl-rendering/resources/rendering_pipeline.md): Comprehensive documentation of the rendering pipeline, PaintOrderController, SpriteRenderer, ShapeRenderer, and Transform Math.
 - **`examples/`**: Code references.
   - [RenderingPatternsReference.java](file:///media/lechibang/WORK1/projects/starsector-shipmaker/.agents/skills/opengl-rendering/examples/RenderingPatternsReference.java): Reference implementation of lookup tables, memory buffers, double-pass opacity, and robust state recovery.
 - **`scripts/`**: Tooling.

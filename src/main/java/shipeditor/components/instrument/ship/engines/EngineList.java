@@ -3,7 +3,7 @@ package shipeditor.components.instrument.ship.engines;
 import javax.swing.ListModel;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.points.EnginePointsSorted;
+import shipeditor.communication.events.viewer.points.PointEvents.EnginePointsSorted;
 import shipeditor.components.viewer.entities.engine.EnginePoint;
 import shipeditor.utility.components.containers.PointList;
 import shipeditor.utility.components.rendering.EngineCellRenderer;

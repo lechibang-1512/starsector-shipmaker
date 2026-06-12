@@ -2,12 +2,8 @@ package shipeditor.menubar;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.control.ViewerTransformsReset;
-import shipeditor.communication.events.viewer.layers.ActiveLayerRemovalQueued;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
-import shipeditor.communication.events.viewer.layers.ViewerLayerRemovalConfirmed;
-import shipeditor.communication.events.viewer.layers.ships.ShipLayerCreationQueued;
-import shipeditor.communication.events.viewer.layers.weapons.WeaponLayerCreationQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ViewerLayerRemovalConfirmed;
 import shipeditor.components.viewer.layers.LayerManager;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.utility.overseers.StaticController;
@@ -22,6 +18,10 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransformsReset;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ShipLayerCreationQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.WeaponLayerCreationQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerRemovalQueued;
 
 @Log4j2
 public class WindowMenu extends JMenu {

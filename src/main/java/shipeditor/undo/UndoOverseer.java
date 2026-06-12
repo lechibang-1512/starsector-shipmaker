@@ -1,4 +1,6 @@
 package shipeditor.undo;
+import shipeditor.utility.UtilityEnums.EditCategory;
+
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

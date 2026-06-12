@@ -7,8 +7,8 @@ import shipeditor.persistence.Settings;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.persistence.database.DatabaseQueryService;
 import shipeditor.persistence.database.IndexedFile;
+import shipeditor.utility.text.StringValues;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +26,9 @@ abstract class LoadCSVDataAction<T extends CSVEntry> extends DataLoadingAction {
 
     @Override
     public Runnable perform() {
-        log.trace("Commencing CSV data fetching from database index for type: {}", csvDbType);
+        if (SettingsManager.isDeveloperModeEnabled()) {
+            log.trace(StringValues.COMMENCING_CSV_FETCH, csvDbType);
+        }
 
         Map<String, List<IndexedFile>> filesByMod = DatabaseQueryService.getFilesByTypeGroupedByMod(csvDbType);
 
@@ -35,7 +37,7 @@ abstract class LoadCSVDataAction<T extends CSVEntry> extends DataLoadingAction {
             for (IndexedFile dbFile : modEntry.getValue()) {
                 Path folderPath = SettingsManager.getFolderForModId(modEntry.getKey());
                 if (folderPath == null) {
-                    log.warn("No folder found for mod_id '{}', skipping CSV: {}", modEntry.getKey(), dbFile.getFilePath());
+                    log.warn(StringValues.NO_FOLDER_FOR_MOD_ID, modEntry.getKey(), dbFile.getFilePath());
                     continue;
                 }
 
@@ -48,9 +50,10 @@ abstract class LoadCSVDataAction<T extends CSVEntry> extends DataLoadingAction {
                     continue;
                 }
 
-                log.trace("Loading CSV table from package: {}", folderPath);
-                File table = dbFile.getFilePath().toFile();
-                List<T> entriesList = loadPackage(folderPath, table);
+                if (SettingsManager.isDeveloperModeEnabled()) {
+                    log.trace(StringValues.LOADING_CSV_TABLE, folderPath);
+                }
+                List<T> entriesList = loadPackage(folderPath, dbFile);
                 if (entriesList != null) {
                     entriesByPackage.putIfAbsent(folderPath, entriesList);
                 }
@@ -67,13 +70,32 @@ abstract class LoadCSVDataAction<T extends CSVEntry> extends DataLoadingAction {
         return FileLoading.parseCSVTable(dataFilePath);
     }
 
-    private List<T> loadPackage(Path folderPath, File table) {
-        Path dataFilePath = table.toPath();
+    private List<T> loadPackage(Path folderPath, IndexedFile dbFile) {
+        Path dataFilePath = dbFile.getFilePath();
 
-        List<Map<String, String>> csvData = parseTable(dataFilePath);
+        List<Map<String, String>> csvData = null;
+        if (dbFile.getParsedData() != null) {
+            try {
+                csvData = shipeditor.parsing.FileUtilities.getConfigured().readValue(
+                        dbFile.getParsedData(),
+                        new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, String>>>() {});
+                if (SettingsManager.isDeveloperModeEnabled()) {
+                    log.trace(StringValues.CSV_LOADED_DB_CACHE);
+                }
+            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                if (SettingsManager.isDeveloperModeEnabled()) {
+                    log.error(StringValues.CSV_DESERIALIZE_DB_CACHE_FAILED, e);
+                } else {
+                    log.error(StringValues.CSV_DESERIALIZE_DB_CACHE_FAILED);
+                }
+            }
+        }
+        if (csvData == null) {
+            csvData = parseTable(dataFilePath);
+        }
 
         if (csvData == null) {
-            log.info("Datafiles folder without CSV table at: {}", folderPath.toString());
+            log.info(StringValues.DATAFILES_FOLDER_NO_CSV, folderPath.toString());
             return null;
         }
 
@@ -85,7 +107,7 @@ abstract class LoadCSVDataAction<T extends CSVEntry> extends DataLoadingAction {
                 if (newEntry != null) {
                     entryList.add(newEntry);
                 } else {
-                    log.error("Failure to load data entry from table, omitting from result data: {}", table);
+                    log.error(StringValues.CSV_ENTRY_LOAD_FAILED, dataFilePath);
                 }
             }
         }

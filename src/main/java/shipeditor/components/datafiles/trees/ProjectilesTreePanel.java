@@ -2,10 +2,8 @@ package shipeditor.components.datafiles.trees;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.WeaponTreeReloadQueued;
-import shipeditor.components.datafiles.OpenDataTarget;
+import shipeditor.components.ComponentEnums.OpenDataTarget;
 import shipeditor.components.viewer.layers.weapon.ProjectileLayer;
-import shipeditor.components.layering.ProjectileLayerTab;
 import shipeditor.components.viewer.layers.weapon.ProjectileLayerPainter;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.parsing.loading.FileLoading;
@@ -14,14 +12,12 @@ import shipeditor.persistence.Settings;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
 import shipeditor.representation.weapon.ProjectileSpecFile;
-import shipeditor.utility.components.ComponentUtilities;
 
 import javax.swing.AbstractAction;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JTree;
-import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.MutableTreeNode;
@@ -34,6 +30,7 @@ import java.awt.event.MouseEvent;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import shipeditor.communication.events.files.FileEvents.WeaponTreeReloadQueued;
 
 @Log4j2
 public class ProjectilesTreePanel extends DataTreePanel {
@@ -51,7 +48,7 @@ public class ProjectilesTreePanel extends DataTreePanel {
         });
 
         JTree tree = getTree();
-        tree.addMouseListener(new ContextMenuListener());
+        tree.addMouseListener(createContextMenuListener());
         tree.addMouseListener(new DoubleClickLayerLoader());
     }
 
@@ -202,8 +199,8 @@ public class ProjectilesTreePanel extends DataTreePanel {
                 log.error("Invalid sprite file resolved for projectile {}: {}", specFile.getId(), file);
             }
 
-            shipeditor.communication.events.viewer.layers.weapons.ProjectileLayerCreated event = 
-                new shipeditor.communication.events.viewer.layers.weapons.ProjectileLayerCreated(layer);
+            shipeditor.communication.events.viewer.layers.LayerEvents.ProjectileLayerCreated event = 
+                new shipeditor.communication.events.viewer.layers.LayerEvents.ProjectileLayerCreated(layer);
             shipeditor.utility.overseers.StaticController.getViewer().getLayerManager().getLayers().add(layer);
             shipeditor.communication.EventBus.publish(event);
         }

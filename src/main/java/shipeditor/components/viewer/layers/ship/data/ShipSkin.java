@@ -14,10 +14,13 @@ import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.*;
 import shipeditor.representation.ship.EngineSlot;
 import shipeditor.representation.ship.HullStyle;
-import shipeditor.representation.ship.ShipTypeHints;
+import shipeditor.representation.RepresentationEnums.ShipTypeHints;
 import shipeditor.representation.ship.ShipSpecFile;
 import shipeditor.representation.ship.SkinSpecFile;
 import shipeditor.representation.weapon.*;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.text.StringValues;
 

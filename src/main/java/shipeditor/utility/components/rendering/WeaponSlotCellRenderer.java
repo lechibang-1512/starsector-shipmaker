@@ -1,8 +1,8 @@
 package shipeditor.utility.components.rendering;
 
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.Utility;
 
 import javax.swing.JLabel;

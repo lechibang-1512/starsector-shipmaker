@@ -1,6 +1,6 @@
 package shipeditor.components.viewer.entities;
 
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.LayerPainter;
 
 import java.awt.geom.Point2D;

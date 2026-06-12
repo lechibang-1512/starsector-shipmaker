@@ -1,7 +1,7 @@
 package shipeditor.components.instrument.ship.builtins.hullmods;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.data.ShipHull;
 import shipeditor.components.viewer.layers.ship.data.ShipSkin;

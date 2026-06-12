@@ -1,9 +1,6 @@
 package shipeditor.components;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.LoadingActionFired;
-import shipeditor.communication.events.components.LoadingTaskCompleted;
-import shipeditor.communication.events.components.LoadingTaskStarted;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -14,6 +11,9 @@ import javax.swing.SwingConstants;
 import java.awt.Dimension;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import shipeditor.communication.events.components.ComponentEvents.LoadingTaskCompleted;
+import shipeditor.communication.events.components.ComponentEvents.LoadingTaskStarted;
+import shipeditor.communication.events.components.ComponentEvents.LoadingActionFired;
 
 public class ProgressBarPanel extends JPanel {
 

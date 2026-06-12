@@ -3,13 +3,9 @@ package shipeditor.menubar;
 import org.kordamp.ikonli.boxicons.BoxiconsRegular;
 import org.kordamp.ikonli.swing.FontIcon;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.layers.ActiveLayerRemovalQueued;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
-import shipeditor.communication.events.viewer.layers.ViewerLayerRemovalConfirmed;
-import shipeditor.communication.events.viewer.layers.ships.ShipLayerCreationQueued;
-import shipeditor.communication.events.viewer.layers.weapons.WeaponLayerCreationQueued;
-import shipeditor.components.datafiles.trees.ShipFilterPanel;
-import shipeditor.components.datafiles.trees.WeaponFilterPanel;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ViewerLayerRemovalConfirmed;
+
 import shipeditor.components.viewer.layers.LayerManager;
 import shipeditor.parsing.loading.FileLoading;
 import shipeditor.undo.UndoOverseer;
@@ -17,9 +13,12 @@ import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.themes.Themes;
 
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JToolBar;
+
+import shipeditor.communication.events.viewer.layers.LayerEvents.ShipLayerCreationQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.WeaponLayerCreationQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerRemovalQueued;
 
 public class MainToolBar extends JToolBar {
 
@@ -50,7 +49,7 @@ public class MainToolBar extends JToolBar {
         this.styleToolbarButton(createLayerButton, BoxiconsRegular.PLUS);
         createLayerButton.setToolTipText("Create new layer");
         createLayerButton.addActionListener(event -> {
-            Object[] options = {"Ship Layer", "Weapon Layer"};
+            Object[] options = { "Ship Layer", "Weapon Layer" };
             int result = JOptionPane.showOptionDialog(null,
                     "Select new layer type:",
                     "Create New Layer",
@@ -84,38 +83,6 @@ public class MainToolBar extends JToolBar {
             }
         });
         this.add(removeLayerButton);
-
-        this.addSeparator();
-
-        JButton shipFiltersButton = new JButton();
-        this.styleToolbarButton(shipFiltersButton, BoxiconsRegular.FILTER_ALT);
-        shipFiltersButton.setToolTipText("Ship Filters");
-        shipFiltersButton.addActionListener(e -> {
-            JDialog dialog = new JDialog();
-            dialog.setTitle("Ship Filters");
-            dialog.setModal(false);
-            dialog.setSize(400, 600);
-            dialog.setLocationRelativeTo(null);
-            dialog.add(new ShipFilterPanel());
-            dialog.setVisible(true);
-        });
-        this.add(shipFiltersButton);
-
-        JButton weaponFiltersButton = new JButton();
-        this.styleToolbarButton(weaponFiltersButton, BoxiconsRegular.FILTER);
-        weaponFiltersButton.setToolTipText("Weapon Filters");
-        weaponFiltersButton.addActionListener(e -> {
-            JDialog dialog = new JDialog();
-            dialog.setTitle("Weapon Filters");
-            dialog.setModal(false);
-            dialog.setSize(400, 600);
-            dialog.setLocationRelativeTo(null);
-            dialog.add(new WeaponFilterPanel());
-            dialog.setVisible(true);
-        });
-        this.add(weaponFiltersButton);
-
-        this.addSeparator();
 
         JButton reloadDataButton = new JButton();
         this.styleToolbarButton(reloadDataButton, BoxiconsRegular.REFRESH);

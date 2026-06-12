@@ -1,4 +1,6 @@
 package shipeditor.representation.ship;
+import shipeditor.representation.RepresentationEnums.ShipTypeHints;
+
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -10,8 +12,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Getter;
 import lombok.Setter;
-import shipeditor.parsing.deserialize.ColorArrayRGBADeserializer;
-import shipeditor.parsing.deserialize.ShipTypeHintsDeserializer;
+import shipeditor.parsing.deserialize.CustomDeserializers.ColorArrayRGBADeserializer;
+import shipeditor.parsing.deserialize.CustomDeserializers.ShipTypeHintsDeserializer;
 
 import shipeditor.representation.weapon.WeaponSlot;
 

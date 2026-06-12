@@ -57,7 +57,7 @@ public class ProjectileDataPanel extends AbstractProjectilePropertiesPanel {
                     String text = specClassEditor.getText();
                     if (!java.util.Objects.equals(spec.getSpecClass(), text)) {
                         spec.setSpecClass(text);
-                        EventBus.publish(new shipeditor.communication.events.components.LayerTabUpdated(cachedLayer));
+                        EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.LayerTabUpdated(cachedLayer));
                         processChange();
                     }
                 }
@@ -78,7 +78,7 @@ public class ProjectileDataPanel extends AbstractProjectilePropertiesPanel {
                     String text = missileTypeEditor.getText();
                     if (!java.util.Objects.equals(spec.getMissileType(), text)) {
                         spec.setMissileType(text);
-                        EventBus.publish(new shipeditor.communication.events.components.LayerTabUpdated(cachedLayer));
+                        EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.LayerTabUpdated(cachedLayer));
                         processChange();
                     }
                 }

@@ -4,16 +4,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
-import shipeditor.communication.events.viewer.points.EngineInsertedConfirmed;
-import shipeditor.communication.events.viewer.points.PointAddConfirmed;
-import shipeditor.communication.events.viewer.points.PointRemovedConfirmed;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.instrument.ship.AbstractShipPropertiesPanel;
 import shipeditor.components.viewer.entities.engine.EnginePoint;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
-import shipeditor.components.viewer.painters.PainterVisibility;
+import shipeditor.components.viewer.ViewerEnums.PainterVisibility;
 import shipeditor.components.viewer.painters.points.ship.EngineSlotPainter;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.objects.Pair;
@@ -32,6 +28,10 @@ import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.EngineInsertedConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointAddConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointRemovedConfirmed;
 
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class EnginesPanel extends AbstractShipPropertiesPanel {

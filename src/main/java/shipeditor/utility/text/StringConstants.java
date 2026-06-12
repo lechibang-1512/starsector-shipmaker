@@ -146,4 +146,26 @@ public interface StringConstants {
 
     char EXTENSION_DOT = '.';
 
+    String SKIN_EXTENSION = ".skin";
+    String SHIP_EXTENSION = ".ship";
+    String WEAPON_EXTENSION = ".wpn";
+    String PROJECTILE_EXTENSION = ".proj";
+    String CSV_EXTENSION = ".csv";
+    String JSON_EXTENSION = ".json";
+
+    String SHIP_TYPE = "SHIP";
+    String SKIN_TYPE = "SKIN";
+    String WEAPON_TYPE = "WEAPON";
+    String VARIANT_TYPE = "VARIANT";
+    String PROJECTILE_TYPE = "PROJECTILE";
+
+    String SHIP_CSV_TYPE = "SHIP_CSV";
+    String WEAPON_CSV_TYPE = "WEAPON_CSV";
+    String HULLMOD_CSV_TYPE = "HULLMOD_CSV";
+    String SHIPSYSTEM_CSV_TYPE = "SHIPSYSTEM_CSV";
+    String WING_CSV_TYPE = "WING_CSV";
+
+    String ENGINE_STYLE_JSON_TYPE = "ENGINE_STYLE_JSON";
+    String HULL_STYLE_JSON_TYPE = "HULL_STYLE_JSON";
+
 }

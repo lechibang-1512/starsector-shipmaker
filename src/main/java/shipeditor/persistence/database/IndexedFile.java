@@ -36,4 +36,6 @@ public class IndexedFile {
 
     private final long lastModified;
 
+    private final String parsedData;
+
 }

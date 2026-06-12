@@ -5,8 +5,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.HullmodDataSet;
-import shipeditor.communication.events.files.WingDataSet;
 import shipeditor.components.datafiles.entities.*;
 import shipeditor.components.datafiles.trees.ShipFilterPanel;
 import shipeditor.components.datafiles.trees.WeaponFilterPanel;
@@ -22,6 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import shipeditor.communication.events.files.FileEvents.HullmodDataSet;
+import shipeditor.communication.events.files.FileEvents.WingDataSet;
 
 @SuppressWarnings({"ClassWithTooManyFields", "ClassWithTooManyMethods", "StaticMethodOnlyUsedInOneClass"})
 @Getter
@@ -31,7 +31,8 @@ public class GameDataRepository {
     /**
      * All ship entries by their hull IDs.
      */
-    private final Map<String, ShipCSVEntry> allShipEntries;
+    @Setter
+    private volatile Map<String, ShipCSVEntry> allShipEntries;
 
     /**
      * Base hull and skin entries by their ship hull IDs. Used when layer needs to be loaded from variant ID.
@@ -41,16 +42,17 @@ public class GameDataRepository {
     /**
      * All hullmod entries by their IDs.
      */
-    private final Map<String, HullmodCSVEntry> allHullmodEntries;
+    private volatile Map<String, HullmodCSVEntry> allHullmodEntries;
 
     /**
      * All shipsystem entries by their IDs.
      */
-    private final Map<String, ShipSystemCSVEntry> allShipsystemEntries;
+    private volatile Map<String, ShipSystemCSVEntry> allShipsystemEntries;
 
-    private final Map<String, WingCSVEntry> allWingEntries;
+    private volatile Map<String, WingCSVEntry> allWingEntries;
 
-    private final Map<String, WeaponCSVEntry> allWeaponEntries;
+    @Setter
+    private volatile Map<String, WeaponCSVEntry> allWeaponEntries;
 
     /**
      * Holds the same instances as id-entry collection, used for quick repopulating of entry tree with filtering.
@@ -67,18 +69,43 @@ public class GameDataRepository {
 
     private Map<Path, List<WingCSVEntry>> wingEntriesByPackage;
 
-    @lombok.Getter(lombok.AccessLevel.NONE)
-    private final Map<Path, SoftReference<List<Map<String, String>>>> rawCSVDataByPath = new ConcurrentHashMap<>();
+    public static class CachedCSVData {
+        private final List<Map<String, String>> rawData;
+        private final Object schema;
+
+        public CachedCSVData(List<Map<String, String>> rawData, Object schema) {
+            this.rawData = rawData;
+            this.schema = schema;
+        }
+
+        public List<Map<String, String>> getRawData() {
+            return rawData;
+        }
+
+        public Object getSchema() {
+            return schema;
+        }
+    }
 
     @lombok.Getter(lombok.AccessLevel.NONE)
-    private final Map<Path, SoftReference<Object>> csvSchemasByPath = new ConcurrentHashMap<>();
+    private final Map<Path, SoftReference<CachedCSVData>> csvCacheByPath = new ConcurrentHashMap<>();
 
     public void putRawCSVDataForPath(Path path, List<Map<String, String>> rawData) {
-        rawCSVDataByPath.put(path, new SoftReference<>(rawData));
+        SoftReference<CachedCSVData> ref = csvCacheByPath.get(path);
+        CachedCSVData existing = ref != null ? ref.get() : null;
+        Object schema = existing != null ? existing.getSchema() : null;
+        csvCacheByPath.put(path, new SoftReference<>(new CachedCSVData(rawData, schema)));
     }
 
     public void putCsvSchemaForPath(Path path, Object schema) {
-        csvSchemasByPath.put(path, new SoftReference<>(schema));
+        SoftReference<CachedCSVData> ref = csvCacheByPath.get(path);
+        CachedCSVData existing = ref != null ? ref.get() : null;
+        List<Map<String, String>> rawData = existing != null ? existing.getRawData() : null;
+        csvCacheByPath.put(path, new SoftReference<>(new CachedCSVData(rawData, schema)));
+    }
+
+    public void putCachedCSVData(Path path, List<Map<String, String>> rawData, Object schema) {
+        csvCacheByPath.put(path, new SoftReference<>(new CachedCSVData(rawData, schema)));
     }
 
     /**
@@ -86,17 +113,21 @@ public class GameDataRepository {
      * transparently re-parses the CSV from disk.
      */
     public List<Map<String, String>> getRawCSVDataForPath(Path path) {
-        SoftReference<List<Map<String, String>>> ref = rawCSVDataByPath.get(path);
+        SoftReference<CachedCSVData> ref = csvCacheByPath.get(path);
         if (ref != null) {
-            List<Map<String, String>> data = ref.get();
-            if (data != null) {
-                return data;
+            CachedCSVData cached = ref.get();
+            if (cached != null && cached.getRawData() != null) {
+                return cached.getRawData();
             }
         }
         // Re-parse from disk on cache miss.
         List<Map<String, String>> reparsed = shipeditor.parsing.loading.FileLoading.reparseCSVForPath(path);
         if (reparsed != null) {
-            rawCSVDataByPath.put(path, new SoftReference<>(reparsed));
+            SoftReference<CachedCSVData> refreshedRef = csvCacheByPath.get(path);
+            CachedCSVData refreshed = refreshedRef != null ? refreshedRef.get() : null;
+            if (refreshed != null && refreshed.getRawData() != null) {
+                return refreshed.getRawData();
+            }
         }
         return reparsed;
     }
@@ -106,42 +137,43 @@ public class GameDataRepository {
      * transparently re-parses to recover the schema.
      */
     public Object getCsvSchemaForPath(Path path) {
-        SoftReference<Object> ref = csvSchemasByPath.get(path);
+        SoftReference<CachedCSVData> ref = csvCacheByPath.get(path);
         if (ref != null) {
-            Object schema = ref.get();
-            if (schema != null) {
-                return schema;
+            CachedCSVData cached = ref.get();
+            if (cached != null && cached.getSchema() != null) {
+                return cached.getSchema();
             }
         }
         // Re-parse from disk to recover the schema.
         shipeditor.parsing.loading.FileLoading.reparseCSVForPath(path);
-        SoftReference<Object> refreshedRef = csvSchemasByPath.get(path);
-        return refreshedRef != null ? refreshedRef.get() : null;
+        SoftReference<CachedCSVData> refreshedRef = csvCacheByPath.get(path);
+        CachedCSVData refreshed = refreshedRef != null ? refreshedRef.get() : null;
+        return refreshed != null ? refreshed.getSchema() : null;
     }
 
     /**
      * Hull styles by their IDs (field names in JSON).
      */
     @Setter
-    private Map<String, HullStyle> allHullStyles;
+    private volatile Map<String, HullStyle> allHullStyles;
 
     /**
      * Engine styles by their IDs (field names in JSON).
      */
     @Setter
-    private Map<String, EngineStyle> allEngineStyles;
+    private volatile Map<String, EngineStyle> allEngineStyles;
 
     /**
      * All variant files by variant IDs.
      */
     @Setter
-    private Map<String, VariantFile> allVariants;
+    private volatile Map<String, VariantFile> allVariants;
 
     /**
      * All projectile files by variant IDs.
      */
     @Setter
-    private Map<String, ProjectileSpecFile> allProjectiles;
+    private volatile Map<String, ProjectileSpecFile> allProjectiles;
 
     @Setter
     private boolean shipDataLoaded;
@@ -158,13 +190,13 @@ public class GameDataRepository {
 
     public GameDataRepository() {
         this.allSpecEntries = new ConcurrentHashMap<>();
-        this.allShipEntries = new HashMap<>();
-        this.allHullmodEntries = new HashMap<>();
-        this.allShipsystemEntries = new HashMap<>();
-        this.allWingEntries = new HashMap<>();
-        this.allWeaponEntries = new HashMap<>();
-        this.allVariants = new HashMap<>();
-        this.allProjectiles = new HashMap<>();
+        this.allShipEntries = new ConcurrentHashMap<>();
+        this.allHullmodEntries = new ConcurrentHashMap<>();
+        this.allShipsystemEntries = new ConcurrentHashMap<>();
+        this.allWingEntries = new ConcurrentHashMap<>();
+        this.allWeaponEntries = new ConcurrentHashMap<>();
+        this.allVariants = new ConcurrentHashMap<>();
+        this.allProjectiles = new ConcurrentHashMap<>();
     }
 
     public void setShipEntriesByPackage(Map<Path, List<ShipCSVEntry>> shipEntries) {
@@ -196,29 +228,32 @@ public class GameDataRepository {
 
     public void setHullmodEntriesByPackage(Map<Path, List<HullmodCSVEntry>> hullmodEntries) {
         this.hullmodEntriesByPackage = hullmodEntries;
-        this.allHullmodEntries.clear();
+        Map<String, HullmodCSVEntry> newAllHullmodEntries = new ConcurrentHashMap<>();
         if (hullmodEntries != null) {
-            hullmodEntries.values().forEach(list -> list.forEach(entry -> this.allHullmodEntries.put(entry.getID(), entry)));
+            hullmodEntries.values().forEach(list -> list.forEach(entry -> newAllHullmodEntries.put(entry.getID(), entry)));
             SettingsManager.announcePackages(hullmodEntries);
         }
+        this.allHullmodEntries = newAllHullmodEntries;
     }
 
     public void setShipSystemEntriesByPackage(Map<Path, List<ShipSystemCSVEntry>> shipSystemEntries) {
         this.shipSystemEntriesByPackage = shipSystemEntries;
-        this.allShipsystemEntries.clear();
+        Map<String, ShipSystemCSVEntry> newAllShipsystemEntries = new ConcurrentHashMap<>();
         if (shipSystemEntries != null) {
-            shipSystemEntries.values().forEach(list -> list.forEach(entry -> this.allShipsystemEntries.put(entry.getID(), entry)));
+            shipSystemEntries.values().forEach(list -> list.forEach(entry -> newAllShipsystemEntries.put(entry.getID(), entry)));
             SettingsManager.announcePackages(shipSystemEntries);
         }
+        this.allShipsystemEntries = newAllShipsystemEntries;
     }
 
     public void setWingEntriesByPackage(Map<Path, List<WingCSVEntry>> wingEntries) {
         this.wingEntriesByPackage = wingEntries;
-        this.allWingEntries.clear();
+        Map<String, WingCSVEntry> newAllWingEntries = new ConcurrentHashMap<>();
         if (wingEntries != null) {
-            wingEntries.values().forEach(list -> list.forEach(entry -> this.allWingEntries.put(entry.getID(), entry)));
+            wingEntries.values().forEach(list -> list.forEach(entry -> newAllWingEntries.put(entry.getID(), entry)));
             SettingsManager.announcePackages(wingEntries);
         }
+        this.allWingEntries = newAllWingEntries;
     }
 
     public static ShipCSVEntry retrieveShipCSVEntryByID(String baseHullID) {

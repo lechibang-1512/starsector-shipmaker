@@ -1,0 +1,30 @@
+package shipeditor.communication;
+
+import shipeditor.communication.events.BusEvent;
+import shipeditor.communication.events.viewer.layers.LayerWasSelected;
+import shipeditor.components.viewer.layers.ViewerLayer;
+
+public class EventSubscriptionExample {
+
+    private final Object parentComponent;
+
+    public EventSubscriptionExample(Object parentComponent) {
+        this.parentComponent = parentComponent;
+    }
+
+    public void registerListeners() {
+        // Lifecycle-bound subscription. Automatically cleaned up when the parent is GC'd.
+        EventBus.subscribe(parentComponent, event -> {
+            if (event instanceof LayerWasSelected checked) {
+                handleLayerSelected(checked.selected());
+            }
+        });
+    }
+
+    private void handleLayerSelected(ViewerLayer selected) {
+        if (selected == null) {
+            return;
+        }
+        System.out.println("Selected layer: " + selected.getSprite());
+    }
+}

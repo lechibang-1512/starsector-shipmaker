@@ -1,12 +1,11 @@
 package shipeditor.components.instrument.weapon;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.LayerTabUpdated;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.weapon.WeaponLayer;
-import shipeditor.representation.weapon.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
 import shipeditor.representation.weapon.WeaponSpecFile;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.components.ComponentUtilities;
 
 import javax.swing.JCheckBox;
@@ -16,16 +15,18 @@ import javax.swing.JTextField;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.Objects;
+import shipeditor.communication.events.components.ComponentEvents.LayerTabUpdated;
 
 public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
 
     private WeaponLayer cachedLayer;
     private JTextField idEditor;
+    private JComboBox<String> specClassSelector;
     private JComboBox<WeaponType> typeSelector;
     private JComboBox<WeaponSize> sizeSelector;
     private JComboBox<WeaponType> mountTypeOverrideSelector;
-    private JTextField collisionClassEditor;
-    private JTextField collisionClassByFighterEditor;
+    private JComboBox<String> collisionClassSelector;
+    private JComboBox<String> collisionClassByFighterSelector;
 
     private JCheckBox showDamageWhenDecorativeCheckbox;
     private JCheckBox passThroughMissilesCheckbox;
@@ -42,6 +43,7 @@ public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
         ComponentUtilities.outfitPanelWithTitle(this, new Insets(1, 0, 0, 0), "Weapon data");
 
         addIDPanel();
+        addSpecClassSelector();
         addTypeSelector();
         addSizeSelector();
         addMountTypeOverrideSelector();
@@ -62,6 +64,29 @@ public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
         ComponentUtilities.addLabelAndComponent(this, label, idEditor, 0);
     }
 
+    private static final String[] SPEC_CLASS_SUGGESTIONS = {"projectile", "beam"};
+
+    private void addSpecClassSelector() {
+        JLabel label = new JLabel("Spec Class:");
+        specClassSelector = new JComboBox<>(SPEC_CLASS_SUGGESTIONS);
+        specClassSelector.setEditable(true);
+        specClassSelector.addActionListener(e -> {
+            if (readyForInput && cachedLayer != null) {
+                WeaponSpecFile spec = cachedLayer.getSpecFile();
+                if (spec != null) {
+                    String selected = (String) specClassSelector.getSelectedItem();
+                    if (!Objects.equals(spec.getSpecClass(), selected)) {
+                        spec.setSpecClass(selected);
+                        EventBus.publish(new LayerTabUpdated(cachedLayer));
+                        processChange();
+                    }
+                }
+            }
+        });
+
+        ComponentUtilities.addLabelAndComponent(this, label, specClassSelector, 1);
+    }
+
     private void addTypeSelector() {
         JLabel label = new JLabel("Type:");
         typeSelector = new JComboBox<>(WeaponType.values());
@@ -79,7 +104,7 @@ public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
             }
         });
 
-        ComponentUtilities.addLabelAndComponent(this, label, typeSelector, 1);
+        ComponentUtilities.addLabelAndComponent(this, label, typeSelector, 2);
     }
 
     private void addSizeSelector() {
@@ -99,7 +124,7 @@ public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
             }
         });
 
-        ComponentUtilities.addLabelAndComponent(this, label, sizeSelector, 2);
+        ComponentUtilities.addLabelAndComponent(this, label, sizeSelector, 3);
     }
 
     private void addMountTypeOverrideSelector() {
@@ -119,18 +144,27 @@ public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
             }
         });
 
-        ComponentUtilities.addLabelAndComponent(this, label, mountTypeOverrideSelector, 3);
+        ComponentUtilities.addLabelAndComponent(this, label, mountTypeOverrideSelector, 4);
     }
+
+    private static final String[] COLLISION_CLASS_SUGGESTIONS = {
+        "NONE", "RAY", "RAY_FIGHTER", "FIGHTER", "SHIP",
+        "PROJECTILE_NO_FF", "PROJECTILE_FF",
+        "MISSILE_NO_FF", "MISSILE_FF",
+        "HITS_SHIPS_AND_ASTEROIDS",
+        "HITS_SHIPS_ONLY_FF", "HITS_SHIPS_ONLY_NO_FF",
+        "PROJECTILE_FIGHTER", "ASTEROID"
+    };
 
     private void addCollisionClassPanel() {
         JLabel label = new JLabel("Collision Class:");
-        collisionClassEditor = new JTextField();
-        collisionClassEditor.setColumns(10);
-        collisionClassEditor.addActionListener(e -> {
+        collisionClassSelector = new JComboBox<>(COLLISION_CLASS_SUGGESTIONS);
+        collisionClassSelector.setEditable(true);
+        collisionClassSelector.addActionListener(e -> {
             if (readyForInput && cachedLayer != null) {
                 WeaponSpecFile spec = cachedLayer.getSpecFile();
                 if (spec != null) {
-                    String text = collisionClassEditor.getText();
+                    String text = (String) collisionClassSelector.getSelectedItem();
                     if (!Objects.equals(spec.getCollisionClass(), text)) {
                         spec.setCollisionClass(text);
                         EventBus.publish(new LayerTabUpdated(cachedLayer));
@@ -140,18 +174,18 @@ public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
             }
         });
 
-        ComponentUtilities.addLabelAndComponent(this, label, collisionClassEditor, 4);
+        ComponentUtilities.addLabelAndComponent(this, label, collisionClassSelector, 5);
     }
 
     private void addCollisionClassByFighterPanel() {
         JLabel label = new JLabel("Collision Class By Fighter:");
-        collisionClassByFighterEditor = new JTextField();
-        collisionClassByFighterEditor.setColumns(10);
-        collisionClassByFighterEditor.addActionListener(e -> {
+        collisionClassByFighterSelector = new JComboBox<>(COLLISION_CLASS_SUGGESTIONS);
+        collisionClassByFighterSelector.setEditable(true);
+        collisionClassByFighterSelector.addActionListener(e -> {
             if (readyForInput && cachedLayer != null) {
                 WeaponSpecFile spec = cachedLayer.getSpecFile();
                 if (spec != null) {
-                    String text = collisionClassByFighterEditor.getText();
+                    String text = (String) collisionClassByFighterSelector.getSelectedItem();
                     if (!Objects.equals(spec.getCollisionClassByFighter(), text)) {
                         spec.setCollisionClassByFighter(text);
                         EventBus.publish(new LayerTabUpdated(cachedLayer));
@@ -161,7 +195,7 @@ public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
             }
         });
 
-        ComponentUtilities.addLabelAndComponent(this, label, collisionClassByFighterEditor, 5);
+        ComponentUtilities.addLabelAndComponent(this, label, collisionClassByFighterSelector, 6);
     }
 
     private void addMiscCheckboxes() {
@@ -178,7 +212,7 @@ public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
                 }
             }
         });
-        ComponentUtilities.addLabelAndComponent(this, new JLabel(), showDamageWhenDecorativeCheckbox, 6);
+        ComponentUtilities.addLabelAndComponent(this, new JLabel(), showDamageWhenDecorativeCheckbox, 7);
 
         passThroughMissilesCheckbox = new JCheckBox("Pass Through Missiles");
         passThroughMissilesCheckbox.addActionListener(e -> {
@@ -193,7 +227,7 @@ public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
                 }
             }
         });
-        ComponentUtilities.addLabelAndComponent(this, new JLabel(), passThroughMissilesCheckbox, 7);
+        ComponentUtilities.addLabelAndComponent(this, new JLabel(), passThroughMissilesCheckbox, 8);
     }
 
     @Override
@@ -212,11 +246,12 @@ public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
         readyForInput = false;
 
         idEditor.setText(spec.getId() != null ? spec.getId() : "");
+        specClassSelector.setSelectedItem(spec.getSpecClass() != null ? spec.getSpecClass() : "");
         typeSelector.setSelectedItem(spec.getType());
         sizeSelector.setSelectedItem(spec.getSize());
         mountTypeOverrideSelector.setSelectedItem(spec.getMountTypeOverride());
-        collisionClassEditor.setText(spec.getCollisionClass() != null ? spec.getCollisionClass() : "");
-        collisionClassByFighterEditor.setText(spec.getCollisionClassByFighter() != null ? spec.getCollisionClassByFighter() : "");
+        collisionClassSelector.setSelectedItem(spec.getCollisionClass() != null ? spec.getCollisionClass() : "");
+        collisionClassByFighterSelector.setSelectedItem(spec.getCollisionClassByFighter() != null ? spec.getCollisionClassByFighter() : "");
         showDamageWhenDecorativeCheckbox.setSelected(spec.isShowDamageWhenDecorative());
         passThroughMissilesCheckbox.setSelected(spec.isPassThroughMissiles());
 
@@ -227,11 +262,12 @@ public class WeaponDataPanel extends AbstractWeaponPropertiesPanel {
         readyForInput = false;
 
         idEditor.setText("");
+        specClassSelector.setSelectedItem(null);
         typeSelector.setSelectedItem(null);
         sizeSelector.setSelectedItem(null);
         mountTypeOverrideSelector.setSelectedItem(null);
-        collisionClassEditor.setText("");
-        collisionClassByFighterEditor.setText("");
+        collisionClassSelector.setSelectedItem(null);
+        collisionClassByFighterSelector.setSelectedItem(null);
         showDamageWhenDecorativeCheckbox.setSelected(false);
         passThroughMissilesCheckbox.setSelected(false);
 

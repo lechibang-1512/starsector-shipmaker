@@ -1,8 +1,8 @@
 package shipeditor.utility.components.dialog;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.saving.HullSaveQueued;
-import shipeditor.communication.events.files.saving.VariantSaveQueued;
+import shipeditor.communication.events.files.FileEvents.HullSaveQueued;
+import shipeditor.communication.events.files.FileEvents.VariantSaveQueued;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.LayerManager;
 import shipeditor.components.viewer.layers.ship.ShipLayer;

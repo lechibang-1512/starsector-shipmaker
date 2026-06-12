@@ -11,11 +11,9 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvParser;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.LoadingActionFired;
-import shipeditor.communication.events.components.LoadingTaskCompleted;
-import shipeditor.communication.events.components.LoadingTaskStarted;
 
 import shipeditor.parsing.FileUtilities;
 import shipeditor.parsing.JsonProcessor;
@@ -59,6 +57,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import shipeditor.communication.events.components.ComponentEvents.LoadingTaskCompleted;
+import shipeditor.communication.events.components.ComponentEvents.LoadingTaskStarted;
+import shipeditor.communication.events.components.ComponentEvents.LoadingActionFired;
 
 @SuppressWarnings({ "ClassWithTooManyFields", "OverlyCoupledClass", "ClassWithTooManyMethods" })
 @Log4j2
@@ -88,8 +89,8 @@ public final class FileLoading {
     @Getter
     private static final Action loadSpriteAsHull = new LoadSpriteAsNewHull();
 
-    @Getter
-    private static boolean loadingInProgress;
+    @Getter @Setter
+    private static volatile boolean loadingInProgress;
 
     private static final Map<Path, SoftReference<Map<String, List<Path>>>> directoryIndices = new ConcurrentHashMap<>();
 
@@ -117,7 +118,11 @@ public final class FileLoading {
                 index.computeIfAbsent(fileName, k -> new ArrayList<>()).add(file);
             });
         } catch (IOException e) {
-            log.error("Failed to index folder: " + folderPath, e);
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.error(StringValues.FAILED_TO_INDEX_FOLDER, folderPath, e);
+            } else {
+                log.error(StringValues.FAILED_TO_INDEX_FOLDER, folderPath);
+            }
         }
         directoryIndices.put(folderPath, new SoftReference<>(index));
         return index;
@@ -128,23 +133,35 @@ public final class FileLoading {
 
     private static void initializeDatabaseInProcess() {
         try {
-            log.info("Starting in-process database indexing scan...");
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.info(StringValues.STARTING_DB_INDEX_SCAN);
+            }
             IndexScannerTask.scanAndIndexAll(false);
-            log.info("In-process database indexing scan completed.");
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.info(StringValues.DB_INDEX_SCAN_COMPLETED);
+            }
         } catch (RuntimeException e) {
-            log.error("Failed to execute in-process database indexing scan", e);
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.error(StringValues.DB_INDEX_SCAN_FAILED, e);
+            } else {
+                log.error(StringValues.DB_INDEX_SCAN_FAILED);
+            }
         }
     }
 
     public static CompletableFuture<List<Runnable>> loadGameData() {
         clearDirectoryCache();
         EventBus.publish(new LoadingActionFired(true));
-        loadingInProgress = true;
+        FileLoading.setLoadingInProgress(true);
 
         return CompletableFuture.runAsync(FileLoading::initializeDatabaseInProcess)
                 .thenCompose(v -> {
-                    List<DataLoadingAction> loadActions = List.of(loadShips, loadHullmods, loadHullStyles,
-                            loadEngineStyles, loadShipSystems, loadWings, loadWeapons);
+                    // Weapons and hullmods must commit their flags (setWeaponsDataLoaded / setHullmodDataLoaded)
+                    // on the EDT before the ship-data runnable fires HullTreeReloadQueued, which can trigger
+                    // variant initialization that guards on those two flags.  Background loading is concurrent
+                    // regardless of this list order; only the EDT runnable execution is sequential.
+                    List<DataLoadingAction> loadActions = List.of(loadWeapons, loadHullmods, loadHullStyles,
+                            loadEngineStyles, loadShipSystems, loadWings, loadShips);
 
                     List<CompletableFuture<Runnable>> futures = new ArrayList<>();
                     for (DataLoadingAction action : loadActions) {
@@ -162,12 +179,16 @@ public final class FileLoading {
                     return allOf.thenApply(val -> futures.stream().map(CompletableFuture::join).toList());
                 }).whenComplete((runnables, ex) -> {
                     if (ex != null) {
-                        log.error("Error during loading game data", ex);
+                        if (SettingsManager.isDeveloperModeEnabled()) {
+                            log.error(StringValues.ERROR_LOADING_GAME_DATA, ex);
+                        } else {
+                            log.error(StringValues.ERROR_LOADING_GAME_DATA);
+                        }
                     } else if (runnables != null) {
                         Runnable completionTasks = () -> {
                             clearDirectoryCache();
                             EventBus.publish(new LoadingActionFired(false));
-                            loadingInProgress = false;
+                            FileLoading.setLoadingInProgress(false);
                             StaticController.reselectCurrentLayer();
                             SettingsManager.updateFileFromRuntime();
                         };
@@ -176,11 +197,11 @@ public final class FileLoading {
                             completionTasks.run();
                         } else {
                             SwingUtilities.invokeLater(() -> {
-                                EventBus.publish(new LoadingTaskStarted("Updating UI"));
+                                EventBus.publish(new LoadingTaskStarted(StringValues.UPDATING_UI));
                                 // Delay the heavy UI rebuilds by one event cycle so the label can repaint first.
                                 SwingUtilities.invokeLater(() -> executeStaggered(new ArrayList<>(runnables), () -> {
                                     completionTasks.run();
-                                    EventBus.publish(new LoadingTaskCompleted("Updating UI"));
+                                    EventBus.publish(new LoadingTaskCompleted(StringValues.UPDATING_UI));
                                 }));
                             });
                         }
@@ -199,7 +220,11 @@ public final class FileLoading {
         try {
             task.run();
         } catch (Throwable t) {
-            log.error("Error during staggered UI execution", t);
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.error(StringValues.STAGGERED_UI_ERROR, t);
+            } else {
+                log.error(StringValues.STAGGERED_UI_ERROR);
+            }
         }
         SwingUtilities.invokeLater(() -> executeStaggered(tasks, onComplete));
     }
@@ -213,7 +238,7 @@ public final class FileLoading {
             @Override
             public void actionPerformed(ActionEvent e) {
                 EventBus.publish(new LoadingActionFired(true));
-                loadingInProgress = true;
+                FileLoading.setLoadingInProgress(true);
                 CompletableFuture<Runnable> loadResult = CompletableFuture.supplyAsync(() -> {
                     String taskName = loadAction.getTaskName();
                     SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskStarted(taskName)));
@@ -223,16 +248,20 @@ public final class FileLoading {
                 });
                 loadResult.whenComplete((runnable, ex) -> {
                     if (ex != null) {
-                        log.error("Error during async loading", ex);
+                        if (SettingsManager.isDeveloperModeEnabled()) {
+                            log.error(StringValues.ASYNC_LOADING_ERROR, ex);
+                        } else {
+                            log.error(StringValues.ASYNC_LOADING_ERROR);
+                        }
                         SwingUtilities.invokeLater(() -> {
                             EventBus.publish(new LoadingActionFired(false));
-                            loadingInProgress = false;
+                            FileLoading.setLoadingInProgress(false);
                         });
                     } else if (runnable != null) {
                         SwingUtilities.invokeLater(() -> {
                             runnable.run();
                             EventBus.publish(new LoadingActionFired(false));
-                            loadingInProgress = false;
+                            FileLoading.setLoadingInProgress(false);
                             SettingsManager.updateFileFromRuntime();
                         });
                     }
@@ -286,7 +315,7 @@ public final class FileLoading {
                     if (inputStream != null) {
                         return ImageIO.read(inputStream);
                     } else {
-                        throw new RuntimeException("Resource not found!");
+                        throw new RuntimeException(StringValues.RESOURCE_NOT_FOUND);
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -294,14 +323,18 @@ public final class FileLoading {
             }
             spriteFile = new File(pathURI);
         } catch (URISyntaxException e) {
-            String errorMsg = "Image resource loading failed, exception thrown at: " + spritePath;
+            String errorMsg = StringValues.IMAGE_RESOURCE_LOAD_FAILED.replace("{}", String.valueOf(spritePath));
             if (!java.awt.GraphicsEnvironment.isHeadless()) {
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                         errorMsg,
                         StringValues.FILE_LOADING_ERROR,
                         JOptionPane.ERROR_MESSAGE);
             } else {
-                log.error(errorMsg);
+                if (SettingsManager.isDeveloperModeEnabled()) {
+                    log.error(errorMsg, e);
+                } else {
+                    log.error(errorMsg);
+                }
             }
             return null;
         }
@@ -332,7 +365,7 @@ public final class FileLoading {
     @SuppressWarnings("MethodWithMultipleReturnPoints")
     public static File fetchDataFile(Path filePath, Path packageFolderPath) {
         if (filePath == null) {
-            log.error("Failed to fetch data file, input path is null.");
+            log.error(StringValues.FETCH_DATA_FILE_NULL);
             return null;
         }
         Path coreDataFolder = SettingsManager.getCoreFolderPath();
@@ -362,13 +395,13 @@ public final class FileLoading {
         if (result != null) {
             return result.toFile();
         } else {
-            log.error("Failed to fetch data file for {}!", filePath.getFileName());
+            log.error(StringValues.FETCH_DATA_FILE_FAILED, filePath.getFileName());
         }
         return null;
     }
 
     public static HullSpecFile loadHullFile(File file) {
-        HullSpecFile hullSpecFile = FileLoading.loadDataFile(file, ".ship", HullSpecFile.class);
+        HullSpecFile hullSpecFile = FileLoading.loadDataFile(file, StringConstants.SHIP_EXTENSION, HullSpecFile.class);
         if (hullSpecFile != null) {
             hullSpecFile.setFilePath(file.toPath());
             GameDataRepository.putSpec(hullSpecFile);
@@ -377,12 +410,12 @@ public final class FileLoading {
     }
 
     static WeaponSpecFile loadWeaponFile(File file) {
-        WeaponSpecFile weaponSpecFile = FileLoading.loadDataFile(file, ".wpn", WeaponSpecFile.class);
+        WeaponSpecFile weaponSpecFile = FileLoading.loadDataFile(file, StringConstants.WEAPON_EXTENSION, WeaponSpecFile.class);
         if (weaponSpecFile != null) {
             weaponSpecFile.setWeaponSpecFilePath(file.toPath());
 
             if (weaponSpecFile.getType() == null) {
-                log.error("Weapon type is NULL in: {}", file.getName());
+                log.error(StringValues.WEAPON_TYPE_NULL, file.getName());
             }
 
         }
@@ -390,7 +423,7 @@ public final class FileLoading {
     }
 
     public static SkinSpecFile loadSkinFile(File file) {
-        SkinSpecFile skinSpecFile = FileLoading.loadDataFile(file, ".skin", SkinSpecFile.class);
+        SkinSpecFile skinSpecFile = FileLoading.loadDataFile(file, StringConstants.SKIN_EXTENSION, SkinSpecFile.class);
         if (skinSpecFile != null) {
             skinSpecFile.setFilePath(file.toPath());
             GameDataRepository.putSpec(skinSpecFile);
@@ -407,7 +440,7 @@ public final class FileLoading {
     }
 
     static ProjectileSpecFile loadProjectileFile(File file) {
-        ProjectileSpecFile projectileFile = FileLoading.loadDataFile(file, ".proj", ProjectileSpecFile.class);
+        ProjectileSpecFile projectileFile = FileLoading.loadDataFile(file, StringConstants.PROJECTILE_EXTENSION, ProjectileSpecFile.class);
         if (projectileFile != null) {
             projectileFile.setProjectileSpecFilePath(file.toPath());
         }
@@ -416,37 +449,47 @@ public final class FileLoading {
 
     private static <T> T loadDataFile(File file, String extension, Class<T> dataClass) {
         if (file == null || !file.exists()) {
-            log.error("Data file does not exist: {}", file != null ? file.getPath() : "null");
+            log.error(StringValues.DATA_FILE_NOT_EXIST, file != null ? file.getPath() : "null");
             return null;
         }
         String toString = file.getPath();
         if (!toString.endsWith(extension)) {
-            throw new IllegalArgumentException("Tried to resolve data file with invalid extension!");
+            throw new IllegalArgumentException(StringValues.INVALID_FILE_EXTENSION);
         }
 
         if (file.length() == 0) {
-            log.warn("Data file is completely empty, skipping: {}", file.getName());
+            log.warn(StringValues.DATA_FILE_EMPTY, file.getName());
             return null;
         }
 
         T dataFile;
         try {
             ObjectMapper objectMapper = FileUtilities.getConfigured();
-            log.trace("Opening data file: {}", file.getName());
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.trace(StringValues.OPENING_DATA_FILE, file.getName());
+            }
             dataFile = objectMapper.readValue(file, dataClass);
         } catch (IOException e) {
-            log.trace("Data file parsing failed, retrying with correction: {}", file.getName());
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.trace(StringValues.DATA_FILE_PARSE_FAILED_RETRY, file.getName());
+            }
 
             dataFile = FileLoading.parseCorrectableJSON(file, dataClass);
             if (dataFile == null) {
                 if (e.getClass().getSimpleName().equals("MismatchedInputException") &&
-                    e.getMessage() != null && e.getMessage().contains("No content to map due to end-of-input")) {
-                    log.warn("Data file has no parsable content, skipping: {}", file.getName());
+                    e.getMessage() != null && e.getMessage().contains(StringValues.NO_CONTENT_TO_MAP)) {
+                    log.warn(StringValues.DATA_FILE_NO_CONTENT, file.getName());
                 } else {
-                    log.error("Data file parsing failed conclusively: {}", file.getName());
-                    Errors.printToStream(e);
+                    if (SettingsManager.isDeveloperModeEnabled()) {
+                        log.error(StringValues.DATA_FILE_PARSE_FAILED, file.getName(), e);
+                    } else {
+                        log.error(StringValues.DATA_FILE_PARSE_FAILED, file.getName());
+                    }
+                    if (SettingsManager.isDeveloperModeEnabled()) {
+                        Errors.printToStream(e);
+                    }
                     if (SettingsManager.areFileErrorPopupsEnabled()) {
-                        Errors.showFileError("Data file parsing failed, exception thrown at: " + file);
+                        Errors.showFileError(StringValues.DATA_FILE_PARSE_EXCEPTION + file, e);
                     }
                 }
             }
@@ -476,9 +519,13 @@ public final class FileLoading {
         try (JsonParser parser = objectMapper.createParser(content)) {
             result = objectMapper.readValue(parser, targetType);
         } catch (IOException e) {
-            log.error("Corrected JSON parsing failed: {}", file.getName());
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.error(StringValues.CORRECTED_JSON_PARSE_FAILED, file.getName(), e);
+                Errors.printToStream(e);
+            } else {
+                log.error(StringValues.CORRECTED_JSON_PARSE_FAILED, file.getName());
+            }
             result = null;
-            Errors.printToStream(e);
         }
         return result;
     }
@@ -525,25 +572,32 @@ public final class FileLoading {
         }
 
         if (csvFile.length() == 0) {
-            log.warn("CSV file is completely empty, skipping: {}", csvFile.getName());
+            log.warn(StringValues.CSV_FILE_EMPTY, csvFile.getName());
             return null;
         }
 
         List<Map<String, String>> csvData = new ArrayList<>();
         try {
             csvData = FileLoading.readCSVWithCharset(csvFile, csvMapper, csvSchema, validationPredicate,
-                    StandardCharsets.UTF_8);
+                    StandardCharsets.ISO_8859_1);
         } catch (Throwable exception) {
-            log.warn("UTF-8 CSV loading failed: {}, retrying with ISO_8859_1", csvFile.getAbsolutePath());
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.warn(StringValues.CSV_ISO_LOAD_FAILED, csvFile.getAbsolutePath(), exception);
+            } else {
+                log.warn(StringValues.CSV_ISO_LOAD_FAILED, csvFile.getAbsolutePath());
+            }
             try {
                 csvData = FileLoading.readCSVWithCharset(csvFile, csvMapper, csvSchema, validationPredicate,
-                        StandardCharsets.ISO_8859_1);
+                        StandardCharsets.UTF_8);
             } catch (Throwable fallbackException) {
-                log.error("Data CSV loading failed on fallback: {}", csvFile.getAbsolutePath());
-                Errors.printToStream(fallbackException);
+                if (SettingsManager.isDeveloperModeEnabled()) {
+                    log.error(StringValues.CSV_FALLBACK_LOAD_FAILED, csvFile.getAbsolutePath(), fallbackException);
+                    Errors.printToStream(fallbackException);
+                } else {
+                    log.error(StringValues.CSV_FALLBACK_LOAD_FAILED, csvFile.getAbsolutePath());
+                }
                 if (SettingsManager.areFileErrorPopupsEnabled()) {
-                    Errors.showFileError("Failed to parse CSV table (likely semantic errors), " +
-                            "loading incomplete: " + csvFile);
+                    Errors.showFileError(StringValues.CSV_PARSE_FAILED + csvFile, fallbackException);
                 }
                 return csvData;
             }
@@ -562,7 +616,6 @@ public final class FileLoading {
                         .readValues(reader)) {
 
             CsvSchema parsedSchema = (CsvSchema) iterator.getParser().getSchema();
-            SettingsManager.getGameData().putCsvSchemaForPath(csvFile.toPath(), parsedSchema);
 
             while (iterator.hasNext()) {
                 Map<String, String> row = iterator.next();
@@ -571,7 +624,7 @@ public final class FileLoading {
                     csvData.add(row);
                 }
             }
-            SettingsManager.getGameData().putRawCSVDataForPath(csvFile.toPath(), rawData);
+            SettingsManager.getGameData().putCachedCSVData(csvFile.toPath(), rawData, parsedSchema);
         }
         return csvData;
     }
@@ -581,15 +634,14 @@ public final class FileLoading {
             String id = row.get(StringConstants.ID);
             String name = row.get("name");
             boolean validID = id != null && !id.isEmpty();
-            return validID && !name.startsWith("#");
+            return validID && (name == null || !name.startsWith("#"));
         };
     }
 
     static Predicate<Map<String, String>> getWingValidationPredicate() {
         return row -> {
             String id = row.get(StringConstants.ID);
-            boolean validID = id != null && !id.isEmpty();
-            return validID && !id.startsWith("#");
+            return id != null && !id.isEmpty() && !id.startsWith("#");
         };
     }
 
@@ -603,7 +655,9 @@ public final class FileLoading {
      * @return the list of raw row maps, or null if re-parsing fails.
      */
     public static List<Map<String, String>> reparseCSVForPath(Path path) {
-        log.trace("Re-parsing CSV from disk (SoftReference was cleared): {}", path);
+        if (SettingsManager.isDeveloperModeEnabled()) {
+            log.trace(StringValues.REPARSING_CSV_DISK, path);
+        }
         CsvMapper csvMapper = new CsvMapper();
         csvMapper.configure(CsvParser.Feature.IGNORE_TRAILING_UNMAPPABLE, true);
         CsvSchema csvSchema = CsvSchema.emptySchema().withHeader();
@@ -614,12 +668,16 @@ public final class FileLoading {
         // Accept all rows — we need the complete raw data for saving.
         Predicate<Map<String, String>> acceptAll = row -> true;
         try {
-            return readCSVWithCharset(csvFile, csvMapper, csvSchema, acceptAll, StandardCharsets.UTF_8);
+            return readCSVWithCharset(csvFile, csvMapper, csvSchema, acceptAll, StandardCharsets.ISO_8859_1);
         } catch (Throwable e) {
             try {
-                return readCSVWithCharset(csvFile, csvMapper, csvSchema, acceptAll, StandardCharsets.ISO_8859_1);
+                return readCSVWithCharset(csvFile, csvMapper, csvSchema, acceptAll, StandardCharsets.UTF_8);
             } catch (Throwable fallback) {
-                log.error("Failed to re-parse CSV on fallback: {}", path, fallback);
+                if (SettingsManager.isDeveloperModeEnabled()) {
+                    log.error(StringValues.CSV_REPARSE_FALLBACK_FAILED, path, fallback);
+                } else {
+                    log.error(StringValues.CSV_REPARSE_FALLBACK_FAILED, path);
+                }
                 return null;
             }
         }

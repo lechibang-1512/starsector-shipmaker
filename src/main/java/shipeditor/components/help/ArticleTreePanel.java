@@ -1,10 +1,9 @@
 package shipeditor.components.help;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.GameDataPanelResized;
 import shipeditor.components.datafiles.trees.DataTreePanel;
-import shipeditor.components.datafiles.OpenDataTarget;
-import shipeditor.components.help.parts.ArticlePart;
+import shipeditor.components.ComponentEnums.OpenDataTarget;
+import shipeditor.components.help.parts.ArticleComponents.ArticlePart;
 import shipeditor.utility.components.containers.TextScrollPanel;
 
 import javax.swing.BoxLayout;
@@ -17,6 +16,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.FlowLayout;
 import java.util.List;
+import shipeditor.communication.events.components.ComponentEvents.GameDataPanelResized;
 
 class ArticleTreePanel extends DataTreePanel {
 

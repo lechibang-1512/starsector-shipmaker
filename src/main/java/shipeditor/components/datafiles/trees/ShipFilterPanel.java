@@ -3,29 +3,18 @@ package shipeditor.components.datafiles.trees;
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.HullTreeReloadQueued;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
-import shipeditor.representation.ship.HullSize;
-import shipeditor.representation.ship.SkinSpecFile;
-import shipeditor.utility.components.ComponentUtilities;
+import shipeditor.representation.RepresentationEnums.HullSize;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
+import shipeditor.representation.ship.SkinSpecFile;
+
 import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import javax.swing.border.EmptyBorder;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Insets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
-import shipeditor.utility.components.UIConstants;
+import shipeditor.communication.events.files.FileEvents.HullTreeReloadQueued;
 
 public class ShipFilterPanel extends AbstractFilterPanel {
 
@@ -36,14 +25,19 @@ public class ShipFilterPanel extends AbstractFilterPanel {
     @Getter
     private static final Map<HullSize, Boolean> SIZE_FILTERS = new EnumMap<>(HullSize.class);
 
+
+
     @SuppressWarnings("StaticCollection")
     @Getter @Setter
     private static Map<Path, Boolean> factionFilters;
+
+    private static boolean isMatchAny = false;
 
     static {
         for (HullSize size : HullSize.values()) {
             SIZE_FILTERS.put(size, true);
         }
+
     }
 
     public ShipFilterPanel() {
@@ -52,19 +46,22 @@ public class ShipFilterPanel extends AbstractFilterPanel {
     }
 
     @Override
-    protected void initFilterPanelContent(JPanel filtersPane) {
-        JPanel selectionButtons = this.getSelectionButtonsPanel();
-        filtersPane.add(selectionButtons);
+    protected boolean isMatchAny() {
+        return isMatchAny;
+    }
 
-        Dimension padding = UIConstants.PADDING_10_4;
+    @Override
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
+    protected void setMatchAny(boolean matchAny) {
+        isMatchAny = matchAny;
+    }
+
+    @Override
+    protected void initTabs(javax.swing.JTabbedPane tabbedPane) {
         if (factionFilters != null) {
-            filtersPane.add(Box.createRigidArea(padding));
-            filtersPane.add(this.createFactionFilters());
+            this.addTab(tabbedPane, "Faction / Package", this.createFactionFilters());
         }
-
-        filtersPane.add(Box.createRigidArea(padding));
-        filtersPane.add(this.createHullSizeFilters());
-        filtersPane.add(Box.createRigidArea(padding));
+        this.addTab(tabbedPane, "Hull size", this.createHullSizeFilters());
     }
 
     @Override
@@ -74,6 +71,19 @@ public class ShipFilterPanel extends AbstractFilterPanel {
         }
         SIZE_FILTERS.forEach((key, aBoolean) -> SIZE_FILTERS.put(key, enable));
         this.updateAllFilterBoxes(enable);
+    }
+
+    @Override
+    protected void invertAll() {
+        if (factionFilters != null) {
+            factionFilters.forEach((key, aBoolean) -> factionFilters.put(key, !aBoolean));
+        }
+        SIZE_FILTERS.forEach((key, aBoolean) -> SIZE_FILTERS.put(key, !aBoolean));
+        this.updateAllFilterBoxesInverted();
+    }
+
+    @Override
+    protected void applyFilters() {
         EventBus.publish(new HullTreeReloadQueued());
     }
 
@@ -86,7 +96,7 @@ public class ShipFilterPanel extends AbstractFilterPanel {
                     return fileName != null ? fileName.toString() : "";
                 },
                 null,
-                HullTreeReloadQueued::new);
+                true);
     }
 
     private JPanel createHullSizeFilters() {
@@ -96,8 +106,10 @@ public class ShipFilterPanel extends AbstractFilterPanel {
                 SIZE_FILTERS,
                 HullSize::getDisplayedName,
                 null,
-                HullTreeReloadQueued::new);
+                false);
     }
+
+
 
     private static boolean shouldDisplayByHandle(ShipCSVEntry entry) {
         if (currentTextFilter == null || currentTextFilter.isEmpty()) return true;
@@ -163,9 +175,18 @@ public class ShipFilterPanel extends AbstractFilterPanel {
         for (Map.Entry<Path, List<ShipCSVEntry>> entryPackage : shipEntriesByPackage.entrySet()) {
             List<ShipCSVEntry> entryList = entryPackage.getValue();
             List<ShipCSVEntry> filteredList = entryList.stream()
-                    .filter(ShipFilterPanel::shouldDisplayByFaction)
-                    .filter(ShipFilterPanel::shouldDisplayBySize)
-                    .filter(ShipFilterPanel::shouldDisplayByHandle)
+                    .filter(entry -> {
+                        if (!shouldDisplayByHandle(entry)) return false;
+                        
+                        boolean byFaction = shouldDisplayByFaction(entry);
+                        boolean bySize = shouldDisplayBySize(entry);
+                        
+                        if (isMatchAny) {
+                            return byFaction || bySize;
+                        } else {
+                            return byFaction && bySize;
+                        }
+                    })
                     .toList();
             if (!filteredList.isEmpty()) {
                 filteredResult.put(entryPackage.getKey(), filteredList);

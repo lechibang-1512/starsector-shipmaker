@@ -1,10 +1,10 @@
 package shipeditor.components.datafiles.trees;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.WingDataLoaded;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
+import shipeditor.communication.events.files.FileEvents.WingDataLoaded;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
 import shipeditor.components.datafiles.entities.WingCSVEntry;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.data.ShipHull;
@@ -77,7 +77,7 @@ public class WingsTreePanel extends CSVDataTreePanel<WingCSVEntry>{
     @Override
     protected void initWalkerListening() {
         EventBus.subscribe(this, event -> {
-            if (event instanceof WingDataLoaded checked) {
+            if (event instanceof WingDataLoaded) {
                 this.queueReload();
             }
         });
@@ -85,8 +85,6 @@ public class WingsTreePanel extends CSVDataTreePanel<WingCSVEntry>{
 
     @Override
     void populateEntries(Map<Path, List<WingCSVEntry>> entriesByPackage) {
-        GameDataRepository data = SettingsManager.getGameData();
-        if (!data.isShipDataLoaded()) return;
         super.populateEntries(entriesByPackage);
     }
 
@@ -109,7 +107,7 @@ public class WingsTreePanel extends CSVDataTreePanel<WingCSVEntry>{
         variantWrapper.setLayout(new BoxLayout(variantWrapper, BoxLayout.PAGE_AXIS));
 
         List<VariantFile> memberVariantFile = Collections.singletonList(selected.retrieveMemberVariant());
-        JPanel variantPanel = DataTreePanel.createVariantsPanel(memberVariantFile, false);
+        JPanel variantPanel = DataTreeVariantPanelBuilder.createVariantsPanel(memberVariantFile, false);
         variantWrapper.add(variantPanel);
 
         constraints.gridy = 1;

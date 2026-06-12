@@ -2,7 +2,7 @@ package shipeditor.components.viewer.layers.weapon;
 
 import lombok.Getter;
 import lombok.Setter;
-import shipeditor.representation.weapon.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.utility.graphics.Sprite;
 
 import java.awt.geom.Point2D;

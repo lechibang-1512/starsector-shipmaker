@@ -2,10 +2,12 @@ package shipeditor.parsing.loading;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.ShipSystemsLoaded;
+import shipeditor.communication.events.files.FileEvents.ShipSystemsLoaded;
 import shipeditor.components.datafiles.entities.ShipSystemCSVEntry;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
+import shipeditor.utility.text.StringConstants;
+import shipeditor.utility.text.StringValues;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -15,13 +17,14 @@ import java.util.Map;
 public class LoadShipSystemDataAction extends LoadCSVDataAction<ShipSystemCSVEntry> {
 
     LoadShipSystemDataAction() {
-        super("SHIPSYSTEM_CSV");
+        super(StringConstants.SHIPSYSTEM_CSV_TYPE);
     }
 
     @Override
     protected void publishResult(Map<Path, List<ShipSystemCSVEntry>> entriesByPackage) {
         GameDataRepository gameData = SettingsManager.getGameData();
         gameData.setShipSystemEntriesByPackage(entriesByPackage);
+        gameData.setShipsystemDataLoaded(true);
         EventBus.publish(new ShipSystemsLoaded(entriesByPackage));
     }
 
@@ -32,7 +35,7 @@ public class LoadShipSystemDataAction extends LoadCSVDataAction<ShipSystemCSVEnt
 
     @Override
     public String getTaskName() {
-        return "Ship Systems";
+        return StringValues.TASK_SHIP_SYSTEMS;
     }
 
 }

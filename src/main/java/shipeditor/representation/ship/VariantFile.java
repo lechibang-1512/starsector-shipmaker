@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.components.viewer.layers.ship.data.Variant;
-import shipeditor.parsing.deserialize.ModulesDeserializer;
+import shipeditor.parsing.deserialize.CustomDeserializers.ModulesDeserializer;
 import shipeditor.parsing.serialize.VariantFileSerializer;
 import shipeditor.representation.GameDataRepository;
 import shipeditor.utility.text.StringConstants;

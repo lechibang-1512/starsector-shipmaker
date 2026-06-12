@@ -1,11 +1,9 @@
 package shipeditor.components.datafiles.styles;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.HullStylesLoaded;
-import shipeditor.parsing.loading.FileLoading;
+import shipeditor.communication.events.files.FileEvents.HullStylesLoaded;
 import shipeditor.representation.ship.HullStyle;
 import shipeditor.utility.components.ComponentUtilities;
-import shipeditor.utility.objects.Pair;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;

@@ -7,7 +7,7 @@ import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.Events;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.BoundPoint;
 import shipeditor.components.viewer.entities.ShieldCenterPoint;

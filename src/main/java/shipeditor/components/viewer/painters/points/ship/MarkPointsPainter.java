@@ -5,7 +5,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.points.PointCreationQueued;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.MarkPoint;
 import shipeditor.components.viewer.entities.WorldPoint;
@@ -13,6 +12,7 @@ import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 
 import java.util.ArrayList;
 import java.util.List;
+import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
 
 /** * Meant to be used to place freeform points, for measuring or visual help.*/
 @Getter

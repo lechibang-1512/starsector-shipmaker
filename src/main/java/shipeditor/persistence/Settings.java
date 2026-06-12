@@ -8,10 +8,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
-import shipeditor.parsing.deserialize.ColorArrayRGBADeserializer;
-import shipeditor.parsing.serialize.ColorArrayRGBASerializer;
+import shipeditor.parsing.deserialize.CustomDeserializers.ColorArrayRGBADeserializer;
+import shipeditor.parsing.serialize.CustomSerializers.ColorArrayRGBASerializer;
 import shipeditor.utility.objects.SimpleRectangle;
-import shipeditor.utility.themes.Theme;
+import shipeditor.utility.UtilityEnums.Theme;
 
 import java.awt.Color;
 import java.nio.file.Path;
@@ -43,6 +43,9 @@ public class Settings {
 
     @JsonProperty("showLoadingErrors")
     boolean showLoadingErrors;
+
+    @JsonProperty("developerMode")
+    boolean developerMode;
 
     @JsonProperty("loadDataAtStart")
     boolean loadDataAtStart = true;
@@ -101,6 +104,11 @@ public class Settings {
 
     public void setShowLoadingErrors(boolean showErrors) {
         this.showLoadingErrors = showErrors;
+        SettingsManager.updateFileFromRuntime();
+    }
+
+    public void setDeveloperMode(boolean devMode) {
+        this.developerMode = devMode;
         SettingsManager.updateFileFromRuntime();
     }
 

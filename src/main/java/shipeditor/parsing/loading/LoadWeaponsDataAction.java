@@ -2,7 +2,6 @@ package shipeditor.parsing.loading;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.WeaponTreeReloadQueued;
 import shipeditor.components.datafiles.entities.WeaponCSVEntry;
 import shipeditor.persistence.GameDataPackage;
 import shipeditor.persistence.Settings;
@@ -19,6 +18,8 @@ import java.util.concurrent.CompletableFuture;
 import shipeditor.persistence.database.IndexedFile;
 import shipeditor.persistence.database.DatabaseQueryService;
 import shipeditor.utility.text.StringConstants;
+import shipeditor.utility.text.StringValues;
+import shipeditor.communication.events.files.FileEvents.WeaponTreeReloadQueued;
 
 @Log4j2
 public class LoadWeaponsDataAction extends DataLoadingAction {
@@ -41,15 +42,14 @@ public class LoadWeaponsDataAction extends DataLoadingAction {
 
     @Override
     public String getTaskName() {
-        return "Weapons";
+        return StringValues.TASK_WEAPONS;
     }
 
     private static Runnable collectWeapons() {
         // Query weapon CSV files from DB, grouped by mod
-        Map<String, List<IndexedFile>> weaponCsvsByMod = DatabaseQueryService.getFilesByTypeGroupedByMod("WEAPON_CSV");
+        Map<String, List<IndexedFile>> weaponCsvsByMod = DatabaseQueryService.getFilesByTypeGroupedByMod(StringConstants.WEAPON_CSV_TYPE);
 
-        GameDataRepository gameData = SettingsManager.getGameData();
-        Map<String, WeaponCSVEntry> allWeapons = gameData.getAllWeaponEntries();
+        Map<String, WeaponCSVEntry> allWeapons = new java.util.concurrent.ConcurrentHashMap<>();
         Map<Path, List<WeaponCSVEntry>> entryListsByPackage = new HashMap<>();
 
         for (Map.Entry<String, List<IndexedFile>> entry : weaponCsvsByMod.entrySet()) {
@@ -61,7 +61,8 @@ public class LoadWeaponsDataAction extends DataLoadingAction {
             if (dataPackage != null && dataPackage.isDisabled()) continue;
             if (LibModFilter.isLibMod(folder)) continue;
 
-            Map<String, WeaponCSVEntry> weaponsFromPackage = LoadWeaponsDataAction.walkWeaponsFolder(folder);
+            IndexedFile weaponCsvFile = entry.getValue().isEmpty() ? null : entry.getValue().get(0);
+            Map<String, WeaponCSVEntry> weaponsFromPackage = LoadWeaponsDataAction.walkWeaponsFolder(folder, weaponCsvFile, entry.getKey());
 
             if (weaponsFromPackage != null) {
                 allWeapons.putAll(weaponsFromPackage);
@@ -71,6 +72,8 @@ public class LoadWeaponsDataAction extends DataLoadingAction {
         }
 
         return () -> {
+            GameDataRepository gameData = SettingsManager.getGameData();
+            gameData.setAllWeaponEntries(allWeapons);
             gameData.setWeaponsDataLoaded(true);
             gameData.setWeaponEntriesByPackage(entryListsByPackage);
         };
@@ -78,7 +81,7 @@ public class LoadWeaponsDataAction extends DataLoadingAction {
 
     private static Runnable collectProjectiles() {
         // Query all projectile files from DB grouped by mod
-        Map<String, List<IndexedFile>> projectilesByMod = DatabaseQueryService.getFilesByTypeGroupedByMod("PROJECTILE");
+        Map<String, List<IndexedFile>> projectilesByMod = DatabaseQueryService.getFilesByTypeGroupedByMod(StringConstants.PROJECTILE_TYPE);
 
         Map<String, ProjectileSpecFile> allProjectiles = new java.util.concurrent.ConcurrentHashMap<>();
         Map<Path, List<ProjectileSpecFile>> entryListsByPackage = new java.util.concurrent.ConcurrentHashMap<>();
@@ -90,18 +93,39 @@ public class LoadWeaponsDataAction extends DataLoadingAction {
                 GameDataPackage dataPackage = settings.getPackage(directory);
                 if (dataPackage == null || !dataPackage.isDisabled()) {
                     if (!LibModFilter.isLibMod(directory)) {
-                        log.trace("Fetching projectile files from database index for package: {}", directory);
+                        if (SettingsManager.isDeveloperModeEnabled()) {
+                            log.trace(StringValues.FETCHING_PROJECTILE_FILES_DB, directory);
+                        }
 
                         List<ProjectileSpecFile> packageProjectiles = new ArrayList<>();
                         entry.getValue().forEach(dbFile -> {
                             File projectileFile = dbFile.getFilePath().toFile();
-                            ProjectileSpecFile mapped = FileLoading.loadProjectileFile(projectileFile);
+                            ProjectileSpecFile mapped = null;
+                            if (dbFile.getParsedData() != null) {
+                                try {
+                                    mapped = shipeditor.parsing.FileUtilities.getConfigured().readValue(dbFile.getParsedData(), ProjectileSpecFile.class);
+                                } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                                    if (SettingsManager.isDeveloperModeEnabled()) {
+                                        log.error(StringValues.FAILED_DESERIALIZE_PROJECTILE_DB, projectileFile.getName(), e);
+                                    } else {
+                                        log.error(StringValues.FAILED_DESERIALIZE_PROJECTILE_DB, projectileFile.getName());
+                                    }
+                                }
+                            }
+                            if (mapped == null) {
+                                mapped = FileLoading.loadProjectileFile(projectileFile);
+                            }
                             if (mapped != null) {
                                 mapped.setContainingPackage(directory);
-                                allProjectiles.put(mapped.getId(), mapped);
+                                String projId = mapped.getId();
+                                if (projId == null || projId.isEmpty()) {
+                                    projId = dbFile.getEntityId();
+                                    mapped.setId(projId);
+                                }
+                                allProjectiles.put(projId, mapped);
                                 packageProjectiles.add(mapped);
                             } else if (projectileFile.length() > 0) {
-                                log.error("Failure to load spec, omitting from result data: {}", projectileFile);
+                                log.error(StringValues.FAILURE_TO_LOAD_SPEC, projectileFile);
                             }
                         });
                         if (!packageProjectiles.isEmpty()) {
@@ -121,40 +145,82 @@ public class LoadWeaponsDataAction extends DataLoadingAction {
         };
     }
 
-    private static Map<String, WeaponCSVEntry> walkWeaponsFolder(Path folder) {
+    private static Map<String, WeaponCSVEntry> walkWeaponsFolder(Path folder, IndexedFile weaponCsvFile, String modId) {
         Path weaponTablePath = Paths.get(folder.toString(), "data", StringConstants.WEAPONS, "weapon_data.csv");
 
-        log.trace("Parsing weapon CSV data at: {}..", weaponTablePath);
-        List<Map<String, String>> csvData = FileLoading.parseCSVTable(weaponTablePath);
-        log.trace("Weapon CSV data at {} retrieved successfully.", weaponTablePath);
+        List<Map<String, String>> csvData = null;
+        if (weaponCsvFile != null && weaponCsvFile.getParsedData() != null) {
+            try {
+                csvData = shipeditor.parsing.FileUtilities.getConfigured().readValue(
+                        weaponCsvFile.getParsedData(),
+                        new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, String>>>() {});
+                if (SettingsManager.isDeveloperModeEnabled()) {
+                    log.trace(StringValues.CSV_LOADED_DB_CACHE);
+                }
+            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                if (SettingsManager.isDeveloperModeEnabled()) {
+                    log.error(StringValues.CSV_DESERIALIZE_DB_CACHE_FAILED, e);
+                } else {
+                    log.error(StringValues.CSV_DESERIALIZE_DB_CACHE_FAILED);
+                }
+            }
+        }
 
         if (csvData == null) {
-            log.info("Weapon folder without CSV table at: {}", folder.toString());
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.trace(StringValues.PARSING_SHIP_CSV, weaponTablePath);
+            }
+            csvData = FileLoading.parseCSVTable(weaponTablePath);
+        }
+        if (SettingsManager.isDeveloperModeEnabled()) {
+            log.trace(StringValues.WEAPON_CSV_RETRIEVED_OK, weaponTablePath);
+        }
+
+        if (csvData == null) {
+            log.info(StringValues.WEAPON_FOLDER_NO_CSV, folder.toString());
             return null;
         }
 
-        log.trace("Fetching weapon files from database index for package: {}", folder);
-
-        Path fileNamePath = folder.getFileName();
-        if (fileNamePath == null) return null;
-        String modId = fileNamePath.toString();
-        if (SettingsManager.isCoreFolder(folder)) {
-            modId = "starsector-core";
+        if (SettingsManager.isDeveloperModeEnabled()) {
+            log.trace(StringValues.FETCHING_WEAPON_FILES_DB, folder);
         }
 
-        List<IndexedFile> dbFiles = DatabaseQueryService.getFilesByModAndTypeAsync(modId, "WEAPON").join();
+
+        List<IndexedFile> dbFiles = DatabaseQueryService.getFilesByModAndTypeAsync(modId, StringConstants.WEAPON_TYPE).join();
         Map<String, WeaponSpecFile> mappedWeaponSpecs = new java.util.concurrent.ConcurrentHashMap<>();
 
         dbFiles.parallelStream().forEach(dbFile -> {
             File weaponFile = dbFile.getFilePath().toFile();
-            WeaponSpecFile mapped = FileLoading.loadWeaponFile(weaponFile);
+            WeaponSpecFile mapped = null;
+            if (dbFile.getParsedData() != null) {
+                try {
+                    mapped = shipeditor.parsing.FileUtilities.getConfigured().readValue(dbFile.getParsedData(), WeaponSpecFile.class);
+                } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                    if (SettingsManager.isDeveloperModeEnabled()) {
+                        log.error(StringValues.FAILED_DESERIALIZE_WEAPON_SPEC_DB, weaponFile.getName(), e);
+                    } else {
+                        log.error(StringValues.FAILED_DESERIALIZE_WEAPON_SPEC_DB, weaponFile.getName());
+                    }
+                }
+            }
+            if (mapped == null) {
+                mapped = FileLoading.loadWeaponFile(weaponFile);
+            }
+            
             if (mapped != null) {
                 mapped.setTableFilePath(weaponTablePath);
                 mapped.setContainingPackage(folder);
-                mappedWeaponSpecs.put(mapped.getId(), mapped);
+                String weaponId = mapped.getId();
+                if (weaponId == null || weaponId.isEmpty()) {
+                    weaponId = dbFile.getEntityId();
+                    mapped.setId(weaponId);
+                }
+                mappedWeaponSpecs.put(weaponId, mapped);
             }
         });
-        log.trace("Fetched and mapped {} weapon files.", mappedWeaponSpecs.size());
+        if (SettingsManager.isDeveloperModeEnabled()) {
+            log.trace(StringValues.FETCHED_AND_MAPPED_WEAPONS, mappedWeaponSpecs.size());
+        }
 
         Map<String, WeaponCSVEntry> weaponEntries = new java.util.concurrent.ConcurrentHashMap<>();
         csvData.parallelStream().forEach(row -> {
@@ -166,8 +232,9 @@ public class LoadWeaponsDataAction extends DataLoadingAction {
                     newEntry.setSpecFile(matching);
                     weaponEntries.put(rowId, newEntry);
                 } else {
-                    log.trace("Weapon CSV entry does not have matching spec file, omitting from data repository. " +
-                            "ID: {}", rowId);
+                    if (SettingsManager.isDeveloperModeEnabled()) {
+                        log.trace(StringValues.WEAPON_CSV_ENTRY_NO_SPEC, rowId);
+                    }
                 }
             }
         });

@@ -5,36 +5,39 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.WeaponTreeReloadQueued;
 import shipeditor.components.datafiles.entities.CSVEntry;
 import shipeditor.components.datafiles.entities.WeaponCSVEntry;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.Errors;
 import shipeditor.utility.components.ComponentUtilities;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Insets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
-import shipeditor.utility.components.UIConstants;
+import shipeditor.communication.events.files.FileEvents.WeaponTreeReloadQueued;
 
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class WeaponFilterPanel extends AbstractFilterPanel {
+
+    public enum OPCostBracket {
+        LOW("0-4"), MEDIUM("5-9"), HIGH("10-14"), VERY_HIGH("15+");
+        private final String display;
+        OPCostBracket(String d) { this.display = d; }
+        public String getDisplay() { return display; }
+        public boolean matches(int cost) {
+            if (this == LOW) return cost <= 4;
+            if (this == MEDIUM) return cost >= 5 && cost <= 9;
+            if (this == HIGH) return cost >= 10 && cost <= 14;
+            return cost >= 15;
+        }
+    }
 
     @Getter
     @Setter
@@ -49,6 +52,10 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
     private static final Map<WeaponSize, Boolean> SIZE_FILTERS = new EnumMap<>(WeaponSize.class);
 
     @SuppressWarnings("StaticCollection")
+    @Getter
+    private static final Map<OPCostBracket, Boolean> OP_COST_FILTERS = new EnumMap<>(OPCostBracket.class);
+
+    @SuppressWarnings("StaticCollection")
     @Getter @Setter
     private static Map<Path, Boolean> packageFilters;
 
@@ -57,12 +64,17 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
 
     private static boolean filterBySelectedSlot;
 
+    private static boolean isMatchAny = false;
+
     static {
         for (WeaponType type : WeaponType.values()) {
             TYPE_FILTERS.put(type, true);
         }
         for (WeaponSize size : WeaponSize.values()) {
             SIZE_FILTERS.put(size, true);
+        }
+        for (OPCostBracket bracket : OPCostBracket.values()) {
+            OP_COST_FILTERS.put(bracket, true);
         }
     }
 
@@ -72,7 +84,18 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
     }
 
     @Override
-    protected void initFilterPanelContent(JPanel filtersPane) {
+    protected boolean isMatchAny() {
+        return isMatchAny;
+    }
+
+    @Override
+    @SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
+    protected void setMatchAny(boolean matchAny) {
+        isMatchAny = matchAny;
+    }
+
+    @Override
+    protected javax.swing.JComponent createHeaderComponent() {
         JCheckBox filterBySlot = new JCheckBox();
         filterBySlot.setText("Filter by last selected slot");
         filterBySlot.setToolTipText("Applied last, does not override other filters");
@@ -80,25 +103,18 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
         filterBySlot.setBorder(new EmptyBorder(6, 9, 6, 0));
         filterBySlot.addActionListener(e -> {
             filterBySelectedSlot = filterBySlot.isSelected();
-            EventBus.publish(new WeaponTreeReloadQueued());
         });
+        return filterBySlot;
+    }
 
-        this.add(filterBySlot, BorderLayout.PAGE_START);
-
-        JPanel buttonContainer = this.getSelectionButtonsPanel();
-        filtersPane.add(buttonContainer);
-
-        Dimension padding = UIConstants.PADDING_10_4;
+    @Override
+    protected void initTabs(javax.swing.JTabbedPane tabbedPane) {
         if (packageFilters != null) {
-            filtersPane.add(Box.createRigidArea(padding));
-            filtersPane.add(this.createPackageFilters());
+            this.addTab(tabbedPane, "Package", this.createPackageFilters());
         }
-
-        filtersPane.add(Box.createRigidArea(padding));
-        filtersPane.add(this.createWeaponTypeFilters());
-        filtersPane.add(Box.createRigidArea(padding));
-        filtersPane.add(this.createWeaponSizeFilters());
-        filtersPane.add(Box.createRigidArea(padding));
+        this.addTab(tabbedPane, "Weapon Type", this.createWeaponTypeFilters());
+        this.addTab(tabbedPane, "Weapon Size", this.createWeaponSizeFilters());
+        this.addTab(tabbedPane, "OP Cost", this.createOPCostFilters());
     }
 
     @Override
@@ -108,7 +124,23 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
         }
         TYPE_FILTERS.forEach((key, aBoolean) -> TYPE_FILTERS.put(key, enable));
         SIZE_FILTERS.forEach((key, aBoolean) -> SIZE_FILTERS.put(key, enable));
+        OP_COST_FILTERS.forEach((key, aBoolean) -> OP_COST_FILTERS.put(key, enable));
         this.updateAllFilterBoxes(enable);
+    }
+
+    @Override
+    protected void invertAll() {
+        if (packageFilters != null) {
+            packageFilters.forEach((key, aBoolean) -> packageFilters.put(key, !aBoolean));
+        }
+        TYPE_FILTERS.forEach((key, aBoolean) -> TYPE_FILTERS.put(key, !aBoolean));
+        SIZE_FILTERS.forEach((key, aBoolean) -> SIZE_FILTERS.put(key, !aBoolean));
+        OP_COST_FILTERS.forEach((key, aBoolean) -> OP_COST_FILTERS.put(key, !aBoolean));
+        this.updateAllFilterBoxesInverted();
+    }
+
+    @Override
+    protected void applyFilters() {
         EventBus.publish(new WeaponTreeReloadQueued());
     }
 
@@ -129,11 +161,21 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
         for (Map.Entry<Path, List<WeaponCSVEntry>> entryPackage : weaponEntriesByPackage.entrySet()) {
             List<WeaponCSVEntry> entryList = entryPackage.getValue();
             List<WeaponCSVEntry> filteredList = entryList.stream()
-                    .filter(WeaponFilterPanel::shouldDisplayByPackage)
-                    .filter(WeaponFilterPanel::shouldDisplayByType)
-                    .filter(WeaponFilterPanel::shouldDisplayBySize)
-                    .filter(WeaponFilterPanel::shouldDisplayByHandle)
-                    .filter(WeaponFilterPanel::shouldDisplayBySlot)
+                    .filter(entry -> {
+                        if (!shouldDisplayByHandle(entry)) return false;
+                        if (!shouldDisplayBySlot(entry)) return false; // Slot filter is always AND
+                        
+                        boolean byPackage = shouldDisplayByPackage(entry);
+                        boolean byType = shouldDisplayByType(entry);
+                        boolean bySize = shouldDisplayBySize(entry);
+                        boolean byCost = shouldDisplayByOPCost(entry);
+                        
+                        if (isMatchAny) {
+                            return byPackage || byType || bySize || byCost;
+                        } else {
+                            return byPackage && byType && bySize && byCost;
+                        }
+                    })
                     .toList();
             if (!filteredList.isEmpty()) {
                 Path entryPackageKey = entryPackage.getKey();
@@ -195,12 +237,22 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
             Errors.showFileError("Null weapon type was found in weapon spec: " + entry.getWeaponID(), exception);
             Errors.printToStream(exception);
         }
-        return TYPE_FILTERS.get(weaponType);
+        return TYPE_FILTERS.getOrDefault(weaponType, true);
     }
 
     private static boolean shouldDisplayByPackage(CSVEntry entry) {
         Path folderPath = entry.getPackageFolderPath();
         return packageFilters.get(folderPath);
+    }
+
+    private static boolean shouldDisplayByOPCost(WeaponCSVEntry entry) {
+        int cost = entry.getOPCost();
+        for (OPCostBracket bracket : OPCostBracket.values()) {
+            if (bracket.matches(cost) && OP_COST_FILTERS.getOrDefault(bracket, true)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean shouldDisplayByHandle(WeaponCSVEntry entry) {
@@ -223,21 +275,23 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
                     return fileName != null ? fileName.toString() : "";
                 },
                 null,
-                WeaponTreeReloadQueued::new);
+                true);
     }
 
     private JPanel createWeaponTypeFilters() {
-        Collection<WeaponType> weaponTypes = new ArrayList<>(List.of(WeaponType.values()));
-        weaponTypes.remove(WeaponType.STATION_MODULE);
-        weaponTypes.remove(WeaponType.SYSTEM);
-        weaponTypes.remove(WeaponType.BUILT_IN);
+        Collection<WeaponType> weaponTypes = new ArrayList<>(List.of(
+                WeaponType.BALLISTIC,
+                WeaponType.ENERGY,
+                WeaponType.MISSILE,
+                WeaponType.DECORATIVE
+        ));
 
         return this.createFilterSection("Weapon Type",
                 weaponTypes,
                 TYPE_FILTERS,
                 WeaponType::getDisplayedName,
                 type -> ComponentUtilities.createColorIconLabel(type.getColor()),
-                WeaponTreeReloadQueued::new);
+                false);
     }
 
     private JPanel createWeaponSizeFilters() {
@@ -247,7 +301,17 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
                 SIZE_FILTERS,
                 WeaponSize::getDisplayedName,
                 null,
-                WeaponTreeReloadQueued::new);
+                false);
+    }
+
+    private JPanel createOPCostFilters() {
+        Iterable<OPCostBracket> brackets = new ArrayList<>(List.of(OPCostBracket.values()));
+        return this.createFilterSection("OP Cost",
+                brackets,
+                OP_COST_FILTERS,
+                OPCostBracket::getDisplay,
+                null,
+                false);
     }
 
 }

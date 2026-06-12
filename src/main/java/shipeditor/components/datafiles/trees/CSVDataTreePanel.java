@@ -1,15 +1,12 @@
 package shipeditor.components.datafiles.trees;
 
 import lombok.extern.log4j.Log4j2;
-import shipeditor.components.datafiles.OpenDataTarget;
+import shipeditor.components.ComponentEnums.OpenDataTarget;
 import shipeditor.components.datafiles.entities.CSVEntry;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.persistence.GameDataPackage;
 import shipeditor.persistence.Settings;
 import shipeditor.persistence.SettingsManager;
-import shipeditor.utility.Utility;
-import shipeditor.utility.components.ComponentUtilities;
-import shipeditor.utility.objects.Pair;
 
 import javax.swing.Action;
 import javax.swing.JPanel;
@@ -66,7 +63,6 @@ public abstract class CSVDataTreePanel<T extends CSVEntry> extends DataTreePanel
         return null;
     }
 
-    @SuppressWarnings("unused")
     @Override
     protected JPanel createTopPanel() {
         return null;
@@ -151,7 +147,7 @@ public abstract class CSVDataTreePanel<T extends CSVEntry> extends DataTreePanel
 
     private void initComponentListeners() {
         JTree tree = getTree();
-        tree.addMouseListener(new ContextMenuListener());
+        tree.addMouseListener(createContextMenuListener());
         tree.addTreeSelectionListener(e -> {
             TreePath selectedNode = e.getNewLeadSelectionPath();
             if (selectedNode == null) return;

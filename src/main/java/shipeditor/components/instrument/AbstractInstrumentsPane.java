@@ -1,12 +1,12 @@
 package shipeditor.components.instrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
+
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentSplitterResized;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.points.InstrumentModeChanged;
 import shipeditor.utility.components.MinimizeListener;
 import shipeditor.utility.components.MinimizerWidget;
 
@@ -17,6 +17,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.util.HashMap;
 import java.util.Map;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentSplitterResized;
+import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
 
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public abstract class AbstractInstrumentsPane extends JTabbedPane {
@@ -43,6 +45,10 @@ public abstract class AbstractInstrumentsPane extends JTabbedPane {
         this.setTabPlacement(SwingConstants.TOP);
         this.setMinimumSize(new Dimension(150, 0));
         this.setPreferredSize(preferredSize);
+        this.putClientProperty("JTabbedPane.tabType", "card");
+        this.putClientProperty("JTabbedPane.tabHeight", 32);
+        this.putClientProperty("JTabbedPane.showTabSeparators", true);
+        this.putClientProperty("JTabbedPane.hasFullBorder", true);
         this.putClientProperty("JTabbedPane.tabWidthMode", "compact");
     }
 

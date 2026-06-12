@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import shipeditor.parsing.serialize.SerializationUtilities;
+import shipeditor.parsing.serialize.CustomSerializers.SerializationUtilities;
 import shipeditor.persistence.BasicPrettyPrinter;
 
 import java.awt.geom.Point2D;

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
-import shipeditor.components.datafiles.entities.CSVEntry;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.representation.GameDataRepository;
 
@@ -51,7 +50,7 @@ public final class SettingsManager {
     private static Path settingsFilePath;
 
     @Getter
-    private static final String projectVersion = "0.0.1d";
+    private static final String projectVersion = "0.0.1e";
 
     private static GameDataPackage corePackage;
 
@@ -105,7 +104,11 @@ public final class SettingsManager {
     }
 
     public static boolean areFileErrorPopupsEnabled() {
-        return settings.showLoadingErrors;
+        return settings != null && settings.showLoadingErrors;
+    }
+
+    public static boolean isDeveloperModeEnabled() {
+        return settings != null && settings.developerMode;
     }
 
     public static boolean isNumericSuffixesForSlotsEnabled() {
@@ -116,7 +119,7 @@ public final class SettingsManager {
         return settings.loadDataAtStart;
     }
 
-    public static File getSettingsPath() {
+    public static synchronized File getSettingsPath() {
         if (settingsFilePath != null) {
             return settingsFilePath.toFile();
         } else {

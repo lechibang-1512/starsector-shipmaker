@@ -8,8 +8,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.Setter;
-import shipeditor.parsing.deserialize.Point2DDeserializer;
-import shipeditor.parsing.serialize.BaseNumberSerializer;
+import shipeditor.parsing.deserialize.CustomDeserializers.Point2DDeserializer;
+import shipeditor.parsing.serialize.CustomSerializers.BaseNumberSerializer;
 import shipeditor.parsing.serialize.points.EngineLocationSerializer;
 import shipeditor.utility.text.StringConstants;
 

@@ -5,10 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
 import shipeditor.components.datafiles.entities.InstallableEntry;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.components.viewer.painters.points.ship.features.FittedWeaponGroup;
@@ -77,8 +77,8 @@ public final class FeatureEdits {
         }
 
         @Override
-        public shipeditor.undo.EditCategory getCategory() {
-            return shipeditor.undo.EditCategory.VARIANT;
+        public shipeditor.utility.UtilityEnums.EditCategory getCategory() {
+            return shipeditor.utility.UtilityEnums.EditCategory.VARIANT;
         }
     }
 
@@ -118,8 +118,8 @@ public final class FeatureEdits {
         }
 
         @Override
-        public shipeditor.undo.EditCategory getCategory() {
-            return shipeditor.undo.EditCategory.VARIANT;
+        public shipeditor.utility.UtilityEnums.EditCategory getCategory() {
+            return shipeditor.utility.UtilityEnums.EditCategory.VARIANT;
         }
     }
 
@@ -175,8 +175,8 @@ public final class FeatureEdits {
         }
 
         @Override
-        public shipeditor.undo.EditCategory getCategory() {
-            return shipeditor.undo.EditCategory.VARIANT;
+        public shipeditor.utility.UtilityEnums.EditCategory getCategory() {
+            return shipeditor.utility.UtilityEnums.EditCategory.VARIANT;
         }
     }
 
@@ -215,8 +215,8 @@ public final class FeatureEdits {
         }
 
         @Override
-        public shipeditor.undo.EditCategory getCategory() {
-            return shipeditor.undo.EditCategory.VARIANT;
+        public shipeditor.utility.UtilityEnums.EditCategory getCategory() {
+            return shipeditor.utility.UtilityEnums.EditCategory.VARIANT;
         }
     }
 
@@ -253,8 +253,8 @@ public final class FeatureEdits {
         }
 
         @Override
-        public shipeditor.undo.EditCategory getCategory() {
-            return shipeditor.undo.EditCategory.VARIANT;
+        public shipeditor.utility.UtilityEnums.EditCategory getCategory() {
+            return shipeditor.utility.UtilityEnums.EditCategory.VARIANT;
         }
     }
 
@@ -296,8 +296,8 @@ public final class FeatureEdits {
         }
 
         @Override
-        public shipeditor.undo.EditCategory getCategory() {
-            return shipeditor.undo.EditCategory.VARIANT;
+        public shipeditor.utility.UtilityEnums.EditCategory getCategory() {
+            return shipeditor.utility.UtilityEnums.EditCategory.VARIANT;
         }
     }
 
@@ -310,7 +310,7 @@ public final class FeatureEdits {
         private final int oldIndex;
         private int cachedOldGroupIndex;
         private int cachedNewGroupIndex;
-        private boolean removeEmptyGroups;
+        private final boolean removeEmptyGroups;
 
         @Override
         public void undo() {
@@ -363,8 +363,8 @@ public final class FeatureEdits {
         }
 
         @Override
-        public shipeditor.undo.EditCategory getCategory() {
-            return shipeditor.undo.EditCategory.VARIANT;
+        public shipeditor.utility.UtilityEnums.EditCategory getCategory() {
+            return shipeditor.utility.UtilityEnums.EditCategory.VARIANT;
         }
     }
 
@@ -414,8 +414,8 @@ public final class FeatureEdits {
         }
 
         @Override
-        public shipeditor.undo.EditCategory getCategory() {
-            return shipeditor.undo.EditCategory.VARIANT;
+        public shipeditor.utility.UtilityEnums.EditCategory getCategory() {
+            return shipeditor.utility.UtilityEnums.EditCategory.VARIANT;
         }
     }
 }

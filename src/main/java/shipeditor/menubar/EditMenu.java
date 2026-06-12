@@ -3,11 +3,8 @@ package shipeditor.menubar;
 import org.kordamp.ikonli.boxicons.BoxiconsRegular;
 import org.kordamp.ikonli.swing.FontIcon;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.control.CursorSnappingToggled;
-import shipeditor.communication.events.viewer.control.PointSelectionModeChange;
-import shipeditor.communication.events.viewer.control.RotationRoundingToggled;
 import shipeditor.components.viewer.control.ControlPredicates;
-import shipeditor.components.viewer.control.PointSelectionMode;
+import shipeditor.components.viewer.ViewerEnums.PointSelectionMode;
 import shipeditor.undo.UndoOverseer;
 import shipeditor.utility.themes.Themes;
 
@@ -19,6 +16,9 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import shipeditor.communication.events.viewer.control.ControlEvents.RotationRoundingToggled;
+import shipeditor.communication.events.viewer.control.ControlEvents.PointSelectionModeChange;
+import shipeditor.communication.events.viewer.control.ControlEvents.CursorSnappingToggled;
 
 class EditMenu extends JMenu {
 
@@ -41,7 +41,7 @@ class EditMenu extends JMenu {
         JMenuItem redo = new JMenuItem("Redo");
         redo.setAction(UndoOverseer.getRedoAction());
         redo.setIcon(FontIcon.of(BoxiconsRegular.REDO, 16, Themes.getIconColor()));
-        KeyStroke keyStrokeToRedo = KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK);
+        KeyStroke keyStrokeToRedo = KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK);
         redo.setAccelerator(keyStrokeToRedo);
         this.add(redo);
 
@@ -82,15 +82,7 @@ class EditMenu extends JMenu {
         });
         this.add(toggleRotationRounding);
 
-        this.addSeparator();
 
-        JMenuItem preferences = new JMenuItem("Preferences");
-        preferences.setIcon(FontIcon.of(BoxiconsRegular.COG, 16, Themes.getIconColor()));
-        preferences.addActionListener(e -> {
-            shipeditor.components.settings.PreferencesDialog dialog = new shipeditor.components.settings.PreferencesDialog(shipeditor.PrimaryWindow.getInstance());
-            dialog.setVisible(true);
-        });
-        this.add(preferences);
     }
 
     private static JMenu createPointSelectionModeOptions() {

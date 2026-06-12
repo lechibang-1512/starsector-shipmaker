@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Ignore calling overridable methods in constructors (Common in Swing initUI methods) -->
+    <Match>
+        <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR" />
+    </Match>
+
+    <!-- Ignore non-serializable fields in serializable classes (Swing classes are trivially serializable but we don't serialize them) -->
+    <Match>
+        <Bug pattern="SE_BAD_FIELD" />
+    </Match>
+    <Match>
+        <Bug pattern="SE_BAD_FIELD_STORE" />
+    </Match>
+    <Match>
+        <Bug pattern="SE_NO_SERIALVERSIONID" />
+    </Match>
+
+    <!-- Ignore unconfirmed cast in our specific layer hierarchy where we know the type -->
+    <Match>
+        <Bug pattern="BC_UNCONFIRMED_CAST_OF_RETURN_VALUE" />
+    </Match>
+
+    <!-- System.exit is used intentionally in our relaunch/exit code -->
+    <Match>
+        <Bug pattern="DM_EXIT" />
+    </Match>
+
+    <!-- Returning null vs zero-length array has different Jackson serialization semantics -->
+    <Match>
+        <Bug pattern="PZLA_PREFER_ZERO_LENGTH_ARRAYS" />
+    </Match>
+
+    <!-- Expose internal representation -->
+    <Match><Bug pattern="EI_EXPOSE_REP" /></Match>
+    <Match><Bug pattern="EI_EXPOSE_REP2" /></Match>
+    <Match><Bug pattern="EI_EXPOSE_STATIC_REP2" /></Match>
+    <Match><Bug pattern="MS_EXPOSE_REP" /></Match>
+
+    <!-- Swing uninitialized fields in constructor -->
+    <Match><Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" /></Match>
+
+    <!-- Dead local store often false positive with temporary image buffers -->
+    <Match><Bug pattern="DLS_DEAD_LOCAL_STORE" /></Match>
+    
+    <Match><Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" /></Match>
+
+    <Match><Bug pattern="BC_VACUOUS_INSTANCEOF" /></Match>
+    <Match><Bug pattern="NM_CONFUSING" /></Match>
+    <Match><Bug pattern="CT_CONSTRUCTOR_THROW" /></Match>
+    <Match><Bug pattern="UPM_UNCALLED_PRIVATE_METHOD" /></Match>
+</FindBugsFilter>

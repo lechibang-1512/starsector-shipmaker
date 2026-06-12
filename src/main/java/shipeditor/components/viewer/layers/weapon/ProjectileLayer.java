@@ -4,7 +4,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.components.viewer.layers.ViewerLayer;
-import shipeditor.components.viewer.painters.points.weapon.ProjectilePainter;
 import shipeditor.representation.weapon.ProjectileSpecFile;
 
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})

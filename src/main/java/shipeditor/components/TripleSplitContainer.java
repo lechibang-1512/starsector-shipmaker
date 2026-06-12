@@ -3,9 +3,8 @@ package shipeditor.components;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.*;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.components.datafiles.GameDataPanel;
 import shipeditor.components.instrument.AbstractInstrumentsPane;
 import shipeditor.components.instrument.ship.ShipInstrumentsPane;
@@ -21,12 +20,16 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-
+import shipeditor.communication.events.components.ComponentEvents.SelectWeaponDataEntry;
+import shipeditor.communication.events.components.ComponentEvents.SelectShipDataEntry;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentSplitterResized;
 
 /**
  * Main editor container.
- * Outer JSplitPane splits horizontally: GameDataPanel (left) | secondaryLevel (right).
- * secondaryLevel JSplitPane splits horizontally: Canvas/Viewer (left) | InstrumentsPane (right).
+ * Outer JSplitPane splits horizontally: GameDataPanel (left) | secondaryLevel
+ * (right).
+ * secondaryLevel JSplitPane splits horizontally: Canvas/Viewer (left) |
+ * InstrumentsPane (right).
  *
  * @author CyberKitsune
  */
@@ -40,7 +43,6 @@ final class TripleSplitContainer extends JSplitPane {
     private ProjectileInstrumentsPane projectileInstrumentsPane;
 
     private JSplitPane secondaryLevel;
-
 
     TripleSplitContainer() {
         super(JSplitPane.HORIZONTAL_SPLIT);
@@ -107,9 +109,11 @@ final class TripleSplitContainer extends JSplitPane {
     }
 
     private void relocateDivider() {
-        if (secondaryLevel == null) return;
+        if (secondaryLevel == null)
+            return;
         int width = secondaryLevel.getWidth();
-        if (width <= 0) return;
+        if (width <= 0)
+            return;
 
         Component rightComp = secondaryLevel.getRightComponent();
         if (rightComp instanceof AbstractInstrumentsPane instrumentsPane) {

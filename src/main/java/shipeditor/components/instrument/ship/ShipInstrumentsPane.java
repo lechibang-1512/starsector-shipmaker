@@ -2,12 +2,13 @@ package shipeditor.components.instrument.ship;
 
 import com.formdev.flatlaf.FlatLaf;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
+import shipeditor.components.ComponentEnums.VariantDataTab;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.points.InstrumentModeChanged;
 import shipeditor.components.instrument.AbstractInstrumentsPane;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.instrument.ship.bays.LaunchBaysPanel;
 import shipeditor.components.instrument.ship.bounds.BoundsPanel;
 import shipeditor.components.instrument.ship.builtins.hullmods.BuiltInHullmodsPanel;
@@ -19,7 +20,9 @@ import shipeditor.components.instrument.ship.hull.ShipLayerInfoPanel;
 import shipeditor.components.instrument.ship.skins.SkinDataPanel;
 import shipeditor.components.instrument.ship.skins.SkinSlotOverridesPanel;
 import shipeditor.components.instrument.ship.slots.WeaponSlotsPanel;
-import shipeditor.components.instrument.ship.variant.VariantDataPanel;
+import shipeditor.components.instrument.ship.variant.VariantMainPanel;
+import shipeditor.components.instrument.ship.variant.VariantWingsPanel;
+import shipeditor.components.instrument.ship.variant.hullmods.VariantHullmodsPanel;
 import shipeditor.components.instrument.ship.variant.VariantWeaponsPanel;
 import shipeditor.components.instrument.ship.variant.modules.VariantModulesPanel;
 import shipeditor.utility.Utility;
@@ -29,15 +32,15 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 import java.awt.Component;
 import java.awt.event.KeyEvent;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
+import shipeditor.communication.events.components.ComponentEvents.VariantDataTabSelected;
+import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
 
 @SuppressWarnings("OverlyCoupledClass")
 @Log4j2
 public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
 
-    @Getter
+    @Getter @Setter
     private static EditorInstrument currentMode;
 
     public ShipInstrumentsPane() {
@@ -53,12 +56,21 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
         }
     }
 
+    private void styleSubTabbedPane(JTabbedPane subPane) {
+        subPane.putClientProperty("JTabbedPane.tabType", "underline");
+        subPane.putClientProperty("JTabbedPane.tabHeight", 26);
+        subPane.putClientProperty("JTabbedPane.showTabSeparators", false);
+        subPane.putClientProperty("JTabbedPane.hasFullBorder", false);
+        subPane.putClientProperty("JTabbedPane.tabWidthMode", "compact");
+    }
+
     @SuppressWarnings("OverlyCoupledMethod")
     private void createTabs() {
         FlatLaf.showMnemonics(this);
 
         JTabbedPane coreTabs = new JTabbedPane(SwingConstants.TOP);
         coreTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        this.styleSubTabbedPane(coreTabs);
         this.createInnerTab(coreTabs, new ShipLayerInfoPanel(), EditorInstrument.LAYER, KeyEvent.VK_Y);
         this.createInnerTab(coreTabs, new CollisionPanel(), EditorInstrument.COLLISION, KeyEvent.VK_C);
         this.createInnerTab(coreTabs, new ShieldPanel(), EditorInstrument.SHIELD, KeyEvent.VK_S);
@@ -68,6 +80,7 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
 
         JTabbedPane fittingsTabs = new JTabbedPane(SwingConstants.TOP);
         fittingsTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        this.styleSubTabbedPane(fittingsTabs);
         this.createInnerTab(fittingsTabs, new WeaponSlotsPanel(), EditorInstrument.WEAPON_SLOTS, KeyEvent.VK_W);
         this.createInnerTab(fittingsTabs, new LaunchBaysPanel(), EditorInstrument.LAUNCH_BAYS, KeyEvent.VK_L);
         this.createInnerTab(fittingsTabs, new EnginesPanel(), EditorInstrument.ENGINES, KeyEvent.VK_E);
@@ -76,14 +89,43 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
         this.addTab("Fittings", null, fittingsTabs, "Ship Fittings & Modifications");
         this.addInnerTabChangeListener(fittingsTabs);
 
+        JTabbedPane skinsTabs = new JTabbedPane(SwingConstants.TOP);
+        skinsTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        this.styleSubTabbedPane(skinsTabs);
+        this.createInnerTab(skinsTabs, new SkinDataPanel(), EditorInstrument.SKIN_DATA, KeyEvent.VK_K);
+        this.createInnerTab(skinsTabs, new SkinSlotOverridesPanel(), EditorInstrument.SKIN_SLOTS, KeyEvent.VK_O);
+        this.addTab("Skins", null, skinsTabs, "Ship Skins");
+        this.addInnerTabChangeListener(skinsTabs);
+
         JTabbedPane variantsTabs = new JTabbedPane(SwingConstants.TOP);
         variantsTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        this.createInnerTab(variantsTabs, new SkinDataPanel(), EditorInstrument.SKIN_DATA, KeyEvent.VK_K);
-        this.createInnerTab(variantsTabs, new SkinSlotOverridesPanel(), EditorInstrument.SKIN_SLOTS, KeyEvent.VK_O);
-        this.createInnerTab(variantsTabs, new VariantDataPanel(), EditorInstrument.VARIANT_DATA, KeyEvent.VK_V);
+        this.styleSubTabbedPane(variantsTabs);
+        this.createInnerTab(variantsTabs, new VariantMainPanel(), EditorInstrument.VARIANT_DATA, KeyEvent.VK_V);
         this.createInnerTab(variantsTabs, new VariantWeaponsPanel(), EditorInstrument.VARIANT_WEAPONS, KeyEvent.VK_T);
         this.createInnerTab(variantsTabs, new VariantModulesPanel(), EditorInstrument.VARIANT_MODULES, KeyEvent.VK_M);
-        this.addTab("Variants", null, variantsTabs, "Skins & Variants");
+
+        VariantHullmodsPanel hullmodsPanel = new VariantHullmodsPanel();
+        panelMode.put(hullmodsPanel, EditorInstrument.VARIANT_DATA);
+        variantsTabs.addTab("Hullmods", null, hullmodsPanel, "Variant Hullmods");
+        variantsTabs.setMnemonicAt(variantsTabs.getTabCount() - 1, KeyEvent.VK_H);
+
+        VariantWingsPanel wingsPanel = new VariantWingsPanel();
+        panelMode.put(wingsPanel, EditorInstrument.VARIANT_DATA);
+        variantsTabs.addTab("Wings", null, wingsPanel, "Variant Wings");
+        variantsTabs.setMnemonicAt(variantsTabs.getTabCount() - 1, KeyEvent.VK_W);
+
+        variantsTabs.addChangeListener(event -> {
+            Component activePanel = variantsTabs.getSelectedComponent();
+            VariantDataTab selected = VariantDataTab.MAIN;
+            if (activePanel instanceof VariantHullmodsPanel) {
+                selected = VariantDataTab.HULLMODS;
+            } else if (activePanel instanceof VariantWingsPanel) {
+                selected = VariantDataTab.WINGS;
+            }
+            EventBus.publish(new VariantDataTabSelected(selected));
+        });
+
+        this.addTab("Variants", null, variantsTabs, "Ship Variants");
         this.addInnerTabChangeListener(variantsTabs);
 
         updateTooltipText();
@@ -99,7 +141,7 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
     @Override
     protected void dispatchModeChange(JPanel active) {
         EditorInstrument selected = panelMode.get(active);
-        currentMode = selected;
+        ShipInstrumentsPane.setCurrentMode(selected);
         EventBus.publish(new InstrumentModeChanged(selected));
         EventBus.publish(new ViewerRepaintQueued());
     }

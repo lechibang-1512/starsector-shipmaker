@@ -3,7 +3,7 @@ package shipeditor.components.help;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
-import shipeditor.components.help.parts.ArticlePart;
+import shipeditor.components.help.parts.ArticleComponents.ArticlePart;
 
 import java.util.ArrayList;
 import java.util.List;

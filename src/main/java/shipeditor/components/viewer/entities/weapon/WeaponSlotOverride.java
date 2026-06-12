@@ -3,9 +3,9 @@ package shipeditor.components.viewer.entities.weapon;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 
 @Getter @Setter @Builder
 public final class WeaponSlotOverride implements SlotData {

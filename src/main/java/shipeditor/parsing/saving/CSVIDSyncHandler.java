@@ -2,9 +2,6 @@ package shipeditor.parsing.saving;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.CSVEntryIDChanged;
-import shipeditor.communication.events.components.DataTreesReloadQueued;
-import shipeditor.communication.events.files.saving.CSVSaveQueued;
 import shipeditor.components.datafiles.entities.*;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
@@ -15,6 +12,9 @@ import javax.swing.JOptionPane;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import shipeditor.communication.events.components.ComponentEvents.DataTreesReloadQueued;
+import shipeditor.communication.events.components.ComponentEvents.CSVEntryIDChanged;
+import shipeditor.communication.events.files.FileEvents.CSVSaveQueued;
 
 @Log4j2
 public final class CSVIDSyncHandler {
@@ -86,7 +86,7 @@ public final class CSVIDSyncHandler {
 
         for (Map<String, String> row : rawData) {
             for (Map.Entry<String, String> cell : row.entrySet()) {
-                String cleanKey = cell.getKey().replace("\uFEFF", "").trim().toLowerCase();
+                String cleanKey = cell.getKey().replace("\uFEFF", "").trim().toLowerCase(java.util.Locale.ROOT);
                 if ("id".equals(cleanKey)
                         && cell.getValue() != null
                         && oldID.equalsIgnoreCase(cell.getValue().trim())) {

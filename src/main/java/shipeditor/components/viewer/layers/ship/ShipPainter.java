@@ -1,6 +1,5 @@
 package shipeditor.components.viewer.layers.ship;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -12,12 +11,11 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.Events;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
-import shipeditor.communication.events.viewer.layers.ships.LayerShipDataInitialized;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerShipDataInitialized;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.ShipCenterPoint;
 import shipeditor.components.viewer.entities.bays.LaunchBay;
@@ -29,27 +27,24 @@ import shipeditor.components.viewer.layers.ship.data.ShipSkin;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.components.viewer.layers.ship.data.Variant;
 
-import shipeditor.components.viewer.layers.weapon.WeaponPainter;
 import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 import shipeditor.components.viewer.painters.points.ship.*;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeaturePainter;
-import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
 import shipeditor.representation.ship.HullSpecFile;
-import shipeditor.representation.ship.ShipTypeHints;
+import shipeditor.representation.RepresentationEnums.ShipTypeHints;
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.text.StringValues;
 
-import javax.swing.JOptionPane;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
 /** * Distinct from parent ship layer instance: present class has to do with direct visual representation.
  * Painter instance is not concerned with loading and file interactions, and leaves that to other classes.*/
@@ -120,17 +115,6 @@ public class ShipPainter extends LayerPainter {
 
     private void installVariant(VariantFile file) {
         boolean empty = file.isEmpty();
-
-        if (!empty) {
-            GameDataRepository gameData = SettingsManager.getGameData();
-            if (!gameData.isWeaponsDataLoaded() || !gameData.isHullmodDataLoaded()) {
-                JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                        "Weapon or hullmod data is not loaded to the editor, aborting variant initialization.",
-                        StringValues.VARIANT_INITIALIZATION_ERROR,
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        }
 
         activeVariant = new ShipVariant(empty);
         if (!empty) {

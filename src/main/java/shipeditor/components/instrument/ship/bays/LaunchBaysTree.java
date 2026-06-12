@@ -5,14 +5,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.points.PointSelectQueued;
-import shipeditor.communication.events.viewer.points.PointSelectedConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectedConfirmed;
 import shipeditor.components.viewer.entities.bays.LaunchBay;
 import shipeditor.components.viewer.entities.bays.LaunchPortPoint;
 import shipeditor.components.viewer.entities.weapon.SlotPoint;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.painters.points.ship.LaunchBayPainter;
-import shipeditor.representation.weapon.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.components.containers.trees.DynamicWidthTree;
 import shipeditor.utility.components.containers.trees.SortableTree;
@@ -27,6 +26,7 @@ import java.awt.FlowLayout;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.function.Consumer;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued;
 
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class LaunchBaysTree extends DynamicWidthTree {

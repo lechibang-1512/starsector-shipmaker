@@ -3,8 +3,8 @@ package shipeditor.components.instrument.ship.shared;
 import javax.swing.ListModel;
 
 import shipeditor.components.datafiles.entities.HullmodCSVEntry;
-import shipeditor.components.datafiles.entities.transferable.TransferableEntry;
-import shipeditor.components.datafiles.entities.transferable.TransferableHullmod;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableEntry;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableHullmod;
 import shipeditor.utility.components.containers.OrdnancedEntryList;
 
 import javax.swing.DefaultListModel;

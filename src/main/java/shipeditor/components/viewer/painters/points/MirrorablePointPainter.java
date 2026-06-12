@@ -1,6 +1,5 @@
 package shipeditor.components.viewer.painters.points;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -9,21 +8,18 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.points.InstrumentModeChanged;
-import shipeditor.communication.events.viewer.points.PointCreationQueued;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.WorldPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
-import shipeditor.components.viewer.painters.PainterVisibility;
+import shipeditor.components.viewer.ViewerEnums.PainterVisibility;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.Utility;
 
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.util.List;
 import java.util.function.Consumer;
+import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
 
 @Getter
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})

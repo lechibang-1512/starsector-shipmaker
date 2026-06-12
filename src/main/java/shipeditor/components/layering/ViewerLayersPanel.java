@@ -5,23 +5,16 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.log4j.Log4j2;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.LayerTabUpdated;
-import shipeditor.communication.events.components.SelectShipDataEntry;
-import shipeditor.communication.events.components.WindowRepaintQueued;
-import shipeditor.communication.events.files.HullFileOpened;
-import shipeditor.communication.events.files.saving.HullSaveQueued;
-import shipeditor.communication.events.files.saving.ProjectileSaveQueued;
-import shipeditor.communication.events.files.saving.VariantSaveQueued;
-import shipeditor.communication.events.files.saving.WeaponSaveQueued;
-import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
-import shipeditor.communication.events.viewer.layers.LayerRemovalQueued;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
-import shipeditor.communication.events.viewer.layers.ViewerLayerRemovalConfirmed;
-import shipeditor.communication.events.viewer.layers.ships.ShipLayerCreated;
-import shipeditor.communication.events.viewer.layers.weapons.WeaponLayerCreated;
+import shipeditor.communication.events.files.FileEvents.HullFileOpened;
+import shipeditor.communication.events.files.FileEvents.HullSaveQueued;
+import shipeditor.communication.events.files.FileEvents.VariantSaveQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerRemovalQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ViewerLayerRemovalConfirmed;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ShipLayerCreated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.WeaponLayerCreated;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
-import shipeditor.components.viewer.PaintOrderController;
 import shipeditor.components.viewer.PrimaryViewer;
 import shipeditor.components.viewer.layers.LayerManager;
 import shipeditor.components.viewer.layers.LayerPainter;
@@ -38,11 +31,9 @@ import shipeditor.parsing.FileUtilities;
 import shipeditor.parsing.loading.OpenSpriteAction;
 import shipeditor.representation.GameDataRepository;
 import shipeditor.representation.ship.HullSpecFile;
-import shipeditor.representation.weapon.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.representation.weapon.WeaponSpecFile;
 import shipeditor.utility.components.containers.SortableTabbedPane;
-import shipeditor.utility.components.widgets.Spinners;
-import shipeditor.utility.graphics.ColorUtilities;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.graphics.opengl.FramebufferUtilities;
 import shipeditor.utility.overseers.StaticController;
@@ -56,20 +47,19 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.TabbedPaneUI;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.function.IntConsumer;
 import java.util.function.ToIntFunction;
+import shipeditor.communication.events.components.ComponentEvents.SelectShipDataEntry;
+import shipeditor.communication.events.components.ComponentEvents.LayerTabUpdated;
+import shipeditor.communication.events.components.ComponentEvents.WindowRepaintQueued;
+import shipeditor.communication.events.files.FileEvents.WeaponSaveQueued;
+import shipeditor.communication.events.files.FileEvents.ProjectileSaveQueued;
 
 @SuppressWarnings("OverlyCoupledClass")
 @Log4j2
@@ -142,7 +132,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
                 this.addTab(LAYER + (getTabCount() + 1), null, tabIndex.get(layer), tooltip);
                 EventBus.publish(new WindowRepaintQueued());
             }
-            else if (event instanceof shipeditor.communication.events.viewer.layers.weapons.ProjectileLayerCreated checked) {
+            else if (event instanceof shipeditor.communication.events.viewer.layers.LayerEvents.ProjectileLayerCreated checked) {
                 shipeditor.components.viewer.layers.weapon.ProjectileLayer layer = checked.newLayer();
                 ProjectileLayerTab created = new ProjectileLayerTab(layer);
                 tabIndex.put(layer, created);
@@ -198,7 +188,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
             tabTitle += "*";
         }
         
-        this.setTitleAt(indexOfComponent(tab), tabTitle);
+        this.setTitleAt(indexOfComponent(tab), shipeditor.utility.Utility.wrapTextWithHtml(tabTitle, 7));
         this.setToolTipTextAt(indexOfComponent(tab), tab.getTabTooltip());
     }
 
@@ -251,7 +241,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
         if (layerManager.isLayerDirty(layer)) {
             tabTitle += "*";
         }
-        this.setTitleAt(indexOfComponent(tab), tabTitle);
+        this.setTitleAt(indexOfComponent(tab), shipeditor.utility.Utility.wrapTextWithHtml(tabTitle, 7));
         this.setToolTipTextAt(indexOfComponent(tab), tab.getTabTooltip());
     }
 
@@ -304,7 +294,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
             tabTitle += "*";
         }
         
-        this.setTitleAt(indexOfComponent(tab), tabTitle);
+        this.setTitleAt(indexOfComponent(tab), shipeditor.utility.Utility.wrapTextWithHtml(tabTitle, 7));
         this.setToolTipTextAt(indexOfComponent(tab), tab.getTabTooltip());
     }
 
@@ -469,7 +459,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
             JMenuItem printLayer = new JMenuItem("Print layer to image");
             printLayer.addActionListener(event -> {
                 JFileChooser chooser = FileUtilities.getImageChooser();
-                int returnVal = chooser.showSaveDialog(null);
+                int returnVal = chooser.showSaveDialog(shipeditor.PrimaryWindow.getInstance());
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     File file = FileUtilities.ensureFileExtension(chooser, "png");
                     
@@ -481,7 +471,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
                         height = layerPainter.getSpriteSize().height;
                     }
                     if (width <= 0 || height <= 0) {
-                        JOptionPane.showMessageDialog(null, "Layer is empty or invalid size.", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(), "Layer is empty or invalid size.", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 

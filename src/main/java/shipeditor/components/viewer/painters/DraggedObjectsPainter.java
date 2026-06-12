@@ -8,28 +8,21 @@ import shipeditor.components.datafiles.entities.CSVEntry;
 import shipeditor.components.datafiles.entities.InstallableEntry;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
 import shipeditor.components.datafiles.entities.WeaponCSVEntry;
-import shipeditor.components.datafiles.entities.transferable.TransferableEntry;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableEntry;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.ViewerDropReceiver;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
-import shipeditor.representation.weapon.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.utility.Utility;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.text.StringValues;
 import shipeditor.utility.graphics.opengl.TextRenderer;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.font.GlyphVector;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.util.HashMap;
-import java.util.Map;
 
 public class DraggedObjectsPainter implements OpenGLPainter {
 

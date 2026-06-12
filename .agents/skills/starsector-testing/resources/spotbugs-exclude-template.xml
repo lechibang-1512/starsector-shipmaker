@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude internal representations exposing mutable state (EI_EXPOSE_REP, EI_EXPOSE_REP2) -->
+    <Match>
+        <Package name="~shipeditor\.representation.*" />
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2,MS_EXPOSE_REP" />
+    </Match>
+
+    <!-- Exclude rendering controllers returning mutable state -->
+    <Match>
+        <Class name="shipeditor.components.viewer.painters.PaintOrderController" />
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2" />
+    </Match>
+</FindBugsFilter>

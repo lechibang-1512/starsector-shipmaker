@@ -37,7 +37,7 @@ public final class EventBus {
 
     private EventBus() {
         this.floatingSubscribers = java.util.Collections.synchronizedSet(java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>()));
-        this.lifecycleSubscribers = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+        this.lifecycleSubscribers = new java.util.WeakHashMap<>();
     }
 
     /**
@@ -55,7 +55,9 @@ public final class EventBus {
      * The listener will be kept alive as long as the parent is not garbage collected.
      */
     public static BusEventListener subscribe(Object lifecycleParent, BusEventListener listener) {
-        bus.lifecycleSubscribers.computeIfAbsent(lifecycleParent, k -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(listener);
+        synchronized (bus.lifecycleSubscribers) {
+            bus.lifecycleSubscribers.computeIfAbsent(lifecycleParent, k -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(listener);
+        }
         return listener;
     }
 
@@ -72,7 +74,9 @@ public final class EventBus {
      * Unsubscribes all listeners bound to the given parent object in O(1) time.
      */
     public static void unsubscribeByParent(Object lifecycleParent) {
-        bus.lifecycleSubscribers.remove(lifecycleParent);
+        synchronized (bus.lifecycleSubscribers) {
+            bus.lifecycleSubscribers.remove(lifecycleParent);
+        }
     }
 
     public static void publish(BusEvent event) {

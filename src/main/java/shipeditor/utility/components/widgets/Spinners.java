@@ -1,4 +1,6 @@
 package shipeditor.utility.components.widgets;
+import shipeditor.utility.UtilityEnums.IncrementType;
+
 
 import shipeditor.utility.text.StringValues;
 
@@ -7,7 +9,6 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;

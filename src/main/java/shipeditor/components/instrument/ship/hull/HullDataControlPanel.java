@@ -2,9 +2,7 @@ package shipeditor.components.instrument.ship.hull;
 
 import com.formdev.flatlaf.ui.FlatLineBorder;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.CSVEntryIDChanged;
-import shipeditor.communication.events.components.LayerTabUpdated;
-import shipeditor.components.datafiles.OpenDataTarget;
+import shipeditor.components.ComponentEnums.OpenDataTarget;
 import shipeditor.components.viewer.PrimaryViewer;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
@@ -13,8 +11,8 @@ import shipeditor.parsing.FileUtilities;
 import shipeditor.parsing.loading.OpenSpriteAction;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
-import shipeditor.representation.SizeEnum;
-import shipeditor.representation.ship.HullSize;
+import shipeditor.representation.RepresentationEnums.SizeEnum;
+import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.representation.ship.HullStyle;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.MouseoverLabelListener;
@@ -45,6 +43,8 @@ import java.util.Collection;
 import java.util.Map;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
+import shipeditor.communication.events.components.ComponentEvents.LayerTabUpdated;
+import shipeditor.communication.events.components.ComponentEvents.CSVEntryIDChanged;
 
 @SuppressWarnings("ClassWithTooManyFields")
 public class HullDataControlPanel extends JPanel {

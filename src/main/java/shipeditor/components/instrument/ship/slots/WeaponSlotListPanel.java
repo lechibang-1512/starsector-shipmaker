@@ -4,16 +4,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
-import shipeditor.communication.events.viewer.points.PointAddConfirmed;
-import shipeditor.communication.events.viewer.points.PointRemovedConfirmed;
-import shipeditor.communication.events.viewer.points.WeaponSlotInsertedConfirmed;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.instrument.ship.AbstractShipPropertiesPanel;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
-import shipeditor.components.viewer.painters.PainterVisibility;
+import shipeditor.components.viewer.ViewerEnums.PainterVisibility;
 import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
 import shipeditor.utility.components.ComponentUtilities;
@@ -31,6 +27,10 @@ import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.util.Map;
 import java.util.function.Function;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.PointAddConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.WeaponSlotInsertedConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointRemovedConfirmed;
 
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class WeaponSlotListPanel extends AbstractShipPropertiesPanel {

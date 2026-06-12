@@ -1,10 +1,9 @@
 package shipeditor.components.instrument.ship.skins;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
@@ -20,6 +19,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.Collection;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
 public class SkinDataPanel extends JPanel {
 

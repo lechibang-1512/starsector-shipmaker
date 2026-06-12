@@ -2,7 +2,7 @@ package shipeditor.utility.components.rendering;
 
 import com.formdev.flatlaf.ui.FlatLineBorder;
 import shipeditor.components.datafiles.entities.OrdnancedCSVEntry;
-import shipeditor.representation.ship.HullSize;
+import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.utility.overseers.StaticController;
 
 import javax.swing.JLabel;
@@ -67,7 +67,13 @@ public class OrdnancedEntryCellRenderer extends PanelListCellRenderer<OrdnancedC
         ordnanceLabel.setForeground(foreground);
 
         JLabel label = value.getIconLabel();
-        iconLabel.setIcon(label.getIcon());
+        if (label != null) {
+            iconLabel.setIcon(label.getIcon());
+            iconLabel.setText(label.getText());
+        } else {
+            iconLabel.setIcon(null);
+            iconLabel.setText("?");
+        }
 
         textLabel.setText(value.getEntryName());
 

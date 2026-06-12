@@ -8,8 +8,8 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.points.*;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.communication.events.viewer.points.PointEvents.EnginePointsSorted;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.WorldPoint;
@@ -17,7 +17,6 @@ import shipeditor.components.viewer.entities.engine.EngineDataOverride;
 import shipeditor.components.viewer.entities.engine.EnginePoint;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipSkin;
-import shipeditor.components.viewer.painters.points.AngledPointPainter;
 import shipeditor.representation.ship.EngineStyle;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.Utility;
@@ -29,7 +28,6 @@ import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
 
 import java.awt.Color;
-import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
@@ -37,6 +35,8 @@ import java.awt.image.BufferedImageOp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.EngineInsertedConfirmed;
 
 @Log4j2
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})

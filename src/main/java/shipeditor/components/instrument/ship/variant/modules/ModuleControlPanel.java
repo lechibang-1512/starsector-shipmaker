@@ -1,14 +1,14 @@
 package shipeditor.components.instrument.ship.variant.modules;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.control.FeatureInstallQueued;
+import shipeditor.communication.events.viewer.control.ControlEvents.FeatureInstallQueued;
 import shipeditor.components.instrument.LayerPropertiesPanel;
 import shipeditor.components.instrument.ship.centers.ModuleAnchorPanel;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.FeaturesOverseer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
-import shipeditor.components.viewer.painters.PainterVisibility;
+import shipeditor.components.viewer.ViewerEnums.PainterVisibility;
 import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
 import shipeditor.persistence.SettingsManager;

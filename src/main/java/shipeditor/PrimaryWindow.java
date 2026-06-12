@@ -5,8 +5,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.WindowGUIShowConfirmed;
-import shipeditor.communication.events.components.WindowRepaintQueued;
 import shipeditor.components.WindowContentPanes;
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.menubar.PrimaryMenuBar;
@@ -35,6 +33,8 @@ import java.awt.Toolkit;
 import java.awt.event.*;
 import java.awt.KeyboardFocusManager;
 import java.awt.KeyEventDispatcher;
+import shipeditor.communication.events.components.ComponentEvents.WindowGUIShowConfirmed;
+import shipeditor.communication.events.components.ComponentEvents.WindowRepaintQueued;
 
 @Log4j2
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
@@ -57,7 +57,6 @@ public final class PrimaryWindow extends JFrame {
 
     private PrimaryWindow() {
         log.info("Application start: creating window.");
-        instance = this;
         this.setTitle(SHIP_EDITOR);
         this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -96,6 +95,7 @@ public final class PrimaryWindow extends JFrame {
 
     public static PrimaryWindow create() {
         PrimaryWindow primaryWindow = new PrimaryWindow();
+        instance = primaryWindow;
 
         primaryWindow.addWindowListener(new WindowAdapter() {
             private final KeyEventDispatcher altDisabler = e -> e.getKeyCode() == KeyEvent.VK_ALT;

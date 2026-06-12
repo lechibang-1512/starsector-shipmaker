@@ -1,14 +1,19 @@
 package shipeditor.components.viewer.control;
+import shipeditor.components.viewer.ViewerEnums.PointSelectionMode;
 
-import java.awt.event.InputEvent;
+
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.control.*;
 
 import java.awt.event.MouseEvent;
 import javax.swing.SwingUtilities;
 import java.util.function.Predicate;
+import shipeditor.communication.events.viewer.control.ControlEvents.RotationRoundingToggled;
+import shipeditor.communication.events.viewer.control.ControlEvents.PointLinkageToleranceChanged;
+import shipeditor.communication.events.viewer.control.ControlEvents.PointSelectionModeChange;
+import shipeditor.communication.events.viewer.control.ControlEvents.CursorSnappingToggled;
+import shipeditor.communication.events.viewer.control.ControlEvents.MirrorModeChange;
 
 @SuppressWarnings("ClassWithTooManyFields")
 public final class ControlPredicates {
@@ -31,7 +36,8 @@ public final class ControlPredicates {
     @Getter
     private static boolean rotationRoundingEnabled = true;
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private static boolean selectionHoldingEnabled = true;
 
     @Getter
@@ -53,29 +59,28 @@ public final class ControlPredicates {
         });
     }
 
-    static final Predicate<MouseEvent> translatePredicate = e ->
-            SwingUtilities.isMiddleMouseButton(e) && !e.isControlDown() && !e.isShiftDown() && !e.isAltDown();
+    static final Predicate<MouseEvent> translatePredicate = e -> SwingUtilities.isMiddleMouseButton(e)
+            && !e.isControlDown() && !e.isShiftDown() && !e.isAltDown();
 
-    static final Predicate<MouseEvent> layerMovePredicate = e ->
-            SwingUtilities.isMiddleMouseButton(e) && e.isShiftDown();
+    static final Predicate<MouseEvent> layerMovePredicate = e -> SwingUtilities.isMiddleMouseButton(e)
+            && e.isShiftDown();
 
-    static final Predicate<MouseEvent> layerSelectPredicate = e ->
-            e.isControlDown() && e.isAltDown();
+    static final Predicate<MouseEvent> layerSelectPredicate = e -> e.isControlDown() && e.isAltDown();
 
-    static final Predicate<MouseEvent> layerRotatePredicate = e ->
-            SwingUtilities.isMiddleMouseButton(e) && e.isAltDown();
+    static final Predicate<MouseEvent> layerRotatePredicate = e -> SwingUtilities.isMiddleMouseButton(e)
+            && e.isAltDown();
 
-    static final Predicate<MouseEvent> removePointPredicate = e ->
-            SwingUtilities.isRightMouseButton(e) && e.isControlDown();
+    static final Predicate<MouseEvent> removePointPredicate = e -> SwingUtilities.isRightMouseButton(e)
+            && e.isControlDown();
 
-    static final Predicate<MouseEvent> selectPointPredicate = e ->
-            SwingUtilities.isLeftMouseButton(e) && !e.isControlDown() && !e.isShiftDown() && !e.isAltDown();
+    static final Predicate<MouseEvent> selectPointPredicate = e -> SwingUtilities.isLeftMouseButton(e)
+            && !e.isControlDown() && !e.isShiftDown() && !e.isAltDown();
 
-    public static final Predicate<MouseEvent> changeAnglePredicate = e ->
-            SwingUtilities.isLeftMouseButton(e) && e.isAltDown();
+    public static final Predicate<MouseEvent> changeAnglePredicate = e -> SwingUtilities.isLeftMouseButton(e)
+            && e.isAltDown();
 
-    public static final Predicate<MouseEvent> changeArcOrSizePredicate = e ->
-            SwingUtilities.isRightMouseButton(e) && e.isAltDown();
+    public static final Predicate<MouseEvent> changeArcOrSizePredicate = e -> SwingUtilities.isRightMouseButton(e)
+            && e.isAltDown();
 
     static final Predicate<MouseEvent> rotatePredicate = e -> e.isControlDown();
 

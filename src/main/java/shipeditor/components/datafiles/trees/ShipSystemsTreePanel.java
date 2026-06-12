@@ -2,7 +2,7 @@ package shipeditor.components.datafiles.trees;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.ShipSystemsLoaded;
+import shipeditor.communication.events.files.FileEvents.ShipSystemsLoaded;
 import shipeditor.components.datafiles.entities.ShipSystemCSVEntry;
 import shipeditor.parsing.loading.FileLoading;
 import shipeditor.persistence.SettingsManager;
@@ -54,7 +54,7 @@ class ShipSystemsTreePanel extends CSVDataTreePanel<ShipSystemCSVEntry>{
     @Override
     protected void initWalkerListening() {
         EventBus.subscribe(this, event -> {
-            if (event instanceof ShipSystemsLoaded checked) {
+            if (event instanceof ShipSystemsLoaded) {
                 this.queueReload();
             }
         });

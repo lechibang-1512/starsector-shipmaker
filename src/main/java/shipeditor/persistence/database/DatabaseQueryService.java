@@ -80,8 +80,8 @@ public final class DatabaseQueryService {
 
     public static void upsertIndexedFile(IndexedFile file) {
         String sql = """
-            INSERT INTO indexed_files (uuid, mod_id, entity_id, entity_name, entity_type, file_name, file_path, last_modified)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO indexed_files (uuid, mod_id, entity_id, entity_name, entity_type, file_name, file_path, last_modified, parsed_data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(uuid) DO UPDATE SET
                 mod_id = excluded.mod_id,
                 entity_id = excluded.entity_id,
@@ -89,7 +89,8 @@ public final class DatabaseQueryService {
                 entity_type = excluded.entity_type,
                 file_name = excluded.file_name,
                 file_path = excluded.file_path,
-                last_modified = excluded.last_modified;
+                last_modified = excluded.last_modified,
+                parsed_data = excluded.parsed_data;
             """;
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -103,6 +104,7 @@ public final class DatabaseQueryService {
             pstmt.setString(6, file.getFileName());
             pstmt.setString(7, file.getFilePath().toAbsolutePath().toString());
             pstmt.setLong(8, file.getLastModified());
+            pstmt.setString(9, file.getParsedData());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             log.error("Failed to upsert indexed file: {}", file.getFilePath(), e);
@@ -349,6 +351,7 @@ public final class DatabaseQueryService {
                 .fileName(rs.getString("file_name"))
                 .filePath(Path.of(rs.getString("file_path")))
                 .lastModified(rs.getLong("last_modified"))
+                .parsedData(rs.getString("parsed_data"))
                 .build();
     }
 

@@ -1,8 +1,8 @@
 package shipeditor.components.instrument;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ViewerLayer;
 
@@ -28,8 +28,7 @@ public abstract class AbstractDataPropertiesPanel<T extends LayerPainter> extend
     }
 
     protected void handleRefreshFromLayer(ViewerLayer selected) {
-        boolean layerPainterPresent = selected != null && selected.getPainter() != null;
-        if (!layerPainterPresent) {
+        if (selected == null || selected.getPainter() == null) {
             this.refresh(null);
             return;
         }

@@ -2,7 +2,6 @@ package shipeditor.utility.components;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**

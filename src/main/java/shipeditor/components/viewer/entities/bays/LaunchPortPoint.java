@@ -1,6 +1,5 @@
 package shipeditor.components.viewer.entities.bays;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -9,26 +8,24 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.weapon.SlotDrawer;
 import shipeditor.components.viewer.entities.weapon.SlotPoint;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotOverride;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
-import shipeditor.utility.Utility;
-import shipeditor.utility.graphics.ColorUtilities;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.overseers.StaticController;
 
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.List;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class LaunchPortPoint extends BaseWorldPoint implements SlotPoint {
@@ -151,8 +148,7 @@ public class LaunchPortPoint extends BaseWorldPoint implements SlotPoint {
 
     @Override
     protected Color createSelectColor() {
-        Color base = this.createBaseColor();
-        return ColorUtilities.getBlendedColor(base, Color.WHITE, 0.5);
+        return new Color(255, 120, 0); // Orange
     }
 
     public String getNameForLabel() {

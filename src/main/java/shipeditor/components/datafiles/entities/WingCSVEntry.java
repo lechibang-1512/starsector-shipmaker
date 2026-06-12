@@ -8,9 +8,8 @@ import lombok.extern.log4j.Log4j2;
 import shipeditor.parsing.loading.FileLoading;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.*;
-import shipeditor.representation.ship.HullSize;
+import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.representation.ship.ShipSpecFile;
-import shipeditor.representation.ship.SkinSpecFile;
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
@@ -19,14 +18,13 @@ import shipeditor.utility.text.StringConstants;
 import shipeditor.utility.text.StringValues;
 
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Map;
 
 @Log4j2
 @Getter
-@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
+@SuppressFBWarnings({ "EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP" })
 public class WingCSVEntry implements OrdnancedCSVEntry {
 
     private final Map<String, String> rowData;
@@ -86,6 +84,9 @@ public class WingCSVEntry implements OrdnancedCSVEntry {
 
     private ShipSpecFile retrieveSpec() {
         VariantFile variantFile = retrieveMemberVariant();
+        if (variantFile == null) {
+            return null;
+        }
 
         String hullID = variantFile.getHullId();
         ShipSpecFile desiredSpec = GameDataRepository.retrieveSpecByID(hullID);
@@ -108,17 +109,18 @@ public class WingCSVEntry implements OrdnancedCSVEntry {
 
         if (specFile != null) {
             String spriteName = specFile.getSpriteName();
+            if (spriteName == null || spriteName.isEmpty()) {
+                log.warn("Wing member sprite loading warning: spriteName is null or empty for: " + this.wingID);
+                return null;
+            }
             Path of = Path.of(spriteName);
             File spriteFile = FileLoading.fetchDataFile(of, packageFolderPath);
             Sprite result = FileLoading.loadSprite(spriteFile);
             this.memberSprite = result;
             return result;
         } else {
-            JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Wing member sprite loading failed, exception thrown for: " + this.wingID,
-                    StringValues.FILE_LOADING_ERROR,
-                    JOptionPane.ERROR_MESSAGE);
-            throw new RuntimeException("Could not retrieve wing member sprite!");
+            log.warn("Wing member sprite loading failed, specFile is null for: " + this.wingID);
+            return null;
         }
     }
 
@@ -166,14 +168,46 @@ public class WingCSVEntry implements OrdnancedCSVEntry {
         return getIconLabel(32);
     }
 
+    private JLabel cachedIconLabel;
+    private boolean isIconLoading = false;
+
     @Override
     public JLabel getIconLabel(int maxSize) {
-        Sprite sprite = this.getWingMemberSprite();
-        if (sprite != null) {
-            String tooltip = Utility.getTooltipForSprite(sprite);
-            return ComponentUtilities.createIconFromImage(sprite.getImage(), tooltip, maxSize);
+        if (cachedIconLabel != null && !isIconLoading) {
+            return cachedIconLabel;
         }
-        return null;
+        if (cachedIconLabel == null) {
+            cachedIconLabel = new JLabel("...");
+        }
+        if (!isIconLoading) {
+            if (!SettingsManager.getGameData().isShipDataLoaded()) {
+                return cachedIconLabel;
+            }
+            isIconLoading = true;
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    Sprite sprite = this.getWingMemberSprite();
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        if (sprite != null) {
+                            String tooltip = Utility.getTooltipForSprite(sprite);
+                            cachedIconLabel = ComponentUtilities.createIconFromImage(sprite.getImage(), tooltip, maxSize);
+                        } else {
+                            cachedIconLabel = new JLabel("?");
+                        }
+                        isIconLoading = false;
+                        shipeditor.communication.EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.WindowRepaintQueued());
+                    });
+                } catch (Exception ex) {
+                    log.error("Failed to load wing icon for: " + this.wingID, ex);
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        cachedIconLabel = new JLabel("?");
+                        isIconLoading = false;
+                        shipeditor.communication.EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.WindowRepaintQueued());
+                    });
+                }
+            });
+        }
+        return cachedIconLabel;
     }
 
 }

@@ -1,12 +1,13 @@
 package shipeditor.utility.graphics;
+import shipeditor.utility.UtilityEnums.DrawMode;
+import shipeditor.utility.UtilityEnums.RectangleCorner;
+
 
 import java.awt.Paint;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.utility.Utility;
-import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
-import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
 
 
@@ -19,7 +20,6 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.font.GlyphVector;
 import java.awt.geom.*;
-import java.awt.image.RenderedImage;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,8 +31,6 @@ public final class DrawUtilities {
     private static final Map<Float, Stroke> CACHED_STROKES = new HashMap<>();
 
     private static final DrawMode DRAW_MODE = DrawMode.FAST;
-
-    private static final AffineTransform CACHED_TRANSFORM = new AffineTransform();
 
     private DrawUtilities() {
     }

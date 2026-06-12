@@ -27,14 +27,14 @@ public final class Errors {
 
     public static void showFileError(String message, Throwable exception) {
         if (java.awt.GraphicsEnvironment.isHeadless()) {
-            log.error("File error (headless): {}", message);
-            if (exception != null) {
+            log.error(StringValues.FILE_ERROR_HEADLESS, message);
+            if (exception != null && SettingsManager.isDeveloperModeEnabled()) {
                 Errors.printToStream(exception);
             }
             return;
         }
 
-        Object[] options = {"OK", "Hide file errors"};
+        Object[] options = {StringValues.OPTION_OK, StringValues.OPTION_HIDE_FILE_ERRORS};
         int result = JOptionPane.showOptionDialog(
                 null,
                 message,
@@ -48,10 +48,12 @@ public final class Errors {
         if (result == 1) {
             Settings settings = SettingsManager.getSettings();
             settings.setShowLoadingErrors(false);
-            log.info("File error pop-ups are disabled by user.");
+            if (SettingsManager.isDeveloperModeEnabled()) {
+                log.info(StringValues.FILE_ERRORS_DISABLED_LOG);
+            }
         }
 
-        if (exception != null) {
+        if (exception != null && SettingsManager.isDeveloperModeEnabled()) {
             Errors.printToStream(exception);
         }
     }
@@ -59,18 +61,22 @@ public final class Errors {
     public static void showFileOpeningError(File toOpen, Throwable exception) {
         String filePath = toOpen.getAbsolutePath();
 
-        log.error("Failed to open {} in Explorer!", filePath);
+        if (SettingsManager.isDeveloperModeEnabled()) {
+            log.error(StringValues.FAILED_TO_OPEN_IN_EXPLORER, filePath);
+        }
         if (!java.awt.GraphicsEnvironment.isHeadless()) {
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Failed to open file in Explorer, exception thrown at: " + filePath,
+                    StringValues.FAILED_TO_OPEN_IN_EXPLORER_UI + filePath,
                     StringValues.FILE_LOADING_ERROR,
                     JOptionPane.ERROR_MESSAGE);
         }
-        Errors.printToStream(exception);
+        if (SettingsManager.isDeveloperModeEnabled()) {
+            Errors.printToStream(exception);
+        }
     }
 
     static void showSpriteNotFound(String filePath) {
-        String report = "Image file not found: " + filePath;
+        String report = StringValues.IMAGE_FILE_NOT_FOUND + filePath;
         if (!java.awt.GraphicsEnvironment.isHeadless()) {
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                     report,
@@ -79,8 +85,10 @@ public final class Errors {
         } else {
             log.error(report);
         }
-        FileNotFoundException notFoundException = new FileNotFoundException(report);
-        Errors.printToStream(notFoundException);
+        if (SettingsManager.isDeveloperModeEnabled()) {
+            FileNotFoundException notFoundException = new FileNotFoundException(report);
+            Errors.printToStream(notFoundException);
+        }
     }
 
     public static void printToStream(Throwable throwable) {
@@ -96,10 +104,10 @@ public final class Errors {
 
         public void uncaughtException(Thread t, Throwable e) {
             try {
-                log.error("Exception caught with global handler!", e);
+                log.error(StringValues.EXCEPTION_GLOBAL_HANDLER, e);
                 Errors.printToStream(e);
             } catch (Throwable fallback) {
-                System.err.println("Uncaught exception failed to log!");
+                System.err.println(StringValues.UNCAUGHT_EXCEPTION_FAILED_LOG);
                 e.printStackTrace(System.err);
                 fallback.printStackTrace(System.err);
             }

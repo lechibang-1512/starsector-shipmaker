@@ -1,7 +1,7 @@
 package shipeditor.utility.components.dialog;
 
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
-import shipeditor.components.viewer.painters.points.ship.features.FireMode;
+import shipeditor.components.viewer.ViewerEnums.FireMode;
 import shipeditor.components.viewer.painters.points.ship.features.FittedWeaponGroup;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeatureComparator;

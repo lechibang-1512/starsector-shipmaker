@@ -11,12 +11,14 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.awt.AWTGLCanvas;
 import org.lwjgl.opengl.awt.GLData;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.ViewerFocusRequestQueued;
 import shipeditor.communication.events.viewer.ViewerBackgroundChanged;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.control.ViewerGuidesToggled;
-import shipeditor.communication.events.viewer.control.ViewerTransformsReset;
-import shipeditor.communication.events.viewer.layers.*;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerGuidesToggled;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ViewerLayerRemovalConfirmed;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerSpriteLoadQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerSpriteLoadConfirmed;
 import shipeditor.components.viewer.control.LayerViewerControls;
 import shipeditor.components.viewer.control.ViewerControl;
 import shipeditor.components.viewer.layers.LayerManager;
@@ -39,7 +41,6 @@ import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -47,6 +48,8 @@ import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import shipeditor.communication.events.components.ComponentEvents.ViewerFocusRequestQueued;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransformsReset;
 /** * This one is a conceptual root of the whole app.
  * It is responsible for the foundation of editing workflow - visual display of ships and its point features.*/
 @Getter

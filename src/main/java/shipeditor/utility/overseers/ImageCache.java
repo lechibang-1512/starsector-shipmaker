@@ -25,6 +25,9 @@ public final class ImageCache {
     }
 
     public static BufferedImage loadImage(File file) {
+        if (file == null) {
+            return null;
+        }
         SoftReference<BufferedImage> ref = instance.cache.get(file);
         if (ref != null) {
             BufferedImage sprite = ref.get();

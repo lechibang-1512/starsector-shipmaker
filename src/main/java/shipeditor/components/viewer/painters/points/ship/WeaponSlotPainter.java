@@ -1,6 +1,5 @@
 package shipeditor.components.viewer.painters.points.ship;
 
-import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -12,9 +11,10 @@ import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.BusEvent;
-import shipeditor.communication.events.viewer.points.*;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectedConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.SlotPointsSorted;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.instrument.ship.slots.SlotCreationPane;
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
@@ -27,21 +27,22 @@ import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipSkin;
 import shipeditor.components.viewer.painters.points.AngledPointPainter;
 import shipeditor.persistence.SettingsManager;
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.Utility;
 import shipeditor.utility.overseers.StaticController;
 
-import java.awt.event.KeyEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.*;
 
-import static shipeditor.components.viewer.painters.PainterVisibility.ALWAYS_SHOWN;
-import static shipeditor.components.viewer.painters.PainterVisibility.SHOWN_WHEN_EDITED;
+import static shipeditor.components.viewer.ViewerEnums.PainterVisibility.ALWAYS_SHOWN;
+import static shipeditor.components.viewer.ViewerEnums.PainterVisibility.SHOWN_WHEN_EDITED;
+import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.WeaponSlotInsertedConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued;
 
 /** * Is not supposed to handle launch bays - bays deserialize to different points and painter.*/
 @SuppressWarnings({"OverlyCoupledClass", "OverlyComplexClass", "ClassWithTooManyMethods"})

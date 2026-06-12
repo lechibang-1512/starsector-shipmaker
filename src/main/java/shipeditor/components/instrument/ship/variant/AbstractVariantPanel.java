@@ -1,8 +1,8 @@
 package shipeditor.components.instrument.ship.variant;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.components.viewer.layers.ViewerLayer;
 
 import javax.swing.JPanel;

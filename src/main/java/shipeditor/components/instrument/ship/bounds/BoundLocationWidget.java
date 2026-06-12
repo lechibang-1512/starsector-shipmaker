@@ -4,7 +4,6 @@ import shipeditor.components.viewer.entities.BoundPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.painters.points.ship.BoundPointsPainter;
-import shipeditor.undo.EditDispatch;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.widgets.PointLocationWidget;
 

@@ -1,9 +1,8 @@
 package shipeditor.components.instrument.ship.builtins.wings;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.data.ShipHull;
@@ -20,6 +19,7 @@ import javax.swing.JScrollPane;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
 public class BuiltInWingsPanel extends JPanel {
 

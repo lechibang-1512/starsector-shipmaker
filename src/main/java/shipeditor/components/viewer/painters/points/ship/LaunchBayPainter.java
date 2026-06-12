@@ -8,10 +8,7 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.points.LaunchBayAddConfirmed;
-import shipeditor.communication.events.viewer.points.LaunchBayRemoveConfirmed;
-import shipeditor.communication.events.viewer.points.PointCreationQueued;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.PrimaryViewer;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.WorldPoint;
@@ -32,6 +29,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.awt.KeyboardFocusManager;
 import shipeditor.utility.graphics.GraphicConstants;
+import shipeditor.communication.BusEventListener;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMousePressed;
+import javax.swing.SwingUtilities;
+import java.awt.event.MouseEvent;
+import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.LaunchBayRemoveConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.LaunchBayAddConfirmed;
 
 @Log4j2
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
@@ -227,14 +231,38 @@ public class LaunchBayPainter extends MirrorablePointPainter {
     }
 
     @Override
+    protected void selectPointConditionally() {
+        // Do not implement sticking on hover.
+    }
+
+    @Override
+    protected void initInteractionListeners() {
+        super.initInteractionListeners();
+        BusEventListener rawMouseListener = event -> {
+            if (!isInteractionEnabled()) return;
+            if (event instanceof ViewerRawMousePressed checked) {
+                MouseEvent me = checked.mouseEvent();
+                if (SwingUtilities.isLeftMouseButton(me) && !me.isControlDown() && !me.isShiftDown() && !me.isAltDown()) {
+                    this.selectPointClosest();
+                }
+            }
+        };
+        EventBus.subscribe(this, rawMouseListener);
+    }
+
+    @Override
     protected void paintPainterContent(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
         if (!isInteractionEnabled()) return;
+        
+        AffineTransform worldToScreen = StaticController.getViewer().getWorldToScreen();
         Point2D finalWorldCursor = StaticController.getFinalWorldCursor();
         WorldPoint selected = this.getSelected();
         PrimaryViewer viewer = StaticController.getViewer();
         if (selected != null && viewer.isCursorInViewer()) {
-            org.joml.Vector2f start = new org.joml.Vector2f((float) selected.getPosition().getX(), (float) selected.getPosition().getY());
-            org.joml.Vector2f end = new org.joml.Vector2f((float) finalWorldCursor.getX(), (float) finalWorldCursor.getY());
+            Point2D startScreen = worldToScreen.transform(selected.getPosition(), null);
+            Point2D endScreen = worldToScreen.transform(finalWorldCursor, null);
+            org.joml.Vector2f start = new org.joml.Vector2f((float) startScreen.getX(), (float) startScreen.getY());
+            org.joml.Vector2f end = new org.joml.Vector2f((float) endScreen.getX(), (float) endScreen.getY());
 
             org.lwjgl.opengl.GL11.glLineWidth(4.0f);
             shapeRenderer.drawLine(start, end, new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 1.0f));

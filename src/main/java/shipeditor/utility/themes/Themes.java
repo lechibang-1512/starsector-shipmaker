@@ -4,7 +4,6 @@ import shipeditor.utility.graphics.ColorUtilities;
 
 import javax.swing.UIManager;
 import java.awt.Color;
-import java.awt.Component;
 
 public final class Themes {
 
@@ -12,11 +11,13 @@ public final class Themes {
     }
 
     public static Color getIconColor() {
-        return UIManager.getColor("Menu.icon.arrowColor");
+        Color color = UIManager.getColor("Menu.icon.arrowColor");
+        return color != null ? color : Color.LIGHT_GRAY;
     }
 
     public static Color getDisabledIconColor() {
-        return UIManager.getColor("Menu.icon.disabledArrowColor");
+        Color color = UIManager.getColor("Menu.icon.disabledArrowColor");
+        return color != null ? color : Color.GRAY;
     }
 
     public static Color getBorderColor() {
@@ -24,7 +25,8 @@ public final class Themes {
     }
 
     public static Color getTextColor() {
-        return UIManager.getColor("Label.foreground");
+        Color color = UIManager.getColor("Label.foreground");
+        return color != null ? color : Color.WHITE;
     }
 
     public static Color getDisabledTextColor() {
@@ -56,7 +58,8 @@ public final class Themes {
     }
 
     public static Color getPanelBackgroundColor() {
-        return UIManager.getColor("Panel.background");
+        Color color = UIManager.getColor("Panel.background");
+        return color != null ? color : Color.DARK_GRAY;
     }
 
     public static Color getPanelHighlightColor() {

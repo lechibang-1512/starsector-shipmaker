@@ -3,7 +3,7 @@ package shipeditor.components.instrument.ship.slots;
 import javax.swing.ListModel;
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.points.SlotPointsSorted;
+import shipeditor.communication.events.viewer.points.PointEvents.SlotPointsSorted;
 import shipeditor.components.datafiles.trees.WeaponFilterPanel;
 
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;

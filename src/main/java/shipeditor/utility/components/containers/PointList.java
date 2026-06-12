@@ -4,9 +4,7 @@ import javax.swing.ListModel;
 
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.points.PointRemoveQueued;
-import shipeditor.communication.events.viewer.points.PointSelectQueued;
-import shipeditor.communication.events.viewer.points.PointSelectedConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectedConfirmed;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.utility.components.dialog.DialogUtilities;
 import shipeditor.utility.components.rendering.PointCellRenderer;
@@ -24,6 +22,8 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.PointRemoveQueued;
 
 public abstract class PointList<T extends BaseWorldPoint> extends SortableList<T> {
 

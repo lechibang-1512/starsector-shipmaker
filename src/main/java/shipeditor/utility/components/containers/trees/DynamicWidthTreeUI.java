@@ -89,9 +89,9 @@ public class DynamicWidthTreeUI extends FlatTreeUI {
         if( visiblePaths != null ) {
             Insets insets = tree.getInsets();
 
-            Set<TreePath> verticalLinePaths = paintLines ? new HashSet<>() : null;
-            List<Runnable> paintLinesLater = paintLines ? new ArrayList<>() : null;
-            List<Runnable> paintExpandControlsLater = paintLines ? new ArrayList<>() : null;
+            Set<TreePath> verticalLinePaths = new HashSet<>();
+            List<Runnable> paintLinesLater = new ArrayList<>();
+            List<Runnable> paintExpandControlsLater = new ArrayList<>();
 
             if( paintLines ) {
                 for( TreePath path = firstPath.getParentPath(); path != null; path = path.getParentPath() )

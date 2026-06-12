@@ -1,8 +1,8 @@
 package shipeditor.components.viewer.painters.points.ship.features;
 
 import shipeditor.components.datafiles.entities.WeaponCSVEntry;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 
 import java.io.Serializable;
 import java.util.Comparator;

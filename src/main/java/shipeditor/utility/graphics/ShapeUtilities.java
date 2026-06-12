@@ -1,4 +1,6 @@
 package shipeditor.utility.graphics;
+import shipeditor.utility.UtilityEnums.RectangleCorner;
+
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

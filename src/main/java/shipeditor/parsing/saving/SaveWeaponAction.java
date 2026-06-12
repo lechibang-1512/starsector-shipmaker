@@ -10,7 +10,6 @@ import shipeditor.utility.text.StringValues;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -81,8 +80,8 @@ final class SaveWeaponAction {
         shipeditor.components.viewer.painters.points.weapon.WeaponOffsetPainter hardpointPainter = null;
         for (shipeditor.components.viewer.painters.points.AbstractPointPainter pointPainter : painter.getAllPainters()) {
             if (pointPainter instanceof shipeditor.components.viewer.painters.points.weapon.WeaponOffsetPainter wop) {
-                if (wop.getDesignatedType() == shipeditor.representation.weapon.WeaponMount.TURRET) turretPainter = wop;
-                if (wop.getDesignatedType() == shipeditor.representation.weapon.WeaponMount.HARDPOINT) hardpointPainter = wop;
+                if (wop.getDesignatedType() == shipeditor.representation.weapon.WeaponEnums.WeaponMount.TURRET) turretPainter = wop;
+                if (wop.getDesignatedType() == shipeditor.representation.weapon.WeaponEnums.WeaponMount.HARDPOINT) hardpointPainter = wop;
             }
         }
 

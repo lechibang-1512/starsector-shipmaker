@@ -8,7 +8,7 @@ else
     cd "$DIRNAME"
 fi
 
-JVM_OPTS="-Xmx512m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20"
+JVM_OPTS="-Xmx4g -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20"
 
 if [ "$1" = "--cli" ]; then
     shift

@@ -1,4 +1,6 @@
 package shipeditor.components.viewer.painters.points.ship.features;
+import shipeditor.components.viewer.ViewerEnums.FireMode;
+
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

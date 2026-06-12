@@ -10,10 +10,8 @@ import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.points.BoundInsertedConfirmed;
-import shipeditor.communication.events.viewer.points.BoundPointsSorted;
-import shipeditor.communication.events.viewer.points.PointCreationQueued;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.communication.events.viewer.points.PointEvents.BoundPointsSorted;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.BoundPoint;
@@ -21,7 +19,6 @@ import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.painters.points.MirrorablePointPainter;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.Utility;
-import shipeditor.utility.graphics.DrawUtilities;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
@@ -36,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.awt.KeyboardFocusManager;
 import shipeditor.utility.graphics.GraphicConstants;
+import shipeditor.communication.events.viewer.points.PointEvents.BoundInsertedConfirmed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
 
 @Log4j2
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})

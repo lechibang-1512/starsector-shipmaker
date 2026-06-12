@@ -2,8 +2,6 @@ package shipeditor.components.datafiles.trees;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.SelectWeaponDataEntry;
-import shipeditor.communication.events.files.WeaponTreeReloadQueued;
 import shipeditor.components.datafiles.entities.WeaponCSVEntry;
 import shipeditor.components.viewer.layers.ship.FeaturesOverseer;
 import shipeditor.components.viewer.layers.weapon.WeaponSprites;
@@ -15,7 +13,7 @@ import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
 import shipeditor.representation.weapon.ProjectileSpecFile;
 import shipeditor.representation.weapon.WeaponSpecFile;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.graphics.Sprite;
@@ -51,11 +49,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import shipeditor.utility.components.UIConstants;
+import shipeditor.communication.events.components.ComponentEvents.SelectWeaponDataEntry;
+import shipeditor.communication.events.files.FileEvents.WeaponTreeReloadQueued;
 
 @Log4j2
 public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
-
-    private WeaponCSVEntry cachedEntry;
 
     private boolean autoExpandNodes;
 
@@ -164,7 +162,7 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
         JPanel searchContainer = new JPanel(new GridBagLayout());
         searchContainer.setBorder(UIConstants.EMPTY_BORDER);
 
-        JTextField searchField = WeaponsTreePanel.getTextField();
+        JTextField searchField = this.getTextField();
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.weightx = 1.0;
@@ -172,27 +170,34 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
         searchContainer.add(searchField, gridBagConstraints);
         JButton searchButton = new JButton(StringValues.SEARCH);
         searchButton.addActionListener(e -> this.reload());
+        searchField.addActionListener(e -> searchButton.doClick());
         searchContainer.add(searchButton);
         return searchContainer;
     }
 
-    private static JTextField getTextField() {
+    private JTextField getTextField() {
         JTextField searchField = new JTextField();
         searchField.setToolTipText("Input is checked against displayed filename and weapon ID as a substring.");
+
+        javax.swing.Timer timer = new javax.swing.Timer(300, e -> {
+            WeaponFilterPanel.setCurrentTextFilter(searchField.getText());
+            this.reload();
+        });
+        timer.setRepeats(false);
 
         Document document = searchField.getDocument();
         document.addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                WeaponFilterPanel.setCurrentTextFilter(searchField.getText());
+                timer.restart();
             }
             @Override
             public void removeUpdate(DocumentEvent e) {
-                WeaponFilterPanel.setCurrentTextFilter(searchField.getText());
+                timer.restart();
             }
             @Override
             public void changedUpdate(DocumentEvent e) {
-                WeaponFilterPanel.setCurrentTextFilter(searchField.getText());
+                timer.restart();
             }
         });
         return searchField;
@@ -256,6 +261,15 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
     }
 
     @Override
+    protected String getTooltipForEntry(Object entry) {
+        if (entry instanceof WeaponCSVEntry weaponEntry) {
+            String dragHint = "(Double-click or drag to load as weapon layer)";
+            return weaponEntry.getMultilineTooltip(dragHint);
+        }
+        return super.getTooltipForEntry(entry);
+    }
+
+    @Override
     protected void updateEntryPanel(WeaponCSVEntry selected) {
         JPanel rightPanel = getRightPanel();
         rightPanel.removeAll();
@@ -276,7 +290,7 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
         specFilePanel.setLayout(new FlowLayout(FlowLayout.LEADING, 0, 0));
 
         ComponentUtilities.outfitPanelWithTitle(specFilePanel, new Insets(1, 0, 0, 0),
-                StringValues.FILES);
+                "Weapon Info");
         specFilePanel.setAlignmentX(LEFT_ALIGNMENT);
 
         JPanel labelContainer = new JPanel();
@@ -296,13 +310,14 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
         WeaponSprites sprites = selected.getSprites();
         WeaponsTreePanel.populateSpriteFileLabels(labelContainer, sprites);
 
+        labelContainer.add(Box.createVerticalStrut(4));
+        labelContainer.add(WeaponsTreePanel.createInstallableSlotsLabel(selected));
+
         specFilePanel.add(labelContainer);
         constraints.gridy = 1;
         rightPanel.add(specFilePanel, constraints);
 
         createRightPanelDataTable(selected);
-
-        cachedEntry = selected;
 
         FeaturesOverseer.setWeaponForInstall(selected);
     }
@@ -345,15 +360,44 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
         return ComponentUtilities.createFileLabel(projectileSpecFilePath, "Projectile file : ");
     }
 
+    private static JLabel createInstallableSlotsLabel(WeaponCSVEntry weapon) {
+        WeaponType type = weapon.getType();
+        List<String> installableIn = new java.util.ArrayList<>();
+        if (type == WeaponType.BALLISTIC || type == WeaponType.HYBRID || type == WeaponType.COMPOSITE) {
+            installableIn.add("Ballistic");
+        }
+        if (type == WeaponType.ENERGY || type == WeaponType.HYBRID || type == WeaponType.SYNERGY) {
+            installableIn.add("Energy");
+        }
+        if (type == WeaponType.MISSILE || type == WeaponType.COMPOSITE || type == WeaponType.SYNERGY) {
+            installableIn.add("Missile");
+        }
+        if (type == WeaponType.UNIVERSAL || (type != WeaponType.LAUNCH_BAY && type != WeaponType.BUILT_IN && type != WeaponType.DECORATIVE && type != WeaponType.SYSTEM && type != WeaponType.STATION_MODULE)) {
+            installableIn.add("Universal");
+        }
+        if (type == WeaponType.SYNERGY || type == WeaponType.ENERGY || type == WeaponType.MISSILE) {
+            installableIn.add("Synergy");
+        }
+        if (type == WeaponType.HYBRID || type == WeaponType.BALLISTIC || type == WeaponType.ENERGY) {
+            installableIn.add("Hybrid");
+        }
+        if (type == WeaponType.COMPOSITE || type == WeaponType.BALLISTIC || type == WeaponType.MISSILE) {
+            installableIn.add("Composite");
+        }
+        
+        String text = installableIn.isEmpty() ? "Installable in slots: None" : "Installable in slots: " + String.join(", ", installableIn);
+        return new JLabel(text);
+    }
+
     @Override
     JPopupMenu getContextMenu() {
         JPopupMenu menu = super.getContextMenu();
         DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
         if (cachedSelectForMenu.getUserObject() instanceof WeaponCSVEntry) {
-            menu.addSeparator();
             JMenuItem loadAsLayer = new JMenuItem("Load as weapon layer");
             loadAsLayer.addActionListener(new LoadWeaponLayerFromTree());
-            menu.add(loadAsLayer);
+            menu.insert(loadAsLayer, 0);
+            menu.insert(new JPopupMenu.Separator(), 1);
         }
         return menu;
     }
@@ -383,6 +427,28 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
     @Override
     protected Class<?> getEntryClass() {
         return WeaponCSVEntry.class;
+    }
+
+    @Override
+    protected void initTreePanelListeners(JPanel passedTreePanel) {
+        super.initTreePanelListeners(passedTreePanel);
+        getTree().addMouseListener(new DoubleClickLayerLoader());
+    }
+
+    private class DoubleClickLayerLoader extends java.awt.event.MouseAdapter {
+        @SuppressWarnings("ChainOfInstanceofChecks")
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            if (e.getButton() != java.awt.event.MouseEvent.BUTTON1 || e.getClickCount() < 2) return;
+            JTree tree = getTree();
+            java.awt.Point eventPoint = e.getPoint();
+            TreePath pathForLocation = tree.getPathForLocation(eventPoint.x, eventPoint.y);
+            if (pathForLocation == null) return;
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) pathForLocation.getLastPathComponent();
+            if (node.getUserObject() instanceof WeaponCSVEntry checked) {
+                checked.loadLayerFromEntry();
+            }
+        }
     }
 
 }

@@ -6,13 +6,10 @@ import lombok.Getter;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.DeleteButtonPressed;
-import shipeditor.communication.events.components.ShipEntryPicked;
-import shipeditor.communication.events.components.WeaponEntryPicked;
-import shipeditor.communication.events.viewer.control.FeatureInstallQueued;
+import shipeditor.communication.events.viewer.control.ControlEvents.FeatureInstallQueued;
 import shipeditor.components.datafiles.entities.InstallableEntry;
 import shipeditor.components.datafiles.entities.WeaponCSVEntry;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.weapon.SlotData;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
 import shipeditor.components.viewer.layers.ship.data.ShipSkin;
@@ -20,18 +17,16 @@ import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.components.viewer.layers.ship.data.Variant;
 import shipeditor.components.viewer.layers.weapon.WeaponPainter;
 import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
-import shipeditor.components.viewer.painters.points.ship.features.FeatureOverrideState;
-import shipeditor.components.viewer.painters.points.ship.features.FireMode;
+import shipeditor.components.viewer.ViewerEnums.FeatureOverrideState;
+import shipeditor.components.viewer.ViewerEnums.FireMode;
 import shipeditor.components.viewer.painters.points.ship.features.FittedWeaponGroup;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
-import shipeditor.representation.GameDataRepository;
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.representation.weapon.WeaponSpecFile;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.overseers.StaticController;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +34,9 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import shipeditor.communication.events.components.ComponentEvents.DeleteButtonPressed;
+import shipeditor.communication.events.components.ComponentEvents.ShipEntryPicked;
+import shipeditor.communication.events.components.ComponentEvents.WeaponEntryPicked;
 
 /** * Responsible for all non-rendering interactions with installed features of layer,
  * be it base hull or skin built-in, or variant fits.*/

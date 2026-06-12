@@ -3,7 +3,7 @@ package shipeditor.undo.edits;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.painters.points.ship.CenterPointPainter;

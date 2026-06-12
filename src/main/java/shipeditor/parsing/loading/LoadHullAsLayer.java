@@ -2,13 +2,11 @@ package shipeditor.parsing.loading;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.HullFileOpened;
-import shipeditor.communication.events.files.SpriteOpened;
-import shipeditor.communication.events.viewer.layers.LastLayerSelectQueued;
-import shipeditor.communication.events.viewer.layers.ships.ShipLayerCreationQueued;
+import shipeditor.communication.events.files.FileEvents.HullFileOpened;
 import shipeditor.representation.ship.HullSpecFile;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.text.StringValues;
+import shipeditor.persistence.SettingsManager;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -16,6 +14,9 @@ import javax.swing.JOptionPane;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Path;
+import shipeditor.communication.events.files.FileEvents.SpriteOpened;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ShipLayerCreationQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LastLayerSelectQueued;
 
 @Log4j2
 public class LoadHullAsLayer extends AbstractAction {
@@ -40,10 +41,12 @@ public class LoadHullAsLayer extends AbstractAction {
             Path spriteFilePath = Path.of(spriteName);
             File spriteFile = FileLoading.fetchDataFile(spriteFilePath, null);
             if (spriteFile == null) {
-                log.error("Failed to find sprite for ship file {}", file);
+                if (SettingsManager.isDeveloperModeEnabled()) {
+                    log.error(StringValues.FAILED_TO_FIND_SPRITE, file);
+                }
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                        "No sprite in game data is found for the selected ship file.",
-                        "Sprite not found",
+                        StringValues.SPRITE_NOT_FOUND_MSG,
+                        StringValues.SPRITE_NOT_FOUND_TITLE,
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }

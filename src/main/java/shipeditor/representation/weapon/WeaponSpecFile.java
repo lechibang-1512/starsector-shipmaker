@@ -1,4 +1,7 @@
 package shipeditor.representation.weapon;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -10,12 +13,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.Setter;
-import shipeditor.parsing.deserialize.ColorArrayRGBADeserializer;
-import shipeditor.parsing.deserialize.Point2DArrayDeserializer;
-import shipeditor.parsing.deserialize.TextureTypeDeserializer;
-import shipeditor.parsing.serialize.ColorArrayRGBASerializer;
-import shipeditor.representation.weapon.animation.AnimationType;
-import shipeditor.representation.weapon.animation.BarrelMode;
+import shipeditor.parsing.deserialize.CustomDeserializers.ColorArrayRGBADeserializer;
+import shipeditor.parsing.deserialize.CustomDeserializers.Point2DArrayDeserializer;
+import shipeditor.parsing.deserialize.CustomDeserializers.TextureTypeDeserializer;
+import shipeditor.parsing.serialize.CustomSerializers.ColorArrayRGBASerializer;
+import shipeditor.representation.weapon.WeaponEnums.AnimationType;
+import shipeditor.representation.weapon.WeaponEnums.BarrelMode;
 import shipeditor.representation.weapon.animation.MuzzleFlashSpec;
 import shipeditor.representation.weapon.animation.SmokeSpec;
 import shipeditor.utility.text.StringConstants;

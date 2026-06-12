@@ -1,14 +1,16 @@
 package shipeditor.components;
+import shipeditor.components.ComponentEnums.CoordsDisplayMode;
+
 
 import com.formdev.flatlaf.ui.FlatLineBorder;
 import lombok.extern.log4j.Log4j2;
 
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.Events;
-import shipeditor.communication.events.viewer.control.*;
-import shipeditor.communication.events.viewer.layers.LayerSpriteLoadConfirmed;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
-import shipeditor.communication.events.viewer.status.CoordsModeChanged;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerCursorMoved;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerSpriteLoadConfirmed;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
+import shipeditor.communication.events.viewer.control.ControlEvents.CoordsModeChanged;
 import shipeditor.components.viewer.LayerViewer;
 import shipeditor.components.viewer.PrimaryViewer;
 import shipeditor.components.viewer.control.ControlPredicates;
@@ -18,7 +20,7 @@ import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.MouseoverLabelListener;
-import shipeditor.utility.components.widgets.IncrementType;
+import shipeditor.utility.UtilityEnums.IncrementType;
 import shipeditor.utility.components.widgets.Spinners;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.overseers.StaticController;
@@ -54,6 +56,10 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.KeyboardFocusManager;
 import javax.swing.JFormattedTextField;
+import shipeditor.communication.events.viewer.control.ControlEvents.PointLinkageToleranceChanged;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerZoomChanged;
+import shipeditor.communication.events.viewer.control.ControlEvents.MirrorModeChange;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransformRotated;
 
 @Log4j2
 final class ViewerStatusPanel extends JPanel {

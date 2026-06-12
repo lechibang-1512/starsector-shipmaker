@@ -4,11 +4,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
 import lombok.Setter;
-import shipeditor.representation.weapon.WeaponMount;
-import shipeditor.representation.weapon.WeaponSize;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.Utility;
-import shipeditor.utility.graphics.DrawUtilities;
 import shipeditor.utility.graphics.ShapeUtilities;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
@@ -44,8 +43,6 @@ public class SlotDrawer {
     private boolean drawArc = true;
 
     private boolean drawAngle = true;
-
-    private static final AffineTransform SCALE_TRANSFORM = new AffineTransform();
 
     public SlotDrawer(SlotPoint parent) {
         this.parentPoint = parent;

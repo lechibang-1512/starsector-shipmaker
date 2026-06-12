@@ -12,7 +12,6 @@ import shipeditor.utility.objects.Size2D;
 import shipeditor.utility.graphics.Sprite;
 
 import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
 
 @Getter @Setter
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
@@ -42,7 +41,6 @@ public class ProjectilePainter implements OpenGLPainter {
         int textureId = projectileSprite.getTextureId();
         if (textureId == 0) return;
 
-        BufferedImage image = this.projectileSprite.getImage();
         double x = paintAnchor.getX() - projectileCenter.getX();
         double y = paintAnchor.getY() - projectileCenter.getY();
 

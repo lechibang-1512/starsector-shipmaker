@@ -18,6 +18,9 @@ import shipeditor.representation.GameDataRepository;
 import shipeditor.representation.ship.HullSpecFile;
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.representation.weapon.*;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.utility.Errors;
 import shipeditor.utility.text.StringConstants;
 

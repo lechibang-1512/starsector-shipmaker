@@ -10,9 +10,9 @@ import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipHull;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.parsing.loading.FileLoading;
-import shipeditor.representation.ship.HullSize;
+import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.representation.ship.HullSpecFile;
-import shipeditor.representation.ship.ShipTypeHints;
+import shipeditor.representation.RepresentationEnums.ShipTypeHints;
 import shipeditor.representation.ship.SkinSpecFile;
 import shipeditor.utility.Utility;
 import shipeditor.utility.graphics.DrawUtilities;
@@ -25,7 +25,6 @@ import shipeditor.persistence.database.DatabaseQueryService;
 import shipeditor.persistence.database.IndexedFile;
 
 import javax.swing.JOptionPane;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.nio.file.Path;
@@ -105,8 +104,11 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
         return skins;
     }
 
-    private synchronized void lazyLoadSpecAndSkins() {
-        if (hullSpecFile != null) return;
+    private java.util.concurrent.CompletableFuture<Void> loadingFuture;
+
+    public synchronized java.util.concurrent.CompletableFuture<Void> lazyLoadSpecAndSkins() {
+        if (hullSpecFile != null) return java.util.concurrent.CompletableFuture.completedFuture(null);
+        if (loadingFuture != null) return loadingFuture;
 
         log.info("Lazily loading spec and skins for base hull ID: {}", hullID);
         Path hullPath = DatabaseQueryService.getFilePathForEntity(this.hullID, "SHIP");
@@ -126,13 +128,15 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
             modId = "starsector-core";
         }
 
-        List<IndexedFile> skinFiles = DatabaseQueryService.getFilesByModAndTypeAsync(modId, "SKIN").join();
-        for (IndexedFile skinFile : skinFiles) {
-            SkinSpecFile skinSpec = FileLoading.loadSkinFile(skinFile.getFilePath().toFile());
-            if (skinSpec != null && Objects.equals(skinSpec.getBaseHullId(), this.hullID)) {
-                this.skins.put(skinFile.getFileName(), skinSpec);
+        loadingFuture = DatabaseQueryService.getFilesByModAndTypeAsync(modId, "SKIN").thenAcceptAsync(skinFiles -> {
+            for (IndexedFile skinFile : skinFiles) {
+                SkinSpecFile skinSpec = FileLoading.loadSkinFile(skinFile.getFilePath().toFile());
+                if (skinSpec != null && Objects.equals(skinSpec.getBaseHullId(), this.hullID)) {
+                    this.skins.put(skinFile.getFileName(), skinSpec);
+                }
             }
-        }
+        });
+        return loadingFuture;
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -145,8 +149,12 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
         if (cellData != null && !cellData.isEmpty()) {
             Iterable<String> hintsText = new ArrayList<>(Arrays.asList(Utility.SPLIT_BY_COMMA.split(cellData)));
             hintsText.forEach(hintText -> {
-                ShipTypeHints typeHint = ShipTypeHints.valueOf(hintText.trim());
-                result.add(typeHint);
+                try {
+                    ShipTypeHints typeHint = ShipTypeHints.valueOf(hintText.trim());
+                    result.add(typeHint);
+                } catch (IllegalArgumentException ignored) {
+                    // Unknown hint from mod data; skip silently.
+                }
             });
         }
         cachedBaseHullHints = result;
@@ -212,6 +220,16 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
     public int getBaseTotalOP() {
         String ordnancePoints = rowData.get(StringConstants.ORDNANCE_POINTS_SPACED);
         return Utility.parseIntegerOrDefault(ordnancePoints, -1);
+    }
+
+    public int getBaseFluxCapacity() {
+        String fluxCapacity = rowData.get("flux capacity");
+        return Utility.parseIntegerOrDefault(fluxCapacity, 0);
+    }
+
+    public int getBaseFluxDissipation() {
+        String fluxDissipation = rowData.get("flux dissipation");
+        return Utility.parseIntegerOrDefault(fluxDissipation, 0);
     }
 
     public int getBayCount() {

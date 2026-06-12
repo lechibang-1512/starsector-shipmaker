@@ -1,7 +1,5 @@
 package shipeditor.components.instrument.weapon;
 
-import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.LayerTabUpdated;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.weapon.WeaponLayer;
 import shipeditor.representation.weapon.WeaponSpecFile;

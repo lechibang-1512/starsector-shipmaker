@@ -4,7 +4,11 @@ import shipeditor.components.datafiles.entities.HullmodCSVEntry;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
 import shipeditor.components.datafiles.entities.WeaponCSVEntry;
 import shipeditor.components.datafiles.entities.WingCSVEntry;
-import shipeditor.components.datafiles.entities.transferable.*;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableHullmod;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableWeapon;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableEntry;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableShip;
+import shipeditor.components.datafiles.entities.transferable.Transferables.TransferableWing;
 import shipeditor.components.viewer.ViewerDragListener;
 import shipeditor.components.viewer.ViewerDropReceiver;
 

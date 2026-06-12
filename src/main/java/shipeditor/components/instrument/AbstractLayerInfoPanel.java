@@ -1,14 +1,16 @@
 package shipeditor.components.instrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
+
 
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.utility.overseers.StaticController;
 
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
 public abstract class AbstractLayerInfoPanel extends JPanel {
 
@@ -40,8 +42,7 @@ public abstract class AbstractLayerInfoPanel extends JPanel {
     private void handleLayerSelected(ViewerLayer selected) {
         clearData();
 
-        boolean layerPainterPresent = selected != null && selected.getPainter() != null;
-        if (!layerPainterPresent) {
+        if (selected == null || selected.getPainter() == null) {
             layerCircumstancePanel.refresh(null);
             return;
         }

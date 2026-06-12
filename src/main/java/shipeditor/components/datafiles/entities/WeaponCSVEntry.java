@@ -4,14 +4,19 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
 import shipeditor.components.viewer.entities.weapon.OffsetPoint;
 import shipeditor.components.viewer.layers.ship.ShipPainterInitialization;
 import shipeditor.components.viewer.layers.weapon.*;
+import shipeditor.components.viewer.ViewerEnums.WeaponRenderOrdering;
 import shipeditor.components.viewer.painters.points.weapon.ProjectilePainter;
 import shipeditor.parsing.loading.FileLoading;
 import shipeditor.representation.GameDataRepository;
 import shipeditor.representation.weapon.*;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
+import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.representation.weapon.WeaponEnums.WeaponRenderHints;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.graphics.DrawUtilities;
@@ -28,7 +33,6 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import java.awt.Graphics2D;
 import java.awt.Insets;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -84,11 +88,18 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
 
     @Override
     public String getMultilineTooltip() {
+        return getMultilineTooltip(null);
+    }
+
+    public String getMultilineTooltip(String appendHint) {
         String entryID = StringValues.WEAPON_ID + this.getWeaponID();
         WeaponType weaponType = this.getType();
         String type =  "Weapon type: " + weaponType.getDisplayedName();
         WeaponSize weaponSize = this.getSize();
         String size =  "Weapon size: " + weaponSize.getDisplayedName();
+        if (appendHint != null) {
+            return Utility.getWithLinebreaks(entryID, type, size, appendHint);
+        }
         return Utility.getWithLinebreaks(entryID, type, size);
     }
 
@@ -280,7 +291,13 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
         var renderHints = specFile.getRenderHints();
         if (renderHints != null && !renderHints.isEmpty()) {
             List<WeaponRenderHints> hintEnums = new ArrayList<>();
-            renderHints.forEach(hintText -> hintEnums.add(WeaponRenderHints.valueOf(hintText)));
+            renderHints.forEach(hintText -> {
+                try {
+                    hintEnums.add(WeaponRenderHints.valueOf(hintText));
+                } catch (IllegalArgumentException ignored) {
+                    // Unknown render hint from mod data; skip silently.
+                }
+            });
             weaponPainter.setRenderHints(hintEnums);
         }
 

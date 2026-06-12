@@ -9,20 +9,17 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.BusEventListener;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
-import shipeditor.communication.events.viewer.points.InstrumentModeChanged;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.ShipCenterPoint;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.utility.graphics.opengl.TextRenderer;
 import shipeditor.representation.ship.HullSpecFile;
-import shipeditor.representation.weapon.WeaponType;
+import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.Utility;
-import shipeditor.utility.graphics.DrawUtilities;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.text.StringValues;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
@@ -32,16 +29,13 @@ import org.joml.Matrix4f;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.KeyEvent;
-import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.awt.KeyboardFocusManager;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
+import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
 
 /** * Also intended to handle collision radii and their painting.*/
 @Log4j2
@@ -90,7 +84,7 @@ public class CenterPointPainter extends SinglePointPainter {
         EventBus.subscribe(this, modeListener);
         // Subscribe to raw mouse moved and compute radius drag internally.
         BusEventListener rawMouseMovedListener = event -> {
-            if (event instanceof shipeditor.communication.events.viewer.control.ViewerRawMouseMoved checked && isInteractionEnabled()) {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseMoved checked && isInteractionEnabled()) {
                 if (!collisionRadiusHotkeyPressed) return;
                 java.awt.geom.AffineTransform screenToWorld = shipeditor.utility.overseers.StaticController.getScreenToWorld();
                 java.awt.event.MouseEvent me = checked.mouseEvent();

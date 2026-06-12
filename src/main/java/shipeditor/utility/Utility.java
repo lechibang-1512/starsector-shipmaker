@@ -1,7 +1,7 @@
 package shipeditor.utility;
 
 import lombok.extern.log4j.Log4j2;
-import shipeditor.components.CoordsDisplayMode;
+import shipeditor.components.ComponentEnums.CoordsDisplayMode;
 import shipeditor.components.viewer.entities.AngledPoint;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.WorldPoint;
@@ -17,8 +17,7 @@ import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.text.CoordinatesFormatter;
 import shipeditor.utility.text.StringValues;
 
-import javax.swing.JLabel;
-import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
@@ -38,7 +37,6 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import java.awt.MenuContainer;
 
 @SuppressWarnings("ClassWithTooManyMethods")
 @Log4j2
@@ -100,18 +98,9 @@ public final class Utility {
     public static ActionListener scheduleTask(int waitTime, ActionListener taskBeforeStart, ActionListener taskWhenDone) {
         return e -> {
             taskBeforeStart.actionPerformed(e);
-            SwingWorker<Void, Void> worker = new SwingWorker<>() {
-                @Override
-                protected Void doInBackground() throws InterruptedException {
-                    Thread.sleep(waitTime);
-                    return null;
-                }
-                @Override
-                protected void done() {
-                    taskWhenDone.actionPerformed(e);
-                }
-            };
-            worker.execute();
+            Timer timer = new Timer(waitTime, evt -> taskWhenDone.actionPerformed(e));
+            timer.setRepeats(false);
+            timer.start();
         };
     }
 
@@ -124,9 +113,28 @@ public final class Utility {
 
     public static double round(double value, int decimalPlaces) {
         if (decimalPlaces < 0) throw new IllegalArgumentException("Decimal places cannot be negative.");
+        if (Double.isNaN(value) || Double.isInfinite(value)) return value;
         BigDecimal bigDecimal = BigDecimal.valueOf(value);
         bigDecimal = bigDecimal.setScale(decimalPlaces, RoundingMode.HALF_UP);
         return bigDecimal.doubleValue();
+    }
+
+    public static String wrapTextWithHtml(String text, int maxWords) {
+        if (text == null || text.isEmpty()) return text;
+        String[] words = text.split("\\s+");
+        if (words.length <= maxWords) return text;
+        
+        StringBuilder builder = new StringBuilder("<html>");
+        for (int i = 0; i < words.length; i++) {
+            builder.append(words[i]);
+            if ((i + 1) % maxWords == 0 && i != words.length - 1) {
+                builder.append("<br>");
+            } else if (i != words.length - 1) {
+                builder.append(" ");
+            }
+        }
+        builder.append("</html>");
+        return builder.toString();
     }
 
     public static String getWithLinebreaks(String ... lines) {
@@ -134,7 +142,20 @@ public final class Utility {
         Stream<String> stringStream = Arrays.stream(lines);
         stringStream.forEachOrdered(line -> {
             if (line == null || line.isEmpty()) return;
-            builder.append(line);
+            
+            String[] words = line.split("\\s+");
+            if (words.length > 7) {
+                for (int i = 0; i < words.length; i++) {
+                    builder.append(words[i]);
+                    if ((i + 1) % 7 == 0 && i != words.length - 1) {
+                        builder.append("<br>");
+                    } else if (i != words.length - 1) {
+                        builder.append(" ");
+                    }
+                }
+            } else {
+                builder.append(line);
+            }
             builder.append("<br>");
         });
         String builderUnfinished = builder.toString();
@@ -210,13 +231,14 @@ public final class Utility {
 
     public static double clampAngleWithRounding(double radians) {
         double rotationDegrees = Math.toDegrees(radians);
-        double clampedDegrees = (360 - rotationDegrees) % 360;
-        return Utility.round(clampedDegrees, 5);
+        double clampedDegrees = (((360 - rotationDegrees) % 360) + 360) % 360;
+        double rounded = Utility.round(clampedDegrees, 5);
+        return rounded >= 360.0 ? 0.0 : rounded;
     }
 
     public static double flipAngle(double degrees) {
         double flipped = -degrees;
-        return (flipped + 360) % 360;
+        return ((flipped % 360) + 360) % 360;
     }
 
     public static String capitalizeFirstLetter(String input) {

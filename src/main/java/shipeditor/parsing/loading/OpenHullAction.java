@@ -2,7 +2,7 @@ package shipeditor.parsing.loading;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.files.HullFileOpened;
+import shipeditor.communication.events.files.FileEvents.HullFileOpened;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.representation.ship.HullSpecFile;
 import shipeditor.utility.text.StringValues;
@@ -19,7 +19,7 @@ public class OpenHullAction extends AbstractAction {
 
     static void openHullAndDo(ActionListener action) {
         JFileChooser shipDataChooser = FileUtilities.getHullFileChooser();
-        int returnVal = shipDataChooser.showOpenDialog(null);
+        int returnVal = shipDataChooser.showOpenDialog(shipeditor.PrimaryWindow.getInstance());
         FileUtilities.setLastShipDirectory(shipDataChooser.getCurrentDirectory());
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             ActionEvent event = new ActionEvent(shipDataChooser, ActionEvent.ACTION_PERFORMED, null);

@@ -2,12 +2,12 @@ package shipeditor.undo.edits;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.viewer.layers.ActiveLayerUpdated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
 import shipeditor.components.datafiles.entities.WingCSVEntry;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.undo.AbstractEdit;
-import shipeditor.undo.EditCategory;
+import shipeditor.utility.UtilityEnums.EditCategory;
 import shipeditor.utility.overseers.StaticController;
 
 import java.util.List;

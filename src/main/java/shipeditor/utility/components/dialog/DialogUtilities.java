@@ -4,7 +4,6 @@ import shipeditor.components.viewer.entities.WorldPoint;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.components.viewer.painters.points.ship.features.FittedWeaponGroup;
 import shipeditor.undo.EditDispatch;
-import shipeditor.utility.overseers.StaticController;
 
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;

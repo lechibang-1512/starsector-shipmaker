@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import shipeditor.components.datafiles.entities.HullmodCSVEntry;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
@@ -13,23 +14,23 @@ import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.weapon.WeaponPainter;
-import shipeditor.components.viewer.painters.points.ship.features.FireMode;
+import shipeditor.components.viewer.ViewerEnums.FireMode;
 import shipeditor.components.viewer.painters.points.ship.features.FittedWeaponGroup;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
-import shipeditor.representation.ship.HullSize;
+import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.representation.ship.SpecWeaponGroup;
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.representation.weapon.WeaponSpecFile;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.text.StringValues;
 
-import javax.swing.JOptionPane;
 import java.nio.file.Path;
 import java.util.*;
 
 /** * Heavy-footprint runtime variant class; stores full-fledged painters and point indexes for display in viewer.*/
+@Log4j2
 @SuppressWarnings({"ClassWithTooManyFields", "ClassWithTooManyMethods", "OverlyCoupledClass", "OverlyComplexClass"})
 @Getter @Setter
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
@@ -292,9 +293,20 @@ public class ShipVariant implements Variant {
 
         List<SpecWeaponGroup> specWeaponGroups = file.getWeaponGroups();
         for (SpecWeaponGroup weaponGroup : specWeaponGroups) {
-            String weaponGroupMode = weaponGroup.getMode();
-            FireMode mode = FireMode.valueOf(weaponGroupMode);
-            FittedWeaponGroup initialized = new FittedWeaponGroup(this, weaponGroup.isAutofire(), mode);
+             String weaponGroupMode = weaponGroup.getMode();
+             FireMode mode;
+             if (weaponGroupMode == null) {
+                 log.warn("Missing weapon group fire mode in variant file for {}, defaulting to LINKED", file.getVariantId());
+                 mode = FireMode.LINKED;
+             } else {
+                 try {
+                     mode = FireMode.valueOf(weaponGroupMode);
+                 } catch (IllegalArgumentException e) {
+                     log.warn("Invalid weapon group fire mode '{}' in variant file for {}, defaulting to LINKED", weaponGroupMode, file.getVariantId());
+                     mode = FireMode.LINKED;
+                 }
+             }
+             FittedWeaponGroup initialized = new FittedWeaponGroup(this, weaponGroup.isAutofire(), mode);
             var fitted = initialized.getWeapons();
             Map<String, String> specGroupWeapons = weaponGroup.getWeapons();
             for (Map.Entry<String, String> entry : specGroupWeapons.entrySet()) {
@@ -302,10 +314,7 @@ public class ShipVariant implements Variant {
                 String weaponID = entry.getValue();
                 WeaponCSVEntry weaponEntry = GameDataRepository.getWeaponByID(weaponID);
                 if (weaponEntry == null) {
-                JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                            "Failed to locate weapon entry for variant, weapon ID: " + weaponID,
-                            StringValues.VARIANT_INITIALIZATION_ERROR,
-                            JOptionPane.ERROR_MESSAGE);
+                    log.error("Failed to locate weapon entry for variant, weapon ID: {}", weaponID);
                     continue;
                 }
                 WeaponSpecFile specFile = weaponEntry.getSpecFile();
@@ -357,10 +366,7 @@ public class ShipVariant implements Variant {
                 if (entry != null) {
                     wings.add(entry);
                 } else {
-                JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                            "Wing entry not found, skipping in shown variant. ID: " + wingID,
-                            StringValues.FILE_LOADING_ERROR,
-                            JOptionPane.ERROR_MESSAGE);
+                    log.error("Wing entry not found, skipping in shown variant. ID: {}", wingID);
                 }
             });
         }
@@ -373,10 +379,7 @@ public class ShipVariant implements Variant {
             if (entry != null) {
                 result.add(entry);
             } else {
-                JOptionPane.showMessageDialog(null,
-                        "Hullmod entry not found, skipping in shown variant. ID: " + hullmodID,
-                        StringValues.FILE_LOADING_ERROR,
-                        JOptionPane.ERROR_MESSAGE);
+                log.error("Hullmod entry not found, skipping in shown variant. ID: {}", hullmodID);
             }
         });
         return result;

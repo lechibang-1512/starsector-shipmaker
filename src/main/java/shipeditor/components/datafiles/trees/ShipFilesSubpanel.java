@@ -237,7 +237,7 @@ class ShipFilesSubpanel extends JPanel {
         }
 
         if (variantsForHull.isEmpty()) return null;
-        return DataTreePanel.createVariantsPanel(variantsForHull, true);
+        return DataTreeVariantPanelBuilder.createVariantsPanel(variantsForHull, true);
     }
 
 }

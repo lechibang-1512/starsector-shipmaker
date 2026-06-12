@@ -5,12 +5,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.communication.EventBus;
-import shipeditor.communication.events.components.InstrumentRepaintQueued;
-import shipeditor.communication.events.viewer.control.ViewerCursorMoved;
-import shipeditor.communication.events.viewer.layers.LayerWasSelected;
-import shipeditor.communication.events.viewer.status.CoordsModeChanged;
-import shipeditor.components.CoordsDisplayMode;
-import shipeditor.components.instrument.EditorInstrument;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerCursorMoved;
+import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
+import shipeditor.communication.events.viewer.control.ControlEvents.CoordsModeChanged;
+import shipeditor.components.ComponentEnums.CoordsDisplayMode;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.instrument.ship.ShipInstrumentsPane;
 import shipeditor.components.viewer.PrimaryViewer;
 import shipeditor.components.viewer.control.ControlPredicates;
@@ -25,7 +24,7 @@ import shipeditor.components.viewer.layers.ship.data.ShipSkin;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
 import shipeditor.parsing.FileUtilities;
-import shipeditor.representation.ship.HullSize;
+import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.utility.Utility;
 
 import java.awt.Shape;
@@ -33,6 +32,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
 /** * Convenience class for static access to active layer and whatever other global features need to be accessed.*/
 @SuppressWarnings({"OverlyCoupledClass", "ClassWithTooManyMethods"})
