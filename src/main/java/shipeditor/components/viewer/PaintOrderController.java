@@ -24,6 +24,9 @@ import org.joml.Vector4f;
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class PaintOrderController implements OpenGLPainter {
 
+    private static final Matrix4f IDENTITY_MATRIX = new Matrix4f();
+    private static final Vector4f BACKGROUND_COLOR = new Vector4f(1.0f);
+
     private final PrimaryViewer parent;
 
     @Getter
@@ -44,6 +47,8 @@ public class PaintOrderController implements OpenGLPainter {
     @Setter
     private boolean repaintQueued;
 
+    private Timer repaintTimer;
+
     PaintOrderController(PrimaryViewer viewer) {
         this.parent = viewer;
 
@@ -51,13 +56,24 @@ public class PaintOrderController implements OpenGLPainter {
         this.guidesPainters = new GuidesPainters(viewer);
         this.hotkeyPainter = new HotkeyHelpPainter();
 
-        Timer repaintTimer = new Timer(16, e -> {
+        repaintTimer = new Timer(16, e -> {
             if (repaintQueued) {
                 repaintViewer();
+            } else {
+                repaintTimer.stop();
             }
         });
         repaintTimer.setRepeats(true);
-        repaintTimer.start();
+    }
+
+    /**
+     * Queues a repaint and ensures the timer is running to process it.
+     */
+    public void queueRepaint() {
+        this.repaintQueued = true;
+        if (!repaintTimer.isRunning()) {
+            repaintTimer.start();
+        }
     }
 
     private void repaintViewer() {
@@ -97,9 +113,9 @@ public class PaintOrderController implements OpenGLPainter {
 
     private void paintBackgroundImage(ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view, int w, int h) {
         // Checkerboard using optimized checkerboard fragment shader inside ShapeRenderer
-        shapeRenderer.begin(projection, new Matrix4f()); // identity view for static screen background
+        shapeRenderer.begin(projection, IDENTITY_MATRIX); // identity view for static screen background
         shapeRenderer.setUseCheckerboard(true);
-        shapeRenderer.drawRect(0.0f, 0.0f, w, h, new Vector4f(1.0f), true);
+        shapeRenderer.drawRect(0.0f, 0.0f, w, h, BACKGROUND_COLOR, true);
         shapeRenderer.setUseCheckerboard(false);
         shapeRenderer.end();
     }

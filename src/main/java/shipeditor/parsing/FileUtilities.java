@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.cfg.CoercionAction;
 import com.fasterxml.jackson.databind.cfg.CoercionInputShape;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.LogicalType;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,6 +19,7 @@ import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.parsing.loading.FileLoading;
+import shipeditor.parsing.serialize.CustomSerializers.ColorArrayRGBASerializer;
 import shipeditor.persistence.BasicPrettyPrinter;
 import shipeditor.persistence.Settings;
 import shipeditor.persistence.SettingsManager;
@@ -30,6 +32,7 @@ import shipeditor.utility.text.StringValues;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.Color;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -79,6 +82,10 @@ public final class FileUtilities {
         mapper.setDefaultPrettyPrinter(prettyPrinter);
 
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(Color.class, new ColorArrayRGBASerializer());
+        mapper.registerModule(module);
     }
 
     private FileUtilities() {}

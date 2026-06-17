@@ -11,6 +11,7 @@ import shipeditor.parsing.loading.FileLoading;
 import shipeditor.undo.UndoOverseer;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.themes.Themes;
+import shipeditor.components.datafiles.GameDataReferenceWindow;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -89,6 +90,14 @@ public class MainToolBar extends JToolBar {
         reloadDataButton.setToolTipText("Reload all game data");
         reloadDataButton.addActionListener(event -> FileLoading.loadGameData());
         this.add(reloadDataButton);
+
+        this.addSeparator();
+
+        JButton dataWindowButton = new JButton();
+        this.styleToolbarButton(dataWindowButton, BoxiconsRegular.BOOK);
+        dataWindowButton.setToolTipText("Toggle Game Data Reference Window");
+        dataWindowButton.addActionListener(event -> GameDataReferenceWindow.toggleWindow());
+        this.add(dataWindowButton);
     }
 
     private void styleToolbarButton(JButton button, org.kordamp.ikonli.Ikon icon) {

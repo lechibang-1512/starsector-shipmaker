@@ -42,6 +42,15 @@ public final class BoundPointsPainter extends MirrorablePointPainter {
 
     private static final Color BOUND_LINE = Color.WHITE;
 
+    // Cached rendering objects to avoid per-frame allocations.
+    private final org.joml.Vector2f cachedStartVec = new org.joml.Vector2f();
+    private final org.joml.Vector2f cachedFinishVec = new org.joml.Vector2f();
+    private final org.joml.Vector4f cachedOutlineColor = new org.joml.Vector4f();
+    private final org.joml.Vector4f cachedLineColor = new org.joml.Vector4f();
+    private static final org.joml.Vector2f cachedCirclePos = new org.joml.Vector2f();
+    private static final org.joml.Vector4f cachedCircleOutline = new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
+    private static final org.joml.Vector4f cachedCircleFill = new org.joml.Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
+
     @Setter
     private List<BoundPoint> boundPoints;
 
@@ -277,15 +286,18 @@ public final class BoundPointsPainter extends MirrorablePointPainter {
         }
     }
 
-    @SuppressWarnings("MethodMayBeStatic")
     private void drawBoundLine(ShapeRenderer shapeRenderer, Point2D start, Point2D finish, Color color, float alpha) {
-        org.joml.Vector2f startVec = new org.joml.Vector2f((float) start.getX(), (float) start.getY());
-        org.joml.Vector2f finishVec = new org.joml.Vector2f((float) finish.getX(), (float) finish.getY());
+        cachedStartVec.set((float) start.getX(), (float) start.getY());
+        cachedFinishVec.set((float) finish.getX(), (float) finish.getY());
 
+        cachedOutlineColor.set(0.0f, 0.0f, 0.0f, alpha);
         org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THICK);
-        shapeRenderer.drawLine(startVec, finishVec, new org.joml.Vector4f(0.0f, 0.0f, 0.0f, alpha));
+        shapeRenderer.drawLine(cachedStartVec, cachedFinishVec, cachedOutlineColor);
+
+        cachedLineColor.set(color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, alpha);
         org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_NORMAL);
-        shapeRenderer.drawLine(startVec, finishVec, new org.joml.Vector4f(color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, alpha));
+        shapeRenderer.drawLine(cachedStartVec, cachedFinishVec, cachedLineColor);
+
         org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
     }
 
@@ -339,10 +351,10 @@ public final class BoundPointsPainter extends MirrorablePointPainter {
 
     private static void paintProspectiveBound(ShapeRenderer shapeRenderer, AffineTransform worldToScreen, Point2D position) {
         Point2D screenLoc = worldToScreen.transform(position, null);
-        org.joml.Vector2f screenPos = new org.joml.Vector2f((float) screenLoc.getX(), (float) screenLoc.getY());
+        cachedCirclePos.set((float) screenLoc.getX(), (float) screenLoc.getY());
         float radius = 6.0f;
-        shapeRenderer.drawCircle(screenPos, radius, new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 1.0f), true);
-        shapeRenderer.drawCircle(screenPos, radius - 1.5f, new org.joml.Vector4f(1.0f, 1.0f, 1.0f, 1.0f), true);
+        shapeRenderer.drawCircle(cachedCirclePos, radius, cachedCircleOutline, true);
+        shapeRenderer.drawCircle(cachedCirclePos, radius - 1.5f, cachedCircleFill, true);
     }
 
     private void handleInsertionGuidelines(ShapeRenderer shapeRenderer, AffineTransform worldToScreen,

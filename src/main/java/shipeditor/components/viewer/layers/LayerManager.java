@@ -195,13 +195,10 @@ public class LayerManager {
             return;
         }
         if (layers.size() >= 2) {
-            ViewerLayer other = null;
-            for (ViewerLayer checked : layers) {
-                if (checked != layer) {
-                    other = checked;
-                }
-            }
-            this.setActiveLayer(other);
+            int index = layers.indexOf(layer);
+            // Select the previous layer, or the next one if removing the first.
+            ViewerLayer adjacent = (index > 0) ? layers.get(index - 1) : layers.get(index + 1);
+            this.setActiveLayer(adjacent);
         } else {
             this.setActiveLayer(null);
         }

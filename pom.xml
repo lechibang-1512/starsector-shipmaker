@@ -6,13 +6,13 @@
 
     <groupId>shipeditor</groupId>
     <artifactId>ship_editor</artifactId>
-    <version>0.0.1e</version>
+    <version>0.0.1e-hotfix</version>
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.lwjgl</groupId>
                 <artifactId>lwjgl-bom</artifactId>
-                <version>3.3.3</version>
+                <version>3.3.4</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -187,7 +187,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <lombok.version>1.18.36</lombok.version>
-        <log4j.version>2.25.4</log4j.version>
+        <log4j.version>2.25.1</log4j.version>
         <ikonli.version>12.3.1</ikonli.version>
         <jackson.version>2.18.7</jackson.version>
         <flatlaf.version>3.1.1</flatlaf.version>

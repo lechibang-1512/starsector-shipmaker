@@ -91,17 +91,19 @@ public class GameDataRepository {
     private final Map<Path, SoftReference<CachedCSVData>> csvCacheByPath = new ConcurrentHashMap<>();
 
     public void putRawCSVDataForPath(Path path, List<Map<String, String>> rawData) {
-        SoftReference<CachedCSVData> ref = csvCacheByPath.get(path);
-        CachedCSVData existing = ref != null ? ref.get() : null;
-        Object schema = existing != null ? existing.getSchema() : null;
-        csvCacheByPath.put(path, new SoftReference<>(new CachedCSVData(rawData, schema)));
+        csvCacheByPath.compute(path, (k, ref) -> {
+            CachedCSVData existing = ref != null ? ref.get() : null;
+            Object schema = existing != null ? existing.getSchema() : null;
+            return new SoftReference<>(new CachedCSVData(rawData, schema));
+        });
     }
 
     public void putCsvSchemaForPath(Path path, Object schema) {
-        SoftReference<CachedCSVData> ref = csvCacheByPath.get(path);
-        CachedCSVData existing = ref != null ? ref.get() : null;
-        List<Map<String, String>> rawData = existing != null ? existing.getRawData() : null;
-        csvCacheByPath.put(path, new SoftReference<>(new CachedCSVData(rawData, schema)));
+        csvCacheByPath.compute(path, (k, ref) -> {
+            CachedCSVData existing = ref != null ? ref.get() : null;
+            List<Map<String, String>> rawData = existing != null ? existing.getRawData() : null;
+            return new SoftReference<>(new CachedCSVData(rawData, schema));
+        });
     }
 
     public void putCachedCSVData(Path path, List<Map<String, String>> rawData, Object schema) {
@@ -168,6 +170,11 @@ public class GameDataRepository {
      */
     @Setter
     private volatile Map<String, VariantFile> allVariants;
+
+    /**
+     * Reverse index: hull ID → map of variant ID → VariantFile. Rebuilt when allVariants is set.
+     */
+    private volatile Map<String, Map<String, VariantFile>> variantsByHullID = new ConcurrentHashMap<>();
 
     /**
      * All projectile files by variant IDs.
@@ -332,6 +339,13 @@ public class GameDataRepository {
         GameDataRepository dataRepository = SettingsManager.getGameData();
         if (dataRepository.getAllVariants() != null) {
             dataRepository.getAllVariants().put(variantFile.getVariantId(), variantFile);
+            // Update reverse index.
+            String hullId = variantFile.getHullId();
+            if (hullId != null) {
+                dataRepository.variantsByHullID
+                        .computeIfAbsent(hullId, k -> new ConcurrentHashMap<>())
+                        .put(variantFile.getVariantId(), variantFile);
+            }
         }
     }
 
@@ -390,16 +404,29 @@ public class GameDataRepository {
 
     public static Map<String, VariantFile> getMatchingForHullID(String shipHullID) {
         var dataRepository = SettingsManager.getGameData();
-        var allVariants = dataRepository.getAllVariants();
-        Map<String, VariantFile> result = new HashMap<>();
-        for (Map.Entry<String, VariantFile> variantFileEntry : allVariants.entrySet()) {
-            VariantFile variantFile = variantFileEntry.getValue();
-            String variantHullId = variantFile.getHullId();
-            if (variantHullId.equals(shipHullID)) {
-                result.put(variantFileEntry.getKey(), variantFileEntry.getValue());
-            }
+        Map<String, VariantFile> indexed = dataRepository.variantsByHullID.get(shipHullID);
+        if (indexed != null) {
+            return new HashMap<>(indexed);
         }
-        return result;
+        return new HashMap<>();
+    }
+
+    /**
+     * Rebuilds the reverse hull-ID → variants index from the full allVariants map.
+     * Should be called after allVariants is fully populated.
+     */
+    public void rebuildVariantsByHullIndex() {
+        Map<String, Map<String, VariantFile>> index = new ConcurrentHashMap<>();
+        if (allVariants != null) {
+            allVariants.forEach((variantId, variantFile) -> {
+                String hullId = variantFile.getHullId();
+                if (hullId != null) {
+                    index.computeIfAbsent(hullId, k -> new ConcurrentHashMap<>())
+                            .put(variantId, variantFile);
+                }
+            });
+        }
+        this.variantsByHullID = index;
     }
 
     // --- Re-indexing methods for CSV ID changes ---

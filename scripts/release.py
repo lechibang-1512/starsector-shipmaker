@@ -147,7 +147,9 @@ def package_release(version):
     
     with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
         # Dynamically add the freshly built jar
-        jar_src = f"target/ship_editor-{version}.jar"
+        jar_src = "ship_editor.jar"
+        if not os.path.exists(jar_src):
+            jar_src = f"target/ship_editor-{version}.jar"
         if not os.path.exists(jar_src):
             print(f"Error: Built JAR '{jar_src}' is missing. Did the build fail?")
             sys.exit(1)

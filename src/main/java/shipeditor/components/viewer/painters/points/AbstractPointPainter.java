@@ -39,6 +39,8 @@ import shipeditor.communication.events.viewer.layers.LayerEvents.PainterOpacityC
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public abstract class AbstractPointPainter implements OpenGLPainter {
 
+    private static final Matrix4f IDENTITY_MATRIX = new Matrix4f();
+
     @Getter @Setter
     private WorldPoint selected;
 
@@ -152,8 +154,11 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
         Class<? extends BaseWorldPoint> typeReference = getTypeReference();
         if (typeReference.isInstance(point) && removalViaListPanel) {
             this.commencePointRemoval(point);
-        } else if (selected != null && !removalViaListPanel) {
-            this.commencePointRemoval((BaseWorldPoint) selected);
+        } else {
+            WorldPoint currentSelected = this.getSelected();
+            if (currentSelected != null && !removalViaListPanel) {
+                this.commencePointRemoval((BaseWorldPoint) currentSelected);
+            }
         }
     }
 
@@ -184,14 +189,18 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
         if (point != null) {
             List<? extends BaseWorldPoint> pointsIndex = getPointsIndex();
             if (!pointsIndex.contains(point)) return;
-            if (this.selected == point) return;
+            WorldPoint currentSelected = this.getSelected();
+            if (currentSelected == point) return;
 
-            if (this.selected != null) {
-                this.selected.setPointSelected(false);
+            if (currentSelected != null) {
+                currentSelected.setPointSelected(false);
             }
-            this.selected = point;
-            this.selected.setPointSelected(true);
-            EventBus.publish(new PointSelectedConfirmed(this.selected));
+            this.setSelected(point);
+            currentSelected = this.getSelected();
+            if (currentSelected != null) {
+                currentSelected.setPointSelected(true);
+            }
+            EventBus.publish(new PointSelectedConfirmed(currentSelected));
             EventBus.publish(new ViewerRepaintQueued());
         } else {
             selectPointConditionally();
@@ -251,15 +260,18 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
     private void selectPointStrictly() {
         if (!this.isMousedOverPoint()) return;
         BaseWorldPoint mousedOver = this.getMousedOver();
-        if (this.selected == mousedOver) return;
+        WorldPoint currentSelected = this.getSelected();
+        if (currentSelected == mousedOver) return;
 
-        if (this.selected != null) {
-            this.selected.setPointSelected(false);
+        if (currentSelected != null) {
+            currentSelected.setPointSelected(false);
         }
-        this.selected = mousedOver;
+        this.setSelected(mousedOver);
         WorldPoint point = this.getSelected();
-        point.setPointSelected(true);
-        EventBus.publish(new PointSelectedConfirmed(this.selected));
+        if (point != null) {
+            point.setPointSelected(true);
+        }
+        EventBus.publish(new PointSelectedConfirmed(point));
         EventBus.publish(new ViewerRepaintQueued());
     }
 
@@ -305,7 +317,8 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
 
     public void removePoint(BaseWorldPoint point) {
         this.removePointFromIndex(point);
-        if (this.selected == point) {
+        WorldPoint currentSelected = this.getSelected();
+        if (currentSelected == point) {
             this.setSelected(null);
         }
         point.setPointSelected(false);
@@ -341,7 +354,7 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
     public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
         if (!checkVisibility()) return;
 
-        shapeRenderer.begin(projection, new Matrix4f());
+        shapeRenderer.begin(projection, IDENTITY_MATRIX);
         paintDelegates(spriteRenderer, shapeRenderer, projection, view);
         shapeRenderer.end();
     }

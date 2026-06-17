@@ -46,6 +46,7 @@ public class LoadShipDataAction extends DataLoadingAction {
     }
 
     private static Runnable collectShips() {
+        SettingsManager.getGameData().getAllSpecEntries().clear();
         // Load skins from DB index, grouped by mod
         Map<String, SkinSpecFile> allSkins = new HashMap<>();
         Map<String, List<IndexedFile>> skinsByMod = DatabaseQueryService.getFilesByTypeGroupedByMod(StringConstants.SKIN_TYPE);
@@ -136,7 +137,11 @@ public class LoadShipDataAction extends DataLoadingAction {
                                     variantId = dbFile.getEntityId();
                                     mapped.setVariantId(variantId);
                                 }
-                                allVariants.put(variantId, mapped);
+                                if (variantId != null && !variantId.isEmpty()) {
+                                    allVariants.put(variantId, mapped);
+                                } else {
+                                    log.warn(StringValues.FAILURE_TO_LOAD_VARIANT + " (Missing variant ID for " + variantFile.getName() + ")");
+                                }
                             } else if (variantFile.length() > 0) {
                                 log.error(StringValues.FAILURE_TO_LOAD_VARIANT, variantFile);
                             }
@@ -149,6 +154,7 @@ public class LoadShipDataAction extends DataLoadingAction {
         return () -> {
             GameDataRepository gameData = SettingsManager.getGameData();
             gameData.setAllVariants(allVariants);
+            gameData.rebuildVariantsByHullIndex();
         };
     }
 
@@ -194,7 +200,14 @@ public class LoadShipDataAction extends DataLoadingAction {
         Map<String, HullSpecFile> mappedHullSpecs = new java.util.concurrent.ConcurrentHashMap<>();
         Map<String, String> shipFiles = new java.util.concurrent.ConcurrentHashMap<>();
         dbFiles.parallelStream().forEach(dbFile -> {
-            shipFiles.put(dbFile.getEntityId(), dbFile.getFileName());
+            String entityId = dbFile.getEntityId();
+            if (entityId != null && !entityId.isEmpty()) {
+                shipFiles.put(entityId, dbFile.getFileName());
+            } else {
+                log.warn("Missing entity ID for hull file: {}", dbFile.getFileName());
+                return;
+            }
+            
             File hullFile = dbFile.getFilePath().toFile();
             HullSpecFile mapped = null;
             if (dbFile.getParsedData() != null) {
@@ -214,7 +227,8 @@ public class LoadShipDataAction extends DataLoadingAction {
             if (mapped != null) {
                 mapped.setFilePath(hullFile.toPath());
                 mapped.setTableFilePath(shipTablePath);
-                mappedHullSpecs.put(dbFile.getEntityId(), mapped);
+                mappedHullSpecs.put(entityId, mapped);
+                GameDataRepository.putSpec(mapped);
             }
         });
 
@@ -286,6 +300,7 @@ public class LoadShipDataAction extends DataLoadingAction {
             if (mapped != null) {
                 mapped.setContainingPackage(skinFolder);
                 mappedSkins.put(skinFile.getName(), mapped);
+                GameDataRepository.putSpec(mapped);
             } else if (skinFile.length() > 0) {
                 log.error(StringValues.FAILURE_TO_LOAD_SKIN, skinFile);
             }

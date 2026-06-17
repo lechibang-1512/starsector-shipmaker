@@ -50,6 +50,8 @@ import shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueu
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class WeaponSlotPainter extends AbstractSlotPainter {
 
+    private static final Matrix4f IDENTITY_MATRIX = new Matrix4f();
+
     @Getter @Setter
     private List<WeaponSlotPoint> slotPoints;
 
@@ -95,9 +97,12 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
                 String slotPointId = slotPoint.getId();
                 if (slotPointId.equals(slotID)) {
                     result = slotPoint;
+                    break;
                 }
             }
-            this.slotsByID.put(slotID, result);
+            if (result != null) {
+                this.slotsByID.put(slotID, result);
+            }
         }
         return result;
     }
@@ -237,14 +242,16 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
     }
 
     public void changeSlotsIDWithMirrorCheck(String inputIDText, Iterable<WeaponSlotPoint> slots) {
+        ShipPainter parentLayer = getParentLayer();
+        Set<String> existingIDs = parentLayer.getAllSlotIDs();
         if (SettingsManager.isNumericSuffixesForSlotsEnabled()) {
             Collection<WeaponSlotPoint> slotsWithCounterparts = this.getSlotsWithCounterparts(slots);
             for (WeaponSlotPoint slot : slotsWithCounterparts) {
                 String newID = inputIDText;
                 if (inputIDText.isEmpty()) {
-                    newID = generateUniqueSlotID();
+                    newID = parentLayer.generateUniqueSlotID("WS", existingIDs);
                 } else if (SettingsManager.isNumericSuffixesForSlotsEnabled()) {
-                    newID = generateUniqueSlotID(inputIDText);
+                    newID = parentLayer.generateUniqueSlotID(inputIDText, existingIDs);
                 }
                 EditDispatch.postSlotIDChanged(slot, newID);
             }
@@ -252,9 +259,8 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
             for (WeaponSlotPoint slot : slots) {
                 String newID = inputIDText;
                 if (newID.isEmpty()) {
-                    newID = generateUniqueSlotID();
+                    newID = parentLayer.generateUniqueSlotID("WS", existingIDs);
                 }
-                ShipPainter parentLayer = getParentLayer();
                 if (!parentLayer.isGeneratedIDUnassigned(newID)) {
                     shipeditor.utility.components.dialog.DialogHelper.showDuplicateIDError();
                     continue;
@@ -505,13 +511,13 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
         boolean isRightMode = visibility == ALWAYS_SHOWN || visibility == SHOWN_WHEN_EDITED;
         boolean visibleForRelatedMode = isVisibleForRelatedMode() && isRightMode;
         if (checkVisibility()) {
-            shapeRenderer.begin(projection, new Matrix4f());
+            shapeRenderer.begin(projection, IDENTITY_MATRIX);
             this.paintPainterContent(spriteRenderer, shapeRenderer, projection, view);
             this.handleSelectionHighlight();
             this.paintDelegates(spriteRenderer, shapeRenderer, projection, view);
             shapeRenderer.end();
         } else if (visibleForRelatedMode) {
-            shapeRenderer.begin(projection, new Matrix4f());
+            shapeRenderer.begin(projection, IDENTITY_MATRIX);
             this.handleSelectionHighlight();
             List<WeaponSlotPoint> activePoints = this.getEligibleForSelection();
             this.paintSlots(spriteRenderer, shapeRenderer, projection, view, activePoints);

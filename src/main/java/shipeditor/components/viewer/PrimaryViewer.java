@@ -173,7 +173,7 @@ public final class PrimaryViewer extends JPanel implements LayerViewer {
 
     public void setRepaintQueued() {
         if (this.paintOrderController != null) {
-            this.paintOrderController.setRepaintQueued(true);
+            this.paintOrderController.queueRepaint();
         }
         if (glCanvas != null && glCanvas.isDisplayable()) {
             glCanvas.render();
@@ -291,10 +291,10 @@ public final class PrimaryViewer extends JPanel implements LayerViewer {
 
         if (newPainter != null) {
             List<ViewerLayer> layers = layerManager.getLayers();
-            if (layers.size() > 1) {
-                
+            int idx = layers.indexOf(layer);
+            if (idx > 0) {
                 // Then get anchor of that and place new painter anchor next to it.
-                var prevLayer = layers.get(layers.indexOf(layer) - 1);
+                var prevLayer = layers.get(idx - 1);
                 var layerPainter = prevLayer.getPainter();
                 if (layerPainter != null) {
                     var layerAnchor = layerPainter.getAnchor();

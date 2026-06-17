@@ -122,8 +122,12 @@ public class LoadWeaponsDataAction extends DataLoadingAction {
                                     projId = dbFile.getEntityId();
                                     mapped.setId(projId);
                                 }
-                                allProjectiles.put(projId, mapped);
-                                packageProjectiles.add(mapped);
+                                if (projId != null && !projId.isEmpty()) {
+                                    allProjectiles.put(projId, mapped);
+                                    packageProjectiles.add(mapped);
+                                } else {
+                                    log.warn(StringValues.FAILURE_TO_LOAD_SPEC + " (Missing projectile ID for " + projectileFile.getName() + ")");
+                                }
                             } else if (projectileFile.length() > 0) {
                                 log.error(StringValues.FAILURE_TO_LOAD_SPEC, projectileFile);
                             }
@@ -215,7 +219,11 @@ public class LoadWeaponsDataAction extends DataLoadingAction {
                     weaponId = dbFile.getEntityId();
                     mapped.setId(weaponId);
                 }
-                mappedWeaponSpecs.put(weaponId, mapped);
+                if (weaponId != null && !weaponId.isEmpty()) {
+                    mappedWeaponSpecs.put(weaponId, mapped);
+                } else {
+                    log.warn(StringValues.FAILED_DESERIALIZE_WEAPON_SPEC_DB + " (Missing weapon ID for " + weaponFile.getName() + ")");
+                }
             }
         });
         if (SettingsManager.isDeveloperModeEnabled()) {

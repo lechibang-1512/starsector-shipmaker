@@ -284,14 +284,20 @@ public final class ComponentUtilities {
         Insets empty = new Insets(0, 3, 2, 4);
         label.setBorder(ComponentUtilities.createLabelSimpleBorder(empty));
 
-        JPopupMenu contextMenu = ComponentUtilities.createPathContextMenu(filePath);
+        if (filePath != null) {
+            JPopupMenu contextMenu = ComponentUtilities.createPathContextMenu(filePath);
 
-        JMenuItem openContainingPackage = new JMenuItem(StringValues.OPEN_DATA_PACKAGE);
-        openContainingPackage.addActionListener(e -> FileUtilities.openPathInDesktop(packagePath));
-        contextMenu.add(openContainingPackage);
+            if (packagePath != null) {
+                JMenuItem openContainingPackage = new JMenuItem(StringValues.OPEN_DATA_PACKAGE);
+                openContainingPackage.addActionListener(e -> FileUtilities.openPathInDesktop(packagePath));
+                contextMenu.add(openContainingPackage);
+            }
 
-        label.addMouseListener(new MouseoverLabelListener(contextMenu, label, Themes.getPanelHighlightColor()));
-        label.setToolTipText(filePath.toString());
+            label.addMouseListener(new MouseoverLabelListener(contextMenu, label, Themes.getPanelHighlightColor()));
+            label.setToolTipText(filePath.toString());
+        } else {
+            label.setToolTipText("No file path associated");
+        }
 
         JPanel titleContainer = new JPanel();
         titleContainer.setLayout(new BoxLayout(titleContainer, BoxLayout.LINE_AXIS));
@@ -530,11 +536,14 @@ public final class ComponentUtilities {
     }
 
     public static JLabel createFileLabel(Path path, String description) {
-        JLabel label = new JLabel(description + path.getFileName());
-        label.setToolTipText(String.valueOf(path));
+        String fileName = path != null && path.getFileName() != null ? path.getFileName().toString() : "Unknown";
+        JLabel label = new JLabel(description + fileName);
+        label.setToolTipText(path != null ? path.toString() : "Unknown");
         label.setBorder(ComponentUtilities.createLabelSimpleBorder(ComponentUtilities.createLabelInsets()));
-        JPopupMenu pathContextMenu = ComponentUtilities.createPathContextMenu(path);
-        label.addMouseListener(new MouseoverLabelListener(pathContextMenu, label));
+        if (path != null) {
+            JPopupMenu pathContextMenu = ComponentUtilities.createPathContextMenu(path);
+            label.addMouseListener(new MouseoverLabelListener(pathContextMenu, label));
+        }
         return label;
     }
 

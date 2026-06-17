@@ -33,7 +33,32 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class GameDataParsingIntegrationTest {
 
-    private static final Path GAME_DATA_DIR = Path.of("/media/lechibang/WORK1/starsector/data");
+    private static final Path GAME_DATA_DIR;
+    static {
+        Path resolvedPath = null;
+        try {
+            Path workingDirectory = Path.of("").toAbsolutePath();
+            Path settingsPath = workingDirectory.resolve("ship_editor_settings.json");
+            if (Files.exists(settingsPath)) {
+                ObjectMapper tempMapper = new ObjectMapper();
+                @SuppressWarnings("unchecked")
+                java.util.Map<String, Object> map = tempMapper.readValue(settingsPath.toFile(), java.util.Map.class);
+                String gameFolderPath = (String) map.get("gameFolderPath");
+                if (gameFolderPath != null) {
+                    Path candidate = Path.of(gameFolderPath).resolve("data");
+                    if (Files.isDirectory(candidate)) {
+                        resolvedPath = candidate;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Ignore, fallback will be used
+        }
+        if (resolvedPath == null) {
+            resolvedPath = Path.of("starsector/data");
+        }
+        GAME_DATA_DIR = resolvedPath;
+    }
     private static final Path HULLS_DIR = GAME_DATA_DIR.resolve("hulls");
     private static final Path SKINS_DIR = HULLS_DIR.resolve("skins");
     private static final Path VARIANTS_DIR = GAME_DATA_DIR.resolve("variants");

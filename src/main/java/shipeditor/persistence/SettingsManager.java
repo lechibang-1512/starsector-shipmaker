@@ -50,7 +50,7 @@ public final class SettingsManager {
     private static Path settingsFilePath;
 
     @Getter
-    private static final String projectVersion = "0.0.1e";
+    private static final String projectVersion = "0.0.1e-hotfix";
 
     private static GameDataPackage corePackage;
 

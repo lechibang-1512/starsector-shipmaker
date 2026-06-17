@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.0.1e-hotfix] - 2026-06-17
+
+### Features & Testing
+- **Data Directory**: Make `GAME_DATA_DIR` dynamic by loading the game folder path from `ship_editor_settings.json` rather than using a hardcoded path.
+- **Property-based Testing**: Integrated `jqwik` property-based tests in `DataLoadingPropertiesTest` to fuzz data loaders and verify null safety of ID-resolution pipelines under 1,000 iterations each.
+
+### Bug Fixes
+- **Data Loading NPEs**: Implemented defensive null validation for `dbFile.getEntityId()` and deserialized Variant/Projectile/Weapon IDs inside parallel loading streams (`LoadShipDataAction` and `LoadWeaponsDataAction`), resolving startup hangs (infinite blue progress bar) caused by malformed or empty database cache entries.
+- **Spec Cache Registration**: Fixed cache population by ensuring newly parsed/loaded hull and skin specs from the database cache are registered via `GameDataRepository.putSpec()`.
+- **Lombok Shadowing**: Replaced direct field accesses on `anchor`, `spriteOpacity`, `selected`, and `paintOpacity` in base painter classes (`LayerPainter` and `AbstractPointPainter`) with polymorphic getters (`this.get...()`) to resolve null reference errors in subclass extensions.
+- **UI & Null Safety**: Handle null file paths gracefully in UI components.
+- **Ignore AI Directories**: Ignore AI-related directories in git/file search.
+- **Undo/Redo**: Fix undo/redo dirty marking logic.
+
+### Refactoring & Performance
+- **Rendering Optimization**: Optimize rendering calculations by using constant matrices.
+- **Layer Selection**: Improve layer selection logic in the viewer.
+
+### Chores
+- **Dependencies**: Upgrade `lwjgl-bom` to version 3.3.4.
+
 ## [0.0.1e] - 2026-06-11
 
 ### Features

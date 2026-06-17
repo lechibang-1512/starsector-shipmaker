@@ -319,7 +319,7 @@ public class ShipPainter extends LayerPainter {
         return new Point2D.Double( anchor.getX(), anchor.getY() + sprite.getHeight());
     }
 
-    private Set<String> getAllSlotIDs() {
+    public Set<String> getAllSlotIDs() {
         WeaponSlotPainter slotPainter = this.getWeaponSlotPainter();
         List<WeaponSlotPoint> slotPoints = slotPainter.getSlotPoints();
 
@@ -346,13 +346,16 @@ public class ShipPainter extends LayerPainter {
     }
 
     public String generateUniqueSlotID(String baseID) {
-        Set<String> existingIDs = this.getAllSlotIDs();
+        return generateUniqueSlotID(baseID, this.getAllSlotIDs());
+    }
 
+    public String generateUniqueSlotID(String baseID, Set<String> existingIDs) {
         int suffix = 0;
 
         while (true) {
             String newID = baseID + " " + String.format("%03d", suffix);
             if (!existingIDs.contains(newID)) {
+                existingIDs.add(newID);
                 return newID;
             }
             suffix++;
@@ -360,8 +363,10 @@ public class ShipPainter extends LayerPainter {
     }
 
     public String incrementUniqueSlotID(String id) {
-        Set<String> existingIDs = this.getAllSlotIDs();
+        return incrementUniqueSlotID(id, this.getAllSlotIDs());
+    }
 
+    public String incrementUniqueSlotID(String id, Set<String> existingIDs) {
         String baseID = id.substring(0, id.lastIndexOf(SPACE) + 1);
 
         int suffix;
@@ -375,6 +380,7 @@ public class ShipPainter extends LayerPainter {
             suffix++;
             String newID = baseID + String.format("%03d", suffix);
             if (!existingIDs.contains(newID)) {
+                existingIDs.add(newID);
                 return newID;
             }
         }

@@ -453,8 +453,12 @@ public final class IndexScannerTask {
                         } else if (type.endsWith("_JSON")) {
                             // Hull styles, Engine styles
                             ObjectMapper mapper = FileUtilities.getConfigured();
-                            com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(file);
-                            parsedObj = node;
+                            String content = shipeditor.parsing.JsonProcessor.straightenMalformed(file);
+                            if (content.trim().isEmpty()) {
+                                parsedObj = null;
+                            } else {
+                                parsedObj = mapper.readTree(content);
+                            }
                         }
                         if (parsedObj != null) {
                             ObjectMapper mapper = FileUtilities.getConfigured();

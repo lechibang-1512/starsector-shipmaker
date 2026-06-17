@@ -164,25 +164,38 @@ public final class UndoOverseer {
     }
 
     private static void cleanupStack(LayerPainter painter, Collection<Edit> stack) {
-        Collection<Edit> toRemove = new ArrayList<>();
-        for (Edit edit : stack) {
+        stack.removeIf(edit -> {
             if (edit instanceof LayerEdit checked) {
                 LayerPainter layerPainter = checked.getLayerPainter();
-                if (layerPainter == null || layerPainter != painter) continue;
-                checked.cleanupReferences();
-                toRemove.add(edit);
+                if (layerPainter != null && layerPainter == painter) {
+                    checked.cleanupReferences();
+                    return true;
+                }
             }
-        }
-        stack.removeAll(toRemove);
+            return false;
+        });
     }
 
     private static void markActiveLayerDirty(Edit edit) {
-        ViewerLayer active = StaticController.getActiveLayer();
-        if (active instanceof ShipLayer) {
-            EditCategory category = edit.getCategory();
-            if (category == EditCategory.NONE) return;
+        EditCategory category = edit.getCategory();
+        if (category == EditCategory.NONE) return;
+
+        // Determine the target layer from the edit itself, not the currently active layer.
+        ViewerLayer target = null;
+        if (edit instanceof LayerEdit layerEdit) {
+            LayerPainter painter = layerEdit.getLayerPainter();
+            if (painter != null) {
+                target = painter.getParentLayer();
+            }
+        }
+        // Fallback to active layer for edits that don't implement LayerEdit.
+        if (target == null) {
+            target = StaticController.getActiveLayer();
+        }
+
+        if (target instanceof ShipLayer) {
             String type = category == EditCategory.VARIANT ? "variant" : "hull";
-            StaticController.getViewer().getLayerManager().markUnsaved(active, type);
+            StaticController.getViewer().getLayerManager().markUnsaved(target, type);
         }
     }
 

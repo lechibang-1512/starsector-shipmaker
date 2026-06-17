@@ -283,8 +283,9 @@ public abstract class LayerPainter implements OpenGLPainter {
      */
     public Point2D getSpriteCenter() {
         Point2D difference = this.getSpriteCenterDifferenceToAnchor();
-        return new Point2D.Double((anchor.getX() + difference.getX()),
-                (anchor.getY() + difference.getY()));
+        Point2D currentAnchor = this.getAnchor();
+        return new Point2D.Double((currentAnchor.getX() + difference.getX()),
+                (currentAnchor.getY() + difference.getY()));
     }
 
     public boolean isWorldCursorInsideSprite(Point2D worldCursor) {
@@ -311,8 +312,9 @@ public abstract class LayerPainter implements OpenGLPainter {
     public Point2D getSpriteCenter(Point2D cachingTarget) {
         Point2D difference = this.getSpriteCenterDifferenceToAnchor();
 
-        double x = anchor.getX() + difference.getX();
-        double y = anchor.getY() + difference.getY();
+        Point2D currentAnchor = this.getAnchor();
+        double x = currentAnchor.getX() + difference.getX();
+        double y = currentAnchor.getY() + difference.getY();
         cachingTarget.setLocation(x, y);
 
         return cachingTarget;
@@ -330,7 +332,8 @@ public abstract class LayerPainter implements OpenGLPainter {
         int textureId = spriteContainer.getTextureId();
         if (textureId == 0) return;
 
-        paintPosition.set((float) anchor.getX(), (float) anchor.getY());
+        Point2D currentAnchor = this.getAnchor();
+        paintPosition.set((float) currentAnchor.getX(), (float) currentAnchor.getY());
         paintSize.set((float) this.getSpriteWidth(), (float) this.getSpriteHeight());
         Point2D rotationAnchor2D = this.getRotationAnchor();
         paintRotAnchor.set((float) rotationAnchor2D.getX(), (float) rotationAnchor2D.getY());

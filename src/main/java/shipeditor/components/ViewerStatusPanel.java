@@ -323,21 +323,12 @@ final class ViewerStatusPanel extends JPanel {
                 this.setZoomLevel(StaticController.getZoomLevel());
             } else if (event instanceof ViewerTransformRotated) {
                 this.setRotationDegrees(StaticController.getRotationDegrees());
-            }
-        });
-        EventBus.subscribe(this, event -> {
-            if (event instanceof ViewerCursorMoved) {
+            } else if (event instanceof ViewerCursorMoved) {
                 this.cursorNeedsUpdate = true;
-            }
-        });
-        EventBus.subscribe(this, event -> {
-            if (event instanceof LayerSpriteLoadConfirmed checked) {
+            } else if (event instanceof LayerSpriteLoadConfirmed checked) {
                 Sprite sprite = checked.sprite();
                 this.setDimensionsLabel(sprite.getImage());
-            }
-        });
-        EventBus.subscribe(this, event -> {
-            if (event instanceof LayerWasSelected checked) {
+            } else if (event instanceof LayerWasSelected checked) {
                 ViewerLayer layer = checked.selected();
                 if (layer == null) return;
                 LayerPainter layerPainter = layer.getPainter();

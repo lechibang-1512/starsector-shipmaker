@@ -185,3 +185,4 @@ final class TripleSplitContainer extends JSplitPane {
     }
 
 }
+
