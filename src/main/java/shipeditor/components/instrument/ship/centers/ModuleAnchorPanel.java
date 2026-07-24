@@ -75,7 +75,28 @@ public class ModuleAnchorPanel extends PointLocationWidget {
                     setter.accept(null);
                 }
                 else {
-                    setter.accept(new Point2D.Double());
+                    CenterPointPainter centerPainter = getCenterPainter();
+                    if (centerPainter != null && centerPainter.getParentLayer() != null) {
+                        ShipPainter shipPainter = centerPainter.getParentLayer();
+                        java.util.List<shipeditor.components.viewer.entities.BoundPoint> bounds = shipPainter.getBoundsPainter().getPointsIndex();
+                        if (bounds != null && !bounds.isEmpty()) {
+                            double sumFileX = 0;
+                            double sumFileY = 0;
+                            for (shipeditor.components.viewer.entities.BaseWorldPoint bp : bounds) {
+                                Point2D fileCoord = shipeditor.utility.Utility.getPointCoordinatesForDisplay(
+                                        bp.getPosition(), shipPainter, shipeditor.components.ComponentEnums.CoordsDisplayMode.SHIP_CENTER);
+                                sumFileX += fileCoord.getX();
+                                sumFileY += fileCoord.getY();
+                            }
+                            double avgFileX = sumFileX / bounds.size();
+                            double avgFileY = sumFileY / bounds.size();
+                            setter.accept(new Point2D.Double(Math.round(avgFileY), Math.round(avgFileX)));
+                        } else {
+                            setter.accept(new Point2D.Double());
+                        }
+                    } else {
+                        setter.accept(new Point2D.Double());
+                    }
                 }
                 processChange();
             }

@@ -81,3 +81,12 @@ Any Swing paint error or unhandled runtime exception can break the `begin()`/`en
       // Bind shader and VAO...
   }
   ```
+
+## Coordinate Systems & Legacy Java2D Porting
+
+The original `Ship-Editor` repository (by `ontheheaven`) used Java2D `Graphics2D` rendering. In that architecture, mathematical points (like `ShipCenterPoint` or `WeaponSlotPoint`) were **never rotated**. Instead, `PaintOrderController` rotated the entire global canvas `AffineTransform` matrix, and Java2D drew the unrotated points at a rotated angle on the screen.
+
+When porting to OpenGL, the global `view` matrix rotation was intentionally dropped from `PaintOrderController` in favor of component-level transformations. Because of this architectural shift:
+
+1. **Explicit Point Rotation**: You must explicitly rotate the physical points (using `AffineTransform` mathematics) when a layer or module is rotated, otherwise the points will remain at 0 degrees while the sprite rotates beneath them.
+2. **Stable Pivot Calculations**: When manually rotating points, be extremely careful about **pivot anchor calculations** (like `getRotationAnchor()`). If a pivot calculation relies on a point (like `ShipCenterPoint`) that is being physically moved during rotation, the pivot will become unstable. You must ensure that pivot logic calculates the anchor *before* points are moved (using the old angle) or mathematically rotates the offsets to construct a perfectly stationary pivot. Failure to do so will cause sprite coordinates to desync and fly apart.

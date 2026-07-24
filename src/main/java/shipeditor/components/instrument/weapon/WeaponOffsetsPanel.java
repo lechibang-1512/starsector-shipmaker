@@ -22,6 +22,11 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JSlider;
+import javax.swing.JTextField;
+import shipeditor.utility.overseers.StaticController;
+import shipeditor.communication.events.components.ComponentEvents.LayerTabUpdated;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +37,12 @@ class WeaponOffsetsPanel extends JPanel {
     private OffsetsTableModel tableModel;
     private JTable offsetsTable;
     private WeaponPainter cachedPainter;
+    private WeaponLayer cachedLayer;
+    
+    private JTextField visualRecoilEditor;
+    private JCheckBox separateRecoilCheckbox;
+    private JSlider recoilPreviewSlider;
+    private boolean readyForInput;
 
     WeaponOffsetsPanel() {
         this.setLayout(new BorderLayout());
@@ -45,6 +56,7 @@ class WeaponOffsetsPanel extends JPanel {
         offsetsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JScrollPane scrollPane = new JScrollPane(offsetsTable);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         this.add(scrollPane, BorderLayout.CENTER);
 
         JPanel buttonPanel = createButtonPanel();
@@ -57,18 +69,58 @@ class WeaponOffsetsPanel extends JPanel {
         JPanel infoPanel = new JPanel(new GridBagLayout());
         ComponentUtilities.outfitPanelWithTitle(infoPanel, "Weapon offsets");
 
+        int row = 0;
+
         JLabel description = new JLabel("Firing positions and angles for current mount mode");
         description.setBorder(new EmptyBorder(4, 4, 4, 4));
-
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
-        constraints.gridy = 0;
+        constraints.gridy = row++;
         constraints.weightx = 1;
+        constraints.gridwidth = 2;
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.anchor = GridBagConstraints.LINE_START;
         infoPanel.add(description, constraints);
 
+        visualRecoilEditor = new JTextField();
+        visualRecoilEditor.setColumns(10);
+        visualRecoilEditor.addActionListener(e -> {
+            if (readyForInput && cachedLayer != null && cachedLayer.getSpecFile() != null) {
+                try {
+                    cachedLayer.getSpecFile().setVisualRecoil(Double.parseDouble(visualRecoilEditor.getText()));
+                    processChange();
+                } catch (NumberFormatException ex) {}
+            }
+        });
+        ComponentUtilities.addLabelAndComponent(infoPanel, new JLabel("Visual Recoil:"), visualRecoilEditor, row++);
+
+        separateRecoilCheckbox = new JCheckBox("Separate Recoil For Linked Barrels");
+        separateRecoilCheckbox.addActionListener(e -> {
+            if (readyForInput && cachedLayer != null && cachedLayer.getSpecFile() != null) {
+                cachedLayer.getSpecFile().setSeparateRecoilForLinkedBarrels(separateRecoilCheckbox.isSelected());
+                processChange();
+            }
+        });
+        ComponentUtilities.addLabelAndComponent(infoPanel, new JLabel(), separateRecoilCheckbox, row++);
+
+        recoilPreviewSlider = new JSlider(0, 100, 0);
+        recoilPreviewSlider.setToolTipText("Preview visual recoil in the viewer");
+        recoilPreviewSlider.addChangeListener(e -> {
+            if (cachedPainter != null) {
+                cachedPainter.setRecoilPreviewFraction(recoilPreviewSlider.getValue() / 100.0);
+                StaticController.getScheduler().queueViewerRepaint();
+            }
+        });
+        ComponentUtilities.addLabelAndComponent(infoPanel, new JLabel("Recoil Preview:"), recoilPreviewSlider, row++);
+
         return infoPanel;
+    }
+
+    private void processChange() {
+        if (cachedLayer != null) {
+            EventBus.publish(new LayerTabUpdated(cachedLayer));
+            StaticController.getScheduler().queueViewerRepaint();
+        }
     }
 
     private JPanel createButtonPanel() {
@@ -121,12 +173,34 @@ class WeaponOffsetsPanel extends JPanel {
     }
 
     private void refreshPanel(ViewerLayer selected) {
+        readyForInput = false;
         if (selected instanceof WeaponLayer weaponLayer) {
             cachedPainter = weaponLayer.getPainter();
+            cachedLayer = weaponLayer;
+            
+            shipeditor.representation.weapon.WeaponSpecFile spec = weaponLayer.getSpecFile();
+            if (spec != null) {
+                visualRecoilEditor.setText(String.valueOf(spec.getVisualRecoil()));
+                separateRecoilCheckbox.setSelected(spec.isSeparateRecoilForLinkedBarrels());
+            } else {
+                visualRecoilEditor.setText("");
+                separateRecoilCheckbox.setSelected(false);
+            }
         } else {
             cachedPainter = null;
+            cachedLayer = null;
+            visualRecoilEditor.setText("");
+            separateRecoilCheckbox.setSelected(false);
         }
+        
+        if (cachedPainter != null) {
+            recoilPreviewSlider.setValue((int) (cachedPainter.getRecoilPreviewFraction() * 100));
+        } else {
+            recoilPreviewSlider.setValue(0);
+        }
+        
         refreshTableModel();
+        readyForInput = true;
     }
 
     private void refreshTableModel() {

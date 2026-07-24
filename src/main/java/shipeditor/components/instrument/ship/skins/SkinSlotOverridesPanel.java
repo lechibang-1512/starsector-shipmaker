@@ -14,8 +14,14 @@ import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
 import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
 import shipeditor.representation.weapon.WeaponEnums.WeaponType;
+import shipeditor.undo.UndoOverseer;
+import shipeditor.undo.edits.features.SkinOverrideEdits.SkinMapOverrideEdit;
 import shipeditor.utility.components.ComponentUtilities;
 
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -30,10 +36,12 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import shipeditor.utility.components.UIConstants;
@@ -206,42 +214,119 @@ public class SkinSlotOverridesPanel extends JPanel {
 
         int gridRow = 0;
 
-        // Slot ID (read-only)
         addReadOnlyField(panel, "Slot ID:", row.slotId, labelGbc, fieldGbc, gridRow++);
 
-        // Base values (read-only)
         addReadOnlyField(panel, "Base Type:", String.valueOf(row.baseType), labelGbc, fieldGbc, gridRow++);
         addReadOnlyField(panel, "Base Mount:", String.valueOf(row.baseMount), labelGbc, fieldGbc, gridRow++);
         addReadOnlyField(panel, "Base Size:", String.valueOf(row.baseSize), labelGbc, fieldGbc, gridRow++);
 
-        // Override indicator
         String overrideStatus = row.hasOverride ? "✓ Has Override" : "✗ No Override";
         Color overrideColor = row.hasOverride
                 ? new Color(100, 200, 100)
                 : UIManager.getColor("Label.disabledForeground");
         addColoredField(panel, "Status:", overrideStatus, overrideColor, labelGbc, fieldGbc, gridRow++);
 
+        JComboBox<WeaponType> typeBox = new JComboBox<>(WeaponType.values());
+        JComboBox<WeaponMount> mountBox = new JComboBox<>(WeaponMount.values());
+        JComboBox<WeaponSize> sizeBox = new JComboBox<>(WeaponSize.values());
+
+        SpinnerNumberModel angleModel = new SpinnerNumberModel(0.0, -360.0, 360.0, 1.0);
+        JSpinner angleSpinner = new JSpinner(angleModel);
+        SpinnerNumberModel arcModel = new SpinnerNumberModel(0.0, 0.0, 360.0, 1.0);
+        JSpinner arcSpinner = new JSpinner(arcModel);
+        SpinnerNumberModel renderOrderModel = new SpinnerNumberModel(0, -1000, 1000, 1);
+        JSpinner renderOrderSpinner = new JSpinner(renderOrderModel);
+
         if (row.hasOverride && row.override != null) {
             WeaponSlotOverride ov = row.override;
-            if (ov.getWeaponType() != null) {
-                addReadOnlyField(panel, "Override Type:", ov.getWeaponType().toString(), labelGbc, fieldGbc, gridRow++);
-            }
-            if (ov.getWeaponMount() != null) {
-                addReadOnlyField(panel, "Override Mount:", ov.getWeaponMount().toString(), labelGbc, fieldGbc, gridRow++);
-            }
-            if (ov.getWeaponSize() != null) {
-                addReadOnlyField(panel, "Override Size:", ov.getWeaponSize().toString(), labelGbc, fieldGbc, gridRow++);
-            }
-            if (ov.getBoxedAngle() != null) {
-                addReadOnlyField(panel, "Override Angle:", String.valueOf(ov.getAngle()), labelGbc, fieldGbc, gridRow++);
-            }
-            if (ov.getBoxedArc() != null) {
-                addReadOnlyField(panel, "Override Arc:", String.valueOf(ov.getArc()), labelGbc, fieldGbc, gridRow++);
-            }
-            if (ov.getRenderOrderModBoxed() != null) {
-                addReadOnlyField(panel, "Override Render Order:", String.valueOf(ov.getRenderOrderMod()), labelGbc, fieldGbc, gridRow);
-            }
+            typeBox.setSelectedItem(ov.getWeaponType() != null ? ov.getWeaponType() : row.baseType);
+            mountBox.setSelectedItem(ov.getWeaponMount() != null ? ov.getWeaponMount() : row.baseMount);
+            sizeBox.setSelectedItem(ov.getWeaponSize() != null ? ov.getWeaponSize() : row.baseSize);
+            angleModel.setValue(ov.getBoxedAngle() != null ? ov.getAngle() : 0.0);
+            arcModel.setValue(ov.getBoxedArc() != null ? ov.getArc() : 0.0);
+            renderOrderModel.setValue(ov.getRenderOrderModBoxed() != null ? ov.getRenderOrderMod() : 0);
+        } else {
+            typeBox.setSelectedItem(row.baseType);
+            mountBox.setSelectedItem(row.baseMount);
+            sizeBox.setSelectedItem(row.baseSize);
         }
+
+        addField(panel, "Override Type:", typeBox, labelGbc, fieldGbc, gridRow++);
+        addField(panel, "Override Mount:", mountBox, labelGbc, fieldGbc, gridRow++);
+        addField(panel, "Override Size:", sizeBox, labelGbc, fieldGbc, gridRow++);
+        addField(panel, "Override Angle:", angleSpinner, labelGbc, fieldGbc, gridRow++);
+        addField(panel, "Override Arc:", arcSpinner, labelGbc, fieldGbc, gridRow++);
+        addField(panel, "Render Order Mod:", renderOrderSpinner, labelGbc, fieldGbc, gridRow++);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton applyButton = new JButton("Apply Override");
+        applyButton.addActionListener(e -> {
+            WeaponSlotOverride.WeaponSlotOverrideBuilder builder = WeaponSlotOverride.builder();
+            builder.slotID(row.slotId);
+            WeaponType selType = (WeaponType) typeBox.getSelectedItem();
+            if (selType != row.baseType) builder.weaponType(selType);
+            WeaponMount selMount = (WeaponMount) mountBox.getSelectedItem();
+            if (selMount != row.baseMount) builder.weaponMount(selMount);
+            WeaponSize selSize = (WeaponSize) sizeBox.getSelectedItem();
+            if (selSize != row.baseSize) builder.weaponSize(selSize);
+
+            double angle = ((Number) angleModel.getValue()).doubleValue();
+            if (angle != 0.0) builder.angle(angle);
+            double arc = ((Number) arcModel.getValue()).doubleValue();
+            if (arc != 0.0) builder.arc(arc);
+            int rom = ((Number) renderOrderModel.getValue()).intValue();
+            if (rom != 0) builder.renderOrderMod(rom);
+
+            commitOverride(row.slotId, builder.build());
+        });
+
+        JButton clearButton = new JButton("Clear Override");
+        clearButton.setEnabled(row.hasOverride);
+        clearButton.addActionListener(e -> {
+            commitOverride(row.slotId, null);
+        });
+
+        buttonPanel.add(clearButton);
+        buttonPanel.add(applyButton);
+
+        GridBagConstraints btnGbc = new GridBagConstraints();
+        btnGbc.gridx = 0;
+        btnGbc.gridy = gridRow;
+        btnGbc.gridwidth = 2;
+        btnGbc.fill = GridBagConstraints.HORIZONTAL;
+        btnGbc.insets = new Insets(8, 4, 4, 4);
+        panel.add(buttonPanel, btnGbc);
+    }
+
+    private void commitOverride(String slotId, WeaponSlotOverride override) {
+        ShipSkin activeSkin = cachedPainter.getActiveSkin();
+        Map<String, WeaponSlotOverride> oldMap = activeSkin.getWeaponSlotChanges();
+        if (oldMap == null) {
+            oldMap = new LinkedHashMap<>();
+        } else {
+            oldMap = new LinkedHashMap<>(oldMap);
+        }
+
+        Map<String, WeaponSlotOverride> newMap = new LinkedHashMap<>(oldMap);
+        if (override == null) {
+            newMap.remove(slotId);
+        } else {
+            newMap.put(slotId, override);
+        }
+
+        if (newMap.isEmpty()) {
+            newMap = null;
+        }
+
+        var edit = new SkinMapOverrideEdit<>(
+                activeSkin::setWeaponSlotChanges,
+                activeSkin.getWeaponSlotChanges(),
+                newMap,
+                EditorInstrument.SKIN_SLOTS,
+                activeSkin
+        );
+        UndoOverseer.post(edit);
+        edit.redo();
     }
 
     private static void addReadOnlyField(JPanel panel, String labelText, String value,
@@ -256,6 +341,17 @@ public class SkinSlotOverridesPanel extends JPanel {
         field.setEditable(false);
         field.setColumns(12);
         panel.add(field, fieldGbc);
+    }
+
+    private static void addField(JPanel panel, String labelText, java.awt.Component comp,
+                                 GridBagConstraints labelGbc, GridBagConstraints fieldGbc, int row) {
+        labelGbc.gridx = 0;
+        labelGbc.gridy = row;
+        panel.add(new JLabel(labelText), labelGbc);
+
+        fieldGbc.gridx = 1;
+        fieldGbc.gridy = row;
+        panel.add(comp, fieldGbc);
     }
 
     private static void addColoredField(JPanel panel, String labelText, String value, Color color,

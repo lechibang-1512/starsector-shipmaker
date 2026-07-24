@@ -10,22 +10,29 @@ if exist "%~dp0ship_editor.jar" (
 
 set JVM_OPTS=-Xmx4g -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20
 
-if "%~1"=="--cli" (
-    if exist "jre\bin\java.exe" (
-        "jre\bin\java.exe" %JVM_OPTS% -cp ship_editor.jar shipeditor.CliMain %2 %3 %4 %5 %6 %7 %8 %9
-    ) else (
-        java %JVM_OPTS% -cp ship_editor.jar shipeditor.CliMain %2 %3 %4 %5 %6 %7 %8 %9
+set "JAVA_EXE=java"
+for %%J in (
+    "jre\bin\java.exe"
+    "..\jre\bin\java.exe"
+    "..\..\jre\bin\java.exe"
+    "..\jre_linux\bin\java.exe"
+    "..\..\jre_linux\bin\java.exe"
+) do (
+    if exist %%J (
+        set "JAVA_EXE=%%~J"
+        echo Found JRE: %%~J
+        goto :found_jre
     )
+)
+echo Local JRE not found. Launching with system Java...
+:found_jre
+
+if "%~1"=="--cli" (
+    !JAVA_EXE! %JVM_OPTS% -cp ship_editor.jar shipeditor.CliMain %2 %3 %4 %5 %6 %7 %8 %9
     exit /b !errorlevel!
 )
 
-if exist "jre\bin\java.exe" (
-    echo Launching with local JRE...
-    "jre\bin\java.exe" %JVM_OPTS% -jar ship_editor.jar
-) else (
-    echo Local JRE not found. Launching with system Java...
-    java %JVM_OPTS% -jar ship_editor.jar
-)
+!JAVA_EXE! %JVM_OPTS% -jar ship_editor.jar
 
 if %errorlevel% neq 0 (
     echo Application exited with error code %errorlevel%

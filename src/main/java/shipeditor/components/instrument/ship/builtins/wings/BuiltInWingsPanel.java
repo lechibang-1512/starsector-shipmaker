@@ -5,8 +5,6 @@ import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelecte
 import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
-import shipeditor.components.viewer.layers.ship.data.ShipHull;
-import shipeditor.components.viewer.layers.ship.data.ShipSkin;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.overseers.StaticController;
@@ -36,11 +34,11 @@ public class BuiltInWingsPanel extends JPanel {
     public BuiltInWingsPanel() {
         this.setLayout(new BorderLayout());
 
-        this.baseBuiltInWingsList = new BaseWingListPane(ShipHull::getBuiltInWings, ShipHull::setBuiltInWings);
+        this.baseBuiltInWingsList = new BaseWingListPane(a -> a.getBuiltInWings(), (a, b) -> a.setBuiltInWings(b));
         ComponentUtilities.outfitPanelWithTitle(baseBuiltInWingsList, StringValues.BASE_BUILT_INS);
-        this.addedBySkinList = new SkinWingListPane(ShipSkin::getBuiltInWings, ShipSkin::setBuiltInWings);
+        this.addedBySkinList = new SkinWingListPane(a -> a.getBuiltInWings(), (a, b) -> a.setBuiltInWings(b));
         ComponentUtilities.outfitPanelWithTitle(addedBySkinList, StringValues.ADDED_BY_SKIN);
-        this.removedBySkinList = new SkinWingListPane(ShipSkin::getRemoveBuiltInWings, ShipSkin::setRemoveBuiltInWings);
+        this.removedBySkinList = new SkinWingListPane(a -> a.getRemoveBuiltInWings(), (a, b) -> a.setRemoveBuiltInWings(b));
         ComponentUtilities.outfitPanelWithTitle(removedBySkinList, StringValues.REMOVED_BY_SKIN);
 
         JPanel container = new JPanel(new GridBagLayout());

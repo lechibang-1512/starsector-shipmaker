@@ -95,7 +95,7 @@ public class MainToolBar extends JToolBar {
 
         JButton dataWindowButton = new JButton();
         this.styleToolbarButton(dataWindowButton, BoxiconsRegular.BOOK);
-        dataWindowButton.setToolTipText("Toggle Game Data Reference Window");
+        dataWindowButton.setToolTipText("Show Reference Data");
         dataWindowButton.addActionListener(event -> GameDataReferenceWindow.toggleWindow());
         this.add(dataWindowButton);
     }

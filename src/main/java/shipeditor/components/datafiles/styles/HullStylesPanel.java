@@ -58,12 +58,18 @@ public class HullStylesPanel extends AbstractStylesPanel {
 
             JLabel ringLabel = new JLabel("Shield ring color:");
             JPanel ringColorPanel = ComponentUtilities.createColorPropertyPanel(ringLabel,
-                    checked.getShieldRingColor(), CONTENT_SIDE_PAD);
+                    checked.getShieldRingColor(), CONTENT_SIDE_PAD, color -> {
+                        checked.setShieldRingColor(color);
+                        shipeditor.utility.overseers.StaticController.getScheduler().queueBuiltInsRepaint();
+                    });
             contentContainer.add(ringColorPanel);
 
             JLabel innerLabel = new JLabel("Shield inner color:");
             JPanel innerColorPanel = ComponentUtilities.createColorPropertyPanel(innerLabel,
-                    checked.getShieldInnerColor(), CONTENT_SIDE_PAD);
+                    checked.getShieldInnerColor(), CONTENT_SIDE_PAD, color -> {
+                        checked.setShieldInnerColor(color);
+                        shipeditor.utility.overseers.StaticController.getScheduler().queueBuiltInsRepaint();
+                    });
             contentContainer.add(innerColorPanel);
 
             return contentContainer;

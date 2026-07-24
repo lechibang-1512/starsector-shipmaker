@@ -130,7 +130,7 @@ public class VariantWeaponsPanel extends AbstractVariantPanel {
         ShipPainter painter = checkedLayer.getPainter();
 
         ShipVariant activeVariant = painter.getActiveVariant();
-        if (activeVariant != null && !activeVariant.isEmpty()) {
+        if (activeVariant != null) {
             weaponsTree.setSlotPainter(painter.getWeaponSlotPainter());
             weaponsTree.repopulateTree(activeVariant, checkedLayer);
 

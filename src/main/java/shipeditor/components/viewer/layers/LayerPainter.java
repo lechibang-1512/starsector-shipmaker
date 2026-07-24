@@ -45,8 +45,38 @@ public abstract class LayerPainter implements OpenGLPainter {
 
     private float spriteOpacity = 1.0f;
 
-    @Setter
     private double rotationRadians;
+
+    public void setRotationRadians(double newRotation) {
+        double delta = newRotation - this.rotationRadians;
+
+        if (delta != 0.0 && this.allPainters != null && !this.allPainters.isEmpty()) {
+            Point2D rotationAnchor = this.getRotationAnchor();
+            
+            AffineTransform rotationTransform = AffineTransform.getRotateInstance(delta, rotationAnchor.getX(), rotationAnchor.getY());
+
+            for (AbstractPointPainter pointPainter : this.allPainters) {
+                for (Object pointObj : pointPainter.getPointsIndex()) {
+                    if (pointObj instanceof shipeditor.components.viewer.entities.BaseWorldPoint point) {
+                        Point2D oldPos = point.getPosition();
+                        Point2D newPos = rotationTransform.transform(oldPos, null);
+                        point.setPosition(newPos.getX(), newPos.getY());
+                    }
+                    if (pointObj instanceof shipeditor.components.viewer.entities.AngledPoint angledPoint) {
+                        angledPoint.setAngle(angledPoint.getAngle() - Math.toDegrees(delta));
+                    }
+                }
+
+                if (pointPainter instanceof shipeditor.components.viewer.painters.points.ship.LaunchBayPainter bayPainter) {
+                    for (shipeditor.components.viewer.entities.bays.LaunchBay bay : bayPainter.getBaysList()) {
+                        bay.setAngle(bay.getAngle() - Math.toDegrees(delta));
+                    }
+                }
+            }
+        }
+        
+        this.rotationRadians = newRotation;
+    }
 
     private final ViewerLayer parentLayer;
 
@@ -349,6 +379,43 @@ public abstract class LayerPainter implements OpenGLPainter {
         if (!shouldDrawPainter)
             return;
         this.paintContent(spriteRenderer, shapeRenderer, projection, view);
+    }
+
+    public Rectangle2D getVisualBounds() {
+        if (isUninitialized()) {
+            return new Rectangle2D.Double();
+        }
+        Point2D currentAnchor = this.getAnchor();
+        int width = this.getSpriteWidth();
+        int height = this.getSpriteHeight();
+        
+        Point2D[] corners = new Point2D[] {
+            new Point2D.Double(currentAnchor.getX(), currentAnchor.getY()),
+            new Point2D.Double(currentAnchor.getX() + width, currentAnchor.getY()),
+            new Point2D.Double(currentAnchor.getX(), currentAnchor.getY() + height),
+            new Point2D.Double(currentAnchor.getX() + width, currentAnchor.getY() + height)
+        };
+        
+        double rotation = this.getRotationRadians();
+        if (rotation != 0.0) {
+            AffineTransform transform = this.getRotationTransform();
+            for (int i = 0; i < corners.length; i++) {
+                transform.transform(corners[i], corners[i]);
+            }
+        }
+        
+        double minX = corners[0].getX();
+        double minY = corners[0].getY();
+        double maxX = corners[0].getX();
+        double maxY = corners[0].getY();
+        for (int i = 1; i < corners.length; i++) {
+            minX = Math.min(minX, corners[i].getX());
+            minY = Math.min(minY, corners[i].getY());
+            maxX = Math.max(maxX, corners[i].getX());
+            maxY = Math.max(maxY, corners[i].getY());
+        }
+        
+        return new Rectangle2D.Double(minX, minY, maxX - minX, maxY - minY);
     }
 
 }

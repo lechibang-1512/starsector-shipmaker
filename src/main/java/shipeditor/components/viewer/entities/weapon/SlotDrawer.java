@@ -8,7 +8,6 @@ import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
 import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.Utility;
-import shipeditor.utility.graphics.ShapeUtilities;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -44,16 +43,73 @@ public class SlotDrawer {
 
     private boolean drawAngle = true;
 
+    // Pre-allocated rendering caches to prevent per-frame object allocation
+    private final Point2D p0Screen = new Point2D.Double();
+    private final Point2D p1Screen = new Point2D.Double();
+    private final Point2D centerScreen = new Point2D.Double();
+    private final org.joml.Vector4f colorGl = new org.joml.Vector4f();
+    private final org.joml.Vector4f blackGl = new org.joml.Vector4f();
+    private final org.joml.Vector4f whiteGl = new org.joml.Vector4f();
+    private final org.joml.Vector2f centerGl = new org.joml.Vector2f();
+
+    private final Point2D p0Cached = new Point2D.Double();
+    private final Point2D p1Cached = new Point2D.Double();
+    private final Point2D p2Cached = new Point2D.Double();
+    private final Point2D p3Cached = new Point2D.Double();
+
+    private final Point2D s0Cached = new Point2D.Double();
+    private final Point2D s1Cached = new Point2D.Double();
+    private final Point2D s2Cached = new Point2D.Double();
+    private final Point2D s3Cached = new Point2D.Double();
+
+    private final org.joml.Vector2f v0Cached = new org.joml.Vector2f();
+    private final org.joml.Vector2f v1Cached = new org.joml.Vector2f();
+    private final org.joml.Vector2f v2Cached = new org.joml.Vector2f();
+    private final org.joml.Vector2f v3Cached = new org.joml.Vector2f();
+
+    // Cache variables for drawArcGL
+    private final Point2D arcStartEndpoint = new Point2D.Double();
+    private final Point2D arcStartCirclePoint = new Point2D.Double();
+    private final Point2D arcEndEndpoint = new Point2D.Double();
+    private final Point2D arcEndCirclePoint = new Point2D.Double();
+
+    private final Point2D sStartEndpoint = new Point2D.Double();
+    private final Point2D sStartCirclePoint = new Point2D.Double();
+    private final Point2D sEndEndpoint = new Point2D.Double();
+    private final Point2D sEndCirclePoint = new Point2D.Double();
+
+    private final org.joml.Vector2f vStartEndpoint = new org.joml.Vector2f();
+    private final org.joml.Vector2f vStartCirclePoint = new org.joml.Vector2f();
+    private final org.joml.Vector2f vEndEndpoint = new org.joml.Vector2f();
+    private final org.joml.Vector2f vEndCirclePoint = new org.joml.Vector2f();
+
+    // Cache variables for drawAnglePointerGL
+    private final Point2D lineEndpoint = new Point2D.Double();
+    private final Point2D closestIntersection = new Point2D.Double();
+    private final Point2D sLineEndpoint = new Point2D.Double();
+    private final Point2D sClosestIntersection = new Point2D.Double();
+    private final org.joml.Vector2f vLineEndpoint = new org.joml.Vector2f();
+    private final org.joml.Vector2f vClosestIntersection = new org.joml.Vector2f();
+
     public SlotDrawer(SlotPoint parent) {
         this.parentPoint = parent;
+    }
+
+    private void getPointInDirection(Point2D startPoint, double angleDegrees, double length, Point2D target) {
+        double angleRadians = Math.toRadians(angleDegrees);
+        double deltaX = length * Math.cos(angleRadians);
+        double deltaY = length * Math.sin(angleRadians);
+        target.setLocation(startPoint.getX() + deltaX, startPoint.getY() + deltaY);
     }
 
     public void paintSlotVisuals(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
         Point2D position = this.pointPosition;
         AffineTransform worldToScreen = StaticController.getViewer().getWorldToScreen();
-        Point2D p0Screen = worldToScreen.transform(new Point2D.Double(0, 0), null);
-        Point2D p1Screen = worldToScreen.transform(new Point2D.Double(1, 0), null);
-        double wtsScale = p0Screen.distance(p1Screen);
+        p0Screen.setLocation(0, 0);
+        p1Screen.setLocation(1, 0);
+        Point2D transformedP0 = worldToScreen.transform(p0Screen, this.p0Screen);
+        Point2D transformedP1 = worldToScreen.transform(p1Screen, this.p1Screen);
+        double wtsScale = transformedP0.distance(transformedP1);
 
         double circleRadius = 0.10f * paintSizeMultiplier;
         double enlargedRadius = circleRadius * 1.65f;
@@ -68,17 +124,17 @@ public class SlotDrawer {
             mountColor = parentPoint.getCurrentColor();
         }
 
-        org.joml.Vector4f colorGl = new org.joml.Vector4f(
+        colorGl.set(
             mountColor.getRed() / 255.0f,
             mountColor.getGreen() / 255.0f,
             mountColor.getBlue() / 255.0f,
             mountColor.getAlpha() / 255.0f * alpha
         );
-        org.joml.Vector4f blackGl = new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 0.4f * alpha);
-        org.joml.Vector4f whiteGl = new org.joml.Vector4f(1.0f, 1.0f, 1.0f, alpha);
+        blackGl.set(0.0f, 0.0f, 0.0f, 0.4f * alpha);
+        whiteGl.set(1.0f, 1.0f, 1.0f, alpha);
 
-        Point2D centerScreen = worldToScreen.transform(position, null);
-        org.joml.Vector2f centerGl = new org.joml.Vector2f((float) centerScreen.getX(), (float) centerScreen.getY());
+        Point2D centerScreenPoint = worldToScreen.transform(position, centerScreen);
+        centerGl.set((float) centerScreenPoint.getX(), (float) centerScreenPoint.getY());
 
         this.drawMountShapeGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, enlargedRadius, colorGl, blackGl);
 
@@ -113,7 +169,8 @@ public class SlotDrawer {
                               double scale, WeaponMount slotMount,
                               org.joml.Vector4f colorGl, org.joml.Vector4f blackGl) {
         
-        Point2D centerScreen = new Point2D.Double(centerGl.x, centerGl.y);
+        Point2D centerScreenPoint = this.centerScreen;
+        centerScreenPoint.setLocation(centerGl.x, centerGl.y);
         
         double effectiveHalfExtent = enlargedRadius * scale;
         double effectiveHalfExtentPixels = effectiveHalfExtent * wtsScale;
@@ -127,63 +184,71 @@ public class SlotDrawer {
 
         switch (slotMount) {
             case TURRET -> {
+                double transformedAngle = Utility.transformAngle(this.angle);
+                double halfArc = this.arc * 0.5d;
+                double arcStartAngle = Math.toRadians(transformedAngle - halfArc);
+                double arcRads = Math.toRadians(this.arc);
+
                 org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
-                shapeRenderer.drawCircle(centerGl, (float) finalHalfExtentPixels, blackGl, false);
+                shapeRenderer.drawPartialCircle(centerGl, (float) finalHalfExtentPixels, blackGl, false, arcStartAngle, arcRads);
                 org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
-                shapeRenderer.drawCircle(centerGl, (float) finalHalfExtentPixels, colorGl, false);
+                shapeRenderer.drawPartialCircle(centerGl, (float) finalHalfExtentPixels, colorGl, false, arcStartAngle, arcRads);
             }
             case HARDPOINT -> {
-                Point2D p0 = new Point2D.Double(pointPosition.getX() - effectiveHalfExtent, pointPosition.getY() - effectiveHalfExtent);
-                Point2D p1 = new Point2D.Double(pointPosition.getX() + effectiveHalfExtent, pointPosition.getY() - effectiveHalfExtent);
-                Point2D p2 = new Point2D.Double(pointPosition.getX() + effectiveHalfExtent, pointPosition.getY() + effectiveHalfExtent);
-                Point2D p3 = new Point2D.Double(pointPosition.getX() - effectiveHalfExtent, pointPosition.getY() + effectiveHalfExtent);
+                double transformedAngle = Utility.transformAngle(this.angle);
+                double diagDist = effectiveHalfExtent * Math.sqrt(2);
+                getPointInDirection(pointPosition, transformedAngle + 225, diagDist, p0Cached);
+                getPointInDirection(pointPosition, transformedAngle + 315, diagDist, p1Cached);
+                getPointInDirection(pointPosition, transformedAngle + 45, diagDist, p2Cached);
+                getPointInDirection(pointPosition, transformedAngle + 135, diagDist, p3Cached);
 
-                Point2D s0 = worldToScreen.transform(p0, null);
-                Point2D s1 = worldToScreen.transform(p1, null);
-                Point2D s2 = worldToScreen.transform(p2, null);
-                Point2D s3 = worldToScreen.transform(p3, null);
+                worldToScreen.transform(p0Cached, s0Cached);
+                worldToScreen.transform(p1Cached, s1Cached);
+                worldToScreen.transform(p2Cached, s2Cached);
+                worldToScreen.transform(p3Cached, s3Cached);
 
-                org.joml.Vector2f v0 = new org.joml.Vector2f(centerGl.x + (float)((s0.getX() - centerScreen.getX()) * pixelScale), centerGl.y + (float)((s0.getY() - centerScreen.getY()) * pixelScale));
-                org.joml.Vector2f v1 = new org.joml.Vector2f(centerGl.x + (float)((s1.getX() - centerScreen.getX()) * pixelScale), centerGl.y + (float)((s1.getY() - centerScreen.getY()) * pixelScale));
-                org.joml.Vector2f v2 = new org.joml.Vector2f(centerGl.x + (float)((s2.getX() - centerScreen.getX()) * pixelScale), centerGl.y + (float)((s2.getY() - centerScreen.getY()) * pixelScale));
-                org.joml.Vector2f v3 = new org.joml.Vector2f(centerGl.x + (float)((s3.getX() - centerScreen.getX()) * pixelScale), centerGl.y + (float)((s3.getY() - centerScreen.getY()) * pixelScale));
+                v0Cached.set(centerGl.x + (float)((s0Cached.getX() - centerScreenPoint.getX()) * pixelScale), centerGl.y + (float)((s0Cached.getY() - centerScreenPoint.getY()) * pixelScale));
+                v1Cached.set(centerGl.x + (float)((s1Cached.getX() - centerScreenPoint.getX()) * pixelScale), centerGl.y + (float)((s1Cached.getY() - centerScreenPoint.getY()) * pixelScale));
+                v2Cached.set(centerGl.x + (float)((s2Cached.getX() - centerScreenPoint.getX()) * pixelScale), centerGl.y + (float)((s2Cached.getY() - centerScreenPoint.getY()) * pixelScale));
+                v3Cached.set(centerGl.x + (float)((s3Cached.getX() - centerScreenPoint.getX()) * pixelScale), centerGl.y + (float)((s3Cached.getY() - centerScreenPoint.getY()) * pixelScale));
 
                 org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
-                shapeRenderer.drawLine(v0, v1, blackGl);
-                shapeRenderer.drawLine(v1, v2, blackGl);
-                shapeRenderer.drawLine(v2, v3, blackGl);
-                shapeRenderer.drawLine(v3, v0, blackGl);
+                shapeRenderer.drawLine(v0Cached, v1Cached, blackGl);
+                shapeRenderer.drawLine(v1Cached, v2Cached, blackGl);
+                shapeRenderer.drawLine(v2Cached, v3Cached, blackGl);
+                shapeRenderer.drawLine(v3Cached, v0Cached, blackGl);
 
                 org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
-                shapeRenderer.drawLine(v0, v1, colorGl);
-                shapeRenderer.drawLine(v1, v2, colorGl);
-                shapeRenderer.drawLine(v2, v3, colorGl);
-                shapeRenderer.drawLine(v3, v0, colorGl);
+                shapeRenderer.drawLine(v0Cached, v1Cached, colorGl);
+                shapeRenderer.drawLine(v1Cached, v2Cached, colorGl);
+                shapeRenderer.drawLine(v2Cached, v3Cached, colorGl);
+                shapeRenderer.drawLine(v3Cached, v0Cached, colorGl);
             }
             case HIDDEN -> {
+                double transformedAngle = Utility.transformAngle(this.angle);
                 double d = effectiveHalfExtent * (2.5 / 1.65);
 
-                Point2D p0 = new Point2D.Double(pointPosition.getX() + d * 0.866025, pointPosition.getY() - d * 0.5);
-                Point2D p1 = new Point2D.Double(pointPosition.getX(), pointPosition.getY() + d);
-                Point2D p2 = new Point2D.Double(pointPosition.getX() - d * 0.866025, pointPosition.getY() - d * 0.5);
+                getPointInDirection(pointPosition, transformedAngle - 120, d, p0Cached);
+                getPointInDirection(pointPosition, transformedAngle, d, p1Cached);
+                getPointInDirection(pointPosition, transformedAngle + 120, d, p2Cached);
 
-                Point2D s0 = worldToScreen.transform(p0, null);
-                Point2D s1 = worldToScreen.transform(p1, null);
-                Point2D s2 = worldToScreen.transform(p2, null);
+                worldToScreen.transform(p0Cached, s0Cached);
+                worldToScreen.transform(p1Cached, s1Cached);
+                worldToScreen.transform(p2Cached, s2Cached);
 
-                org.joml.Vector2f v0 = new org.joml.Vector2f(centerGl.x + (float)((s0.getX() - centerScreen.getX()) * pixelScale), centerGl.y + (float)((s0.getY() - centerScreen.getY()) * pixelScale));
-                org.joml.Vector2f v1 = new org.joml.Vector2f(centerGl.x + (float)((s1.getX() - centerScreen.getX()) * pixelScale), centerGl.y + (float)((s1.getY() - centerScreen.getY()) * pixelScale));
-                org.joml.Vector2f v2 = new org.joml.Vector2f(centerGl.x + (float)((s2.getX() - centerScreen.getX()) * pixelScale), centerGl.y + (float)((s2.getY() - centerScreen.getY()) * pixelScale));
+                v0Cached.set(centerGl.x + (float)((s0Cached.getX() - centerScreenPoint.getX()) * pixelScale), centerGl.y + (float)((s0Cached.getY() - centerScreenPoint.getY()) * pixelScale));
+                v1Cached.set(centerGl.x + (float)((s1Cached.getX() - centerScreenPoint.getX()) * pixelScale), centerGl.y + (float)((s1Cached.getY() - centerScreenPoint.getY()) * pixelScale));
+                v2Cached.set(centerGl.x + (float)((s2Cached.getX() - centerScreenPoint.getX()) * pixelScale), centerGl.y + (float)((s2Cached.getY() - centerScreenPoint.getY()) * pixelScale));
 
                 org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
-                shapeRenderer.drawLine(v0, v1, blackGl);
-                shapeRenderer.drawLine(v1, v2, blackGl);
-                shapeRenderer.drawLine(v2, v0, blackGl);
+                shapeRenderer.drawLine(v0Cached, v1Cached, blackGl);
+                shapeRenderer.drawLine(v1Cached, v2Cached, blackGl);
+                shapeRenderer.drawLine(v2Cached, v0Cached, blackGl);
 
                 org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
-                shapeRenderer.drawLine(v0, v1, colorGl);
-                shapeRenderer.drawLine(v1, v2, colorGl);
-                shapeRenderer.drawLine(v2, v0, colorGl);
+                shapeRenderer.drawLine(v0Cached, v1Cached, colorGl);
+                shapeRenderer.drawLine(v1Cached, v2Cached, colorGl);
+                shapeRenderer.drawLine(v2Cached, v0Cached, colorGl);
             }
         }
     }
@@ -205,21 +270,20 @@ public class SlotDrawer {
         double effectiveLineLength = lineLength;
         double effectiveArcRadius = 0.40f * paintSizeMultiplier;
 
-        Point2D arcStartEndpoint = ShapeUtilities.getPointInDirection(position, arcStartAngle, effectiveLineLength);
-        Point2D arcStartCirclePoint = ShapeUtilities.getPointInDirection(position, arcStartAngle, effectiveCircleRadius);
+        getPointInDirection(position, arcStartAngle, effectiveLineLength, arcStartEndpoint);
+        getPointInDirection(position, arcStartAngle, effectiveCircleRadius, arcStartCirclePoint);
+        getPointInDirection(position, arcEndAngle, effectiveLineLength, arcEndEndpoint);
+        getPointInDirection(position, arcEndAngle, effectiveCircleRadius, arcEndCirclePoint);
 
-        Point2D arcEndEndpoint = ShapeUtilities.getPointInDirection(position, arcEndAngle, effectiveLineLength);
-        Point2D arcEndCirclePoint = ShapeUtilities.getPointInDirection(position, arcEndAngle, effectiveCircleRadius);
+        worldToScreen.transform(arcStartEndpoint, sStartEndpoint);
+        worldToScreen.transform(arcStartCirclePoint, sStartCirclePoint);
+        worldToScreen.transform(arcEndEndpoint, sEndEndpoint);
+        worldToScreen.transform(arcEndCirclePoint, sEndCirclePoint);
 
-        Point2D sStartEndpoint = worldToScreen.transform(arcStartEndpoint, null);
-        Point2D sStartCirclePoint = worldToScreen.transform(arcStartCirclePoint, null);
-        Point2D sEndEndpoint = worldToScreen.transform(arcEndEndpoint, null);
-        Point2D sEndCirclePoint = worldToScreen.transform(arcEndCirclePoint, null);
-
-        org.joml.Vector2f vStartEndpoint = new org.joml.Vector2f((float) sStartEndpoint.getX(), (float) sStartEndpoint.getY());
-        org.joml.Vector2f vStartCirclePoint = new org.joml.Vector2f((float) sStartCirclePoint.getX(), (float) sStartCirclePoint.getY());
-        org.joml.Vector2f vEndEndpoint = new org.joml.Vector2f((float) sEndEndpoint.getX(), (float) sEndEndpoint.getY());
-        org.joml.Vector2f vEndCirclePoint = new org.joml.Vector2f((float) sEndCirclePoint.getX(), (float) sEndCirclePoint.getY());
+        vStartEndpoint.set((float) sStartEndpoint.getX(), (float) sStartEndpoint.getY());
+        vStartCirclePoint.set((float) sStartCirclePoint.getX(), (float) sStartCirclePoint.getY());
+        vEndEndpoint.set((float) sEndEndpoint.getX(), (float) sEndEndpoint.getY());
+        vEndCirclePoint.set((float) sEndCirclePoint.getX(), (float) sEndCirclePoint.getY());
 
         org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
         shapeRenderer.drawLine(vStartEndpoint, vStartCirclePoint, blackGl);
@@ -229,36 +293,15 @@ public class SlotDrawer {
         shapeRenderer.drawLine(vStartEndpoint, vStartCirclePoint, colorGl);
         shapeRenderer.drawLine(vEndEndpoint, vEndCirclePoint, colorGl);
 
-        int segments = 24;
-        org.joml.Vector2f prevPtScreen = null;
-        for (int i = 0; i <= segments; i++) {
-            double t = (double) i / segments;
-            double theta = arcStartAngle + t * slotArc;
-            Point2D arcPt = ShapeUtilities.getPointInDirection(position, theta, effectiveArcRadius);
-            Point2D sArcPt = worldToScreen.transform(arcPt, null);
-            org.joml.Vector2f currPtScreen = new org.joml.Vector2f((float) sArcPt.getX(), (float) sArcPt.getY());
-            
-            if (prevPtScreen != null) {
-                org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
-                shapeRenderer.drawLine(prevPtScreen, currPtScreen, blackGl);
-            }
-            prevPtScreen = currPtScreen;
-        }
+        double startAngleRads = Math.toRadians(transformedAngle - halfArc);
+        double arcRads = Math.toRadians(slotArc);
+        float screenArcRadius = (float) (effectiveArcRadius * wtsScale);
 
-        prevPtScreen = null;
-        for (int i = 0; i <= segments; i++) {
-            double t = (double) i / segments;
-            double theta = arcStartAngle + t * slotArc;
-            Point2D arcPt = ShapeUtilities.getPointInDirection(position, theta, effectiveArcRadius);
-            Point2D sArcPt = worldToScreen.transform(arcPt, null);
-            org.joml.Vector2f currPtScreen = new org.joml.Vector2f((float) sArcPt.getX(), (float) sArcPt.getY());
-            
-            if (prevPtScreen != null) {
-                org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
-                shapeRenderer.drawLine(prevPtScreen, currPtScreen, colorGl);
-            }
-            prevPtScreen = currPtScreen;
-        }
+        org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
+        shapeRenderer.drawPartialCircle(centerGl, screenArcRadius, blackGl, false, startAngleRads, arcRads);
+
+        org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
+        shapeRenderer.drawPartialCircle(centerGl, screenArcRadius, colorGl, false, startAngleRads, arcRads);
     }
 
     private void drawAnglePointerGL(ShapeRenderer shapeRenderer, AffineTransform worldToScreen, double wtsScale,
@@ -270,16 +313,16 @@ public class SlotDrawer {
         double effectiveRadius = circleRadius;
         double effectivePointerStart = effectiveRadius * 5.0;
 
-        Point2D lineEndpoint = ShapeUtilities.getPointInDirection(position, transformedAngle, effectivePointerStart);
-        Point2D closestIntersection = ShapeUtilities.getPointInDirection(position, transformedAngle, effectiveRadius);
+        getPointInDirection(position, transformedAngle, effectivePointerStart, lineEndpoint);
+        getPointInDirection(position, transformedAngle, effectiveRadius, closestIntersection);
 
-        Point2D sLineEndpoint = worldToScreen.transform(lineEndpoint, null);
-        Point2D sClosestIntersection = worldToScreen.transform(closestIntersection, null);
+        worldToScreen.transform(lineEndpoint, sLineEndpoint);
+        worldToScreen.transform(closestIntersection, sClosestIntersection);
 
-        org.joml.Vector2f vLineEndpoint = new org.joml.Vector2f((float) sLineEndpoint.getX(), (float) sLineEndpoint.getY());
-        org.joml.Vector2f vClosestIntersection = new org.joml.Vector2f((float) sClosestIntersection.getX(), (float) sClosestIntersection.getY());
+        vLineEndpoint.set((float) sLineEndpoint.getX(), (float) sLineEndpoint.getY());
+        vClosestIntersection.set((float) sClosestIntersection.getX(), (float) sClosestIntersection.getY());
 
-        org.joml.Vector4f blackGl = new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 0.4f * alpha);
+        blackGl.set(0.0f, 0.0f, 0.0f, 0.4f * alpha);
 
         org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
         shapeRenderer.drawLine(vLineEndpoint, vClosestIntersection, blackGl);

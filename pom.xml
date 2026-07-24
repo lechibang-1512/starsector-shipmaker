@@ -6,13 +6,13 @@
 
     <groupId>shipeditor</groupId>
     <artifactId>ship_editor</artifactId>
-    <version>0.0.1e-hotfix</version>
+    <version>0.0.1f</version>
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.lwjgl</groupId>
                 <artifactId>lwjgl-bom</artifactId>
-                <version>3.3.4</version>
+                <version>3.4.0</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -70,7 +70,7 @@
         <dependency>
             <groupId>org.lwjglx</groupId>
             <artifactId>lwjgl3-awt</artifactId>
-            <version>0.2.3</version>
+            <version>0.2.4</version>
         </dependency>
         <dependency>
             <groupId>org.joml</groupId>
@@ -161,12 +161,12 @@
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
-            <version>3.45.2.0</version>
+            <version>3.49.1.0</version>
         </dependency>
         <dependency>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
-            <version>4.8.3</version>
+            <version>4.8.6</version>
         </dependency>
         <dependency>
             <groupId>net.jqwik</groupId>
@@ -187,10 +187,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <lombok.version>1.18.36</lombok.version>
-        <log4j.version>2.25.1</log4j.version>
+        <log4j.version>2.25.3</log4j.version>
         <ikonli.version>12.3.1</ikonli.version>
-        <jackson.version>2.18.7</jackson.version>
-        <flatlaf.version>3.1.1</flatlaf.version>
+        <jackson.version>2.18.9</jackson.version>
+        <flatlaf.version>3.5.4</flatlaf.version>
     </properties>
 
     <build>
@@ -262,6 +262,8 @@
                                 <argument>-XX:+UseStringDeduplication</argument>
                                 <argument>-XX:MinHeapFreeRatio=10</argument>
                                 <argument>-XX:MaxHeapFreeRatio=20</argument>
+                                <argument>-Dsun.awt.noerasebackground=true</argument>
+                                <argument>-Dsun.java2d.noddraw=true</argument>
                                 <argument>-cp</argument>
                                 <classpath/>
                                 <argument>shipeditor.Main</argument>

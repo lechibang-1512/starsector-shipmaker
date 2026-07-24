@@ -43,7 +43,7 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
     @Setter
     private static String currentTextFilter;
 
-    @SuppressWarnings("StaticCollection")
+    @SuppressWarnings({"StaticCollection"})
     @Getter
     private static final Map<WeaponType, Boolean> TYPE_FILTERS = new EnumMap<>(WeaponType.class);
 
@@ -289,7 +289,7 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
         return this.createFilterSection("Weapon Type",
                 weaponTypes,
                 TYPE_FILTERS,
-                WeaponType::getDisplayedName,
+                a -> a.getDisplayedName(),
                 type -> ComponentUtilities.createColorIconLabel(type.getColor()),
                 false);
     }
@@ -299,7 +299,7 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
         return this.createFilterSection("Weapon Size",
                 weaponSizes,
                 SIZE_FILTERS,
-                WeaponSize::getDisplayedName,
+                a -> a.getDisplayedName(),
                 null,
                 false);
     }
@@ -309,7 +309,7 @@ public class WeaponFilterPanel extends AbstractFilterPanel {
         return this.createFilterSection("OP Cost",
                 brackets,
                 OP_COST_FILTERS,
-                OPCostBracket::getDisplay,
+                a -> a.getDisplay(),
                 null,
                 false);
     }

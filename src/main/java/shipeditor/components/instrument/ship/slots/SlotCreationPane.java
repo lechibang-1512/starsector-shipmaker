@@ -219,7 +219,7 @@ public class SlotCreationPane extends JPanel {
         JRadioButton button = new JRadioButton(type.getDisplayedName());
         button.addActionListener(e -> defaultType = type);
 
-        JPanel panel = ComponentUtilities.createColorPropertyPanel(button, type.getColor(), 0);
+        JPanel panel = ComponentUtilities.createColorPropertyPanel(button, type.getColor(), 0, null);
         panel.setBorder(new EmptyBorder(4, 4, 0, 6));
         return new Pair<>(panel, button);
     }

@@ -38,4 +38,6 @@ public class IndexedFile {
 
     private final String parsedData;
 
+    private final String fileHash;
+
 }

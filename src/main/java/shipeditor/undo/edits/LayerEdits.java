@@ -21,6 +21,64 @@ public final class LayerEdits {
     private LayerEdits() {
     }
 
+    public static class HullCoversColorEdit extends AbstractEdit implements LayerEdit {
+        @Getter
+        private shipeditor.components.viewer.layers.ViewerLayer layer;
+        private final java.awt.Color oldColor;
+        private final java.awt.Color updatedColor;
+
+        public HullCoversColorEdit(shipeditor.components.viewer.layers.ViewerLayer layer, java.awt.Color oldColor, java.awt.Color updatedColor) {
+            this.layer = layer;
+            this.oldColor = oldColor;
+            this.updatedColor = updatedColor;
+        }
+
+        @Override
+        public void undo() {
+            if (layer instanceof shipeditor.components.viewer.layers.ship.ShipLayer shipLayer && shipLayer.getHull() != null) {
+                shipLayer.getHull().setCoversColor(oldColor);
+                StaticController.reselectCurrentLayer();
+            }
+        }
+
+        @Override
+        public void redo() {
+            if (layer instanceof shipeditor.components.viewer.layers.ship.ShipLayer shipLayer && shipLayer.getHull() != null) {
+                shipLayer.getHull().setCoversColor(updatedColor);
+                StaticController.reselectCurrentLayer();
+            }
+        }
+
+        @Override
+        public String getName() {
+            return "Hull Covers Color";
+        }
+
+        @Override
+        public LayerPainter getLayerPainter() {
+            return this.layer.getPainter();
+        }
+
+        @Override
+        public void cleanupReferences() {
+            this.layer = null;
+        }
+
+        public boolean isSimilar(Edit edit) {
+            return edit instanceof HullCoversColorEdit checked &&
+                    checked.getLayer() == this.layer &&
+                    this.oldColor != null &&
+                    this.updatedColor != null;
+        }
+
+        public void assimilate(Edit edit) {
+            if (isSimilar(edit)) {
+                HullCoversColorEdit checked = (HullCoversColorEdit) edit;
+                checked.setFinished(true);
+            }
+        }
+    }
+
     public static class AnchorOffsetEdit extends AbstractEdit implements LayerEdit {
         @Getter
         private LayerPainter layerPainter;

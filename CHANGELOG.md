@@ -1,5 +1,57 @@
 # Changelog
 
+## [0.0.1f] - 2026-07-25
+
+### Features
+- **File Hashing**: Add MD5 file hashing to `IndexedFile` and optimize index scanning by skipping re-parsing for content-identical files.
+- **Module Anchoring**: Set default module anchor position to the centroid of ship boundary points.
+- **Testing Support**: Add `ColorArrayRGBASerializer` to `SkinSpecFile` and enable coversColor round-trip testing.
+- **Weapon Recoil**: Implement per-barrel weapon recoil rendering with support for individual offset points.
+- **Weapon UI Integration**: Move weapon visuals panel into the weapons instruments tabbed view and remove redundant event handling.
+- **Module Features**: Register and activate new layer upon loading module feature.
+- **Module Features**: Implement rotation transformation for ship points and update module anchoring logic while adding fallback variant retrieval for features.
+- **Module Features**: Highlight station module features when their associated weapon slot is selected.
+- **Variant Panels**: Add support for empty slot visualization and module sprite display in variant panels.
+- **Real-time Search**: Implement debounced real-time searching in data trees and remove redundant search buttons.
+- **Rendering**: Implement partial circle rendering and update weapon slot geometry to honor rotation angles.
+- **Skin Overrides**: Allow null values for ship system and hull style in ShipSkin builder.
+- **Weapon Slots**: Implement copy-paste functionality for weapon slots using keyboard shortcuts and context menus.
+- **Skin Overrides**: Implement skin engine and removal override panels with corresponding undo/redo support.
+
+### Bug Fixes
+- **Rendering**: Fixed jitter and stuttering in ship and shield center points during camera panning by rounding screen coordinates.
+- **Rendering**: Enhanced zoom input with precise trackpad support and smooth logarithmic interpolation.
+- **Weapon Mirroring**: Fixed an issue where perfectly centered single weapon slots would mistakenly identify themselves as their own mirrored counterparts, causing angle rotation bugs.
+- **Documentation**: Updated README with instructions to compile and run the editor directly from source using Maven.
+- **Linux Compatibility**: Improve Linux rendering compatibility by adding AWT and DirectDraw JVM flags.
+- **Null Safety**: Allow null values for pad parameter in `ArticleTextBlock` constructor with default fallback to zero.
+- **Linux Compatibility**: Improve Linux compatibility by adjusting rendering flags, window bounds, startup error handling, and documentation.
+- **Null Safety**: Resolve null pointer safety, optimize path logic, refactor document listener, and clean up exception handling.
+- **Linux Compatibility**: Added a troubleshooting guide to the README addressing GLX rendering crashes and black workspaces on Wayland display servers (Arch, Garuda, Fedora).
+- **Database Caching**: Fixed a critical bug in `IndexScannerTask` where external file modifications were ignored during startup due to missing timestamp checks, ensuring the SQLite database cache correctly invalidates and prompts for updates.
+
+### Security
+- **Dependencies**: Upgrade `jackson-databind` & `jackson-core` to `2.18.9`, `log4j` to `2.25.3`, `sqlite-jdbc` to `3.49.1.0`, `flatlaf` to `3.5.4`, and `spotbugs-annotations` to `4.8.6` to resolve Dependabot security advisories.
+
+### Refactoring & Performance
+- **Release Automation**: Migrate release automation script from Python to Java.
+- **Code Modernization**: Replace method references with lambda expressions for consistent functional interface usage.
+- **Code Modernization**: Remove redundant null suppression annotations across codebase.
+- **Code Modernization**: Suppress null warnings and replace method references with lambda expressions throughout the project.
+- **UI & Navigation**: Update JSON deserializers for robustness, improve `ProjectilesTreePanel` layout, and increase scroll bar unit increment in `WeaponOffsetsPanel`.
+- **UI & Navigation**: Migrate reference data panel to a floating window and integrate wing/visuals tabs into the main game data panel.
+- **UI & Navigation**: Replace `GameDataReferenceWindow` with an integrated tab in `GameDataPanel` to improve navigation and workflow uniformity.
+- **UI & Navigation**: Change `HelpArticle` and `ArticleTreePanel` access modifiers to public.
+- **Utilities**: Encapsulate `DocumentListener` logic into a reusable class and modernize path-to-string conversion utilities.
+- **Point Alignment**: Improve point alignment, linkage logic, and simplify `WeaponSlotList` usage.
+
+### Chores, Docs & Build
+- **JVM Flags**: Add Java AWT and DirectDraw compatibility flags to JVM_OPTS.
+- **Documentation**: Clarify X11 display environment variable usage for IDE previewers versus physical monitors.
+- **Dependencies**: Upgrade lwjgl-bom to version 3.4.0 and lwjgl3-awt to version 0.2.4.
+- **Documentation**: Document coordinate system differences and rotation requirements for OpenGL porting.
+- **Cleanup**: Remove obsolete refactoring scripts and temporary test files.
+
 ## [0.0.1e-hotfix] - 2026-06-17
 
 ### Features & Testing

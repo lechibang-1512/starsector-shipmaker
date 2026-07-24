@@ -60,6 +60,41 @@ public class LayerManager {
 
     private final Map<ViewerLayer, List<String>> unsavedChangesRegistry = new HashMap<>();
 
+    public List<String> getUnsavedLayerNames() {
+        List<String> names = new ArrayList<>();
+        for (ViewerLayer layer : unsavedChangesRegistry.keySet()) {
+            String layerName = "";
+            if (layer instanceof ShipLayer shipLayer) {
+                ShipHull shipHull = shipLayer.getHull();
+                if (shipHull != null && shipHull.getHullName() != null && !shipHull.getHullName().isEmpty()) {
+                    layerName = shipHull.getHullName();
+                } else if (shipLayer.getHullFileName() != null && !shipLayer.getHullFileName().isEmpty()) {
+                    layerName = shipLayer.getHullFileName();
+                }
+                
+                ShipPainter painter = shipLayer.getPainter();
+                if (painter != null) {
+                    ShipSkin activeSkin = painter.getActiveSkin();
+                    if (activeSkin != null && !activeSkin.isBase() && activeSkin.getHullName() != null) {
+                        layerName = activeSkin.getHullName();
+                    }
+                }
+            }
+            if (layerName.isEmpty()) {
+                LayerPainter painter = layer.getPainter();
+                if (painter != null && painter.getSprite() != null && painter.getSprite().getFilename() != null && !painter.getSprite().getFilename().isEmpty()) {
+                    layerName = painter.getSprite().getFilename();
+                }
+            }
+            if (layerName.isEmpty()) {
+                int index = this.layers.indexOf(layer) + 1;
+                layerName = "Layer " + index;
+            }
+            names.add(layerName);
+        }
+        return names;
+    }
+
     public void markUnsaved(ViewerLayer layer, String changeType) {
         List<String> types = unsavedChangesRegistry.computeIfAbsent(layer, k -> new ArrayList<>());
         if (!types.contains(changeType)) {
@@ -167,8 +202,8 @@ public class LayerManager {
 
         // Game Data Loading Events
         EventBus.subscribe(this, event -> {
-            if (event instanceof HullmodDataSet) actOnAllLayerHulls(ShipHull::loadBuiltInMods);
-            else if (event instanceof WingDataSet) actOnAllLayerHulls(ShipHull::loadBuiltInWings);
+            if (event instanceof HullmodDataSet) actOnAllLayerHulls((a, b) -> a.loadBuiltInMods(b));
+            else if (event instanceof WingDataSet) actOnAllLayerHulls((a, b) -> a.loadBuiltInWings(b));
         });
     }
 
@@ -205,6 +240,7 @@ public class LayerManager {
         layers.remove(layer);
         unsavedChangesRegistry.remove(layer);
         EventBus.publish(new ViewerLayerRemovalConfirmed(layer));
+        EventBus.publish(new shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransformsReset());
     }
 
     private void initOpenSpriteListener() {

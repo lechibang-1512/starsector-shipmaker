@@ -53,8 +53,8 @@ public class VariantWingsPanel extends JPanel {
     public VariantWingsPanel() {
         this.setLayout(new BorderLayout());
 
-        BiConsumer<ShipVariant, List<WingCSVEntry>> sortSetter = ShipVariant::setWings;
-        this.wingsGetter = ShipVariant::getWings;
+        BiConsumer<ShipVariant, List<WingCSVEntry>> sortSetter = (a, b) -> a.setWings(b);
+        this.wingsGetter = a -> a.getWings();
 
         this.wingsModel = new DefaultListModel<>();
 

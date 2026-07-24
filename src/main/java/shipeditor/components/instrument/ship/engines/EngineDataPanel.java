@@ -110,7 +110,7 @@ public class EngineDataPanel extends LayerPropertiesPanel {
         String text = StringValues.ENGINE_ANGLE;
         SpinnerNumberModel spinnerNumberModel = new SpinnerNumberModel(0.0d,
                 -360.0d, 360.0d, 0.5d);
-        Function<EngineData, Double> getter = EngineData::getAngleBoxed;
+        Function<EngineData, Double> getter = a -> a.getAngleBoxed();
         Consumer<Double> setter = degrees -> {
             ShipPainter shipPainter = getCachedLayerPainter();
             EngineSlotPainter enginePainter = shipPainter.getEnginePainter();
@@ -123,7 +123,7 @@ public class EngineDataPanel extends LayerPropertiesPanel {
         String text = StringValues.ENGINE_WIDTH;
         SpinnerNumberModel spinnerNumberModel = new SpinnerNumberModel(0.0d,
                 0.0d, Double.MAX_VALUE, 0.5d);
-        Function<EngineData, Double> getter = EngineData::getWidthBoxed;
+        Function<EngineData, Double> getter = a -> a.getWidthBoxed();
         Consumer<Double> setter = width -> {
             ShipPainter shipPainter = getCachedLayerPainter();
             EngineSlotPainter enginePainter = shipPainter.getEnginePainter();
@@ -139,7 +139,7 @@ public class EngineDataPanel extends LayerPropertiesPanel {
         String text = StringValues.ENGINE_LENGTH;
         SpinnerNumberModel spinnerNumberModel = new SpinnerNumberModel(0.0d,
                 0.0d, Double.MAX_VALUE, 0.5d);
-        Function<EngineData, Double> getter = EngineData::getLengthBoxed;
+        Function<EngineData, Double> getter = a -> a.getLengthBoxed();
         Consumer<Double> setter = length -> {
             ShipPainter shipPainter = getCachedLayerPainter();
             EngineSlotPainter enginePainter = shipPainter.getEnginePainter();
@@ -155,7 +155,7 @@ public class EngineDataPanel extends LayerPropertiesPanel {
         String text = StringValues.CONTRAIL_SIZE;
         SpinnerNumberModel spinnerNumberModel = new SpinnerNumberModel(0.0d,
                 0.0d, 128.0d, 1.0d);
-        Function<EngineData, Double> getter = EngineData::getContrailSizeBoxed;
+        Function<EngineData, Double> getter = a -> a.getContrailSizeBoxed();
         Consumer<Double> setter = contrailValue -> {
             ShipPainter shipPainter = getCachedLayerPainter();
             EngineSlotPainter enginePainter = shipPainter.getEnginePainter();

@@ -19,10 +19,9 @@ import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
 import shipeditor.representation.weapon.WeaponEnums.WeaponType;
-import shipeditor.utility.overseers.StaticController;
+
 
 import java.awt.Color;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.List;
 import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
@@ -157,9 +156,6 @@ public class LaunchPortPoint extends BaseWorldPoint implements SlotPoint {
 
     @Override
     public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
-        AffineTransform worldToScreen = StaticController.getViewer().getWorldToScreen();
-        this.updateCursorHitState(worldToScreen);
-
         slotDrawer.setPointPosition(this.getPosition());
         slotDrawer.setType(this.parentBay.getWeaponType());
         slotDrawer.setMount(this.parentBay.getWeaponMount());

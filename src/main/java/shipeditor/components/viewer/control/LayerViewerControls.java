@@ -1,6 +1,6 @@
 package shipeditor.components.viewer.control;
-import shipeditor.components.viewer.ViewerEnums.PointSelectionMode;
 
+import shipeditor.components.viewer.ViewerEnums.PointSelectionMode;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -22,6 +22,13 @@ import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.Utility;
+import shipeditor.components.ComponentEnums.EditorInstrument;
+import shipeditor.components.instrument.ship.slots.WeaponSlotClipboard;
+import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
+import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
+import shipeditor.components.viewer.painters.points.AbstractPointPainter;
+import shipeditor.components.viewer.entities.BaseWorldPoint;
+import shipeditor.communication.events.viewer.ViewerRepaintQueued;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -51,14 +58,20 @@ import shipeditor.communication.events.viewer.control.ControlEvents.ViewerRotati
 import shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransformsReset;
 import shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransformRotated;
 
-/** * should not publish a plethora of different events that are opinionated as to what their receivers should do.
- * Instead, its sole purpose should be collecting input control data and publishing it on event bus;
- * Interested classes like painters and viewer entities should listen for that input.
- * However, given the constraints and the fact that current implementation works fine, best to leave things be.*/
+/**
+ * * should not publish a plethora of different events that are opinionated as
+ * to what their receivers should do.
+ * Instead, its sole purpose should be collecting input control data and
+ * publishing it on event bus;
+ * Interested classes like painters and viewer entities should listen for that
+ * input.
+ * However, given the constraints and the fact that current implementation works
+ * fine, best to leave things be.
+ */
 
-@SuppressWarnings({"OverlyCoupledClass", "OverlyComplexClass"})
+@SuppressWarnings({ "OverlyCoupledClass", "OverlyComplexClass" })
 @Log4j2
-@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
+@SuppressFBWarnings({ "EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP" })
 public final class LayerViewerControls implements ViewerControl {
 
     private final PrimaryViewer parentViewer;
@@ -75,6 +88,23 @@ public final class LayerViewerControls implements ViewerControl {
      * Position where the mouse was previously pressed
      */
     private final Point pressPoint = new Point();
+
+    private boolean pointDragActive = false;
+    private boolean marqueeSelectionActive = false;
+    private Point marqueeStartPoint = null;
+    private Point marqueeEndPoint = null;
+
+    public boolean isMarqueeSelectionActive() {
+        return this.marqueeSelectionActive;
+    }
+
+    public Point getMarqueeStartPoint() {
+        return this.marqueeStartPoint;
+    }
+
+    public Point getMarqueeEndPoint() {
+        return this.marqueeEndPoint;
+    }
 
     /**
      * Used for layer dragging functionality.
@@ -95,7 +125,8 @@ public final class LayerViewerControls implements ViewerControl {
     private final SmoothZoomHandler zoomHandler = new SmoothZoomHandler();
 
     /**
-     * @param parent Viewer which is manipulated via this instance of controls class.
+     * @param parent Viewer which is manipulated via this instance of controls
+     *               class.
      */
     private LayerViewerControls(PrimaryViewer parent) {
         this.parentViewer = parent;
@@ -108,13 +139,20 @@ public final class LayerViewerControls implements ViewerControl {
     private void initKeyBinding() {
         InputMap inputMap = parentViewer.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         String deleteKey = "Backspace";
-        inputMap.put(KeyStroke.getKeyStroke((char)KeyEvent.VK_BACK_SPACE), deleteKey);
+        inputMap.put(KeyStroke.getKeyStroke((char) KeyEvent.VK_BACK_SPACE), deleteKey);
         ActionMap actionMap = parentViewer.getActionMap();
         actionMap.put(deleteKey, new DeleteAction());
+
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_DOWN_MASK), "copyCommand");
+        actionMap.put("copyCommand", new CopyAction());
+
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, java.awt.event.InputEvent.CTRL_DOWN_MASK), "pasteCommand");
+        actionMap.put("pasteCommand", new PasteAction());
     }
 
     /**
-     * @param parent Viewer which is manipulated via this instance of controls class.
+     * @param parent Viewer which is manipulated via this instance of controls
+     *               class.
      * @return instance of controls via factory method.
      */
     public static LayerViewerControls create(PrimaryViewer parent) {
@@ -166,23 +204,71 @@ public final class LayerViewerControls implements ViewerControl {
     }
 
     @Override
-    public void mouseClicked(MouseEvent e) {}
+    public void mouseClicked(MouseEvent e) {
+    }
 
     @Override
     public void mousePressed(MouseEvent e) {
         Point point = e.getPoint();
         this.pressPoint.setLocation(point);
-        // This layer dragging feature took a long time to figure out; careful here in the future.
+        // This layer dragging feature took a long time to figure out; careful here in
+        // the future.
         // Should any difficulties arise, employ logging liberally.
         if (this.parentViewer.getSelectedLayer() != null) {
             LayerPainter selected = this.parentViewer.getSelectedLayer();
             AffineTransform worldToScreen = this.parentViewer.getTransformWorldToScreen();
             Point2D anchor = selected.getAnchor();
-            // Layer anchor needs to be transformed because all mouse events are evaluated in screen coordinates.
+            // Layer anchor needs to be transformed because all mouse events are evaluated
+            // in screen coordinates.
             Point2D transformed = worldToScreen.transform(anchor, null);
             this.layerDragPoint.setLocation(e.getX() - transformed.getX(), e.getY() - transformed.getY());
         }
-        if (e.getButton() == MouseEvent.BUTTON1) {
+
+        boolean hoveredOnPoint = false;
+        BaseWorldPoint clickedPoint = null;
+        AbstractPointPainter clickedPainter = null;
+        LayerPainter activePainter = parentViewer.getSelectedLayer();
+        if (activePainter != null) {
+            for (AbstractPointPainter pointPainter : activePainter.getAllPainters()) {
+                if (pointPainter.isInteractionEnabled()) {
+                    for (BaseWorldPoint p : pointPainter.getPointsIndex()) {
+                        if (p.isCursorInBounds()) {
+                            clickedPoint = p;
+                            clickedPainter = pointPainter;
+                            hoveredOnPoint = true;
+                            break;
+                        }
+                    }
+                }
+                if (hoveredOnPoint) break;
+            }
+        }
+        this.pointDragActive = hoveredOnPoint;
+
+        if (javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+            if (clickedPoint != null) {
+                if (e.isShiftDown() || e.isControlDown()) {
+                    if (clickedPainter != null && clickedPainter.getSelectedPoints().contains(clickedPoint)) {
+                        clickedPainter.removePointFromSelection(clickedPoint);
+                    } else if (clickedPainter != null) {
+                        clickedPainter.addPointToSelection(clickedPoint);
+                    }
+                    this.pointDragActive = false; // toggle selection, don't drag
+                    EventBus.publish(new ViewerRepaintQueued());
+                } else {
+                    if (clickedPainter != null && !clickedPainter.getSelectedPoints().contains(clickedPoint)) {
+                        clickedPainter.setSelected(clickedPoint);
+                    }
+                }
+            } else {
+                // Clicked on empty space: save marquee start
+                this.marqueeStartPoint = e.getPoint();
+                this.marqueeEndPoint = e.getPoint();
+            }
+        }
+
+        // Only publish creation event if not left clicking on a point
+        if (e.getButton() == MouseEvent.BUTTON1 && clickedPoint == null) {
             this.publishMousePressWithPosition(e, point);
         }
         if (ControlPredicates.removePointPredicate.test(e)) {
@@ -190,7 +276,8 @@ public final class LayerViewerControls implements ViewerControl {
         }
         // Publish raw mouse pressed for painters to evaluate their own predicates.
         EventBus.publish(new ViewerRawMousePressed(e));
-        if (!ControlPredicates.selectPointPredicate.test(e)) return;
+        if (!ControlPredicates.selectPointPredicate.test(e))
+            return;
         if (ControlPredicates.getSelectionMode() == PointSelectionMode.STRICT) {
             EventBus.publish(new PointSelectQueued(null));
         }
@@ -215,13 +302,46 @@ public final class LayerViewerControls implements ViewerControl {
     @Override
     public void mouseReleased(MouseEvent e) {
         EventBus.publish(new ViewerMouseReleased());
+        this.pointDragActive = false;
+        if (this.marqueeSelectionActive && this.marqueeStartPoint != null && this.marqueeEndPoint != null) {
+            this.marqueeSelectionActive = false;
+            int x = Math.min(this.marqueeStartPoint.x, this.marqueeEndPoint.x);
+            int y = Math.min(this.marqueeStartPoint.y, this.marqueeEndPoint.y);
+            int w = Math.abs(this.marqueeStartPoint.x - this.marqueeEndPoint.x);
+            int h = Math.abs(this.marqueeStartPoint.y - this.marqueeEndPoint.y);
+            Rectangle rect = new Rectangle(x, y, w, h);
+            
+            LayerPainter activePainter = parentViewer.getSelectedLayer();
+            if (activePainter != null) {
+                AffineTransform worldToScreen = parentViewer.getWorldToScreen();
+                boolean cumulative = e.isShiftDown() || e.isControlDown();
+                for (AbstractPointPainter pointPainter : activePainter.getAllPainters()) {
+                    pointPainter.selectPointsInRect(rect, worldToScreen, cumulative);
+                }
+            }
+        } else if (this.marqueeStartPoint != null) {
+            // A clean click on empty space (no drag)
+            if (!e.isShiftDown() && !e.isControlDown() && !e.isAltDown() && javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+                LayerPainter activePainter = parentViewer.getSelectedLayer();
+                if (activePainter != null) {
+                    for (AbstractPointPainter pointPainter : activePainter.getAllPainters()) {
+                        pointPainter.clearSelection();
+                    }
+                }
+            }
+        }
+        this.marqueeStartPoint = null;
+        this.marqueeEndPoint = null;
+        this.parentViewer.setRepaintQueued();
     }
 
     @Override
-    public void mouseEntered(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {
+    }
 
     @Override
-    public void mouseExited(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {
+    }
 
     @Override
     public void mouseDragged(MouseEvent e) {
@@ -246,11 +366,19 @@ public final class LayerViewerControls implements ViewerControl {
                 Point2D worldTarget = screenToWorld.transform(e.getPoint(), null);
                 EventBus.publish(new LayerRotationQueued(selected, worldTarget));
             }
+        } else if (javax.swing.SwingUtilities.isLeftMouseButton(e) && !this.pointDragActive && this.marqueeStartPoint != null) {
+            double dist = this.marqueeStartPoint.distance(e.getPoint());
+            if (dist > 5) {
+                this.marqueeSelectionActive = true;
+                this.marqueeEndPoint = e.getPoint();
+                this.parentViewer.setRepaintQueued();
+            }
         }
         this.previousPoint.setLocation(x, y);
         this.refreshCursorPosition(e);
-        // Publish raw mouse dragged for painters to evaluate their own predicates.
-        EventBus.publish(new ViewerRawMouseDragged(e));
+        if (!this.marqueeSelectionActive) {
+            EventBus.publish(new ViewerRawMouseDragged(e));
+        }
     }
 
     // publishAngleRotation and tryRadiusDrag have been removed.
@@ -275,7 +403,7 @@ public final class LayerViewerControls implements ViewerControl {
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        int wheelRotation = e.getWheelRotation();
+        double wheelRotation = e.getPreciseWheelRotation();
         if (ControlPredicates.rotatePredicate.test(e) && this.rotationEnabled) {
             double toRadians = Math.toRadians(wheelRotation);
             double resultRadians = toRadians * ControlPredicates.ROTATION_SPEED;
@@ -288,10 +416,7 @@ public final class LayerViewerControls implements ViewerControl {
             StaticController.updateViewerRotation(-resultRadians, rotationDegree);
             EventBus.publish(new ViewerTransformRotated());
         } else {
-            // Calculate the zoom factor - sign of wheel rotation argument determines the direction.
-            // Calculate the zoom factor - sign of wheel rotation argument determines the direction.
-            // Using 25% of raw ZOOMING_SPEED for snappier magnification steps.
-            double speed = ControlPredicates.ZOOMING_SPEED * 0.25d;
+            double speed = ControlPredicates.ZOOMING_SPEED * 0.10d;
             double d = Math.pow(1 + speed, -wheelRotation) - 1;
             double factor = 1.0 + d;
             double max = ControlPredicates.MAXIMUM_ZOOM;
@@ -346,9 +471,10 @@ public final class LayerViewerControls implements ViewerControl {
     }
 
     /**
-     * @param input Point that will be snapped to grid.
+     * @param input           Point that will be snapped to grid.
      * @param snappingDivisor value that will determine the size of snapping grid.
-     * E.g. value of 2.0f means position snapping to 0.5 scaled pixel, while 1.0f will snap to the whole pixel.
+     *                        E.g. value of 2.0f means position snapping to 0.5
+     *                        scaled pixel, while 1.0f will snap to the whole pixel.
      * @return Snapped point instance.
      */
     private Point2D snapPointToGrid(Point2D input, float snappingDivisor) {
@@ -368,6 +494,16 @@ public final class LayerViewerControls implements ViewerControl {
         return input;
     }
 
+    private void updateHoverStatesForAllPainters() {
+        LayerPainter activePainter = parentViewer.getSelectedLayer();
+        if (activePainter != null) {
+            AffineTransform worldToScreen = parentViewer.getWorldToScreen();
+            for (AbstractPointPainter pointPainter : activePainter.getAllPainters()) {
+                pointPainter.updateHoverStates(this.mousePoint, worldToScreen);
+            }
+        }
+    }
+
     @Override
     public void refreshCursorPosition(MouseEvent event) {
         this.mousePoint = event.getPoint();
@@ -375,6 +511,7 @@ public final class LayerViewerControls implements ViewerControl {
         Point2D adjusted = this.getAdjustedCursor();
         Point2D corrected = Utility.correctAdjustedCursor(adjusted, screenToWorld);
         EventBus.publish(new ViewerCursorMoved(this.mousePoint, adjusted, corrected));
+        this.updateHoverStatesForAllPainters();
         if (ControlPredicates.selectPointPredicate.test(event)) {
             Point2D cursor = mousePoint;
             if (ControlPredicates.isCursorSnappingEnabled()) {
@@ -434,6 +571,7 @@ public final class LayerViewerControls implements ViewerControl {
         Point2D adjusted = this.getAdjustedCursor();
         Point2D corrected = Utility.correctAdjustedCursor(adjusted, screenToWorld);
         EventBus.publish(new ViewerCursorMoved(this.mousePoint, adjusted, corrected));
+        this.updateHoverStatesForAllPainters();
 
         boolean dragInProgress = ViewerDropReceiver.isDragToViewerInProgress();
         boolean closestMode = ControlPredicates.getSelectionMode() == PointSelectionMode.CLOSEST;
@@ -469,7 +607,8 @@ public final class LayerViewerControls implements ViewerControl {
                 this.targetZoomLevel = targetZoom;
             }
 
-            this.targetZoomLevel = Math.max(ControlPredicates.MINIMUM_ZOOM, Math.min(ControlPredicates.MAXIMUM_ZOOM, this.targetZoomLevel));
+            this.targetZoomLevel = Math.max(ControlPredicates.MINIMUM_ZOOM,
+                    Math.min(ControlPredicates.MAXIMUM_ZOOM, this.targetZoomLevel));
             this.targetX = x;
             this.targetY = y;
 
@@ -483,9 +622,10 @@ public final class LayerViewerControls implements ViewerControl {
         }
 
         private void updateZoom() {
-            currentZoomStep += (targetZoomLevel - currentZoomStep) * 0.15;
+            // Logarithmic interpolation for a visually uniform, smoother curve
+            currentZoomStep *= Math.pow(targetZoomLevel / currentZoomStep, 0.12);
             setZoomLevel(currentZoomStep);
-            
+
             double snapThreshold = this.targetZoomLevel * SNAP_RATIO;
             if (Math.abs(currentZoomStep - targetZoomLevel) < snapThreshold) {
                 currentZoomStep = targetZoomLevel;
@@ -498,6 +638,7 @@ public final class LayerViewerControls implements ViewerControl {
             double factor = level / LayerViewerControls.this.zoomLevel;
             LayerViewerControls.this.parentViewer.zoom(targetX, targetY, factor, factor);
             LayerViewerControls.this.setZoomLevel(level);
+            LayerViewerControls.this.parentViewer.setRepaintQueued();
         }
     }
 
@@ -506,6 +647,44 @@ public final class LayerViewerControls implements ViewerControl {
         public void actionPerformed(ActionEvent e) {
             EventBus.publish(new PointRemoveQueued(null, false));
             EventBus.publish(new DeleteButtonPressed());
+        }
+    }
+
+    private static class CopyAction extends AbstractAction {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            java.awt.Component focusOwner = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                    .getFocusOwner();
+            if (focusOwner instanceof javax.swing.text.JTextComponent) {
+                return;
+            }
+            if (StaticController.getEditorMode() == EditorInstrument.WEAPON_SLOTS) {
+                WeaponSlotPainter painter = StaticController.getSelectedSlotPainter();
+                if (painter != null) {
+                    WeaponSlotPoint selected = painter.getSelected();
+                    if (selected != null) {
+                        WeaponSlotClipboard.copy(java.util.List.of(selected));
+                    }
+                }
+            }
+        }
+    }
+
+    private static class PasteAction extends AbstractAction {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            java.awt.Component focusOwner = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                    .getFocusOwner();
+            if (focusOwner instanceof javax.swing.text.JTextComponent) {
+                return;
+            }
+            if (StaticController.getEditorMode() == EditorInstrument.WEAPON_SLOTS) {
+                WeaponSlotPainter painter = StaticController.getSelectedSlotPainter();
+                if (painter != null && WeaponSlotClipboard.hasData()) {
+                    Point2D target = StaticController.getFinalWorldCursor();
+                    painter.pasteSlots(WeaponSlotClipboard.getClipboard(), target);
+                }
+            }
         }
     }
 

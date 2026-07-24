@@ -68,7 +68,6 @@ public class ShieldCenterPoint extends BaseWorldPoint {
     @Override
     public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
         AffineTransform worldToScreen = StaticController.getViewer().getWorldToScreen();
-        this.updateCursorHitState(worldToScreen);
 
         // 1. Draw Shield Circle (World Space)
         shapeRenderer.end();
@@ -110,7 +109,7 @@ public class ShieldCenterPoint extends BaseWorldPoint {
             1.0f
         );
         Point2D screenLoc = worldToScreen.transform(position, null);
-        org.joml.Vector2f screenPos = new org.joml.Vector2f((float) screenLoc.getX(), (float) screenLoc.getY());
+        org.joml.Vector2f screenPos = new org.joml.Vector2f(Math.round(screenLoc.getX()), Math.round(screenLoc.getY()));
 
         float halfLen = 4.24f;
         shapeRenderer.drawLine(new org.joml.Vector2f(screenPos.x - halfLen, screenPos.y - halfLen), new org.joml.Vector2f(screenPos.x + halfLen, screenPos.y + halfLen), glCrossColor);

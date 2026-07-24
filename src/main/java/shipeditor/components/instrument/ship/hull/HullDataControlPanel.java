@@ -17,6 +17,7 @@ import shipeditor.representation.ship.HullStyle;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.MouseoverLabelListener;
 import shipeditor.utility.graphics.ColorUtilities;
+import shipeditor.utility.graphics.SmartColorPaste;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.overseers.EventScheduler;
 import shipeditor.utility.overseers.StaticController;
@@ -340,6 +341,17 @@ public class HullDataControlPanel extends JPanel {
             coversColorValue.setText(notDefined);
         }
         coversColorValue.setForeground(Themes.getTextColor());
+        SmartColorPaste.install(coversColorValue, color -> {
+            var activeLayer = StaticController.getActiveLayer();
+            if (activeLayer instanceof ShipLayer shipLayer) {
+                ShipHull hull = shipLayer.getHull();
+                if (hull != null) {
+                    shipeditor.undo.EditDispatch.postHullCoversColorSet(activeLayer, hull.getCoversColor(), color);
+                    hull.setCoversColor(color);
+                    StaticController.reselectCurrentLayer();
+                }
+            }
+        });
 
         spritePathLabel.setEnabled(true);
         spritePathLabel.setToolTipText(StringValues.RIGHT_CLICK_TO_CHANGE_SPRITE);
@@ -401,8 +413,11 @@ public class HullDataControlPanel extends JPanel {
                     } else {
                         chosen = ColorUtilities.showColorChooser();
                     }
-                    shipHull.setCoversColor(chosen);
-                    StaticController.reselectCurrentLayer();
+                    if (chosen != null) {
+                        shipeditor.undo.EditDispatch.postHullCoversColorSet(activeLayer, current, chosen);
+                        shipHull.setCoversColor(chosen);
+                        StaticController.reselectCurrentLayer();
+                    }
                 } else {
                     HullDataControlPanel.abortColorInteraction();
                 }
@@ -418,6 +433,8 @@ public class HullDataControlPanel extends JPanel {
             if (activeLayer instanceof ShipLayer shipLayer) {
                 ShipHull shipHull = shipLayer.getHull();
                 if (shipHull != null) {
+                    var current = shipHull.getCoversColor();
+                    shipeditor.undo.EditDispatch.postHullCoversColorSet(activeLayer, current, null);
                     shipHull.setCoversColor(null);
                     StaticController.reselectCurrentLayer();
                 } else {

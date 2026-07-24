@@ -51,7 +51,7 @@ public final class ModuleList extends InstalledFeatureList {
         if (menu != null && selected != null) {
             JMenuItem loadAsLayer = new JMenuItem("Load as separate layer");
 
-            loadAsLayer.addActionListener(event -> actOnSelectedEntry(InstalledFeature::loadAsSeparateLayer));
+            loadAsLayer.addActionListener(event -> actOnSelectedEntry(a -> a.loadAsSeparateLayer()));
             if (!(selected.getDataEntry() instanceof ShipCSVEntry)) {
                 loadAsLayer.setEnabled(false);
             }

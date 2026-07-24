@@ -10,18 +10,24 @@ import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
 import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.text.StringValues;
 
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Image;
+import shipeditor.utility.graphics.Sprite;
+import shipeditor.components.datafiles.entities.ShipCSVEntry;
+import shipeditor.utility.text.StringConstants;
 
 public class InstalledFeatureCellRenderer extends BoxPanelCellRenderer<InstalledFeature> {
 
     private final JLabel slotSizeIcon;
     private final JLabel slotTypeIcon;
     private final JLabel slotIDText;
+    private final JLabel spriteIcon;
 
     private final JLabel featureIDText;
     private final JLabel featureTypeIcon;
@@ -34,7 +40,11 @@ public class InstalledFeatureCellRenderer extends BoxPanelCellRenderer<Installed
         slotIDText = new JLabel();
         slotIDText.setBorder(new EmptyBorder(0, 4, 0, 0));
 
+        spriteIcon = new JLabel();
+        spriteIcon.setBorder(new EmptyBorder(0, 4, 0, 0));
+
         JPanel leftContainer = getLeftContainer();
+        leftContainer.add(spriteIcon);
         leftContainer.add(slotSizeIcon);
         leftContainer.add(slotTypeIcon);
         leftContainer.add(slotIDText);
@@ -63,7 +73,43 @@ public class InstalledFeatureCellRenderer extends BoxPanelCellRenderer<Installed
         Color foreground = list.getForeground();
 
         CSVEntry dataEntry = value.getDataEntry();
-        this.setToolTipText(dataEntry.getMultilineTooltip());
+
+        if (dataEntry == null) {
+            this.setToolTipText("Empty slot");
+            featureIDText.setText("(empty)");
+            Color gray = Color.GRAY;
+            slotIDText.setForeground(gray);
+            featureIDText.setForeground(gray);
+            slotTypeIcon.setForeground(gray);
+            slotSizeIcon.setForeground(gray);
+            featureTypeIcon.setVisible(false);
+            featureSizeIcon.setVisible(false);
+            spriteIcon.setIcon(null);
+            
+            slotIDText.setText(slotID + ":");
+            if (slotPoint != null) {
+                populateSlotInfo(value, slotPoint, gray);
+                slotTypeIcon.setForeground(gray);
+                slotSizeIcon.setForeground(gray);
+            }
+            return this;
+        }
+
+        if (dataEntry instanceof ShipCSVEntry shipEntry) {
+            StringBuilder sb = new StringBuilder("<html>");
+            String name = shipEntry.getRowData().get("name");
+            sb.append("Hull: ").append(name).append(" (").append(shipEntry.getHullID()).append(")<br>");
+            sb.append("Variant: ").append(value.getID()).append("<br>");
+            sb.append("Size: ").append(shipEntry.getSize().getDisplayedName()).append("<br>");
+            String hints = shipEntry.getRowData().get(StringConstants.HINTS);
+            if (hints != null && !hints.isEmpty()) {
+                sb.append("Hints: ").append(hints);
+            }
+            sb.append("</html>");
+            this.setToolTipText(sb.toString());
+        } else {
+            this.setToolTipText(dataEntry.getMultilineTooltip());
+        }
 
         if (isSelected) {
             foreground = list.getSelectionForeground();
@@ -98,6 +144,14 @@ public class InstalledFeatureCellRenderer extends BoxPanelCellRenderer<Installed
         String sizeName = size.getDisplayedName();
         featureSizeIcon.setText("[" + sizeName + "]");
         featureSizeIcon.setVisible(true);
+
+        Sprite sprite = value.getEntrySprite();
+        if (sprite != null && sprite.getImage() != null) {
+            Image img = sprite.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+            spriteIcon.setIcon(new ImageIcon(img));
+        } else {
+            spriteIcon.setIcon(null);
+        }
 
         return this;
     }

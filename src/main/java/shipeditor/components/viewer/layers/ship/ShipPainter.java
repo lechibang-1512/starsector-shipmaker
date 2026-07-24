@@ -307,8 +307,15 @@ public class ShipPainter extends LayerPainter {
             return getEntityCenter();
         } else {
             Point2D entityCenter = getEntityCenter();
-            double x = entityCenter.getX() - moduleAnchorOffset.getY();
-            double y = entityCenter.getY() - moduleAnchorOffset.getX();
+            double unrotatedOx = -moduleAnchorOffset.getY();
+            double unrotatedOy = -moduleAnchorOffset.getX();
+            Point2D unrotatedOffset = new Point2D.Double(unrotatedOx, unrotatedOy);
+            
+            java.awt.geom.AffineTransform rotationTransform = java.awt.geom.AffineTransform.getRotateInstance(this.getRotationRadians());
+            Point2D rotatedOffset = rotationTransform.transform(unrotatedOffset, null);
+            
+            double x = entityCenter.getX() + rotatedOffset.getX();
+            double y = entityCenter.getY() + rotatedOffset.getY();
             return new Point2D.Double(x, y);
         }
     }
@@ -324,14 +331,14 @@ public class ShipPainter extends LayerPainter {
         List<WeaponSlotPoint> slotPoints = slotPainter.getSlotPoints();
 
         Set<String> slotIDs = slotPoints.stream()
-                .map(WeaponSlotPoint::getId)
+                .map(a -> a.getId())
                 .collect(Collectors.toSet());
 
         LaunchBayPainter launchBayPainter = this.getBayPainter();
         List<LaunchBay> layerBays = launchBayPainter.getBaysList();
 
         Set<String> bayIDs = layerBays.stream()
-                .map(LaunchBay::getId)
+                .map(a -> a.getId())
                 .collect(Collectors.toSet());
 
         slotIDs.addAll(bayIDs);
@@ -471,6 +478,20 @@ public class ShipPainter extends LayerPainter {
         });
 
         return allFeatures;
+    }
+
+    @Override
+    public java.awt.geom.Rectangle2D getVisualBounds() {
+        java.awt.geom.Rectangle2D bounds = super.getVisualBounds();
+        var installedFeaturePainter = this.getInstallablesPainter();
+        if (installedFeaturePainter != null) {
+            installedFeaturePainter.updateRenderQueue(this);
+            java.awt.geom.Rectangle2D featureBounds = installedFeaturePainter.getVisualBounds();
+            if (featureBounds != null) {
+                java.awt.geom.Rectangle2D.union(bounds, featureBounds, bounds);
+            }
+        }
+        return bounds;
     }
 
     @Override

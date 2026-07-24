@@ -11,6 +11,7 @@ import shipeditor.components.viewer.painters.DraggedObjectsPainter;
 import shipeditor.components.viewer.painters.GuidesPainters;
 import shipeditor.components.viewer.painters.HotkeyHelpPainter;
 import shipeditor.components.viewer.painters.points.AbstractPointPainter;
+import shipeditor.components.viewer.control.LayerViewerControls;
 import shipeditor.components.viewer.painters.points.ship.MarkPointsPainter;
 import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
@@ -126,6 +127,23 @@ public class PaintOrderController implements OpenGLPainter {
         }
     }
 
+    private static boolean isGraphicsOnlyRender = false;
+
+    public static boolean isGraphicsOnlyRender() {
+        return isGraphicsOnlyRender;
+    }
+    public static void paintLayerGraphicsOnly(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view, ViewerLayer layer) {
+        LayerPainter layerPainter = layer.getPainter();
+        if (layerPainter == null) return;
+        
+        isGraphicsOnlyRender = true;
+        try {
+            layerPainter.paint(spriteRenderer, shapeRenderer, projection, view);
+        } finally {
+            isGraphicsOnlyRender = false;
+        }
+    }
+
     public static void paintLayer(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view, ViewerLayer layer) {
         LayerPainter layerPainter = layer.getPainter();
         if (layerPainter == null) return;
@@ -150,6 +168,26 @@ public class PaintOrderController implements OpenGLPainter {
         PaintOrderController.paintIfPresent(spriteRenderer, shapeRenderer, projection, view, guidesPainters.getCenterPaint());
         if (!ViewerDropReceiver.isDragToViewerInProgress() && parent.isCursorInViewer()) {
             PaintOrderController.paintIfPresent(spriteRenderer, shapeRenderer, projection, view, guidesPainters.getGuidesPaint());
+        }
+
+        if (parent.getViewerControls() instanceof LayerViewerControls layerControls) {
+            if (layerControls.isMarqueeSelectionActive()) {
+                java.awt.Point start = layerControls.getMarqueeStartPoint();
+                java.awt.Point end = layerControls.getMarqueeEndPoint();
+                if (start != null && end != null) {
+                    float x = Math.min(start.x, end.x);
+                    float y = Math.min(start.y, end.y);
+                    float w = Math.abs(start.x - end.x);
+                    float h = Math.abs(start.y - end.y);
+                    shapeRenderer.begin(projection, IDENTITY_MATRIX);
+                    // Blue filled semi-transparent box
+                    shapeRenderer.drawRect(x, y, w, h, new Vector4f(0.1f, 0.4f, 0.8f, 0.15f), true);
+                    // Blue border outline
+                    org.lwjgl.opengl.GL11.glLineWidth(1.0f);
+                    shapeRenderer.drawRect(x, y, w, h, new Vector4f(0.2f, 0.5f, 0.9f, 0.8f), false);
+                    shapeRenderer.end();
+                }
+            }
         }
     }
 }

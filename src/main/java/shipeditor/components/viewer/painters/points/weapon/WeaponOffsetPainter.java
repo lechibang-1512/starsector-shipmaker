@@ -1,37 +1,64 @@
 package shipeditor.components.viewer.painters.points.weapon;
 
-import shipeditor.utility.graphics.opengl.SpriteRenderer;
-import shipeditor.utility.graphics.opengl.ShapeRenderer;
-import org.joml.Matrix4f;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.joml.Matrix4f;
+import shipeditor.communication.BusEventListener;
+import shipeditor.communication.EventBus;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseDragged;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseMoved;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMousePressed;
+import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
 import shipeditor.components.ComponentEnums.EditorInstrument;
+import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.weapon.OffsetPoint;
 import shipeditor.components.viewer.layers.weapon.WeaponPainter;
 import shipeditor.components.viewer.painters.points.AngledPointPainter;
 import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
+import shipeditor.utility.graphics.opengl.ShapeRenderer;
+import shipeditor.utility.graphics.opengl.SpriteRenderer;
+import shipeditor.utility.overseers.StaticController;
 
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
-import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
 
+/**
+ * Point painter managing weapon offset (barrel) points for a single mount type.
+ * <p>
+ * Each {@link WeaponPainter} owns three instances of this painter —
+ * one per {@link WeaponMount} (TURRET, HARDPOINT, HIDDEN). Only the instance
+ * matching the weapon's current mount mode is painted and interactive.
+ */
 @Getter
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class WeaponOffsetPainter extends AngledPointPainter {
+
+    private static final Matrix4f IDENTITY_MATRIX = new Matrix4f();
 
     @Setter
     private List<OffsetPoint> offsetPoints;
 
     private final WeaponMount designatedType;
 
+    private boolean controlHotkeyPressed;
+
+    @Setter
+    private boolean creationHotkeyPressed;
+
     public WeaponOffsetPainter(WeaponPainter parent, WeaponMount mount) {
         super(parent);
         this.offsetPoints = new ArrayList<>();
         this.designatedType = mount;
     }
+
+    // ---- Index management ----
 
     @Override
     public List<OffsetPoint> getPointsIndex() {
@@ -76,23 +103,34 @@ public class WeaponOffsetPainter extends AngledPointPainter {
         return OffsetPoint.class;
     }
 
+    // ---- Visibility ----
+
+    /**
+     * Offset points are visible whenever their parent layer is active,
+     * regardless of which instrument tab is selected.
+     */
     @Override
-    public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
+    protected boolean checkVisibility() {
+        return isParentLayerActive();
+    }
+
+    // ---- Rendering ----
+
+    @Override
+    public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer,
+                      Matrix4f projection, Matrix4f view) {
         if (!checkVisibility()) return;
 
-        var parentLayer = getParentLayer();
+        WeaponPainter parentLayer = getParentLayer();
         if (parentLayer.getMount() != designatedType) return;
 
-        shapeRenderer.begin(projection, new Matrix4f());
+        shapeRenderer.begin(projection, IDENTITY_MATRIX);
+        this.handleSelectionHighlight();
         this.paintDelegates(spriteRenderer, shapeRenderer, projection, view);
         shapeRenderer.end();
     }
 
-    @lombok.Getter
-    private boolean controlHotkeyPressed;
-
-    @lombok.Getter @lombok.Setter
-    private boolean creationHotkeyPressed;
+    // ---- Hotkeys ----
 
     @Override
     public void setControlHotkeyPressed(boolean pressed) {
@@ -101,13 +139,15 @@ public class WeaponOffsetPainter extends AngledPointPainter {
 
     @Override
     protected int getControlHotkey() {
-        return java.awt.event.KeyEvent.VK_ALT;
+        return KeyEvent.VK_ALT;
     }
 
     @Override
     protected int getCreationHotkey() {
-        return java.awt.event.KeyEvent.VK_SHIFT;
+        return KeyEvent.VK_SHIFT;
     }
+
+    // ---- Interaction ----
 
     @Override
     protected void handlePointSelectionEvent(BaseWorldPoint point) {
@@ -115,45 +155,43 @@ public class WeaponOffsetPainter extends AngledPointPainter {
         super.handlePointSelectionEvent(point);
     }
 
-    @SuppressWarnings("ChainOfInstanceofChecks")
     @Override
     protected void initInteractionListeners() {
         super.initInteractionListeners();
-        
-        shipeditor.communication.BusEventListener rawMouseListener = event -> {
+
+        BusEventListener rawMouseListener = event -> {
             if (!isInteractionEnabled() || !isControlHotkeyPressed()) return;
-            
-            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseDragged checked) {
-                java.awt.event.MouseEvent me = checked.mouseEvent();
-                if (shipeditor.components.viewer.control.ControlPredicates.changeAnglePredicate.test(me)) {
-                    java.awt.geom.Point2D worldTarget = computeWorldTarget(me);
-                    super.changePointAngleByTarget(worldTarget);
-                }
-            } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseMoved checked) {
-                java.awt.event.MouseEvent me = checked.mouseEvent();
-                if (shipeditor.components.viewer.control.ControlPredicates.changeAnglePredicate.test(me)) {
-                    java.awt.geom.Point2D worldTarget = computeWorldTarget(me);
-                    super.changePointAngleByTarget(worldTarget);
-                }
-            } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMousePressed checked) {
-                java.awt.event.MouseEvent me = checked.mouseEvent();
-                if (shipeditor.components.viewer.control.ControlPredicates.changeAnglePredicate.test(me)) {
-                    java.awt.geom.Point2D worldTarget = computeWorldTarget(me);
-                    super.changePointAngleByTarget(worldTarget);
-                }
+
+            MouseEvent me = extractMouseEvent(event);
+            if (me != null && ControlPredicates.changeAnglePredicate.test(me)) {
+                Point2D worldTarget = computeWorldTarget(me);
+                super.changePointAngleByTarget(worldTarget);
             }
         };
-        shipeditor.communication.EventBus.subscribe(this, rawMouseListener);
+        EventBus.subscribe(this, rawMouseListener);
     }
 
-    protected java.awt.geom.Point2D computeWorldTarget(java.awt.event.MouseEvent me) {
-        java.awt.geom.AffineTransform rotatedTransform = shipeditor.utility.overseers.StaticController.getScreenToWorld();
-        java.awt.geom.Point2D target = me.getPoint();
-        if (shipeditor.components.viewer.control.ControlPredicates.isRotationRoundingEnabled()) {
-            target = shipeditor.utility.overseers.StaticController.getAdjustedCursor();
+    private static MouseEvent extractMouseEvent(Object event) {
+        if (event instanceof ViewerRawMouseDragged checked) {
+            return checked.mouseEvent();
+        } else if (event instanceof ViewerRawMouseMoved checked) {
+            return checked.mouseEvent();
+        } else if (event instanceof ViewerRawMousePressed checked) {
+            return checked.mouseEvent();
         }
-        return rotatedTransform.transform(target, null);
+        return null;
     }
+
+    private Point2D computeWorldTarget(MouseEvent me) {
+        AffineTransform screenToWorld = StaticController.getScreenToWorld();
+        Point2D target = me.getPoint();
+        if (ControlPredicates.isRotationRoundingEnabled()) {
+            target = StaticController.getAdjustedCursor();
+        }
+        return screenToWorld.transform(target, null);
+    }
+
+    // ---- Instrument & Creation ----
 
     @Override
     protected EditorInstrument getInstrumentType() {

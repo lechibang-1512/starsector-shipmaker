@@ -176,7 +176,7 @@ public final class FileLoading {
                     }
 
                     CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-                    return allOf.thenApply(val -> futures.stream().map(CompletableFuture::join).toList());
+                    return allOf.thenApply(val -> futures.stream().map(a -> a.join()).toList());
                 }).whenComplete((runnables, ex) -> {
                     if (ex != null) {
                         if (SettingsManager.isDeveloperModeEnabled()) {
@@ -193,7 +193,7 @@ public final class FileLoading {
                             SettingsManager.updateFileFromRuntime();
                         };
                         if (java.awt.GraphicsEnvironment.isHeadless()) {
-                            runnables.forEach(Runnable::run);
+                            runnables.forEach(a -> a.run());
                             completionTasks.run();
                         } else {
                             SwingUtilities.invokeLater(() -> {
@@ -540,7 +540,7 @@ public final class FileLoading {
                 String toString = fileNamePath.toString();
                 return toString.endsWith("." + dotlessExtension);
             })
-                    .map(Path::toFile)
+                    .map(a -> a.toFile())
                     .forEach(files::add);
         } catch (IOException exception) {
             Errors.printToStream(exception);

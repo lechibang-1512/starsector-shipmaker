@@ -17,13 +17,11 @@ import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.graphics.Sprite;
-import shipeditor.utility.text.StringValues;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -168,10 +166,6 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new Insets(0, 0, 0, 0);
         searchContainer.add(searchField, gridBagConstraints);
-        JButton searchButton = new JButton(StringValues.SEARCH);
-        searchButton.addActionListener(e -> this.reload());
-        searchField.addActionListener(e -> searchButton.doClick());
-        searchContainer.add(searchButton);
         return searchContainer;
     }
 
@@ -186,20 +180,7 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
         timer.setRepeats(false);
 
         Document document = searchField.getDocument();
-        document.addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                timer.restart();
-            }
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                timer.restart();
-            }
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                timer.restart();
-            }
-        });
+        document.addDocumentListener(new SearchFieldDocumentListener(timer));
         return searchField;
     }
 
@@ -448,6 +429,29 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
             if (node.getUserObject() instanceof WeaponCSVEntry checked) {
                 checked.loadLayerFromEntry();
             }
+        }
+    }
+
+    private static class SearchFieldDocumentListener implements DocumentListener {
+        private final javax.swing.Timer timer;
+
+        SearchFieldDocumentListener(javax.swing.Timer timer) {
+            this.timer = timer;
+        }
+
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            timer.restart();
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            timer.restart();
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            timer.restart();
         }
     }
 

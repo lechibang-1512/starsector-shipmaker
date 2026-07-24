@@ -10,10 +10,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.parsing.deserialize.CustomDeserializers.ColorArrayRGBADeserializer;
 import shipeditor.parsing.deserialize.CustomDeserializers.ShipTypeHintsDeserializer;
+import shipeditor.parsing.serialize.CustomSerializers.ColorArrayRGBASerializer;
 
 import shipeditor.representation.weapon.WeaponSlot;
 
@@ -121,6 +123,7 @@ public class SkinSpecFile implements ShipSpecFile {
 
     @JsonProperty(StringConstants.COVERS_COLOR)
     @JsonDeserialize(using = ColorArrayRGBADeserializer.class)
+    @JsonSerialize(using = ColorArrayRGBASerializer.class)
     private Color coversColor;
 
     @JsonProperty("tags")

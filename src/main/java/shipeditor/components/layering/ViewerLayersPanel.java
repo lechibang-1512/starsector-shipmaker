@@ -458,6 +458,32 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
         private static JMenuItem createPrintLayerOption(ViewerLayer layer) {
             JMenuItem printLayer = new JMenuItem("Print layer to image");
             printLayer.addActionListener(event -> {
+                javax.swing.JPanel panel = new javax.swing.JPanel();
+                panel.setLayout(new javax.swing.BoxLayout(panel, javax.swing.BoxLayout.Y_AXIS));
+
+                javax.swing.JComboBox<String> scaleCombo = new javax.swing.JComboBox<>(new String[]{"1x", "2x", "3x", "4x", "8x"});
+                javax.swing.JSpinner paddingSpinner = new javax.swing.JSpinner(new javax.swing.SpinnerNumberModel(0, 0, 2000, 10));
+
+                panel.add(new javax.swing.JLabel("Output Scale:"));
+                panel.add(scaleCombo);
+                panel.add(javax.swing.Box.createVerticalStrut(10));
+                panel.add(new javax.swing.JLabel("Padding (pixels around the base sprite):"));
+                panel.add(paddingSpinner);
+
+                int result = JOptionPane.showConfirmDialog(shipeditor.PrimaryWindow.getInstance(), panel, 
+                        "Print Image Options", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                if (result != JOptionPane.OK_OPTION) {
+                    return;
+                }
+
+                double tempScale = scaleCombo.getSelectedIndex() + 1.0;
+                if (scaleCombo.getSelectedIndex() == 4) {
+                    tempScale = 8.0;
+                }
+                final double finalScale = tempScale;
+                final int finalPadding = (Integer) paddingSpinner.getValue();
+
                 JFileChooser chooser = FileUtilities.getImageChooser();
                 int returnVal = chooser.showSaveDialog(shipeditor.PrimaryWindow.getInstance());
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -467,17 +493,18 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
                     int height = 0;
                     LayerPainter layerPainter = layer.getPainter();
                     if (layerPainter != null && !layerPainter.isUninitialized()) {
-                        width = layerPainter.getSpriteSize().width;
-                        height = layerPainter.getSpriteSize().height;
+                        java.awt.geom.Rectangle2D bounds = layerPainter.getVisualBounds();
+                        width = (int) Math.ceil(bounds.getWidth());
+                        height = (int) Math.ceil(bounds.getHeight());
                     }
                     if (width <= 0 || height <= 0) {
                         JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(), "Layer is empty or invalid size.", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 
-                    int finalWidth = width;
-                    int finalHeight = height;
-                    StaticController.getViewer().queueGLTask(() -> FramebufferUtilities.printLayerToImage(layer, finalWidth, finalHeight, file));
+                    final int finalWidth = width;
+                    final int finalHeight = height;
+                    StaticController.getViewer().queueGLTask(() -> FramebufferUtilities.printLayerToImage(layer, finalWidth, finalHeight, finalScale, finalPadding, file));
                 }
             });
             return printLayer;

@@ -25,7 +25,6 @@ import shipeditor.utility.overseers.EventScheduler;
 import shipeditor.utility.overseers.StaticController;
 
 import java.awt.Color;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.List;
 
@@ -231,9 +230,6 @@ public class WeaponSlotPoint extends AngledPoint implements SlotPoint {
 
     @Override
     public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
-        AffineTransform worldToScreen = StaticController.getViewer().getWorldToScreen();
-        this.updateCursorHitState(worldToScreen);
-
         slotDrawer.setPointPosition(this.getPosition());
         slotDrawer.setType(this.getWeaponType());
         slotDrawer.setMount(this.getWeaponMount());

@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("SameParameterValue")
-class HelpArticle {
+public class HelpArticle {
 
     @Getter
     private final List<ArticlePart> articleParts;
@@ -17,7 +17,7 @@ class HelpArticle {
     private final String name;
 
     @JsonCreator
-    HelpArticle(@JsonProperty("name") String displayedName,
+    public HelpArticle(@JsonProperty("name") String displayedName,
                 @JsonProperty("articleParts") List<ArticlePart> partList) {
         this.articleParts = new ArrayList<>(partList);
         this.name = displayedName;

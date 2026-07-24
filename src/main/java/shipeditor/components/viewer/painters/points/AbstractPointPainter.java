@@ -21,6 +21,8 @@ import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.WorldPoint;
 import shipeditor.components.viewer.ViewerEnums.PainterVisibility;
 import shipeditor.undo.EditDispatch;
+import shipeditor.undo.Edit;
+import shipeditor.undo.UndoOverseer;
 import shipeditor.utility.Utility;
 import shipeditor.utility.overseers.StaticController;
 
@@ -41,8 +43,88 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
 
     private static final Matrix4f IDENTITY_MATRIX = new Matrix4f();
 
-    @Getter @Setter
     private WorldPoint selected;
+    private final java.util.Set<BaseWorldPoint> selectedPoints = new java.util.LinkedHashSet<>();
+
+    public WorldPoint getSelected() {
+        return this.selected;
+    }
+
+    public void setSelected(WorldPoint point) {
+        this.selected = point;
+        if (point == null) {
+            for (BaseWorldPoint p : new java.util.ArrayList<>(selectedPoints)) {
+                p.setPointSelected(false);
+            }
+            selectedPoints.clear();
+        } else {
+            if (point instanceof BaseWorldPoint checked) {
+                if (!selectedPoints.contains(checked)) {
+                    for (BaseWorldPoint p : new java.util.ArrayList<>(selectedPoints)) {
+                        if (p != checked) {
+                            p.setPointSelected(false);
+                        }
+                    }
+                    selectedPoints.clear();
+                    selectedPoints.add(checked);
+                    checked.setPointSelected(true);
+                }
+            }
+        }
+    }
+
+    public java.util.Set<BaseWorldPoint> getSelectedPoints() {
+        return this.selectedPoints;
+    }
+
+    public void clearSelection() {
+        this.selected = null;
+        for (BaseWorldPoint p : selectedPoints) {
+            p.setPointSelected(false);
+        }
+        selectedPoints.clear();
+    }
+
+    public void addPointToSelection(BaseWorldPoint point) {
+        if (point == null) return;
+        if (selectedPoints.add(point)) {
+            point.setPointSelected(true);
+            this.selected = point;
+        }
+    }
+
+    public void removePointFromSelection(BaseWorldPoint point) {
+        if (point == null) return;
+        if (selectedPoints.remove(point)) {
+            point.setPointSelected(false);
+            if (this.selected == point) {
+                this.selected = selectedPoints.isEmpty() ? null : selectedPoints.iterator().next();
+            }
+        }
+    }
+
+    public void selectPointsInRect(java.awt.Rectangle screenRect, AffineTransform worldToScreen, boolean cumulative) {
+        if (!this.isInteractionEnabled()) return;
+        if (!cumulative) {
+            clearSelection();
+        }
+        Point2D screenLoc = new Point2D.Double();
+        BaseWorldPoint lastSelected = null;
+        for (BaseWorldPoint point : this.getPointsIndex()) {
+            worldToScreen.transform(point.getPosition(), screenLoc);
+            if (screenRect.contains(screenLoc)) {
+                if (selectedPoints.add(point)) {
+                    point.setPointSelected(true);
+                    lastSelected = point;
+                }
+            }
+        }
+        if (lastSelected != null) {
+            this.selected = lastSelected;
+            EventBus.publish(new PointSelectedConfirmed(lastSelected));
+        }
+        EventBus.publish(new ViewerRepaintQueued());
+    }
 
     @Getter @Setter
     private PainterVisibility visibilityMode;
@@ -135,30 +217,76 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
     }
 
     public void dragPointWithMirrorCheck(Point2D changedPosition) {
-        WorldPoint counterpart = null;
-        Point2D counterpartNewPosition = null;
+        WorldPoint primary = getSelected();
+        if (primary == null) return;
+
+        double dx = changedPosition.getX() - primary.getPosition().getX();
+        double dy = changedPosition.getY() - primary.getPosition().getY();
+        if (dx == 0 && dy == 0) return;
+
         boolean mirroringEnabled = ControlPredicates.isMirrorModeEnabled();
-        if (isMirrorable() && mirroringEnabled) {
-            counterpart = getMirroredCounterpart(getSelected());
-            if (counterpart != null) {
-                counterpartNewPosition = createCounterpartPosition(changedPosition);
+
+        for (BaseWorldPoint point : new java.util.ArrayList<>(selectedPoints)) {
+            Point2D pos = point.getPosition();
+            Point2D newPos = new Point2D.Double(pos.getX() + dx, pos.getY() + dy);
+
+            EditDispatch.postPointDragged(point, newPos);
+
+            if (isMirrorable() && mirroringEnabled) {
+                WorldPoint counterpart = getMirroredCounterpart(point);
+                if (counterpart != null) {
+                    Point2D counterpartNewPosition = createCounterpartPosition(newPos);
+                    EditDispatch.postPointDragged(counterpart, counterpartNewPosition);
+                }
             }
-        }
-        EditDispatch.postPointDragged(getSelected(), changedPosition);
-        if (counterpartNewPosition != null) {
-            EditDispatch.postPointDragged(counterpart, counterpartNewPosition);
         }
     }
 
     protected void handlePointRemovalEvent(BaseWorldPoint point, boolean removalViaListPanel) {
         Class<? extends BaseWorldPoint> typeReference = getTypeReference();
-        if (typeReference.isInstance(point) && removalViaListPanel) {
-            this.commencePointRemoval(point);
-        } else {
-            WorldPoint currentSelected = this.getSelected();
-            if (currentSelected != null && !removalViaListPanel) {
-                this.commencePointRemoval((BaseWorldPoint) currentSelected);
+        if (!removalViaListPanel && !selectedPoints.isEmpty()) {
+            List<BaseWorldPoint> toRemove = new ArrayList<>(selectedPoints);
+            boolean first = true;
+            Edit parentEdit = null;
+            for (BaseWorldPoint p : toRemove) {
+                if (first) {
+                    this.commencePointRemoval(p);
+                    parentEdit = UndoOverseer.getNextUndoable();
+                    first = false;
+                } else {
+                    List<? extends BaseWorldPoint> pointsIndex = getPointsIndex();
+                    if (pointsIndex.contains(p)) {
+                        boolean mirroringEnabled = ControlPredicates.isMirrorModeEnabled();
+                        BaseWorldPoint counterpart = null;
+                        if (isMirrorable() && mirroringEnabled) {
+                            counterpart = (BaseWorldPoint) getMirroredCounterpart(p);
+                        }
+
+                        int idx = getIndexOfPoint(p);
+                        if (idx != -1) {
+                            Edit removeEdit = new shipeditor.undo.edits.points.PointEdits.PointRemovalEdit(this, p, idx);
+                            if (parentEdit != null) {
+                                parentEdit.add(removeEdit);
+                            }
+                            this.removePoint(p);
+                        }
+
+                        if (counterpart != null) {
+                            int cIdx = getIndexOfPoint(counterpart);
+                            if (cIdx != -1) {
+                                Edit removeEdit = new shipeditor.undo.edits.points.PointEdits.PointRemovalEdit(this, counterpart, cIdx);
+                                if (parentEdit != null) {
+                                    parentEdit.add(removeEdit);
+                                }
+                                this.removePoint(counterpart);
+                            }
+                        }
+                    }
+                }
             }
+            EventBus.publish(new ViewerRepaintQueued());
+        } else if (typeReference.isInstance(point) && removalViaListPanel) {
+            this.commencePointRemoval(point);
         }
     }
 
@@ -239,9 +367,31 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
         return this.getPointsIndex();
     }
 
+    public BaseWorldPoint findClosestPointToScreen(Point2D rawCursor, AffineTransform worldToScreen, double maxRadiusPixels) {
+        BaseWorldPoint closestPoint = null;
+        double closestDistance = Double.MAX_VALUE;
+        Point2D screenLoc = new Point2D.Double();
+
+        for (BaseWorldPoint point : this.getEligibleForSelection()) {
+            worldToScreen.transform(point.getPosition(), screenLoc);
+            double distance = screenLoc.distance(rawCursor);
+
+            if (distance < closestDistance) {
+                closestPoint = point;
+                closestDistance = distance;
+            }
+        }
+
+        if (closestDistance <= maxRadiusPixels) {
+            return closestPoint;
+        }
+        return null;
+    }
+
     protected void selectPointClosest() {
-        Point2D cursor = StaticController.getCorrectedCursor();
-        BaseWorldPoint toSelect = findClosestPoint(cursor);
+        Point2D rawCursor = StaticController.getRawCursor();
+        AffineTransform worldToScreen = StaticController.getViewer().getWorldToScreen();
+        BaseWorldPoint toSelect = findClosestPointToScreen(rawCursor, worldToScreen, 20.0);
 
         WorldPoint selectedPoint = this.getSelected();
         if (selectedPoint == toSelect) return;
@@ -276,6 +426,18 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
     }
 
     public abstract List<? extends BaseWorldPoint> getPointsIndex();
+
+    public void updateHoverStates(Point2D rawCursor, AffineTransform worldToScreen) {
+        if (!this.isInteractionEnabled()) {
+            for (BaseWorldPoint point : this.getPointsIndex()) {
+                point.setCursorInBounds(false);
+            }
+            return;
+        }
+        for (BaseWorldPoint point : this.getPointsIndex()) {
+            point.updateCursorHitState(rawCursor, worldToScreen);
+        }
+    }
 
     protected abstract void addPointToIndex(BaseWorldPoint point);
 

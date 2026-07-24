@@ -28,7 +28,7 @@ import java.util.function.Function;
 @Log4j2
 public final class Main {
 
-    public static final String VERSION = "0.0.1e-hotfix";
+    public static final String VERSION = "0.0.1f";
 
     private Main() {}
 
@@ -56,6 +56,10 @@ public final class Main {
                 command.add("-XX:+UseStringDeduplication");
                 command.add("-XX:MinHeapFreeRatio=10");
                 command.add("-XX:MaxHeapFreeRatio=20");
+                command.add("-Dsun.java2d.opengl=false");
+                command.add("-Dsun.java2d.d3d=false");
+                command.add("-Dsun.java2d.noddraw=true");
+                command.add("-Dsun.awt.noerasebackground=true");
                 command.add("-Dshipeditor.relaunched=true");
 
                 var codeSource = Main.class.getProtectionDomain().getCodeSource();
@@ -100,12 +104,11 @@ public final class Main {
         System.setProperty("sun.java2d.opengl", "false");
         System.setProperty("sun.java2d.d3d", "false");
         System.setProperty("sun.java2d.noddraw", "true");
+        System.setProperty("sun.awt.noerasebackground", "true");
         
         Locale.setDefault(Locale.US);
         SwingUtilities.invokeLater(() -> {
             // These method calls are initialization block; the order of calls is important.
-            StandardOutputRedirector.redirectStandardStreams();
-            Errors.initGlobalHandler();
             Initializations.initializeSettingsFile();
             configureLaf();
             PrimaryWindow window = PrimaryWindow.create();
@@ -120,6 +123,11 @@ public final class Main {
                 // No data preload — show window immediately.
                 window.showGUI();
             }
+
+            // Bind the error streams AFTER the UI is fully initialized and visible
+            // to prevent silent layout crashes on startup!
+            StandardOutputRedirector.redirectStandardStreams();
+            Errors.initGlobalHandler();
         });
     }
 
@@ -131,7 +139,10 @@ public final class Main {
         UIManager.put("TabbedPane.tabSeparatorsFullHeight", true);
         UIManager.put("SplitPane.dividerSize", 8);
         UIManager.put("SplitPane.oneTouchButtonSize", 10);
-        UIManager.put("TitlePane.useWindowDecorations", true);
+        boolean isLinux = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("linux");
+        if (!isLinux) {
+            UIManager.put("TitlePane.useWindowDecorations", true);
+        }
 
         UIManager.put(StringConstants.TREE_PAINT_LINES, true);
         UIManager.put("Tree.showDefaultIcons", true);

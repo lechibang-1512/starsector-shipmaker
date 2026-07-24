@@ -27,11 +27,13 @@ public class HullStyle {
     @Setter
     private String hullStyleID;
 
+    @Setter
     @JsonDeserialize(using = ColorArrayRGBADeserializer.class)
     @JsonSerialize(using = ColorArrayRGBASerializer.class)
     @JsonProperty("shieldRingColor")
     private Color shieldRingColor;
 
+    @Setter
     @JsonDeserialize(using = ColorArrayRGBADeserializer.class)
     @JsonSerialize(using = ColorArrayRGBASerializer.class)
     @JsonProperty("shieldInnerColor")

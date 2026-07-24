@@ -130,15 +130,15 @@ class HullmodsTreePanel extends CSVDataTreePanel<HullmodCSVEntry>{
         ViewerLayer activeLayer = StaticController.getActiveLayer();
 
         JMenuItem addToNormal = createVariantOption("Add to variant mods",
-                activeLayer, entry, ShipVariant::getHullMods);
+                activeLayer, entry, variant -> variant.getHullMods());
         menu.add(addToNormal);
 
         JMenuItem addToPermanent = createVariantOption("Add to variant perma-mods",
-                activeLayer, entry, ShipVariant::getPermaMods);
+                activeLayer, entry, variant -> variant.getPermaMods());
         menu.add(addToPermanent);
 
         JMenuItem addToSMods = createVariantOption("Add to variant S-mods",
-                activeLayer, entry, ShipVariant::getSMods);
+                activeLayer, entry, variant -> variant.getSMods());
         menu.add(addToSMods);
     }
 
@@ -257,7 +257,7 @@ class HullmodsTreePanel extends CSVDataTreePanel<HullmodCSVEntry>{
         }
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    @SuppressWarnings({"BooleanMethodIsAlwaysInverted"})
     private static boolean isCurrentLayerDataEligible() {
         ViewerLayer activeLayer = StaticController.getActiveLayer();
         boolean isShipLayer = activeLayer instanceof ShipLayer;

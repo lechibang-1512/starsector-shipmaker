@@ -14,6 +14,8 @@ import javax.swing.JComboBox;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import shipeditor.communication.events.components.ComponentEvents.DataTreesReloadQueued;
+import shipeditor.communication.events.components.ComponentEvents.SelectReferenceDataTab;
+import shipeditor.communication.events.components.ComponentEvents.SelectWingsDataTab;
 import shipeditor.communication.events.components.ComponentEvents.VariantDataTabSelected;
 import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
 
@@ -22,8 +24,6 @@ public class DataReferencePanel extends JPanel {
 
     private final HullmodsTreePanel hullmodsTreePanel;
     private final ShipSystemsTreePanel systemsTreePanel;
-    private final WingsTreePanel wingsTreePanel;
-    private final ProjectilesTreePanel projectilesTreePanel;
     
     private final CardLayout dataCardLayout;
     private final JPanel dataCardsPanel;
@@ -32,8 +32,6 @@ public class DataReferencePanel extends JPanel {
     public DataReferencePanel() {
         hullmodsTreePanel = new HullmodsTreePanel();
         systemsTreePanel = new ShipSystemsTreePanel();
-        wingsTreePanel = new WingsTreePanel();
-        projectilesTreePanel = new ProjectilesTreePanel();
         
         this.setLayout(new BorderLayout());
         
@@ -42,16 +40,12 @@ public class DataReferencePanel extends JPanel {
         
         dataCardsPanel.add(hullmodsTreePanel, StringValues.HULLMODS);
         dataCardsPanel.add(systemsTreePanel, "Shipsystems");
-        dataCardsPanel.add(wingsTreePanel, StringValues.WINGS);
-        dataCardsPanel.add(projectilesTreePanel, "Projectiles");
         dataCardsPanel.add(new HullStylesPanel(), "Hull styles");
         dataCardsPanel.add(new EngineStylesPanel(), "Engine styles");
         
         dataComboBox = new JComboBox<>(new String[] {
             StringValues.HULLMODS,
             "Shipsystems",
-            StringValues.WINGS,
-            "Projectiles",
             "Hull styles",
             "Engine styles"
         });
@@ -78,13 +72,11 @@ public class DataReferencePanel extends JPanel {
                 if (variantDataTab == VariantDataTab.HULLMODS) {
                     selectHullmodsTab();
                 } else if (variantDataTab == VariantDataTab.WINGS) {
-                    selectWingsTab();
+                    EventBus.publish(new SelectWingsDataTab());
                 }
             } else if (event instanceof DataTreesReloadQueued) {
                 hullmodsTreePanel.queueReload();
                 systemsTreePanel.queueReload();
-                wingsTreePanel.queueReload();
-                projectilesTreePanel.queueReload();
             }
         });
     }
@@ -92,19 +84,14 @@ public class DataReferencePanel extends JPanel {
     private void handleInstrumentModeChange(EditorInstrument newMode) {
         switch (newMode) {
             case BUILT_IN_MODS -> selectHullmodsTab();
-            case BUILT_IN_WINGS -> selectWingsTab();
+            case BUILT_IN_WINGS -> EventBus.publish(new SelectWingsDataTab());
             default -> {}
         }
     }
 
     private void selectHullmodsTab() {
         dataComboBox.setSelectedItem(StringValues.HULLMODS);
-        GameDataReferenceWindow.showWindow();
-    }
-
-    private void selectWingsTab() {
-        dataComboBox.setSelectedItem(StringValues.WINGS);
-        GameDataReferenceWindow.showWindow();
+        EventBus.publish(new SelectReferenceDataTab());
     }
 
 }

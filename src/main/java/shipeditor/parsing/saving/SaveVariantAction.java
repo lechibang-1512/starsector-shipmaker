@@ -107,11 +107,11 @@ final class SaveVariantAction {
         result.setQuality(shipVariant.getQuality());
 
         List<HullmodCSVEntry> hullMods = shipVariant.getHullMods();
-        result.setHullMods(hullMods.stream().map(HullmodCSVEntry::getHullmodID).collect(Collectors.toList()));
+        result.setHullMods(hullMods.stream().map(a -> a.getHullmodID()).collect(Collectors.toList()));
         List<HullmodCSVEntry> permaMods = shipVariant.getPermaMods();
-        result.setPermaMods(permaMods.stream().map(HullmodCSVEntry::getHullmodID).collect(Collectors.toList()));
+        result.setPermaMods(permaMods.stream().map(a -> a.getHullmodID()).collect(Collectors.toList()));
         List<HullmodCSVEntry> sMods = shipVariant.getSMods();
-        result.setSMods(sMods.stream().map(HullmodCSVEntry::getHullmodID).collect(Collectors.toList()));
+        result.setSMods(sMods.stream().map(a -> a.getHullmodID()).collect(Collectors.toList()));
 
         List<String> suppressedMods = shipVariant.getSuppressedMods();
         if (suppressedMods != null && !suppressedMods.isEmpty()) {
@@ -122,7 +122,7 @@ final class SaveVariantAction {
         result.setWeaponGroups(specWeaponGroups);
 
         List<WingCSVEntry> wings = shipVariant.getWings();
-        result.setWings(wings.stream().map(WingCSVEntry::getWingID).collect(Collectors.toList()));
+        result.setWings(wings.stream().map(a -> a.getWingID()).collect(Collectors.toList()));
 
         Map<String, String> modules = new LinkedHashMap<>();
         Map<String, InstalledFeature> fittedModules = shipVariant.getFittedModules();

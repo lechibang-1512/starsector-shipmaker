@@ -72,7 +72,6 @@ public final class WindowContentPanes {
         tripleSplitter = new TripleSplitContainer();
         tripleSplitter.loadContentPanes(shipView);
         primaryContentPane.add(tripleSplitter, BorderLayout.CENTER);
-        shipeditor.components.datafiles.GameDataReferenceWindow.getInstance();
         this.refreshContent();
     }
 

@@ -67,7 +67,7 @@ public class LayerCircumstancePanel extends LayerPropertiesPanel {
             processChange();
         };
 
-        Function<LayerPainter, Float> opacityGetter = LayerPainter::getSpriteOpacity;
+        Function<LayerPainter, Float> opacityGetter = a -> a.getSpriteOpacity();
 
         return super.createOpacityWidget(opacityGetter, opacitySetter);
     }

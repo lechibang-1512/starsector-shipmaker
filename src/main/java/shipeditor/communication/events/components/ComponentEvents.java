@@ -88,6 +88,16 @@ public class ComponentEvents {
 
     }
 
+    public static record SelectReferenceDataTab() implements ComponentEvent {
+
+    }
+
+    public static record SelectWingsDataTab() implements ComponentEvent {
+
+    }
+
+
+
     @SuppressWarnings("MarkerInterface")
     public static interface ComponentEvent extends BusEvent {
 

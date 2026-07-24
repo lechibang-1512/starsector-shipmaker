@@ -495,39 +495,9 @@ class SpecFileSerializationTest {
             assertEquals(255, skin.getCoversColor().getAlpha());
         }
 
-        /**
-         * Round-trip test for SkinSpecFile. Note: coversColor is excluded from the
-         * round-trip check because SkinSpecFile has @JsonDeserialize
-         * (ColorArrayRGBADeserializer)
-         * but no @JsonSerialize on the coversColor field, so re-serialization produces
-         * a
-         * Color JSON object that can't be deserialized back as an int[]. This is a
-         * known
-         * asymmetry — skins are deserialized from Starsector files but not
-         * re-serialized.
-         */
         @Test
         void testRoundTripMinimalSkin() throws IOException {
-            // Use a skin without coversColor to avoid the serialization asymmetry
-            String skinWithoutColor = """
-                    {
-                        baseHullId: "onslaught";
-                        skinHullId: "onslaught_xiv";
-                        hullName: "Onslaught (XIV)";
-                        hullDesignation: "Battleship";
-                        hullStyle: "MIDLINE";
-                        manufacturer: "Domain";
-                        fleetPoints: 45;
-                        ordnancePoints: 420;
-                        baseValue: 350000;
-                        spriteName: "graphics/ships/onslaught_xiv.png";
-                        tags: ["xiv", "rare_bp"];
-                        builtInMods: ["fourteenthbattlegroup"];
-                        removeWeaponSlots: ["WS0008"];
-                        removeEngineSlots: [3];
-                    }
-                    """;
-            SkinSpecFile original = parseStarsectorJson(skinWithoutColor, SkinSpecFile.class);
+            SkinSpecFile original = parseStarsectorJson(MINIMAL_SKIN_JSON, SkinSpecFile.class);
             SkinSpecFile roundTripped = roundTrip(original, SkinSpecFile.class);
 
             assertEquals(original.getBaseHullId(), roundTripped.getBaseHullId());
@@ -543,6 +513,7 @@ class SpecFileSerializationTest {
             assertEquals(original.getBuiltInMods(), roundTripped.getBuiltInMods());
             assertEquals(original.getRemoveWeaponSlots(), roundTripped.getRemoveWeaponSlots());
             assertEquals(original.getRemoveEngineSlots(), roundTripped.getRemoveEngineSlots());
+            assertEquals(original.getCoversColor(), roundTripped.getCoversColor());
         }
 
         /**

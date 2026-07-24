@@ -21,6 +21,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -34,6 +35,8 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
 
     private DefaultListModel<InstalledFeature> model;
 
+    private javax.swing.JLabel slotSummaryLabel;
+
     @SuppressWarnings({"OverlyComplexBooleanExpression", "ChainedMethodCall"})
     @Override
     public void refreshContent(LayerPainter layerPainter) {
@@ -41,8 +44,7 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
 
         if (!(layerPainter instanceof ShipPainter shipPainter)
                 || shipPainter.isUninitialized()
-                || shipPainter.getActiveVariant() == null
-                || shipPainter.getActiveVariant().isEmpty()) {
+                || shipPainter.getActiveVariant() == null) {
             this.model = newModel;
             this.moduleList.setModel(newModel);
 
@@ -54,12 +56,14 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
             return;
         }
 
-        ShipVariant activeVariant = shipPainter.getActiveVariant();
-
-        newModel.addAll(activeVariant.getFittedModulesList());
-
         this.model = newModel;
         this.moduleList.setModel(newModel);
+        
+        List<InstalledFeature> allFeatures = getAllModuleFeatures(shipPainter);
+        newModel.addAll(allFeatures);
+        
+        updateSlotSummary(shipPainter);
+
         this.moduleList.setEnabled(true);
 
         fireRefresherListeners(layerPainter);
@@ -78,7 +82,15 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
 
         JPanel buttonContainer = new JPanel(new BorderLayout());
         buttonContainer.setBorder(new EmptyBorder(4, 4, 0, 4));
-        buttonContainer.add(getLoadModulesButton(), BorderLayout.CENTER);
+        
+        this.slotSummaryLabel = new javax.swing.JLabel("Modules: 0/0 slots filled");
+        this.slotSummaryLabel.setBorder(new EmptyBorder(0, 0, 4, 0));
+        
+        JPanel topContainer = new JPanel(new BorderLayout());
+        topContainer.add(slotSummaryLabel, BorderLayout.PAGE_START);
+        topContainer.add(getLoadModulesButton(), BorderLayout.CENTER);
+        
+        buttonContainer.add(topContainer, BorderLayout.CENTER);
 
         northContainer.add(buttonContainer, BorderLayout.PAGE_START);
 
@@ -112,7 +124,7 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
             if (currentVariant != null) {
                 List<InstalledFeature> fittedModulesList = currentVariant.getFittedModulesList();
                 if (!fittedModulesList.isEmpty()) {
-                    fittedModulesList.forEach(InstalledFeature::loadAsSeparateLayer);
+                    fittedModulesList.forEach(a -> a.loadAsSeparateLayer());
                 }
             }
         });
@@ -131,11 +143,72 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
 
     private ShipVariant getCurrentVariant() {
         ShipPainter shipPainter = getCachedLayerPainter();
+        if (shipPainter == null) return null;
         ShipVariant activeVariant = shipPainter.getActiveVariant();
         if (activeVariant != null && !activeVariant.isEmpty()) {
             return activeVariant;
         }
         return null;
+    }
+
+    private List<InstalledFeature> getAllModuleFeatures(ShipPainter shipPainter) {
+        List<InstalledFeature> features = new ArrayList<>();
+        ShipVariant activeVariant = shipPainter.getActiveVariant();
+        if (activeVariant == null) return features;
+        
+        java.util.Map<String, InstalledFeature> fittedModules = activeVariant.getFittedModules();
+        if (fittedModules == null) fittedModules = java.util.Collections.emptyMap();
+        
+        shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter slotPainter = shipPainter.getWeaponSlotPainter();
+        if (slotPainter != null) {
+            for (shipeditor.components.viewer.entities.weapon.WeaponSlotPoint slot : slotPainter.getSlotPoints()) {
+                if (slot.getWeaponType() == shipeditor.representation.weapon.WeaponEnums.WeaponType.STATION_MODULE) {
+                    InstalledFeature feature = fittedModules.get(slot.getId());
+                    if (feature != null) {
+                        features.add(feature);
+                    } else {
+                        features.add(InstalledFeature.createEmpty(slot.getId()));
+                    }
+                }
+            }
+        }
+        return features;
+    }
+
+    private void updateSlotSummary(ShipPainter shipPainter) {
+        if (this.slotSummaryLabel == null) return;
+        
+        int totalSlots = 0;
+        int filledSlots = 0;
+        
+        ShipVariant activeVariant = shipPainter.getActiveVariant();
+        if (activeVariant != null) {
+            java.util.Map<String, InstalledFeature> fittedModules = activeVariant.getFittedModules();
+            if (fittedModules == null) fittedModules = java.util.Collections.emptyMap();
+            
+            shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter slotPainter = shipPainter.getWeaponSlotPainter();
+            if (slotPainter != null) {
+                for (shipeditor.components.viewer.entities.weapon.WeaponSlotPoint slot : slotPainter.getSlotPoints()) {
+                    if (slot.getWeaponType() == shipeditor.representation.weapon.WeaponEnums.WeaponType.STATION_MODULE) {
+                        totalSlots++;
+                        if (fittedModules.containsKey(slot.getId())) {
+                            filledSlots++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        this.slotSummaryLabel.setText(String.format("Modules: %d/%d slots filled", filledSlots, totalSlots));
+        if (totalSlots == 0) {
+            this.slotSummaryLabel.setForeground(Color.GRAY);
+        } else if (filledSlots == totalSlots) {
+            this.slotSummaryLabel.setForeground(new Color(0, 180, 0)); // Green
+        } else if (filledSlots > 0) {
+            this.slotSummaryLabel.setForeground(new Color(200, 150, 0)); // Yellow/Orange
+        } else {
+            this.slotSummaryLabel.setForeground(Color.GRAY);
+        }
     }
 
     private void refreshModuleControlPane() {
@@ -152,6 +225,27 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
     protected void initLayerListeners() {
         super.initLayerListeners();
         EventBus.subscribe(this, event -> {
+            if (event instanceof shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged checked) {
+                if (checked.newMode() == EditorInstrument.VARIANT_MODULES) {
+                    ShipPainter shipPainter = getCachedLayerPainter();
+                    if (shipPainter != null && shipPainter.getWeaponSlotPainter() != null) {
+                        ShipVariant activeVariant = shipPainter.getActiveVariant();
+                        java.util.Map<String, InstalledFeature> fittedModules = activeVariant != null ? activeVariant.getFittedModules() : java.util.Collections.emptyMap();
+                        if (fittedModules == null) fittedModules = java.util.Collections.emptyMap();
+                        
+                        for (shipeditor.components.viewer.entities.weapon.WeaponSlotPoint slot : shipPainter.getWeaponSlotPainter().getSlotPoints()) {
+                            if (slot.getWeaponType() == shipeditor.representation.weapon.WeaponEnums.WeaponType.STATION_MODULE) {
+                                if (!fittedModules.containsKey(slot.getId())) {
+                                    EventBus.publish(new shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued(slot));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        EventBus.subscribe(this, event -> {
             if (event instanceof PointSelectedConfirmed checked) {
                 if (!(checked.point() instanceof WeaponSlotPoint slotPoint)) return;
                 if (moduleList != null && StaticController.getEditorMode() == EditorInstrument.VARIANT_MODULES) {
@@ -164,13 +258,17 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
                 if (checked.editorMode() != EditorInstrument.VARIANT_MODULES) {
                     return;
                 }
-                ShipVariant currentVariant = getCurrentVariant();
-                if (currentVariant != null) {
-                    java.util.List<InstalledFeature> currentFeatures = currentVariant.getFittedModulesList();
+                ShipPainter shipPainter = getCachedLayerPainter();
+                if (shipPainter != null) {
+                    java.util.List<InstalledFeature> currentFeatures = getAllModuleFeatures(shipPainter);
+                    updateSlotSummary(shipPainter);
+                    
                     boolean modelsEqual = true;
                     if (this.model.getSize() == currentFeatures.size()) {
                         for (int i = 0; i < this.model.getSize(); i++) {
-                            if (this.model.getElementAt(i) != currentFeatures.get(i)) {
+                            InstalledFeature mFeat = this.model.getElementAt(i);
+                            InstalledFeature cFeat = currentFeatures.get(i);
+                            if (!mFeat.getSlotID().equals(cFeat.getSlotID()) || mFeat.getDataEntry() != cFeat.getDataEntry()) {
                                 modelsEqual = false;
                                 break;
                             }

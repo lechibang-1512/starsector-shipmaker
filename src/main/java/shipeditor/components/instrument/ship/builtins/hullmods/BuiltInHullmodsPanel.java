@@ -3,8 +3,6 @@ package shipeditor.components.instrument.ship.builtins.hullmods;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.components.viewer.layers.ViewerLayer;
-import shipeditor.components.viewer.layers.ship.data.ShipHull;
-import shipeditor.components.viewer.layers.ship.data.ShipSkin;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.text.StringValues;
 
@@ -26,11 +24,11 @@ public class BuiltInHullmodsPanel extends JPanel {
     public BuiltInHullmodsPanel() {
         this.setLayout(new BorderLayout());
 
-        this.baseBuiltInModsList = new BaseHullmodsListPane(ShipHull::getBuiltInMods, ShipHull::setBuiltInMods);
+        this.baseBuiltInModsList = new BaseHullmodsListPane(a -> a.getBuiltInMods(), (a, b) -> a.setBuiltInMods(b));
         ComponentUtilities.outfitPanelWithTitle(baseBuiltInModsList, StringValues.BASE_BUILT_INS);
-        this.addedBySkinList = new SkinHullmodsListPane(ShipSkin::getBuiltInMods, ShipSkin::setBuiltInMods);
+        this.addedBySkinList = new SkinHullmodsListPane(a -> a.getBuiltInMods(), (a, b) -> a.setBuiltInMods(b));
         ComponentUtilities.outfitPanelWithTitle(addedBySkinList, StringValues.ADDED_BY_SKIN);
-        this.removedBySkinList = new SkinHullmodsListPane(ShipSkin::getRemoveBuiltInMods, ShipSkin::setRemoveBuiltInMods);
+        this.removedBySkinList = new SkinHullmodsListPane(a -> a.getRemoveBuiltInMods(), (a, b) -> a.setRemoveBuiltInMods(b));
         ComponentUtilities.outfitPanelWithTitle(removedBySkinList, StringValues.REMOVED_BY_SKIN);
 
         JPanel container = new JPanel(new GridBagLayout());

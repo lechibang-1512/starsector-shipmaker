@@ -199,7 +199,7 @@ public final class StaticController {
     }
 
     public static WeaponSlotPainter getSelectedSlotPainter() {
-        return getActiveInitializedShipPainter().map(ShipPainter::getWeaponSlotPainter).orElse(null);
+        return getActiveInitializedShipPainter().map(a -> a.getWeaponSlotPainter()).orElse(null);
     }
 
     public static boolean isShipLayerActive() {
@@ -208,7 +208,7 @@ public final class StaticController {
 
     public static boolean isShipVariantActive() {
         return getActiveInitializedShipPainter()
-                .map(ShipPainter::getActiveVariant)
+                .map(a -> a.getActiveVariant())
                 .map(v -> !v.isEmpty())
                 .orElse(false);
     }
