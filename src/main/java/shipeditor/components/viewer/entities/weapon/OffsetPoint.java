@@ -1,24 +1,41 @@
 package shipeditor.components.viewer.entities.weapon;
 
-import shipeditor.utility.graphics.opengl.SpriteRenderer;
-import shipeditor.utility.graphics.opengl.ShapeRenderer;
-import org.joml.Matrix4f;
+import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.AngledPoint;
 import shipeditor.components.viewer.layers.weapon.WeaponPainter;
-import shipeditor.utility.graphics.ShapeUtilities;
-import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.Utility;
+import shipeditor.utility.graphics.ColorUtilities;
+import shipeditor.utility.graphics.opengl.ShapeRenderer;
+import shipeditor.utility.graphics.opengl.SpriteRenderer;
+
+
+import org.joml.Matrix4f;
 
 import java.awt.Color;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 
+/**
+ * Represents a single weapon firing-position offset point.
+ * <p>
+ * Each offset defines a barrel location (X, Y) and firing angle.
+ * Rendering is delegated to {@link OffsetDrawer}, mirroring how
+ * {@link WeaponSlotPoint} delegates to {@link SlotDrawer}.
+ */
 public class OffsetPoint extends AngledPoint {
+
+    /**
+     * Distinctive cyan color for offset points — intentionally different from
+     * weapon type colors (which are used by {@link WeaponSlotPoint}).
+     */
+    private static final Color OFFSET_BASE_COLOR = new Color(0, 210, 255);
 
     private double angle;
 
+    private final OffsetDrawer offsetDrawer;
+
     public OffsetPoint(Point2D pointPosition, WeaponPainter layer) {
         super(pointPosition, layer);
+        this.offsetDrawer = new OffsetDrawer(this);
     }
 
     @Override
@@ -37,35 +54,42 @@ public class OffsetPoint extends AngledPoint {
     }
 
     @Override
-    public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
-        AffineTransform worldToScreen = StaticController.getViewer().getWorldToScreen();
-        this.updateCursorHitState(worldToScreen);
+    public EditorInstrument getAssociatedMode() {
+        return EditorInstrument.WEAPON_OFFSETS;
+    }
 
-        super.paint(spriteRenderer, shapeRenderer, projection, view);
+    @Override
+    protected Color createBaseColor() {
+        return OFFSET_BASE_COLOR;
+    }
 
-        Point2D position = this.getPosition();
-        double transformedAngle = Utility.transformAngle(this.angle);
-        Point2D lineEndpoint = ShapeUtilities.getPointInDirection(position,
-                transformedAngle, 0.5 * getPaintSizeMultiplier());
+    @Override
+    protected Color createSelectColor() {
+        return ColorUtilities.getBlendedColor(OFFSET_BASE_COLOR, Color.WHITE, 0.5);
+    }
 
-        Point2D startScreen = worldToScreen.transform(position, null);
-        Point2D endScreen = worldToScreen.transform(lineEndpoint, null);
+    @Override
+    public String getNameForLabel() {
+        return "Offset";
+    }
 
-        org.joml.Vector2f startVec = new org.joml.Vector2f((float) startScreen.getX(), (float) startScreen.getY());
-        org.joml.Vector2f endVec = new org.joml.Vector2f((float) endScreen.getX(), (float) endScreen.getY());
+    @Override
+    protected String[] getHoverLines() {
+        Point2D toDisplay = this.getCoordinatesForDisplay();
+        String header = "Offset";
+        String angleLine = "Angle: " + Utility.round(angle, 1) + "\u00B0";
+        String coords = "(" + toDisplay.getX() + ", " + toDisplay.getY() + ")";
+        return new String[]{ header, angleLine, coords };
+    }
 
-        Color color = getCurrentColor();
-        org.joml.Vector4f colorVec = new org.joml.Vector4f(
-            color.getRed() / 255.0f,
-            color.getGreen() / 255.0f,
-            color.getBlue() / 255.0f,
-            color.getAlpha() / 255.0f
-        );
+    @Override
+    public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer,
+                      Matrix4f projection, Matrix4f view) {
+        offsetDrawer.setPointPosition(this.getPosition());
+        offsetDrawer.setAngle(this.angle);
+        offsetDrawer.setPaintSizeMultiplier(this.getPaintSizeMultiplier());
 
-        org.lwjgl.opengl.GL11.glLineWidth(4.0f);
-        shapeRenderer.drawLine(startVec, endVec, new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 1.0f));
-        org.lwjgl.opengl.GL11.glLineWidth(2.0f);
-        shapeRenderer.drawLine(startVec, endVec, colorVec);
+        offsetDrawer.paintOffsetVisuals(spriteRenderer, shapeRenderer, projection, view);
     }
 
 }

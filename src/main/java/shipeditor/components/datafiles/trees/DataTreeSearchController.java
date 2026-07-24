@@ -1,9 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.components.UIConstants;
 
-import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JTree;
@@ -44,17 +42,24 @@ public class DataTreeSearchController {
         gridBagConstraints.insets = new Insets(0, 0, 0, 0); // Set padding.
         // Add the search field to the container with the specified constraints.
         searchContainer.add(searchField, gridBagConstraints);
-        JButton searchButton = new JButton(StringValues.SEARCH);
-        searchButton.addActionListener(e -> {
+        
+        javax.swing.Timer timer = new javax.swing.Timer(300, e -> {
             String query = searchField.getText();
-            if (query.isEmpty()) return;
+            if (query.isEmpty()) {
+                tree.clearSelection();
+                return;
+            }
             List<DefaultMutableTreeNode> nodes = getMatchingNodes(query);
             if (!nodes.isEmpty()) {
                 selectMatchedNodes(nodes);
+            } else {
+                tree.clearSelection();
             }
         });
-        searchField.addActionListener(e -> searchButton.doClick());
-        searchContainer.add(searchButton);
+        timer.setRepeats(false);
+        
+        searchField.getDocument().addDocumentListener(new TimerRestartListener(timer));
+        
         return searchContainer;
     }
 
@@ -84,5 +89,20 @@ public class DataTreeSearchController {
         }
         tree.setSelectionPaths(paths);
         tree.scrollPathToVisible(paths[0]);
+    }
+
+    private static class TimerRestartListener implements javax.swing.event.DocumentListener {
+        private final javax.swing.Timer timer;
+
+        public TimerRestartListener(javax.swing.Timer timer) {
+            this.timer = timer;
+        }
+
+        @Override
+        public void insertUpdate(javax.swing.event.DocumentEvent e) { timer.restart(); }
+        @Override
+        public void removeUpdate(javax.swing.event.DocumentEvent e) { timer.restart(); }
+        @Override
+        public void changedUpdate(javax.swing.event.DocumentEvent e) { timer.restart(); }
     }
 }

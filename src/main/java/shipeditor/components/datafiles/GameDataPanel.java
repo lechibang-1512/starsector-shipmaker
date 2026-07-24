@@ -11,6 +11,7 @@ import javax.swing.SwingConstants;
 import java.awt.BorderLayout;
 import shipeditor.communication.events.components.ComponentEvents.SelectWeaponDataEntry;
 import shipeditor.communication.events.components.ComponentEvents.DataTreesReloadQueued;
+import shipeditor.communication.events.components.ComponentEvents.SelectWingsDataTab;
 import shipeditor.communication.events.components.ComponentEvents.SelectShipDataEntry;
 import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
 
@@ -20,6 +21,9 @@ public class GameDataPanel extends JPanel {
     private final JTabbedPane dataTabsContainer;
     private final HullsTreePanel hullsTreePanel;
     private final WeaponsTreePanel weaponsTreePanel;
+    private final ProjectilesTreePanel projectilesTreePanel;
+    private final WingsTreePanel wingsTreePanel;
+    private final JTabbedPane weaponsTabbedPane;
 
     public GameDataPanel() {
         dataTabsContainer = new JTabbedPane(SwingConstants.TOP);
@@ -32,10 +36,16 @@ public class GameDataPanel extends JPanel {
         dataTabsContainer.addTab("Hulls", null, hullsTabbedPane, "Hulls");
 
         weaponsTreePanel = new WeaponsTreePanel();
-        JTabbedPane weaponsTabbedPane = new JTabbedPane(SwingConstants.BOTTOM);
+        weaponsTabbedPane = new JTabbedPane(SwingConstants.BOTTOM);
         weaponsTabbedPane.addTab("List", weaponsTreePanel);
         weaponsTabbedPane.addTab("Filters", new WeaponFilterPanel());
         dataTabsContainer.addTab("Weapons", null, weaponsTabbedPane, "Weapons");
+
+        projectilesTreePanel = new ProjectilesTreePanel();
+        dataTabsContainer.addTab("Projectiles", null, projectilesTreePanel, "Projectiles");
+
+        wingsTreePanel = new WingsTreePanel();
+        dataTabsContainer.addTab("Wings", null, wingsTreePanel, "Fighter wings");
 
         dataTabsContainer.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
         this.setLayout(new BorderLayout());
@@ -55,6 +65,10 @@ public class GameDataPanel extends JPanel {
             } else if (event instanceof DataTreesReloadQueued) {
                 hullsTreePanel.queueReload();
                 weaponsTreePanel.queueReload();
+                projectilesTreePanel.queueReload();
+                wingsTreePanel.queueReload();
+            } else if (event instanceof SelectWingsDataTab) {
+                selectWingsTab();
             }
         });
     }
@@ -63,17 +77,30 @@ public class GameDataPanel extends JPanel {
         switch (newMode) {
             case VARIANT_WEAPONS -> selectWeaponTab();
             case VARIANT_MODULES -> selectShipTab();
+            case BUILT_IN_WINGS -> selectWingsTab();
             default -> {
             }
         }
     }
 
     private void selectShipTab() {
-        dataTabsContainer.setSelectedComponent(hullsTreePanel.getParent().getParent());
+        java.awt.Component comp = hullsTreePanel.getParent().getParent();
+        if (dataTabsContainer.indexOfComponent(comp) != -1) {
+            dataTabsContainer.setSelectedComponent(comp);
+        }
     }
 
     private void selectWeaponTab() {
-        dataTabsContainer.setSelectedComponent(weaponsTreePanel.getParent().getParent());
+        if (dataTabsContainer.indexOfComponent(weaponsTabbedPane) != -1) {
+            dataTabsContainer.setSelectedComponent(weaponsTabbedPane);
+        }
+    }
+
+    private void selectWingsTab() {
+        int index = dataTabsContainer.indexOfComponent(wingsTreePanel);
+        if (index != -1) {
+            dataTabsContainer.setSelectedIndex(index);
+        }
     }
 
 }

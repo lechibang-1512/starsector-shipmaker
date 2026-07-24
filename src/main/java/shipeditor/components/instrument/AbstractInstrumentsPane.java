@@ -98,6 +98,13 @@ public abstract class AbstractInstrumentsPane extends JTabbedPane {
             if (selected instanceof JPanel panel) {
                 activePanel = panel;
                 this.dispatchModeChange(activePanel);
+            } else if (selected instanceof javax.swing.JScrollPane scrollPane) {
+                // Panels may be wrapped in a JScrollPane — unwrap to get the actual panel
+                java.awt.Component view = scrollPane.getViewport().getView();
+                if (view instanceof JPanel panel) {
+                    activePanel = panel;
+                    this.dispatchModeChange(activePanel);
+                }
             } else if (selected instanceof JTabbedPane subPane) {
                 Component subSelected = subPane.getSelectedComponent();
                 if (subSelected instanceof JPanel panel) {

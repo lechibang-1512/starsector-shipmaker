@@ -139,7 +139,7 @@ public abstract class MirrorablePointPainter extends AbstractPointPainter {
         BaseWorldPoint closestPoint = this.findClosestPoint(counterpartPosition);
         double threshold = ControlPredicates.getMirrorPointLinkageTolerance();
 
-        if (closestPoint != null) {
+        if (closestPoint != null && closestPoint != inputPoint) {
             double closestDistance = counterpartPosition.distance(closestPoint.getPosition());
             if (closestDistance <= threshold) {
                 return closestPoint;

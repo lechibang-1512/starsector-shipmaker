@@ -38,7 +38,7 @@ public class HelpMainPanel extends JPanel {
         File articlesRoot = SettingsManager.getApplicationDirectory().resolve("help").toFile();
 
         if (!articlesRoot.exists() || !articlesRoot.isDirectory()) return;
-        File[] sectionFolders = articlesRoot.listFiles(File::isDirectory);
+        File[] sectionFolders = articlesRoot.listFiles(a -> a.isDirectory());
 
         if (sectionFolders == null) return;
         for (File sectionFolder : sectionFolders) {
@@ -61,7 +61,7 @@ public class HelpMainPanel extends JPanel {
         }
     }
 
-    @SuppressWarnings("CallToPrintStackTrace")
+    @SuppressWarnings({"CallToPrintStackTrace"})
     private HelpArticle readArticleFromFile(File file) {
         ObjectMapper objectMapper = FileUtilities.getConfigured();
         try {

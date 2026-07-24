@@ -13,12 +13,11 @@ import shipeditor.components.instrument.ship.bays.LaunchBaysPanel;
 import shipeditor.components.instrument.ship.bounds.BoundsPanel;
 import shipeditor.components.instrument.ship.builtins.hullmods.BuiltInHullmodsPanel;
 import shipeditor.components.instrument.ship.builtins.wings.BuiltInWingsPanel;
-import shipeditor.components.instrument.ship.centers.CollisionPanel;
-import shipeditor.components.instrument.ship.centers.ShieldPanel;
 import shipeditor.components.instrument.ship.engines.EnginesPanel;
-import shipeditor.components.instrument.ship.hull.ShipLayerInfoPanel;
 import shipeditor.components.instrument.ship.skins.SkinDataPanel;
 import shipeditor.components.instrument.ship.skins.SkinSlotOverridesPanel;
+import shipeditor.components.instrument.ship.skins.SkinEngineOverridesPanel;
+import shipeditor.components.instrument.ship.skins.SkinRemovalsPanel;
 import shipeditor.components.instrument.ship.slots.WeaponSlotsPanel;
 import shipeditor.components.instrument.ship.variant.VariantMainPanel;
 import shipeditor.components.instrument.ship.variant.VariantWingsPanel;
@@ -45,9 +44,15 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
 
     public ShipInstrumentsPane() {
         this.createTabs();
+        // Initial dispatch — first tab is a JScrollPane wrapping ShipHullPanel
         Component selected = getSelectedComponent();
         if (selected instanceof JPanel panel) {
             this.dispatchModeChange(panel);
+        } else if (selected instanceof javax.swing.JScrollPane scrollPane) {
+            java.awt.Component view = scrollPane.getViewport().getView();
+            if (view instanceof JPanel panel) {
+                this.dispatchModeChange(panel);
+            }
         } else if (selected instanceof JTabbedPane subPane) {
             Component subSelected = subPane.getSelectedComponent();
             if (subSelected instanceof JPanel panel) {
@@ -68,35 +73,39 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
     private void createTabs() {
         FlatLaf.showMnemonics(this);
 
-        JTabbedPane coreTabs = new JTabbedPane(SwingConstants.TOP);
-        coreTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        this.styleSubTabbedPane(coreTabs);
-        this.createInnerTab(coreTabs, new ShipLayerInfoPanel(), EditorInstrument.LAYER, KeyEvent.VK_Y);
-        this.createInnerTab(coreTabs, new CollisionPanel(), EditorInstrument.COLLISION, KeyEvent.VK_C);
-        this.createInnerTab(coreTabs, new ShieldPanel(), EditorInstrument.SHIELD, KeyEvent.VK_S);
-        this.createInnerTab(coreTabs, new BoundsPanel(), EditorInstrument.BOUNDS, KeyEvent.VK_B);
-        this.addTab("Core", null, coreTabs, "Core Ship Instruments");
-        this.addInnerTabChangeListener(coreTabs);
+        // Tab 1: Hull — collapsible sections for Layer Info, Collision, Shield
+        ShipHullPanel hullPanel = new ShipHullPanel();
+        javax.swing.JScrollPane hullScroll = new javax.swing.JScrollPane(hullPanel);
+        hullScroll.setBorder(null);
+        hullScroll.getVerticalScrollBar().setUnitIncrement(16);
+        panelMode.put(hullPanel, EditorInstrument.LAYER);
+        this.addTab("Hull", null, hullScroll, "Hull Properties");
 
+        // Tab 2: Fittings — inner tabs for table-based panels
         JTabbedPane fittingsTabs = new JTabbedPane(SwingConstants.TOP);
         fittingsTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         this.styleSubTabbedPane(fittingsTabs);
         this.createInnerTab(fittingsTabs, new WeaponSlotsPanel(), EditorInstrument.WEAPON_SLOTS, KeyEvent.VK_W);
         this.createInnerTab(fittingsTabs, new LaunchBaysPanel(), EditorInstrument.LAUNCH_BAYS, KeyEvent.VK_L);
         this.createInnerTab(fittingsTabs, new EnginesPanel(), EditorInstrument.ENGINES, KeyEvent.VK_E);
+        this.createInnerTab(fittingsTabs, new BoundsPanel(), EditorInstrument.BOUNDS, KeyEvent.VK_B);
         this.createInnerTab(fittingsTabs, new BuiltInHullmodsPanel(), EditorInstrument.BUILT_IN_MODS, KeyEvent.VK_H);
         this.createInnerTab(fittingsTabs, new BuiltInWingsPanel(), EditorInstrument.BUILT_IN_WINGS, KeyEvent.VK_N);
         this.addTab("Fittings", null, fittingsTabs, "Ship Fittings & Modifications");
         this.addInnerTabChangeListener(fittingsTabs);
 
+        // Tab 3: Skins
         JTabbedPane skinsTabs = new JTabbedPane(SwingConstants.TOP);
         skinsTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         this.styleSubTabbedPane(skinsTabs);
         this.createInnerTab(skinsTabs, new SkinDataPanel(), EditorInstrument.SKIN_DATA, KeyEvent.VK_K);
         this.createInnerTab(skinsTabs, new SkinSlotOverridesPanel(), EditorInstrument.SKIN_SLOTS, KeyEvent.VK_O);
+        this.createInnerTab(skinsTabs, new SkinEngineOverridesPanel(), EditorInstrument.SKIN_ENGINES, KeyEvent.VK_E);
+        this.createInnerTab(skinsTabs, new SkinRemovalsPanel(), EditorInstrument.SKIN_REMOVALS, KeyEvent.VK_R);
         this.addTab("Skins", null, skinsTabs, "Ship Skins");
         this.addInnerTabChangeListener(skinsTabs);
 
+        // Tab 4: Variants
         JTabbedPane variantsTabs = new JTabbedPane(SwingConstants.TOP);
         variantsTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         this.styleSubTabbedPane(variantsTabs);

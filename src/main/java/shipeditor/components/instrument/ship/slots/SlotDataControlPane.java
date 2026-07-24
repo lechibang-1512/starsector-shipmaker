@@ -11,7 +11,7 @@ import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
 import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
 import shipeditor.representation.weapon.WeaponEnums.WeaponType;
-import shipeditor.utility.Utility;
+import shipeditor.utility.Utility; // force rebuild
 import shipeditor.utility.overseers.StaticController;
 import javax.swing.JButton;
 import javax.swing.JLabel;

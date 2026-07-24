@@ -65,8 +65,6 @@ public final class PrimaryWindow extends JFrame {
         this.setMinimumSize(MINIMUM_WINDOW_SIZE);
 
         this.initListeners();
-        // This centers the frame.
-        this.setLocationRelativeTo(null);
 
         Container contentPane = this.getContentPane();
         contentPane.setLayout(new BorderLayout());
@@ -82,6 +80,8 @@ public final class PrimaryWindow extends JFrame {
         this.addComponentListener(new ResizingPersistenceListener());
 
         this.pack();
+        // This centers the frame.
+        this.setLocationRelativeTo(null);
     }
 
     private static void performStaticInits() {
@@ -109,6 +109,22 @@ public final class PrimaryWindow extends JFrame {
             public void windowDeactivated(WindowEvent e) {
                 KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(altDisabler);
             }
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (shipeditor.utility.overseers.StaticController.getViewer() != null) {
+                    java.util.List<String> unsaved = shipeditor.utility.overseers.StaticController.getViewer().getLayerManager().getUnsavedLayerNames();
+                    if (!unsaved.isEmpty()) {
+                        String message = "You have unsaved changes in the following layers:\n\n- " + String.join("\n- ", unsaved) + "\n\nAre you sure you want to exit without saving?";
+                        int result = javax.swing.JOptionPane.showConfirmDialog(primaryWindow, message, "Unsaved Changes", javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.WARNING_MESSAGE);
+                        if (result != javax.swing.JOptionPane.YES_OPTION) {
+                            return;
+                        }
+                    }
+                }
+                primaryWindow.dispose();
+                System.exit(0);
+            }
         });
 
         primaryWindow.restoreSize();
@@ -131,8 +147,8 @@ public final class PrimaryWindow extends JFrame {
 
             Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
-            int clampedWidth = Math.min(saved.getWidth(), screenSize.width - x);
-            int clampedHeight = Math.min(saved.getHeight(), screenSize.height - y);
+            int clampedWidth = Math.min(saved.getWidth(), screenSize.width - x - 50);
+            int clampedHeight = Math.min(saved.getHeight(), screenSize.height - y - 50);
 
             int width = Math.max(MINIMUM_WINDOW_SIZE.width, clampedWidth);
             int height = Math.max(MINIMUM_WINDOW_SIZE.height, clampedHeight);

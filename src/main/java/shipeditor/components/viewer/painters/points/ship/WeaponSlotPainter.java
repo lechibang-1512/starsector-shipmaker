@@ -16,6 +16,7 @@ import shipeditor.communication.events.viewer.points.PointEvents.SlotPointsSorte
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
 import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.instrument.ship.slots.SlotCreationPane;
+import shipeditor.components.instrument.ship.slots.WeaponSlotClipboard;
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.WorldPoint;
@@ -129,6 +130,73 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
     }
 
     @Override
+    protected void initInteractionListeners() {
+        super.initInteractionListeners();
+        
+        EventBus.subscribe(this, event -> {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMousePressed checked) {
+                if (!isInteractionEnabled()) return;
+                java.awt.event.MouseEvent me = checked.mouseEvent();
+                if (javax.swing.SwingUtilities.isRightMouseButton(me) && 
+                    shipeditor.utility.overseers.StaticController.getEditorMode() == shipeditor.components.ComponentEnums.EditorInstrument.VARIANT_MODULES) {
+                    
+                    Point2D worldTarget = computeWorldTarget(me);
+                    WeaponSlotPoint closest = (WeaponSlotPoint) findClosestPoint(worldTarget);
+                    
+                    if (closest != null && closest.getWeaponType() == shipeditor.representation.weapon.WeaponEnums.WeaponType.STATION_MODULE) {
+                        java.awt.geom.Point2D screenLoc = shipeditor.utility.overseers.StaticController.getViewer().getWorldToScreen().transform(closest.getPosition(), null);
+                        if (me.getPoint().distanceSq(screenLoc) <= 144.0) {
+                            javax.swing.JPopupMenu contextMenu = createModuleContextMenu(closest);
+                            contextMenu.show(me.getComponent(), me.getX(), me.getY());
+                            me.consume();
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private javax.swing.JPopupMenu createModuleContextMenu(WeaponSlotPoint slotPoint) {
+        javax.swing.JPopupMenu menu = new javax.swing.JPopupMenu();
+        
+        shipeditor.components.viewer.layers.ship.data.ShipVariant activeVariant = this.getParentLayer().getActiveVariant();
+        java.util.Map<String, shipeditor.components.viewer.painters.points.ship.features.InstalledFeature> fittedModules = 
+                activeVariant != null ? activeVariant.getFittedModules() : null;
+        
+        shipeditor.components.viewer.painters.points.ship.features.InstalledFeature installed = null;
+        if (fittedModules != null) {
+            installed = fittedModules.get(slotPoint.getId());
+        }
+        
+        if (installed != null) {
+            javax.swing.JMenuItem infoItem = new javax.swing.JMenuItem("Installed: " + installed.getName());
+            infoItem.setEnabled(false);
+            menu.add(infoItem);
+            
+            javax.swing.JMenuItem clearItem = new javax.swing.JMenuItem("Clear module");
+            shipeditor.components.viewer.painters.points.ship.features.InstalledFeature toRemove = installed;
+            clearItem.addActionListener(e -> {
+                EditDispatch.postFeatureUninstalled(fittedModules, slotPoint.getId(), toRemove, null);
+            });
+            menu.add(clearItem);
+        } else {
+            javax.swing.JMenuItem emptyItem = new javax.swing.JMenuItem("Slot: " + slotPoint.getId() + " (Empty)");
+            emptyItem.setEnabled(false);
+            menu.add(emptyItem);
+        }
+        
+        menu.addSeparator();
+        
+        javax.swing.JMenuItem selectItem = new javax.swing.JMenuItem("Select slot for install");
+        selectItem.addActionListener(e -> {
+            EventBus.publish(new shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued(slotPoint));
+        });
+        menu.add(selectItem);
+        
+        return menu;
+    }
+
+    @Override
     public ShipPainter getParentLayer() {
         return (ShipPainter) super.getParentLayer();
     }
@@ -186,6 +254,61 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
         EditDispatch.postPointAdded(this, created);
         if (counterpart != null) {
             EditDispatch.postPointAdded(this, counterpart);
+        }
+    }
+
+    public void pasteSlots(List<WeaponSlotClipboard.CopiedSlotData> copiedSlots, Point2D targetPosition) {
+        if (copiedSlots == null || copiedSlots.isEmpty()) return;
+
+        ShipPainter parentLayer = this.getParentLayer();
+        boolean mirrorMode = ControlPredicates.isMirrorModeEnabled();
+
+        double sumX = 0;
+        double sumY = 0;
+        for (WeaponSlotClipboard.CopiedSlotData data : copiedSlots) {
+            sumX += data.x;
+            sumY += data.y;
+        }
+        double avgX = sumX / copiedSlots.size();
+        double avgY = sumY / copiedSlots.size();
+
+        for (WeaponSlotClipboard.CopiedSlotData data : copiedSlots) {
+            double offsetX = data.x - avgX;
+            double offsetY = data.y - avgY;
+
+            Point2D position;
+            if (targetPosition != null) {
+                position = new Point2D.Double(targetPosition.getX() + offsetX, targetPosition.getY() + offsetY);
+            } else {
+                position = new Point2D.Double(data.x + 10.0, data.y + 10.0);
+            }
+
+            String uniqueID = this.generateUniqueSlotID();
+            WeaponSlotPoint created = new WeaponSlotPoint(position, parentLayer);
+            created.setId(uniqueID);
+            created.setWeaponType(data.type);
+            created.setWeaponMount(data.mount);
+            created.setWeaponSize(data.size);
+            created.setAngle(data.angle);
+            created.setArc(data.arc);
+            created.setRenderOrderMod(data.renderOrderMod);
+
+            WeaponSlotPoint counterpart = null;
+            if (mirrorMode) {
+                if (getMirroredCounterpart(created) == null) {
+                    Point2D counterpartPosition = createCounterpartPosition(position);
+                    counterpart = new WeaponSlotPoint(counterpartPosition, parentLayer, created);
+                    String incrementedID = parentLayer.incrementUniqueSlotID(uniqueID);
+                    counterpart.setId(incrementedID);
+                    double flipAngle = Utility.flipAngle(counterpart.getAngle());
+                    counterpart.setAngle(flipAngle);
+                }
+            }
+
+            EditDispatch.postPointAdded(this, created);
+            if (counterpart != null) {
+                EditDispatch.postPointAdded(this, counterpart);
+            }
         }
     }
 
@@ -497,9 +620,9 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
         EditorInstrument mode = StaticController.getEditorMode();
         switch (mode) {
             case VARIANT_WEAPONS ->
-                    result = eligibleForSelection.stream().filter(WeaponSlotPoint::isFittable).toList();
+                    result = eligibleForSelection.stream().filter(a -> a.isFittable()).toList();
             case VARIANT_MODULES ->
-                    result = eligibleForSelection.stream().filter(WeaponSlotPoint::isModule).toList();
+                    result = eligibleForSelection.stream().filter(a -> a.isModule()).toList();
             default -> result = eligibleForSelection;
         }
         return result;

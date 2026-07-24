@@ -64,9 +64,11 @@ final class SaveHullAction {
         ShipSpecFile existing = GameDataRepository.retrieveSpecByID(shipHull.getHullID());
         if (existing instanceof HullSpecFile hullSpecFile) {
             Path specFilePath = hullSpecFile.getFilePath();
-            File originalPath = specFilePath.toFile();
-            if (originalPath.isFile()) {
-                fileChooser.setSelectedFile(originalPath);
+            if (specFilePath != null) {
+                File originalPath = specFilePath.toFile();
+                if (originalPath.isFile()) {
+                    fileChooser.setSelectedFile(originalPath);
+                }
             }
         }
 

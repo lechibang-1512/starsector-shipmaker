@@ -143,6 +143,7 @@ public final class InstalledFeaturePainter {
         }
 
         feature.setInvalidated(false);
+        feature.setAssociatedSlotSelected(slotPoint.isPointSelected());
         int renderOrder = feature.computeRenderOrder(slotPoint);
         feature.refreshPaintCircumstance(slotPoint);
         return renderOrder;
@@ -157,15 +158,32 @@ public final class InstalledFeaturePainter {
     }
 
     private void paintFeatures(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view,
-                               Predicate<Integer> filter) {
-        var allFeatures = this.orderedRenderQueue;
-        if (allFeatures == null) return;
+                               Predicate<Integer> predicate) {
+        if (orderedRenderQueue == null) return;
+        this.orderedRenderQueue.forEach((integer, installedFeatures) -> {
+            if (predicate.test(integer)) {
+                installedFeatures.forEach(feature -> feature.paint(spriteRenderer, shapeRenderer, projection, view));
+            }
+        });
+    }
 
-        for (Map.Entry<Integer, Set<InstalledFeature>> entry : allFeatures.entrySet()) {
-            if (!filter.test(entry.getKey())) continue;
-            Set<InstalledFeature> featuresRenderLayer = entry.getValue();
-            featuresRenderLayer.forEach(feature -> feature.paint(spriteRenderer, shapeRenderer, projection, view));
+    public java.awt.geom.Rectangle2D getVisualBounds() {
+        if (orderedRenderQueue == null) return null;
+        java.awt.geom.Rectangle2D totalBounds = null;
+        for (Set<InstalledFeature> features : orderedRenderQueue.values()) {
+            for (InstalledFeature feature : features) {
+                LayerPainter painter = feature.getFeaturePainter();
+                if (painter != null && !painter.isUninitialized()) {
+                    java.awt.geom.Rectangle2D bounds = painter.getVisualBounds();
+                    if (totalBounds == null) {
+                        totalBounds = bounds;
+                    } else {
+                        java.awt.geom.Rectangle2D.union(totalBounds, bounds, totalBounds);
+                    }
+                }
+            }
         }
+        return totalBounds;
     }
 
 }

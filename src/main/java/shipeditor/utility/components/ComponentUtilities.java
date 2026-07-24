@@ -313,7 +313,7 @@ public final class ComponentUtilities {
         return titleContainer;
     }
 
-    public static JPanel createColorPropertyPanel(Component left, Color color, int sidePadding) {
+    public static JPanel createColorPropertyPanel(Component left, Color color, int sidePadding, java.util.function.Consumer<Color> setter) {
         JPanel container = new JPanel();
 
         container.setLayout(new BoxLayout(container, BoxLayout.LINE_AXIS));
@@ -321,6 +321,10 @@ public final class ComponentUtilities {
 
         JLabel colorIcon = ComponentUtilities.createColorIconLabel(color);
         colorIcon.setToolTipText(ColorUtilities.getColorBreakdown(color));
+        
+        if (setter != null) {
+            shipeditor.utility.graphics.SmartColorPaste.install(colorIcon, setter);
+        }
 
         ComponentUtilities.layoutAsOpposites(container, left, colorIcon, sidePadding);
         return container;
@@ -536,7 +540,8 @@ public final class ComponentUtilities {
     }
 
     public static JLabel createFileLabel(Path path, String description) {
-        String fileName = path != null && path.getFileName() != null ? path.getFileName().toString() : "Unknown";
+        Path fileNamePath = path != null ? path.getFileName() : null;
+        String fileName = fileNamePath != null ? fileNamePath.toString() : "Unknown";
         JLabel label = new JLabel(description + fileName);
         label.setToolTipText(path != null ? path.toString() : "Unknown");
         label.setBorder(ComponentUtilities.createLabelSimpleBorder(ComponentUtilities.createLabelInsets()));

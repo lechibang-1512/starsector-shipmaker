@@ -3,7 +3,6 @@ package shipeditor.parsing.deserialize;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -76,27 +75,27 @@ public class CustomDeserializers {
 
     public static class TextureTypeDeserializer extends JsonDeserializer<List<String>> {
 
-    private static final TypeReference<List<String>> LIST_TYPE_REF = new TypeReference<>() {};
-
-    @Override
-    public List<String> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        if (p.isExpectedStartArrayToken()) {
-            // Deserialize array.
-            return p.readValueAs(LIST_TYPE_REF);
-        } else if (p.isExpectedStartObjectToken()) {
-            p.readValueAs(Object.class);
-            // This is not going to work if there are indeed curly braces used to enclose array.
-            return new ArrayList<>();
-        } else {
-            // Deserialize single value as a list.
-            String singleValue = p.getValueAsString();
-            List<String> list = new ArrayList<>();
-            list.add(singleValue);
-            return list;
+        @Override
+        public List<String> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            if (p.isExpectedStartArrayToken() || p.currentToken() == JsonToken.START_ARRAY) {
+                List<String> list = new ArrayList<>();
+                while (p.nextToken() != JsonToken.END_ARRAY) {
+                    list.add(p.getValueAsString());
+                }
+                return list;
+            } else if (p.isExpectedStartObjectToken() || p.currentToken() == JsonToken.START_OBJECT) {
+                p.skipChildren(); // Skip the object entirely
+                return new ArrayList<>();
+            } else {
+                String singleValue = p.getValueAsString();
+                List<String> list = new ArrayList<>();
+                if (singleValue != null) {
+                    list.add(singleValue);
+                }
+                return list;
+            }
         }
     }
-
-}
 
     public static class Point2DDeserializer extends JsonDeserializer<Point2D.Double> {
 
@@ -155,16 +154,33 @@ public class CustomDeserializers {
         if (node == null || !node.isArray()) {
             return new Point2D.Double[0];
         }
-        int size = node.size() / 2;
-        Point2D.Double[] points = new Point2D.Double[size];
-        for (int i = 0; i < size; i++) {
-            JsonNode xNode = node.get(i * 2);
-            JsonNode yNode = node.get(i * 2 + 1);
-            double x = xNode != null ? xNode.asDouble() : 0.0;
-            double y = yNode != null ? yNode.asDouble() : 0.0;
-            points[i] = new Point2D.Double(x, y);
+        
+        if (node.size() > 0 && node.get(0).isNumber()) {
+            int size = node.size() / 2;
+            Point2D.Double[] points = new Point2D.Double[size];
+            for (int i = 0; i < size; i++) {
+                JsonNode xNode = node.get(i * 2);
+                JsonNode yNode = node.get(i * 2 + 1);
+                double x = xNode != null ? xNode.asDouble() : 0.0;
+                double y = yNode != null ? yNode.asDouble() : 0.0;
+                points[i] = new Point2D.Double(x, y);
+            }
+            return points;
+        } else {
+            int size = node.size();
+            Point2D.Double[] points = new Point2D.Double[size];
+            for (int i = 0; i < size; i++) {
+                JsonNode pointNode = node.get(i);
+                if (pointNode.isArray() && pointNode.size() >= 2) {
+                    double x = pointNode.get(0).asDouble();
+                    double y = pointNode.get(1).asDouble();
+                    points[i] = new Point2D.Double(x, y);
+                } else {
+                    points[i] = new Point2D.Double(0, 0);
+                }
+            }
+            return points;
         }
-        return points;
     }
 
 }

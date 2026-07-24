@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.WindowAdapter;
@@ -29,8 +30,6 @@ public class FirstTimeSetupDialog extends JDialog {
 
     private FirstTimeSetupDialog(String detectedPath, Settings settings) {
         super(PrimaryWindow.getInstance(), "First-Time Setup", true);
-        this.setSize(500, 200);
-        this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
@@ -90,6 +89,11 @@ public class FirstTimeSetupDialog extends JDialog {
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         this.add(mainPanel);
+
+        this.pack();
+        this.setMinimumSize(new Dimension(500, 200));
+        this.setSize(Math.max(500, this.getWidth()), Math.max(200, this.getHeight()));
+        this.setLocationRelativeTo(null);
         
         this.addWindowListener(new WindowAdapter() {
             @Override
@@ -103,7 +107,9 @@ public class FirstTimeSetupDialog extends JDialog {
         FirstTimeSetupDialog dialog = new FirstTimeSetupDialog(detectedPath, settings);
         dialog.setVisible(true);
         if (dialog.confirmedPath == null) {
-            throw new RuntimeException("Game folder selection failed or cancelled.");
+            log.info("Game folder selection cancelled by user, exiting.");
+            System.exit(0);
+            return null;
         }
         return dialog.confirmedPath;
     }

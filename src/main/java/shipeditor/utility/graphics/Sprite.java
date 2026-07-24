@@ -45,7 +45,7 @@ public final class Sprite {
     }
 
     public String getPathFromPackage() {
-        if (pathFromPackage == null || !pathFromPackage.isEmpty()) {
+        if (pathFromPackage == null || pathFromPackage.isEmpty()) {
             pathFromPackage = Utility.computeRelativePathFromPackage(path);
         }
         return pathFromPackage;

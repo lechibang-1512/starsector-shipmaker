@@ -97,41 +97,50 @@ public final class PrimaryViewer extends JPanel implements LayerViewer {
         data.majorVersion = 3;
         data.minorVersion = 3;
         data.profile = GLData.Profile.CORE;
-        data.samples = 4; // Anti-aliasing
+        // data.samples = 4; // Anti-aliasing - disabled as it causes X11 GLX pixel format selection failures on many Linux drivers
 
         glCanvas = new AWTGLCanvas(data) {
             @Override
             public void initGL() {
-                GL.createCapabilities();
-                GL11.glEnable(GL11.GL_BLEND);
-                GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-                spriteRenderer = new SpriteRenderer();
-                shapeRenderer = new ShapeRenderer();
+                try {
+                    GL.createCapabilities();
+                    GL11.glEnable(GL11.GL_BLEND);
+                    GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+                    spriteRenderer = new SpriteRenderer();
+                    shapeRenderer = new ShapeRenderer();
+                } catch (Throwable t) {
+                    log.error("Failed to initialize OpenGL capabilities!", t);
+                }
             }
 
             @Override
             public void paintGL() {
-                Color bg = getBackground();
-                GL11.glViewport(0, 0, getWidth(), getHeight());
-                GL11.glClearColor(bg.getRed() / 255.0f, bg.getGreen() / 255.0f, bg.getBlue() / 255.0f, 1.0f);
-                GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
+                try {
+                    Color bg = getBackground();
+                    GL11.glViewport(0, 0, getWidth(), getHeight());
+                    GL11.glClearColor(bg.getRed() / 255.0f, bg.getGreen() / 255.0f, bg.getBlue() / 255.0f, 1.0f);
+                    GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
 
-                projectionMatrix.setOrtho(0.0f, getWidth(), getHeight(), 0.0f, -1.0f, 1.0f);
-                Matrix4f viewMatrix = ViewerTransform.convertToMatrix4f(viewerTransform.getWorldToScreen());
+                    projectionMatrix.setOrtho(0.0f, getWidth(), getHeight(), 0.0f, -1.0f, 1.0f);
+                    Matrix4f viewMatrix = ViewerTransform.convertToMatrix4f(viewerTransform.getWorldToScreen());
 
-                if (paintOrderController != null) {
-                    paintOrderController.paint(spriteRenderer, shapeRenderer, projectionMatrix, viewMatrix, getWidth(), getHeight());
-                }
-
-                while (!glRunnables.isEmpty()) {
-                    Runnable task = glRunnables.poll();
-                    if (task != null) {
-                        task.run();
+                    if (paintOrderController != null) {
+                        paintOrderController.paint(spriteRenderer, shapeRenderer, projectionMatrix, viewMatrix, getWidth(), getHeight());
                     }
+
+                    while (!glRunnables.isEmpty()) {
+                        Runnable task = glRunnables.poll();
+                        if (task != null) {
+                            task.run();
+                        }
+                    }
+                    
+                    swapBuffers();
+                } catch (Throwable t) {
+                    log.error("Error during OpenGL painting!", t);
+                } finally {
+                    java.awt.Toolkit.getDefaultToolkit().sync();
                 }
-                
-                swapBuffers();
-                java.awt.Toolkit.getDefaultToolkit().sync();
             }
         };
 
@@ -249,6 +258,10 @@ public final class PrimaryViewer extends JPanel implements LayerViewer {
     @Override
     public AffineTransform getTransformWorldToScreen() {
         return this.getWorldToScreen();
+    }
+
+    public ViewerControl getViewerControls() {
+        return this.viewerControls;
     }
 
     /**

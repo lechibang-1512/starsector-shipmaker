@@ -354,18 +354,9 @@ public final class Initializations {
         Path fileNamePath = folderPath.getFileName();
         if (fileNamePath == null) return false;
 
-        String[] validParentFolderNames = {"starsector-core", "Java", "starsector"};
-        String parentFolderName = fileNamePath.toString();
-        boolean isValidParentFolder = false;
-
-        for (String validName : validParentFolderNames) {
-            if (parentFolderName.equals(validName)) {
-                isValidParentFolder = true;
-                break;
-            }
-        }
-
-        if (!isValidParentFolder) {
+        // A mod folder will also contain data and graphics, so we must exclude it.
+        // We do this by checking for the absence of 'mod_info.json', which uniquely identifies mods.
+        if (Files.exists(folderPath.resolve("mod_info.json"))) {
             return false;
         }
 

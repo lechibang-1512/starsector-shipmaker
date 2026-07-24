@@ -113,6 +113,11 @@ public final class EditDispatch {
         repainter.queueEnginesPanelRepaint();
     }
 
+    public static void postHullCoversColorSet(shipeditor.components.viewer.layers.ViewerLayer layer, java.awt.Color oldColor, java.awt.Color newColor) {
+        Edit coversColorEdit = new HullCoversColorEdit(layer, oldColor, newColor);
+        UndoOverseer.post(coversColorEdit);
+    }
+
     public static void postPointAdded(AbstractPointPainter pointPainter, BaseWorldPoint point) {
         Edit addEdit = new PointAdditionEdit(pointPainter, point);
         UndoOverseer.post(addEdit);

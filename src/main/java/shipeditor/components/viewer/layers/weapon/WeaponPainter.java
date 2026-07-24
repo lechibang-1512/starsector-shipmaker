@@ -18,6 +18,7 @@ import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.representation.weapon.WeaponEnums.WeaponRenderHints;
 import shipeditor.utility.graphics.Sprite;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -53,6 +54,10 @@ public class WeaponPainter extends LayerPainter {
      */
     @Getter @Setter
     private ProjectilePainter projectilePainter;
+
+    @Getter @Setter
+    private double recoilPreviewFraction = 0.0;
+    private static final float GHOST_OPACITY = 0.25f;
 
     private final org.joml.Vector2f paintPosition = new org.joml.Vector2f();
     private final org.joml.Vector2f paintSize = new org.joml.Vector2f();
@@ -110,11 +115,11 @@ public class WeaponPainter extends LayerPainter {
             this.drawSpritePartGL(spriteRenderer, projection, view, weaponSprites.getUnderSprite(mount), false);
 
             if (hasHint(WeaponRenderHints.RENDER_BARREL_BELOW)) {
-                this.drawSpritePartGL(spriteRenderer, projection, view, weaponSprites.getGunSprite(mount), 0.0, isAdditive);
+                this.paintGunSpritesGL(spriteRenderer, projection, view, isAdditive);
                 this.drawSpritePartGL(spriteRenderer, projection, view, weaponSprites.getMainSprite(mount), isAdditive);
             } else {
                 this.drawSpritePartGL(spriteRenderer, projection, view, weaponSprites.getMainSprite(mount), isAdditive);
-                this.drawSpritePartGL(spriteRenderer, projection, view, weaponSprites.getGunSprite(mount), 0.0, isAdditive);
+                this.paintGunSpritesGL(spriteRenderer, projection, view, isAdditive);
             }
 
             this.paintLoadedMissilesGL(spriteRenderer, shapeRenderer, projection, view);
@@ -132,20 +137,81 @@ public class WeaponPainter extends LayerPainter {
         var offsets = offsetPainter.getOffsetPoints();
         if (offsets.isEmpty()) return;
 
+        AffineTransform rotTrans = this.getRotationTransform();
         for (int i = 0; i < offsets.size(); i++) {
             OffsetPoint offsetPoint = offsets.get(i);
-            projectilePainter.setPaintAnchor(offsetPoint.getPosition());
-            projectilePainter.setRotationRadians(Math.toRadians(-offsetPoint.getAngle()));
+            Point2D ptPos = offsetPoint.getPosition();
+            Point2D rotatedPos = rotTrans.transform(ptPos, null);
+
+            projectilePainter.setPaintAnchor(rotatedPos);
+            projectilePainter.setRotationRadians(this.getRotationRadians() + Math.toRadians(-offsetPoint.getAngle()));
             projectilePainter.setSpriteOpacity(this.getSpriteOpacity());
             projectilePainter.paint(spriteRenderer, shapeRenderer, projection, view);
         }
     }
 
+    private void paintGunSpritesGL(SpriteRenderer spriteRenderer, Matrix4f projection, Matrix4f view, boolean isAdditive) {
+        Sprite gunSprite = weaponSprites.getGunSprite(mount);
+        if (gunSprite == null || gunSprite.getTextureId() == 0) return;
+
+        double maxRecoil = 0.0;
+        boolean separate = false;
+
+        ViewerLayer layer = getParentLayer();
+        if (layer instanceof WeaponLayer weaponLayer) {
+            shipeditor.representation.weapon.WeaponSpecFile spec = weaponLayer.getSpecFile();
+            if (spec != null) {
+                maxRecoil = spec.getVisualRecoil();
+                separate = spec.isSeparateRecoilForLinkedBarrels();
+            }
+        }
+
+        double recoilOffset = maxRecoil * recoilPreviewFraction;
+
+        if (recoilPreviewFraction > 0.001f) {
+            // Draw ghost un-recoiled base first
+            if (separate) {
+                var offsets = getOffsetPainter().getOffsetPoints();
+                if (offsets.isEmpty()) {
+                    this.drawSpritePartGL(spriteRenderer, projection, view, gunSprite, 0.0, isAdditive, GHOST_OPACITY);
+                } else {
+                    AffineTransform rotTrans = this.getRotationTransform();
+                    for (OffsetPoint pt : offsets) {
+                        Point2D rotatedPos = rotTrans.transform(pt.getPosition(), null);
+                        this.drawSpritePartAtGL(spriteRenderer, projection, view, gunSprite, rotatedPos, pt.getAngle(), 0.0, isAdditive, GHOST_OPACITY);
+                    }
+                }
+            } else {
+                this.drawSpritePartGL(spriteRenderer, projection, view, gunSprite, 0.0, isAdditive, GHOST_OPACITY);
+            }
+        }
+
+        // Draw the real recoiled weapon
+        if (separate) {
+            var offsets = getOffsetPainter().getOffsetPoints();
+            if (offsets.isEmpty()) {
+                this.drawSpritePartGL(spriteRenderer, projection, view, gunSprite, recoilOffset, isAdditive);
+            } else {
+                AffineTransform rotTrans = this.getRotationTransform();
+                for (OffsetPoint pt : offsets) {
+                    Point2D rotatedPos = rotTrans.transform(pt.getPosition(), null);
+                    this.drawSpritePartAtGL(spriteRenderer, projection, view, gunSprite, rotatedPos, pt.getAngle(), recoilOffset, isAdditive);
+                }
+            }
+        } else {
+            this.drawSpritePartGL(spriteRenderer, projection, view, gunSprite, recoilOffset, isAdditive);
+        }
+    }
+
     private void drawSpritePartGL(SpriteRenderer spriteRenderer, Matrix4f projection, Matrix4f view, Sprite part, boolean additive) {
-        drawSpritePartGL(spriteRenderer, projection, view, part, 0.0, additive);
+        drawSpritePartGL(spriteRenderer, projection, view, part, 0.0, additive, 1.0f);
     }
 
     private void drawSpritePartGL(SpriteRenderer spriteRenderer, Matrix4f projection, Matrix4f view, Sprite part, double recoilOffset, boolean additive) {
+        drawSpritePartGL(spriteRenderer, projection, view, part, recoilOffset, additive, 1.0f);
+    }
+
+    private void drawSpritePartGL(SpriteRenderer spriteRenderer, Matrix4f projection, Matrix4f view, Sprite part, double recoilOffset, boolean additive, float opacityMultiplier) {
         if (part == null) return;
         int textureId = part.getTextureId();
         if (textureId == 0) return;
@@ -170,7 +236,46 @@ public class WeaponPainter extends LayerPainter {
         paintSize.set(spriteImage.getWidth(), spriteImage.getHeight());
         paintRotAnchor.set((float) finalAnchorX, (float) finalAnchorY);
         float rotation = (float) rotRads;
-        float opacity = this.getSpriteOpacity();
+        float opacity = this.getSpriteOpacity() * opacityMultiplier;
+        paintColor.w = opacity;
+
+        if (additive) {
+            org.lwjgl.opengl.GL11.glBlendFunc(org.lwjgl.opengl.GL11.GL_SRC_ALPHA, org.lwjgl.opengl.GL11.GL_ONE);
+        }
+        spriteRenderer.drawSprite(textureId, paintPosition, paintSize, paintRotAnchor, rotation, paintColor, projection, view);
+        if (additive) {
+            org.lwjgl.opengl.GL11.glBlendFunc(org.lwjgl.opengl.GL11.GL_SRC_ALPHA, org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA);
+        }
+    }
+
+    private void drawSpritePartAtGL(SpriteRenderer spriteRenderer, Matrix4f projection, Matrix4f view, Sprite part, Point2D pointPosition, double pointAngle, double recoilOffset, boolean additive) {
+        drawSpritePartAtGL(spriteRenderer, projection, view, part, pointPosition, pointAngle, recoilOffset, additive, 1.0f);
+    }
+
+    private void drawSpritePartAtGL(SpriteRenderer spriteRenderer, Matrix4f projection, Matrix4f view, Sprite part, Point2D pointPosition, double pointAngle, double recoilOffset, boolean additive, float opacityMultiplier) {
+        if (part == null) return;
+        int textureId = part.getTextureId();
+        if (textureId == 0) return;
+
+        BufferedImage spriteImage = part.getImage();
+
+        // The point is already in world space. We recoil backwards along the weapon's facing (rotationRads)
+        // Note: Starsector recoils along the weapon's angle, not the offset's angle.
+        double rotRads = this.getRotationRadians();
+
+        double offsetX = -Math.cos(rotRads) * recoilOffset;
+        double offsetY = -Math.sin(rotRads) * recoilOffset;
+
+        double finalPosX = pointPosition.getX() - (spriteImage.getWidth() / 2.0) + offsetX;
+        double finalPosY = pointPosition.getY() - (spriteImage.getHeight() / 2.0) + offsetY;
+        double finalAnchorX = pointPosition.getX() + offsetX;
+        double finalAnchorY = pointPosition.getY() + offsetY;
+
+        paintPosition.set((float) finalPosX, (float) finalPosY);
+        paintSize.set(spriteImage.getWidth(), spriteImage.getHeight());
+        paintRotAnchor.set((float) finalAnchorX, (float) finalAnchorY);
+        float rotation = (float) rotRads;
+        float opacity = this.getSpriteOpacity() * opacityMultiplier;
         paintColor.w = opacity;
 
         if (additive) {

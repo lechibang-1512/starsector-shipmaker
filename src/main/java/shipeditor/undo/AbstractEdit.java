@@ -26,13 +26,13 @@ public abstract class AbstractEdit implements Edit {
     }
 
     protected void undoSubEdits() {
-        subEdits.forEach(Edit::undo);
+        subEdits.forEach(a -> a.undo());
     }
 
     protected void redoSubEdits() {
         List<Edit> editsList = new ArrayList<>(subEdits);
         Collections.reverse(editsList);
-        editsList.forEach(Edit::redo);
+        editsList.forEach(a -> a.redo());
     }
 
     @Override

@@ -18,11 +18,11 @@ import java.awt.FlowLayout;
 import java.util.List;
 import shipeditor.communication.events.components.ComponentEvents.GameDataPanelResized;
 
-class ArticleTreePanel extends DataTreePanel {
+public class ArticleTreePanel extends DataTreePanel {
 
     private final Runnable reload;
 
-    ArticleTreePanel(Runnable reloadAction) {
+    public ArticleTreePanel(Runnable reloadAction) {
         super("Articles");
         this.reload = reloadAction;
     }

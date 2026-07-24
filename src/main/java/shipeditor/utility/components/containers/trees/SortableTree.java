@@ -136,7 +136,7 @@ public abstract class SortableTree extends JTree {
             }
 
             Object draggingObject = Optional.ofNullable(getSelectionPath())
-                    .map(TreePath::getLastPathComponent).orElse(null);
+                    .map(a -> a.getLastPathComponent()).orElse(null);
             if (!isNodeDragValid((DefaultMutableTreeNode) draggingObject)) {
                 rejectDrag(dtde);
                 return;
@@ -151,7 +151,7 @@ public abstract class SortableTree extends JTree {
                 return;
             }
             Object draggingNode = Optional.ofNullable(getSelectionPath())
-                    .map(TreePath::getLastPathComponent).orElse(null);
+                    .map(a -> a.getLastPathComponent()).orElse(null);
             DefaultMutableTreeNode targetNode = (DefaultMutableTreeNode) path.getLastPathComponent();
             DefaultMutableTreeNode parent = (DefaultMutableTreeNode) targetNode.getParent();
             if (parent != null && draggingNode instanceof TreeNode) {
@@ -170,7 +170,7 @@ public abstract class SortableTree extends JTree {
         @Override
         public void drop(DropTargetDropEvent dtde) {
             Object draggingObject = Optional.ofNullable(getSelectionPath())
-                    .map(TreePath::getLastPathComponent).orElse(null);
+                    .map(a -> a.getLastPathComponent()).orElse(null);
             Point pt = dtde.getLocation();
             TreePath path = getPathForLocation(pt.x, pt.y);
             if (Objects.isNull(path) || !(draggingObject instanceof DefaultMutableTreeNode draggingNode)) {

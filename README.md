@@ -45,10 +45,15 @@ Once Java is installed, download the release files and run the appropriate start
 *   **Windows**: Double-click **`ship_editor.bat`**.
 *   **Linux / macOS**: Run **`ship_editor.sh`** or **`ship_editor.command`**.
 
+### Alternative: Starsector's Built-in JRE (No Installation Required)
+If you place the Ship Editor inside your Starsector installation directory (for example, in the `mods` folder or the main `Starsector` folder), the launcher scripts will **automatically detect and use Starsector's built-in Java**.
+
+You don't need to install anything! Just double-click `ship_editor.bat` (Windows) or run `ship_editor.sh` (Mac/Linux), and it will automatically look for the `jre` folder that came with your game.
+
 ---
 
 ### Alternative: Local JRE (Portable Setup)
-If you prefer not to install Java system-wide, you can run the editor using a local folder:
+If you prefer not to install Java system-wide and are running the editor outside of the Starsector directory, you can run the editor using a local folder:
 1. Go to the **[Eclipse Temurin Java 21 Releases](https://adoptium.net/temurin/releases/?version=21)** page.
 2. Select your Operating System and download the `.zip` archive (Windows) or `.tar.gz` archive (Linux/macOS). Make sure the package type is set to **JRE**.
 3. Extract the downloaded archive.
@@ -60,47 +65,17 @@ If you prefer not to install Java system-wide, you can run the editor using a lo
 
 ## Building from Source (For Developers)
 
-If you wish to compile the project yourself:
-
-### Prerequisites
-- **Java Development Kit (JDK)**: JDK 17 or higher (JDK 21 recommended).
-- **Maven**: Ensure Maven is installed on your system.
-
-### Compiling
-To compile the project and generate the executable fat JAR, run:
-```bash
-mvn clean package -DskipTests
-```
-This builds the application and outputs the executable `ship_editor.jar` directly into the project root directory.
-
-### Running Developer Build
-To run the compiled JAR:
-```bash
-java -jar ship_editor.jar
-```
-
-### Managing Releases
-To automate a new release locally without relying on GitHub:
-```bash
-python3 scripts/release.py
-```
-This script will:
-1. Extract the current version from `pom.xml` and prompt you for the target release version.
-2. Verify that `CHANGELOG.md` has an entry for the target version.
-3. Automatically bump the version in `pom.xml` and Java source files (`Main.java`, `SettingsManager.java`).
-4. Compile and package the application using Maven.
-5. Create a standalone portable ZIP archive (e.g., `releases/ship-editor-0.0.1d.zip`) containing the fat JAR, launchers, `CHANGELOG.md`, `LICENSE`, and `README.md`.
-6. Commit the version bump and create a local Git release tag (e.g., `v0.0.1d`).
-
-**Available options:**
-*   `--dry-run`: Performs compilation, packages the zip, but reverts all code modifications and skips Git operations. Useful for testing the release build.
-*   `--no-git`: Bumps version and builds/packages, but skips Git commit and tag creation.
-*   `--allow-dirty`: Allows running the script even if there are uncommitted changes in the working directory.
+For detailed instructions on compiling, running from source, and managing releases, please refer to the [BUILD.md](BUILD.md) file.
 
 ### Troubleshooting & Platform Notes
 - **Crash Errors & Logs**: Should there be any crash errors, check the `log` folder, which will have a file with stack trace lines.
   > [!NOTE]
   > File loading failures that do not have a modal popup and appear exclusively in log lines are generally to be expected; they are usually the result of inputs that do not conform to the Starsector spec JSON layouts.
+- **Linux Wayland Rendering Issues**: If you are running Linux (such as Arch, Garuda, or Fedora) with a Wayland session, the editor may launch with a black, unrendered workspace and "not initialized" side panels. This is caused by a `Failed to query GLX version` OpenGL crash on Wayland's default display server. To fix this, run the application in X11/XWayland mode by launching the script via terminal with the GDK backend variable set:
+  ```bash
+  GDK_BACKEND=x11 ./ship_editor.sh
+  ```
+  Alternatively, you may switch your desktop environment session from Wayland to X11/Xorg from your login screen.
 - **macOS Startup Issues**: If the editor fails to launch on macOS, try the following steps (see [PR 52](https://github.com/Ontheheavens/Ship-Editor/pull/52)):
   1. Open a Terminal window.
   2. Type: `chmod +x ` (make sure to include the trailing space).

@@ -220,26 +220,26 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
     public WeaponLayer loadLayerFromEntry() {
         String turretSprite = this.specFile.getTurretSprite();
 
+        Sprite sprite = null;
+
         if (turretSprite == null || turretSprite.isEmpty()) {
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Layer initialization failed, sprite file not defined for: " + this.getWeaponID(),
+                    "Layer initialization warning, sprite file not defined for: " + this.getWeaponID() + ".\nIt will be loaded with missing graphics.",
                     StringValues.FILE_LOADING_ERROR,
-                    JOptionPane.ERROR_MESSAGE);
-            return null;
+                    JOptionPane.WARNING_MESSAGE);
+        } else {
+            Path spriteFilePath = Path.of(turretSprite);
+            File spriteFile = FileLoading.fetchDataFile(spriteFilePath, this.packageFolderPath);
+
+            if (spriteFile == null) {
+                JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
+                        "Layer initialization warning, sprite file not found for: " + this.getWeaponID() + ".\nIt will be loaded with missing graphics.",
+                        StringValues.FILE_LOADING_ERROR,
+                        JOptionPane.WARNING_MESSAGE);
+            } else {
+                sprite = FileLoading.loadSprite(spriteFile);
+            }
         }
-
-        Path spriteFilePath = Path.of(turretSprite);
-        File spriteFile = FileLoading.fetchDataFile(spriteFilePath, this.packageFolderPath);
-
-        if (spriteFile == null) {
-            JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Layer initialization failed, sprite file not found for: " + this.getWeaponID(),
-                    StringValues.FILE_LOADING_ERROR,
-                    JOptionPane.ERROR_MESSAGE);
-            return null;
-        }
-
-        Sprite sprite = FileLoading.loadSprite(spriteFile);
 
         var manager = StaticController.getLayerManager();
         if (manager == null) {
@@ -288,6 +288,11 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
         WeaponCSVEntry.initializeOffsets(weaponPainter, WeaponMount.TURRET,
                 turretOffsets, turretAngles);
 
+        var hiddenOffsets = weaponSpecFile.getHiddenOffsets();
+        var hiddenAngles = weaponSpecFile.getHiddenAngleOffsets();
+        WeaponCSVEntry.initializeOffsets(weaponPainter, WeaponMount.HIDDEN,
+                hiddenOffsets, hiddenAngles);
+
         var renderHints = specFile.getRenderHints();
         if (renderHints != null && !renderHints.isEmpty()) {
             List<WeaponRenderHints> hintEnums = new ArrayList<>();
@@ -327,6 +332,7 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
 
     private static void initializeOffsets(WeaponPainter painter, WeaponMount mount,
                                           Point2D[] offsetPoints, double[] offsetAngles) {
+        if (offsetPoints == null || offsetPoints.length == 0) return;
         int length = offsetPoints.length;
         painter.setMount(mount);
         var offsetPainter = painter.getOffsetPainter();
@@ -335,7 +341,7 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
             Point2D rotated = ShipPainterInitialization.rotatePointByCenter(offset,
                     painter.getEntityCenter());
             OffsetPoint initialized = new OffsetPoint(rotated, painter);
-            if (offsetAngles.length > i) {
+            if (offsetAngles != null && offsetAngles.length > i) {
                 initialized.setAngle(offsetAngles[i]);
             }
 

@@ -13,10 +13,8 @@ import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.representation.ship.HullSpecFile;
 import shipeditor.representation.ship.SkinSpecFile;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
 
 import javax.swing.AbstractAction;
-import javax.swing.JButton;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -47,8 +45,7 @@ import shipeditor.communication.events.files.FileEvents.HullTreeEntryCleared;
 import shipeditor.communication.events.files.FileEvents.HullTreeReloadQueued;
 
 @Log4j2
-public
-class HullsTreePanel extends DataTreePanel {
+public class HullsTreePanel extends DataTreePanel {
 
     public HullsTreePanel() {
         super("Hull file packages");
@@ -129,10 +126,6 @@ class HullsTreePanel extends DataTreePanel {
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new Insets(0, 0, 0, 0);
         searchContainer.add(searchField, gridBagConstraints);
-        JButton searchButton = new JButton(StringValues.SEARCH);
-        searchButton.addActionListener(e -> reload());
-        searchField.addActionListener(e -> searchButton.doClick());
-        searchContainer.add(searchButton);
         return searchContainer;
     }
 
@@ -146,20 +139,7 @@ class HullsTreePanel extends DataTreePanel {
         timer.setRepeats(false);
 
         Document document = searchField.getDocument();
-        document.addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                timer.restart();
-            }
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                timer.restart();
-            }
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                timer.restart();
-            }
-        });
+        document.addDocumentListener(new SearchFieldDocumentListener(timer));
         return searchField;
     }
 
@@ -168,7 +148,8 @@ class HullsTreePanel extends DataTreePanel {
         tree.addMouseListener(createContextMenuListener());
         tree.addTreeSelectionListener(e -> {
             TreePath selectedNode = e.getNewLeadSelectionPath();
-            if (selectedNode == null) return;
+            if (selectedNode == null)
+                return;
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectedNode.getLastPathComponent();
             if (node.getUserObject() instanceof ShipCSVEntry checked) {
                 JPanel rightPanel = getRightPanel();
@@ -176,7 +157,7 @@ class HullsTreePanel extends DataTreePanel {
                 rightPanel.add(new javax.swing.JLabel("Loading..."));
                 rightPanel.revalidate();
                 rightPanel.repaint();
-                
+
                 checked.lazyLoadSpecAndSkins().thenAccept(v -> {
                     javax.swing.SwingUtilities.invokeLater(() -> {
                         updateEntryPanel(checked);
@@ -208,7 +189,8 @@ class HullsTreePanel extends DataTreePanel {
     private void reloadHullList() {
         Map<Path, List<ShipCSVEntry>> shipEntries = ShipFilterPanel.getFilteredEntries();
 
-        if (shipEntries == null || shipEntries.isEmpty()) return;
+        if (shipEntries == null || shipEntries.isEmpty())
+            return;
 
         for (Map.Entry<Path, List<ShipCSVEntry>> hullFolder : shipEntries.entrySet()) {
             Settings settings = SettingsManager.getSettings();
@@ -251,16 +233,13 @@ class HullsTreePanel extends DataTreePanel {
         return result;
     }
 
-
-
-
-
     private class LoadLayerFromTree extends AbstractAction {
         @Override
         public boolean isEnabled() {
             DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
             return super.isEnabled() && cachedSelectForMenu.getUserObject() instanceof ShipCSVEntry;
         }
+
         @Override
         public void actionPerformed(ActionEvent e) {
             DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
@@ -303,7 +282,8 @@ class HullsTreePanel extends DataTreePanel {
 
     private static JMenuItem addOpenSkinOption(ShipCSVEntry checked) {
         SkinSpecFile activeSkinSpecFile = checked.getActiveSkinSpecFile();
-        if (activeSkinSpecFile == null || activeSkinSpecFile.isBase()) return null;
+        if (activeSkinSpecFile == null || activeSkinSpecFile.isBase())
+            return null;
         JMenuItem openSkin = new JMenuItem("Open skin file");
         openSkin.addActionListener(e -> {
             Path toOpen = activeSkinSpecFile.getFilePath();
@@ -315,7 +295,8 @@ class HullsTreePanel extends DataTreePanel {
     @Override
     protected void openEntryPath(OpenDataTarget target) {
         DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-        if (!(cachedSelectForMenu.getUserObject() instanceof ShipCSVEntry checked)) return;
+        if (!(cachedSelectForMenu.getUserObject() instanceof ShipCSVEntry checked))
+            return;
         HullSpecFile hullSpecFileFile = checked.getHullSpecFile();
         if (hullSpecFileFile == null) {
             log.error("Hull spec file not loaded for ID: {}", checked.getHullID());
@@ -326,7 +307,8 @@ class HullsTreePanel extends DataTreePanel {
             case FILE -> toOpen = hullSpecFileFile.getFilePath();
             case CONTAINER -> {
                 toOpen = hullSpecFileFile.getFilePath().getParent();
-                if (toOpen == null) return;
+                if (toOpen == null)
+                    return;
             }
             default -> toOpen = checked.getPackageFolderPath();
         }
@@ -338,7 +320,7 @@ class HullsTreePanel extends DataTreePanel {
         @SuppressWarnings("ParameterHidesMemberVariable")
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
-                                                      boolean expanded, boolean leaf, int row, boolean hasFocus) {
+                boolean expanded, boolean leaf, int row, boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
             Object object = ((DefaultMutableTreeNode) value).getUserObject();
             DataTreePanel.configureCellRendererColors(object, this);
@@ -360,15 +342,40 @@ class HullsTreePanel extends DataTreePanel {
         @Override
         public void mouseClicked(MouseEvent e) {
             // Check for double-click.
-            if (e.getButton() != MouseEvent.BUTTON1 || e.getClickCount() < 2) return;
+            if (e.getButton() != MouseEvent.BUTTON1 || e.getClickCount() < 2)
+                return;
             JTree tree = getTree();
             Point eventPoint = e.getPoint();
             TreePath pathForLocation = tree.getPathForLocation(eventPoint.x, eventPoint.y);
-            if (pathForLocation == null) return;
+            if (pathForLocation == null)
+                return;
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) pathForLocation.getLastPathComponent();
             if (node.getUserObject() instanceof ShipCSVEntry checked) {
                 checked.loadLayerFromEntry();
             }
+        }
+    }
+
+    private static class SearchFieldDocumentListener implements DocumentListener {
+        private final javax.swing.Timer timer;
+
+        SearchFieldDocumentListener(javax.swing.Timer timer) {
+            this.timer = timer;
+        }
+
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            timer.restart();
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            timer.restart();
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            timer.restart();
         }
     }
 

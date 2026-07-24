@@ -21,7 +21,7 @@ public class ShipFilterPanel extends AbstractFilterPanel {
     @Getter @Setter
     private static String currentTextFilter;
 
-    @SuppressWarnings("StaticCollection")
+    @SuppressWarnings({"StaticCollection"})
     @Getter
     private static final Map<HullSize, Boolean> SIZE_FILTERS = new EnumMap<>(HullSize.class);
 
@@ -104,7 +104,7 @@ public class ShipFilterPanel extends AbstractFilterPanel {
         return this.createFilterSection("Hull size",
                 hullSizes,
                 SIZE_FILTERS,
-                HullSize::getDisplayedName,
+                a -> a.getDisplayedName(),
                 null,
                 false);
     }

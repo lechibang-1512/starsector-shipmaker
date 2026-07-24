@@ -68,8 +68,8 @@ public class DataTreeVariantPanelBuilder {
 
     private static JLabel createVariantFileLabel(VariantFile variantFile) {
         Path variantFilePath = variantFile.getVariantFilePath();
-        String fileName = variantFilePath != null && variantFilePath.getFileName() != null ?
-                variantFilePath.getFileName().toString() : "Unknown";
+        Path fileNamePath = variantFilePath != null ? variantFilePath.getFileName() : null;
+        String fileName = fileNamePath != null ? fileNamePath.toString() : "Unknown";
         JLabel variantLabel = new JLabel("Variant file : " + fileName);
         variantLabel.setToolTipText(variantFilePath != null ? variantFilePath.toString() : "Unknown");
         variantLabel.setBorder(ComponentUtilities.createLabelSimpleBorder(ComponentUtilities.createLabelInsets()));

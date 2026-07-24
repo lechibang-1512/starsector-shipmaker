@@ -1,53 +1,55 @@
 package shipeditor.components.datafiles;
 
-import shipeditor.PrimaryWindow;
+import shipeditor.communication.EventBus;
+import shipeditor.communication.events.components.ComponentEvents.SelectReferenceDataTab;
+
 import javax.swing.JFrame;
-import javax.swing.WindowConstants;
-import java.awt.BorderLayout;
+import javax.swing.SwingUtilities;
 import java.awt.Dimension;
 
-public class GameDataReferenceWindow extends JFrame {
+/**
+ * Floating window for reference data (Hullmods, Ship Systems, Hull/Engine Styles).
+ * Toggled via the "Show Reference Data" toolbar button.
+ */
+public class GameDataReferenceWindow {
 
-    private static GameDataReferenceWindow instance;
-    private final DataReferencePanel dataReferencePanel;
+    private static JFrame window;
 
     private GameDataReferenceWindow() {
-        super("Game Data Reference");
-        this.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-        this.setMinimumSize(new Dimension(300, 400));
-        this.setPreferredSize(new Dimension(350, 800));
-
-        this.dataReferencePanel = new DataReferencePanel();
-        
-        this.getContentPane().setLayout(new BorderLayout());
-        this.getContentPane().add(this.dataReferencePanel, BorderLayout.CENTER);
-        
-        this.pack();
-        this.setLocationRelativeTo(PrimaryWindow.getInstance());
     }
 
-    public static GameDataReferenceWindow getInstance() {
-        if (instance == null) {
-            instance = new GameDataReferenceWindow();
-        }
-        return instance;
-    }
-
-    public static void showWindow() {
-        GameDataReferenceWindow window = getInstance();
-        if (!window.isVisible()) {
-            window.setVisible(true);
-        }
-        window.toFront();
-        window.requestFocus();
-    }
-    
     public static void toggleWindow() {
-        GameDataReferenceWindow window = getInstance();
+        if (window == null) {
+            createWindow();
+        }
+        window.setVisible(!window.isVisible());
         if (window.isVisible()) {
-            window.setVisible(false);
-        } else {
-            showWindow();
+            window.toFront();
         }
     }
+
+    private static void createWindow() {
+        window = new JFrame("Reference Data");
+        window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+
+        DataReferencePanel referencePanel = new DataReferencePanel();
+        window.setContentPane(referencePanel);
+
+        window.setMinimumSize(new Dimension(400, 500));
+        window.setPreferredSize(new Dimension(600, 700));
+        window.pack();
+        window.setLocationRelativeTo(null);
+
+        EventBus.subscribe(GameDataReferenceWindow.class, event -> {
+            if (event instanceof SelectReferenceDataTab) {
+                SwingUtilities.invokeLater(() -> {
+                    if (window != null) {
+                        window.setVisible(true);
+                        window.toFront();
+                    }
+                });
+            }
+        });
+    }
+
 }

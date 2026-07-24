@@ -16,7 +16,6 @@ import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.LayerPainter;
 
 import shipeditor.undo.UndoOverseer;
-import shipeditor.utility.overseers.MiscCaching;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.Utility;
 import shipeditor.utility.graphics.ColorUtilities;
@@ -160,9 +159,14 @@ public class BaseWorldPoint implements WorldPoint, OpenGLPainter {
         return Utility.getPointCoordinatesForDisplay(pointPosition);
     }
 
-    protected void updateCursorHitState(AffineTransform worldToScreen) {
-        Point2D screenLoc = worldToScreen.transform(position, MiscCaching.getNewPoint());
-        double distSq = screenLoc.distanceSq(StaticController.getRawCursor());
+    private final Point2D cachedScreenLoc = new Point2D.Double();
+    private final org.joml.Vector2f cachedScreenPos = new org.joml.Vector2f();
+    private final org.joml.Vector4f cachedGlColor = new org.joml.Vector4f();
+    private static final org.joml.Vector4f BLACK_GL = new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
+
+    public void updateCursorHitState(Point2D rawCursor, AffineTransform worldToScreen) {
+        worldToScreen.transform(position, cachedScreenLoc);
+        double distSq = cachedScreenLoc.distanceSq(rawCursor);
         double radius = 8.0 * paintSizeMultiplier;
         boolean withinRadius = distSq <= (radius * radius);
         this.setCursorInBounds(withinRadius);
@@ -171,25 +175,23 @@ public class BaseWorldPoint implements WorldPoint, OpenGLPainter {
     @Override
     public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
         AffineTransform worldToScreen = StaticController.getViewer().getWorldToScreen();
-        this.updateCursorHitState(worldToScreen);
-
-        Point2D screenLoc = worldToScreen.transform(position, null);
-        org.joml.Vector2f screenPos = new org.joml.Vector2f((float) screenLoc.getX(), (float) screenLoc.getY());
+        worldToScreen.transform(position, cachedScreenLoc);
+        cachedScreenPos.set((float) cachedScreenLoc.getX(), (float) cachedScreenLoc.getY());
 
         float radius = (float) (6.0 * paintSizeMultiplier);
 
         // Draw black border circle
-        shapeRenderer.drawCircle(screenPos, radius, new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 1.0f), true);
+        shapeRenderer.drawCircle(cachedScreenPos, radius, BLACK_GL, true);
 
         // Draw inner colored circle
         Color color = getCurrentColor();
-        org.joml.Vector4f glColor = new org.joml.Vector4f(
+        cachedGlColor.set(
             color.getRed() / 255.0f,
             color.getGreen() / 255.0f,
             color.getBlue() / 255.0f,
             color.getAlpha() / 255.0f
         );
-        shapeRenderer.drawCircle(screenPos, radius - 1.5f, glColor, true);
+        shapeRenderer.drawCircle(cachedScreenPos, radius - 1.5f, cachedGlColor, true);
     }
 
 }

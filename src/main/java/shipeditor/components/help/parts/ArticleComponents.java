@@ -136,9 +136,9 @@ public class ArticleComponents {
         private int pad;
 
         @JsonCreator
-        public ArticleTextBlock(@JsonProperty("text") String text, @JsonProperty("pad") int pad) {
+        public ArticleTextBlock(@JsonProperty("text") String text, @JsonProperty("pad") Integer pad) {
             this.text = text;
-            this.pad = pad;
+            this.pad = pad == null ? 0 : pad;
         }
 
         @Override

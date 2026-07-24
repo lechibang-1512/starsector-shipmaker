@@ -172,7 +172,7 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
             processChange();
         };
 
-        Function<LayerPainter, Float> opacityGetter = LayerPainter::getSpriteOpacity;
+        Function<LayerPainter, Float> opacityGetter = a -> a.getSpriteOpacity();
 
         Pair<JLabel, JSlider> opacityWidget = super.createOpacityWidget(opacityGetter, opacitySetter);
 

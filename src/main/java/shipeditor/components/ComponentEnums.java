@@ -48,13 +48,13 @@ public class ComponentEnums {
     BUILT_IN_WINGS("Built-in Wings", FluentUiRegularAL.AIRPLANE_20),
     SKIN_DATA("Skin: Data", FluentUiRegularAL.CLIPBOARD_TEXT_20),
     SKIN_SLOTS("Skin: Overrides", FluentUiRegularAL.EDIT_20),
+    SKIN_ENGINES("Skin: Engines", FluentUiRegularAL.EDIT_20),
+    SKIN_REMOVALS("Skin: Removals", FluentUiRegularAL.EDIT_20),
     VARIANT_DATA("Variant: Data", FluentUiRegularAL.DOCUMENT_EDIT_20),
     VARIANT_WEAPONS("Variant: Weapons", FluentUiRegularMZ.TARGET_20),
     VARIANT_MODULES("Variant: Modules", FluentUiRegularAL.BOARD_24),
     WEAPON_DATA("Weapon Data", FluentUiRegularAL.DOCUMENT_EDIT_20),
     WEAPON_VISUALS("Weapon Visuals", FluentUiRegularAL.IMAGE_20),
-    WEAPON_FIRE("Weapon Firing", FluentUiRegularMZ.TARGET_20),
-    WEAPON_BEAM("Weapon Beams", FluentUiRegularMZ.TARGET_20),
     WEAPON_OFFSETS("Weapon Offsets", FluentUiRegularMZ.TARGET_20),
     PROJECTILE_DATA("Projectile Data", FluentUiRegularAL.DOCUMENT_EDIT_20);
 

@@ -250,7 +250,7 @@ public abstract class SortableTabbedPane extends JTabbedPane {
             Rectangle bounds = getBounds();
 
             Component selectedComponent = getSelectedComponent();
-            Function<Component, Rectangle> getBounds = Component::getBounds;
+            Function<Component, Rectangle> getBounds = a -> a.getBounds();
             Supplier<Rectangle> supplier = Rectangle::new;
             Rectangle selectedComponentBounds = Optional.ofNullable(selectedComponent)
                     .map(getBounds)
@@ -287,8 +287,8 @@ public abstract class SortableTabbedPane extends JTabbedPane {
             }
             JButton b = SCROLL_TABS_FORWARD_ACTION.equals(actionKey) ? forwardButton : backwardButton;
             Optional.ofNullable(b)
-                    .filter(JButton::isEnabled)
-                    .ifPresent(JButton::doClick);
+                    .filter(a -> a.isEnabled())
+                    .ifPresent(a -> a.doClick());
         }
 
         private void initTargetLine(int next) {

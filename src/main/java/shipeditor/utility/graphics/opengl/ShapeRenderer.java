@@ -33,6 +33,10 @@ public class ShapeRenderer {
 
     private final java.nio.FloatBuffer circleBuffer = org.lwjgl.system.MemoryUtil.memAllocFloat(CIRCLE_SEGMENTS * 3 * 2);
 
+    private final float[] lineVertices = new float[4];
+    private final float[] rectFilledVertices = new float[12];
+    private final float[] rectLineVertices = new float[8];
+
     public ShapeRenderer() {
         initShader();
         initRenderData();
@@ -128,15 +132,15 @@ public class ShapeRenderer {
     }
 
     public void drawLine(Vector2f start, Vector2f end, Vector4f color) {
-        float[] vertices = {
-            start.x, start.y,
-            end.x, end.y
-        };
+        lineVertices[0] = start.x;
+        lineVertices[1] = start.y;
+        lineVertices[2] = end.x;
+        lineVertices[3] = end.y;
 
         shader.setUniform("shapeColor", color);
 
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-        GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, vertices);
+        GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, lineVertices);
         
         GL11.glDrawArrays(GL11.GL_LINES, 0, 2);
     }
@@ -146,28 +150,23 @@ public class ShapeRenderer {
     }
 
     public void drawRect(float x, float y, float w, float h, Vector4f color, boolean filled) {
-        float[] vertices;
         int mode;
         int count;
 
         if (filled) {
-            vertices = new float[]{
-                x, y + h,
-                x + w, y,
-                x, y,
-                x, y + h,
-                x + w, y + h,
-                x + w, y
-            };
+            rectFilledVertices[0] = x; rectFilledVertices[1] = y + h;
+            rectFilledVertices[2] = x + w; rectFilledVertices[3] = y;
+            rectFilledVertices[4] = x; rectFilledVertices[5] = y;
+            rectFilledVertices[6] = x; rectFilledVertices[7] = y + h;
+            rectFilledVertices[8] = x + w; rectFilledVertices[9] = y + h;
+            rectFilledVertices[10] = x + w; rectFilledVertices[11] = y;
             mode = GL11.GL_TRIANGLES;
             count = 6;
         } else {
-            vertices = new float[]{
-                x, y,
-                x + w, y,
-                x + w, y + h,
-                x, y + h
-            };
+            rectLineVertices[0] = x; rectLineVertices[1] = y;
+            rectLineVertices[2] = x + w; rectLineVertices[3] = y;
+            rectLineVertices[4] = x + w; rectLineVertices[5] = y + h;
+            rectLineVertices[6] = x; rectLineVertices[7] = y + h;
             mode = GL11.GL_LINE_LOOP;
             count = 4;
         }
@@ -175,7 +174,7 @@ public class ShapeRenderer {
         shader.setUniform("shapeColor", color);
 
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-        GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, vertices);
+        GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, filled ? rectFilledVertices : rectLineVertices);
 
         GL11.glDrawArrays(mode, 0, count);
     }
@@ -217,6 +216,69 @@ public class ShapeRenderer {
         }
 
         GL11.glDrawArrays(filled ? GL11.GL_TRIANGLES : GL11.GL_LINE_LOOP, 0, count);
+    }
+
+    public void drawPartialCircle(Vector2f center, float radius, Vector4f color, boolean filled, double startAngleRads, double arcRads) {
+        if (arcRads >= 2 * Math.PI - 0.001) {
+            drawCircle(center, radius, color, filled);
+            return;
+        }
+
+        int targetSegments = Math.max((int) ((arcRads / (2 * Math.PI)) * CIRCLE_SEGMENTS), 4);
+        int count = filled ? targetSegments * 3 : targetSegments + 1;
+        int capacityFloats = count * 2;
+        
+        circleBuffer.clear();
+        
+        double step = arcRads / targetSegments;
+        double dc = Math.cos(step);
+        double ds = Math.sin(step);
+        double c = Math.cos(startAngleRads);
+        double s = Math.sin(startAngleRads);
+
+        if (filled) {
+            for (int i = 0; i < targetSegments; i++) {
+                float x1 = (float) (radius * c) + center.x;
+                float y1 = (float) (radius * s) + center.y;
+
+                double nextC = c * dc - s * ds;
+                double nextS = s * dc + c * ds;
+
+                float x2 = (float) (radius * nextC) + center.x;
+                float y2 = (float) (radius * nextS) + center.y;
+
+                circleBuffer.put(center.x).put(center.y);
+                circleBuffer.put(x1).put(y1);
+                circleBuffer.put(x2).put(y2);
+
+                c = nextC;
+                s = nextS;
+            }
+        } else {
+            for (int i = 0; i <= targetSegments; i++) {
+                float x = (float) (radius * c) + center.x;
+                float y = (float) (radius * s) + center.y;
+                circleBuffer.put(x).put(y);
+
+                double nextC = c * dc - s * ds;
+                double nextS = s * dc + c * ds;
+                c = nextC;
+                s = nextS;
+            }
+        }
+
+        circleBuffer.flip();
+
+        shader.setUniform("shapeColor", color);
+
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
+        if (capacityFloats * Float.BYTES > 1024 * Float.BYTES) {
+             GL15.glBufferData(GL15.GL_ARRAY_BUFFER, circleBuffer, GL15.GL_DYNAMIC_DRAW);
+        } else {
+             GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, circleBuffer);
+        }
+
+        GL11.glDrawArrays(filled ? GL11.GL_TRIANGLES : GL11.GL_LINE_STRIP, 0, count);
     }
 
     public void cleanup() {

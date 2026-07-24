@@ -254,6 +254,10 @@ public final class ShipSkin {
         }
 
         public Builder withShipSystem(String systemId) {
+            if (systemId == null) {
+                skin.shipSystem = null;
+                return this;
+            }
             GameDataRepository gameData = SettingsManager.getGameData();
             Map<String, ShipSystemCSVEntry> allShipsystemEntries = gameData.getAllShipsystemEntries();
             skin.shipSystem = allShipsystemEntries.get(systemId);
@@ -271,6 +275,10 @@ public final class ShipSkin {
         }
 
         public Builder withHullStyle(String hullStyle) {
+            if (hullStyle == null) {
+                skin.hullStyle = null;
+                return this;
+            }
             GameDataRepository gameData = SettingsManager.getGameData();
             Map<String, HullStyle> allHullStyles = gameData.getAllHullStyles();
             if (allHullStyles == null) return this;

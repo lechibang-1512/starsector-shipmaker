@@ -3,54 +3,45 @@ package shipeditor.components.instrument.weapon;
 import shipeditor.components.instrument.AbstractInstrumentsPane;
 import shipeditor.components.ComponentEnums.EditorInstrument;
 
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import java.awt.BorderLayout;
 
+/**
+ * Weapon instrument pane with three tabs:
+ * 1. Properties (identity, collision, projectile, firing logic, audio, beam)
+ * 2. Sprites & Rendering (turret/hardpoint sprites, render flags, colors, animation, muzzle flash, smoke)
+ * 3. Offsets (firing positions table + recoil controls)
+ */
 public class WeaponInstrumentsPane extends AbstractInstrumentsPane {
 
     public WeaponInstrumentsPane() {
-        createTabs();
-        this.dispatchModeChange((JPanel) getSelectedComponent());
+        WeaponPropertiesPanel firstPanel = createTabs();
+        this.dispatchModeChange(firstPanel);
     }
 
-    private void createTabs() {
-        JPanel layerPanel = new JPanel();
-        layerPanel.setLayout(new BorderLayout());
+    /** Returns the first panel so the constructor can dispatch the initial mode change. */
+    private WeaponPropertiesPanel createTabs() {
+        // Tab 1: Properties
+        WeaponPropertiesPanel propertiesPanel = new WeaponPropertiesPanel();
+        JScrollPane propertiesScroll = new JScrollPane(propertiesPanel);
+        propertiesScroll.setBorder(null);
+        propertiesScroll.getVerticalScrollBar().setUnitIncrement(16);
+        panelMode.put(propertiesPanel, EditorInstrument.WEAPON_DATA);
+        this.addTab("Properties", null, propertiesScroll, EditorInstrument.WEAPON_DATA.getTitle());
 
-        JPanel layerWidgetsPanel = new WeaponLayerInfoPanel();
-        layerPanel.add(layerWidgetsPanel, BorderLayout.CENTER);
-
-        panelMode.put(layerPanel, EditorInstrument.LAYER);
-        this.addTab(EditorInstrument.LAYER.getTitle(), null, layerPanel, EditorInstrument.LAYER.getTitle());
-
-        WeaponOffsetsPanel offsetPanel = new WeaponOffsetsPanel();
-        panelMode.put(offsetPanel, EditorInstrument.WEAPON_OFFSETS);
-        this.addTab(EditorInstrument.WEAPON_OFFSETS.getTitle(), null, offsetPanel, EditorInstrument.WEAPON_OFFSETS.getTitle());
-
-        WeaponDataPanel dataPanel = new WeaponDataPanel();
-        JScrollPane dataScroll = new JScrollPane(dataPanel);
-        dataScroll.setBorder(null);
-        panelMode.put(dataPanel, EditorInstrument.WEAPON_DATA);
-        this.addTab(EditorInstrument.WEAPON_DATA.getTitle(), null, dataScroll, EditorInstrument.WEAPON_DATA.getTitle());
-
+        // Tab 2: Sprites & Rendering
         WeaponVisualsPanel visualsPanel = new WeaponVisualsPanel();
         JScrollPane visualsScroll = new JScrollPane(visualsPanel);
         visualsScroll.setBorder(null);
+        visualsScroll.getVerticalScrollBar().setUnitIncrement(16);
         panelMode.put(visualsPanel, EditorInstrument.WEAPON_VISUALS);
-        this.addTab(EditorInstrument.WEAPON_VISUALS.getTitle(), null, visualsScroll, EditorInstrument.WEAPON_VISUALS.getTitle());
+        this.addTab("Sprites", null, visualsScroll, EditorInstrument.WEAPON_VISUALS.getTitle());
 
-        WeaponFirePanel firePanel = new WeaponFirePanel();
-        JScrollPane fireScroll = new JScrollPane(firePanel);
-        fireScroll.setBorder(null);
-        panelMode.put(firePanel, EditorInstrument.WEAPON_FIRE);
-        this.addTab(EditorInstrument.WEAPON_FIRE.getTitle(), null, fireScroll, EditorInstrument.WEAPON_FIRE.getTitle());
+        // Tab 3: Offsets (unchanged)
+        WeaponOffsetsPanel offsetPanel = new WeaponOffsetsPanel();
+        panelMode.put(offsetPanel, EditorInstrument.WEAPON_OFFSETS);
+        this.addTab("Offsets", null, offsetPanel, EditorInstrument.WEAPON_OFFSETS.getTitle());
 
-        WeaponBeamPanel beamPanel = new WeaponBeamPanel();
-        JScrollPane beamScroll = new JScrollPane(beamPanel);
-        beamScroll.setBorder(null);
-        panelMode.put(beamPanel, EditorInstrument.WEAPON_BEAM);
-        this.addTab(EditorInstrument.WEAPON_BEAM.getTitle(), null, beamScroll, EditorInstrument.WEAPON_BEAM.getTitle());
+        return propertiesPanel;
     }
 
 }

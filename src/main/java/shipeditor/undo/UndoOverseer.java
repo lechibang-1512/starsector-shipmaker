@@ -110,7 +110,7 @@ public final class UndoOverseer {
         return seer.redoAction;
     }
 
-    static Edit getNextUndoable() {
+    public static Edit getNextUndoable() {
         Deque<Edit> stack = seer.getUndoStack();
         return stack.peek();
     }

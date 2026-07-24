@@ -24,6 +24,8 @@ import java.util.concurrent.CompletableFuture;
 @Log4j2
 public final class DatabaseQueryService {
 
+    public record FileInfo(long lastModified, String fileHash) {}
+
     private DatabaseQueryService() {}
 
     // --- Synchronous Modifications (Used by Background Scanner) ---
@@ -80,8 +82,8 @@ public final class DatabaseQueryService {
 
     public static void upsertIndexedFile(IndexedFile file) {
         String sql = """
-            INSERT INTO indexed_files (uuid, mod_id, entity_id, entity_name, entity_type, file_name, file_path, last_modified, parsed_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO indexed_files (uuid, mod_id, entity_id, entity_name, entity_type, file_name, file_path, last_modified, parsed_data, file_hash)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(uuid) DO UPDATE SET
                 mod_id = excluded.mod_id,
                 entity_id = excluded.entity_id,
@@ -90,7 +92,8 @@ public final class DatabaseQueryService {
                 file_name = excluded.file_name,
                 file_path = excluded.file_path,
                 last_modified = excluded.last_modified,
-                parsed_data = excluded.parsed_data;
+                parsed_data = excluded.parsed_data,
+                file_hash = excluded.file_hash;
             """;
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -105,6 +108,7 @@ public final class DatabaseQueryService {
             pstmt.setString(7, file.getFilePath().toAbsolutePath().toString());
             pstmt.setLong(8, file.getLastModified());
             pstmt.setString(9, file.getParsedData());
+            pstmt.setString(10, file.getFileHash());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             log.error("Failed to upsert indexed file: {}", file.getFilePath(), e);
@@ -230,15 +234,15 @@ public final class DatabaseQueryService {
         return null;
     }
 
-    public static Map<String, Long> getFilesLastModifiedMap(Connection conn, String modId) {
-        Map<String, Long> fileMap = new HashMap<>();
-        String sql = "SELECT file_path, last_modified FROM indexed_files WHERE mod_id = ?;";
+    public static Map<String, FileInfo> getFilesInfoMap(Connection conn, String modId) {
+        Map<String, FileInfo> fileMap = new HashMap<>();
+        String sql = "SELECT file_path, last_modified, file_hash FROM indexed_files WHERE mod_id = ?;";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, modId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    fileMap.put(rs.getString("file_path"), rs.getLong("last_modified"));
+                    fileMap.put(rs.getString("file_path"), new FileInfo(rs.getLong("last_modified"), rs.getString("file_hash")));
                 }
             }
         } catch (SQLException e) {
@@ -352,6 +356,7 @@ public final class DatabaseQueryService {
                 .filePath(Path.of(rs.getString("file_path")))
                 .lastModified(rs.getLong("last_modified"))
                 .parsedData(rs.getString("parsed_data"))
+                .fileHash(rs.getString("file_hash"))
                 .build();
     }
 

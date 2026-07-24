@@ -5,7 +5,6 @@ import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelecte
 import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
-import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.overseers.StaticController;
@@ -39,11 +38,11 @@ public class VariantHullmodsPanel extends JPanel {
     public VariantHullmodsPanel() {
         this.setLayout(new BorderLayout());
 
-        this.normalModsPanel = new VariantHullmodsListPane(ShipVariant::getHullMods, ShipVariant::setHullMods);
+        this.normalModsPanel = new VariantHullmodsListPane(a -> a.getHullMods(), (a, b) -> a.setHullMods(b));
         ComponentUtilities.outfitPanelWithTitle(normalModsPanel, "Normal");
-        this.permaModsPanel = new VariantHullmodsListPane(ShipVariant::getPermaMods, ShipVariant::setPermaMods);
+        this.permaModsPanel = new VariantHullmodsListPane(a -> a.getPermaMods(), (a, b) -> a.setPermaMods(b));
         ComponentUtilities.outfitPanelWithTitle(permaModsPanel, "Permanent");
-        this.sModsPanel = new VariantHullmodsListPane(ShipVariant::getSMods, ShipVariant::setSMods);
+        this.sModsPanel = new VariantHullmodsListPane(a -> a.getSMods(), (a, b) -> a.setSMods(b));
         ComponentUtilities.outfitPanelWithTitle(sModsPanel, "S-Mods");
 
         this.suppressedModsPanel = new SuppressedModsPanel();

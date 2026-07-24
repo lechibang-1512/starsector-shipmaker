@@ -47,7 +47,7 @@ public final class InstalledFeature implements InstallableEntry {
     public static final Comparator<Map.Entry<String, InstalledFeature>> SERIALIZATION_ORDER =
             Comparator.<Map.Entry<String, InstalledFeature>, Boolean>comparing(
                             entry -> entry.getValue().isDecoWeapon())
-                    .thenComparing(Map.Entry::getKey);
+                    .thenComparing(a -> a.getKey());
 
     private final String slotID;
 
@@ -59,6 +59,9 @@ public final class InstalledFeature implements InstallableEntry {
 
     @Setter
     private boolean invalidated;
+
+    @Setter
+    private boolean associatedSlotSelected;
 
     @Setter
     private boolean containedInBuiltIns;
@@ -83,11 +86,19 @@ public final class InstalledFeature implements InstallableEntry {
         this.featureID = id;
         this.featurePainter = painter;
         this.dataEntry = entry;
-        featurePainter.setShouldDrawPainter(false);
+        if (featurePainter != null) {
+            featurePainter.setShouldDrawPainter(false);
+        }
+    }
+
+    public static InstalledFeature createEmpty(String slot) {
+        return new InstalledFeature(slot, "", null, null);
     }
 
     public void cleanupForRemoval() {
-        featurePainter.cleanupForRemoval();
+        if (featurePainter != null) {
+            featurePainter.cleanupForRemoval();
+        }
     }
 
     public static InstalledFeature of(String slot, String id, LayerPainter painter, CSVEntry entry) {
@@ -97,6 +108,7 @@ public final class InstalledFeature implements InstallableEntry {
     }
 
     public WeaponType getWeaponType() {
+        if (dataEntry == null) return WeaponType.STATION_MODULE;
         if (dataEntry instanceof WeaponCSVEntry weaponEntry) {
             return weaponEntry.getType();
         } else {
@@ -105,6 +117,7 @@ public final class InstalledFeature implements InstallableEntry {
     }
 
     public SizeEnum getSize() {
+        if (dataEntry == null) return null;
         if (dataEntry instanceof WeaponCSVEntry weaponEntry) {
             return weaponEntry.getSize();
         } else {
@@ -137,10 +150,11 @@ public final class InstalledFeature implements InstallableEntry {
     }
 
     public String getName() {
+        if (dataEntry == null) return "(empty)";
         return dataEntry.toString();
     }
 
-    @SuppressWarnings("ChainOfInstanceofChecks")
+    @SuppressWarnings({"ChainOfInstanceofChecks"})
     int computeRenderOrder(WeaponSlotPoint slotPoint) {
         int result = Integer.MIN_VALUE;
         if (featurePainter instanceof WeaponPainter weaponPainter) {
@@ -174,9 +188,13 @@ public final class InstalledFeature implements InstallableEntry {
             result = (int) Math.ceil(rawResult);
         } else if (featurePainter instanceof ShipPainter) {
             CSVEntry entry = this.getDataEntry();
-            Map<String, String> rowData = entry.getRowData();
-            String hints = rowData.get(StringConstants.HINTS);
-            if (!hints.contains("UNDER_PARENT")) {
+            if (entry != null) {
+                Map<String, String> rowData = entry.getRowData();
+                String hints = rowData.get(StringConstants.HINTS);
+                if (!hints.contains("UNDER_PARENT")) {
+                    result = Integer.MIN_VALUE + 1;
+                }
+            } else {
                 result = Integer.MIN_VALUE + 1;
             }
         }
@@ -210,7 +228,7 @@ public final class InstalledFeature implements InstallableEntry {
 
         double transformedAngle = Utility.transformAngle(slotPoint.getAngle());
         double rotationRadians = Math.toRadians(transformedAngle + 90);
-        painter.setRotationRadians(rotationRadians + slotPoint.getParent().getRotationRadians());
+        painter.setRotationRadians(rotationRadians);
     }
 
     public void loadAsSeparateLayer() {
@@ -223,6 +241,10 @@ public final class InstalledFeature implements InstallableEntry {
             variant.setOpacityForAllFitted(opacity);
 
             VariantFile rawVariant = GameDataRepository.getVariantByID(variant.getVariantId());
+            if (rawVariant == null || rawVariant.isEmpty()) {
+                rawVariant = GameDataRepository.getVariantByID(this.getFeatureID());
+            }
+
             if (rawVariant != null && !rawVariant.isEmpty()) {
                 ShipLayer loadedFromModule = shipeditor.components.viewer.layers.LayerFactory.createLayerFromVariant(rawVariant);
 
@@ -233,6 +255,11 @@ public final class InstalledFeature implements InstallableEntry {
 
                 double rotationDegrees = Math.toDegrees(shipPainter.getRotationRadians());
                 newPainter.rotateLayer(rotationDegrees);
+
+                shipeditor.components.viewer.layers.LayerManager layerManager = shipeditor.utility.overseers.StaticController.getLayerManager();
+                layerManager.getLayers().add(loadedFromModule);
+                shipeditor.communication.EventBus.publish(new shipeditor.communication.events.viewer.layers.LayerEvents.ShipLayerCreated(loadedFromModule));
+                layerManager.setActiveLayer(loadedFromModule);
             }
         } else {
             throw new IllegalStateException("Can only load modules as separate layers!");
@@ -250,10 +277,40 @@ public final class InstalledFeature implements InstallableEntry {
         if (layerPainter == null) return;
         layerPainter.paint(spriteRenderer, shapeRenderer, projection, view);
 
+        if (shipeditor.components.viewer.PaintOrderController.isGraphicsOnlyRender()) {
+            return;
+        }
+
+        if (this.associatedSlotSelected && this.getWeaponType() == WeaponType.STATION_MODULE) {
+            drawSelectionBounds(shapeRenderer, projection, view, layerPainter);
+        }
+
         List<AbstractPointPainter> allPainters = layerPainter.getAllPainters();
         for (AbstractPointPainter pointPainter : allPainters) {
             pointPainter.paint(spriteRenderer, shapeRenderer, projection, view);
         }
+    }
+
+    private void drawSelectionBounds(ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view, LayerPainter layerPainter) {
+        Point2D anchor = layerPainter.getAnchor();
+        int width = layerPainter.getSpriteWidth();
+        int height = layerPainter.getSpriteHeight();
+        double rotationRadians = layerPainter.getRotationRadians();
+        Point2D center = layerPainter.getSpriteCenter();
+
+        Matrix4f rotatedView = new Matrix4f(view)
+            .rotate((float) rotationRadians, 0.0f, 0.0f, 1.0f)
+            .translate((float) -center.getX(), (float) -center.getY(), 0.0f);
+
+        shapeRenderer.begin(projection, rotatedView);
+
+        org.joml.Vector2f pos = new org.joml.Vector2f((float) anchor.getX(), (float) anchor.getY());
+        org.joml.Vector2f size = new org.joml.Vector2f((float) width, (float) height);
+
+        org.joml.Vector4f outlineColor = new org.joml.Vector4f(1.0f, 0.0f, 0.0f, 1.0f);
+        
+        shapeRenderer.drawRect(pos, size, outlineColor, false);
+        shapeRenderer.end();
     }
 
     @Override

@@ -13,10 +13,13 @@ import shipeditor.utility.text.StringValues;
 import shipeditor.PrimaryWindow;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -39,6 +42,26 @@ import javax.swing.SwingUtilities;
 public final class IndexScannerTask {
 
     private IndexScannerTask() {
+    }
+
+    private static String calculateFileHash(File file) {
+        try (InputStream is = new FileInputStream(file)) {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = is.read(buffer)) > 0) {
+                md.update(buffer, 0, read);
+            }
+            byte[] hash = md.digest();
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (java.io.IOException | java.security.NoSuchAlgorithmException e) {
+            log.error("Failed to hash file: {}", file.getAbsolutePath(), e);
+            return "";
+        }
     }
 
     /**
@@ -87,6 +110,25 @@ public final class IndexScannerTask {
 
             if (dbLastScanned == null) {
                 return true;
+            }
+
+            try (Stream<Path> pathStream = Files.walk(folder)) {
+                boolean hasNewerFile = pathStream.anyMatch(path -> {
+                    if (Files.isRegularFile(path)) {
+                        String name = path.getFileName().toString();
+                        if (name.endsWith(".ship") || name.endsWith(".skin") || name.endsWith(".wpn") 
+                                || name.endsWith(".variant") || name.endsWith(".proj") 
+                                || name.endsWith(".csv") || name.endsWith(".json")) {
+                            return path.toFile().lastModified() > dbLastScanned;
+                        }
+                    }
+                    return false;
+                });
+                if (hasNewerFile) {
+                    return true;
+                }
+            } catch (IOException e) {
+                log.warn("Failed to check last modified times for mod folder: {}", folder, e);
             }
         }
 
@@ -299,12 +341,12 @@ public final class IndexScannerTask {
                 "variant", StringConstants.VARIANT_TYPE,
                 "proj", StringConstants.PROJECTILE_TYPE);
 
-        Map<String, Long> dbFilesMap = DatabaseQueryService.getFilesLastModifiedMap(conn, modId);
+        Map<String, DatabaseQueryService.FileInfo> dbFilesMap = DatabaseQueryService.getFilesInfoMap(conn, modId);
         Map<String, UUID> dbUuidMap = DatabaseQueryService.getFilesUuidMap(conn, modId);
 
         String upsertFileSql = """
-                INSERT INTO indexed_files (uuid, mod_id, entity_id, entity_name, entity_type, file_name, file_path, last_modified, parsed_data)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO indexed_files (uuid, mod_id, entity_id, entity_name, entity_type, file_name, file_path, last_modified, parsed_data, file_hash)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(uuid) DO UPDATE SET
                     mod_id = excluded.mod_id,
                     entity_id = excluded.entity_id,
@@ -313,7 +355,8 @@ public final class IndexScannerTask {
                     file_name = excluded.file_name,
                     file_path = excluded.file_path,
                     last_modified = excluded.last_modified,
-                    parsed_data = excluded.parsed_data;
+                    parsed_data = excluded.parsed_data,
+                    file_hash = excluded.file_hash;
                 """;
 
         Map<String, List<File>> allFiles = fetchFilesWithExtensions(modFolder, extensions.keySet());
@@ -330,10 +373,27 @@ public final class IndexScannerTask {
                     activePaths.add(absPath);
 
                     long diskLastModified = file.lastModified();
-                    Long dbLastModified = dbFilesMap.get(absPath);
+                    DatabaseQueryService.FileInfo dbInfo = dbFilesMap.get(absPath);
+                    Long dbLastModified = dbInfo != null ? dbInfo.lastModified() : null;
+                    String dbFileHash = dbInfo != null ? dbInfo.fileHash() : null;
 
                     // Check if file is new or modified
-                    if (dbLastModified == null || diskLastModified > dbLastModified) {
+                    if (dbLastModified == null || diskLastModified != dbLastModified) {
+                        String currentFileHash = calculateFileHash(file);
+                        
+                        // If file modified timestamp changed but hash is the same, skip parsing
+                        if (dbFileHash != null && dbFileHash.equals(currentFileHash)) {
+                            // Fast path: just update last_modified in DB, no parsing
+                            String updateSql = "UPDATE indexed_files SET last_modified = ? WHERE file_path = ? AND mod_id = ?;";
+                            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                                updateStmt.setLong(1, diskLastModified);
+                                updateStmt.setString(2, absPath);
+                                updateStmt.setString(3, modId);
+                                updateStmt.executeUpdate();
+                            }
+                            continue;
+                        }
+
                         String entityId = extractEntityId(file, type, mapper);
                         String entityName = file.getName().replace("." + ext, "");
 
@@ -386,6 +446,7 @@ public final class IndexScannerTask {
                         pstmt.setString(7, absPath);
                         pstmt.setLong(8, diskLastModified);
                         pstmt.setString(9, parsedDataJson);
+                        pstmt.setString(10, currentFileHash);
                         pstmt.addBatch();
                         batchCount++;
                         if (batchCount % 500 == 0) {
@@ -407,7 +468,7 @@ public final class IndexScannerTask {
     }
 
     private static void scanCSVs(Path modFolder, String modId, PreparedStatement pstmt,
-            List<String> activePaths, Map<String, Long> dbFilesMap,
+            List<String> activePaths, Map<String, DatabaseQueryService.FileInfo> dbFilesMap,
             Map<String, UUID> dbUuidMap) throws SQLException {
 
         // CSV data files
@@ -432,9 +493,24 @@ public final class IndexScannerTask {
 
                 File file = fullPath.toFile();
                 long diskLastModified = file.lastModified();
-                Long dbLastModified = dbFilesMap.get(absPath);
+                DatabaseQueryService.FileInfo dbInfo = dbFilesMap.get(absPath);
+                Long dbLastModified = dbInfo != null ? dbInfo.lastModified() : null;
+                String dbFileHash = dbInfo != null ? dbInfo.fileHash() : null;
 
-                if (dbLastModified == null || diskLastModified > dbLastModified) {
+                if (dbLastModified == null || diskLastModified != dbLastModified) {
+                    String currentFileHash = calculateFileHash(file);
+
+                    if (dbFileHash != null && dbFileHash.equals(currentFileHash)) {
+                        String updateSql = "UPDATE indexed_files SET last_modified = ? WHERE file_path = ? AND mod_id = ?;";
+                        try (PreparedStatement updateStmt = pstmt.getConnection().prepareStatement(updateSql)) {
+                            updateStmt.setLong(1, diskLastModified);
+                            updateStmt.setString(2, absPath);
+                            updateStmt.setString(3, modId);
+                            updateStmt.executeUpdate();
+                        }
+                        continue;
+                    }
+
                     UUID uuid = dbUuidMap.get(absPath);
                     if (uuid == null) {
                         uuid = UUID.randomUUID();
@@ -474,13 +550,14 @@ public final class IndexScannerTask {
 
                     pstmt.setString(1, uuid.toString());
                     pstmt.setString(2, modId);
-                    pstmt.setString(3, type.toLowerCase(java.util.Locale.ROOT));
-                    pstmt.setString(4, file.getName().replaceAll("\\.(csv|json)$", ""));
+                    pstmt.setString(3, file.getName().replace(".csv", ""));
+                    pstmt.setString(4, file.getName().replace(".csv", ""));
                     pstmt.setString(5, type);
                     pstmt.setString(6, file.getName());
                     pstmt.setString(7, absPath);
                     pstmt.setLong(8, diskLastModified);
                     pstmt.setString(9, parsedDataJson);
+                    pstmt.setString(10, currentFileHash);
                     pstmt.addBatch();
                 }
             }
