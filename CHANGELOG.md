@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.0.1f] - 2026-07-25
+## [0.0.1f] - 2026-08-02
 
 ### Features
 - **File Hashing**: Add MD5 file hashing to `IndexedFile` and optimize index scanning by skipping re-parsing for content-identical files.
@@ -17,6 +17,7 @@
 - **Skin Overrides**: Allow null values for ship system and hull style in ShipSkin builder.
 - **Weapon Slots**: Implement copy-paste functionality for weapon slots using keyboard shortcuts and context menus.
 - **Skin Overrides**: Implement skin engine and removal override panels with corresponding undo/redo support.
+- **Game Folder Detection**: Improve game folder detection logic by checking for `mod_info.json` and add verification tests.
 
 ### Bug Fixes
 - **Rendering**: Fixed jitter and stuttering in ship and shield center points during camera panning by rounding screen coordinates.
@@ -34,6 +35,7 @@
 - **Dependencies**: Upgrade `jackson-databind` & `jackson-core` to `2.18.9`, `log4j` to `2.25.3`, `sqlite-jdbc` to `3.49.1.0`, `flatlaf` to `3.5.4`, and `spotbugs-annotations` to `4.8.6` to resolve Dependabot security advisories.
 
 ### Refactoring & Performance
+- **Build & Documentation**: Migrate build documentation to `BUILD.md` and update Maven output directory configuration.
 - **Release Automation**: Migrate release automation script from Python to Java.
 - **Code Modernization**: Replace method references with lambda expressions for consistent functional interface usage.
 - **Code Modernization**: Remove redundant null suppression annotations across codebase.
@@ -46,6 +48,8 @@
 - **Point Alignment**: Improve point alignment, linkage logic, and simplify `WeaponSlotList` usage.
 
 ### Chores, Docs & Build
+- **Repository Guidelines**: Add `AGENTS.md` guidelines for using GitHub CLI in workspace operations.
+- **CI & Maintenance**: Add Dependabot configuration (`.github/dependabot.yml`).
 - **JVM Flags**: Add Java AWT and DirectDraw compatibility flags to JVM_OPTS.
 - **Documentation**: Clarify X11 display environment variable usage for IDE previewers versus physical monitors.
 - **Dependencies**: Upgrade lwjgl-bom to version 3.4.0 and lwjgl3-awt to version 0.2.4.

@@ -11,7 +11,7 @@ To compile the project and generate the executable fat JAR, run:
 ```bash
 mvn clean package -DskipTests
 ```
-This builds the application and outputs the executable JAR file in the `target/` directory (e.g. `target/ship_editor-0.0.1g.jar`).
+This builds the application and outputs the executable JAR file in the `target/` directory (e.g. `target/ship_editor-0.0.1f.jar`).
 
 ## Running Developer Build
 To run the compiled JAR, execute:

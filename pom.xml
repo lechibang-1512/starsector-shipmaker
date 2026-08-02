@@ -6,7 +6,7 @@
 
     <groupId>shipeditor</groupId>
     <artifactId>ship_editor</artifactId>
-    <version>0.0.1g</version>
+    <version>0.0.1f</version>
     <dependencyManagement>
         <dependencies>
             <dependency>
