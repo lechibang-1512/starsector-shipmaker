@@ -40,8 +40,13 @@ public class WingsTreePanel extends CSVDataTreePanel<WingCSVEntry>{
     }
 
     @Override
+    protected boolean isDataLoaded() {
+        return SettingsManager.getGameData().isWingDataLoaded();
+    }
+
+    @Override
     protected Action getLoadDataAction() {
-        return FileLoading.loadDataAsync(FileLoading.getLoadWings());
+        return new javax.swing.AbstractAction("Reload") { @Override public void actionPerformed(java.awt.event.ActionEvent e) { reload(); } };
     }
 
     @Override
@@ -84,36 +89,41 @@ public class WingsTreePanel extends CSVDataTreePanel<WingCSVEntry>{
     }
 
     @Override
-    void populateEntries(Map<Path, List<WingCSVEntry>> entriesByPackage) {
-        super.populateEntries(entriesByPackage);
-    }
-
-    @Override
     protected void updateEntryPanel(WingCSVEntry selected) {
-        JPanel rightPanel = getRightPanel();
-        rightPanel.removeAll();
+        JPanel infoPanel = getLeftInfoPanel();
+        infoPanel.removeAll();
+        infoPanel.setLayout(new javax.swing.BoxLayout(infoPanel, javax.swing.BoxLayout.Y_AXIS));
 
-        GridBagConstraints constraints = DataTreePanel.getDefaultConstraints();
-        constraints.gridy = 0;
-        constraints.insets = new Insets(0, 5, 0, 5);
+        shipeditor.utility.components.ComponentUtilities.InfoPanelBuilder builder = new shipeditor.utility.components.ComponentUtilities.InfoPanelBuilder("Wing Info");
+
         JLabel spriteIcon = selected.getIconLabel(128);
         if (spriteIcon != null) {
-            JPanel iconPanel = new JPanel();
+            JPanel iconPanel = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER));
             iconPanel.add(spriteIcon);
-            rightPanel.add(iconPanel, constraints);
+            builder.addCustomComponent(iconPanel);
+        }
+
+        VariantFile variantFile = selected.retrieveMemberVariant();
+        if (variantFile != null && variantFile.getVariantFilePath() != null) {
+            builder.addWrappingPathLabel("Variant file: ", variantFile.getVariantFilePath());
         }
 
         JPanel variantWrapper = new JPanel();
         variantWrapper.setLayout(new BoxLayout(variantWrapper, BoxLayout.PAGE_AXIS));
 
-        List<VariantFile> memberVariantFile = Collections.singletonList(selected.retrieveMemberVariant());
+        List<VariantFile> memberVariantFile = Collections.singletonList(variantFile);
         JPanel variantPanel = DataTreeVariantPanelBuilder.createVariantsPanel(memberVariantFile, false);
         variantWrapper.add(variantPanel);
 
-        constraints.gridy = 1;
-        rightPanel.add(variantWrapper, constraints);
+        builder.addCustomComponent(variantWrapper);
+
+        infoPanel.add(builder.getPanel());
+        infoPanel.add(javax.swing.Box.createVerticalStrut(20));
 
         createRightPanelDataTable(selected);
+        
+        infoPanel.revalidate();
+        infoPanel.repaint();
     }
 
     @Override
@@ -256,7 +266,13 @@ public class WingsTreePanel extends CSVDataTreePanel<WingCSVEntry>{
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
                                                       boolean expanded, boolean leaf, int row, boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-            Object object = ((DefaultMutableTreeNode) value).getUserObject();
+            if (!(value instanceof DefaultMutableTreeNode treeNode)) {
+                return this;
+            }
+            Object object = treeNode.getUserObject();
+            if (object == null) {
+                return this;
+            }
             DataTreePanel.configureCellRendererColors(object, this);
             if (object instanceof WingCSVEntry checked && leaf) {
                 setText(checked.getEntryName());

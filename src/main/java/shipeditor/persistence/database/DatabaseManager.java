@@ -2,6 +2,9 @@ package shipeditor.persistence.database;
 
 import lombok.extern.log4j.Log4j2;
 import shipeditor.persistence.SettingsManager;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import org.sqlite.SQLiteConfig;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,22 +24,27 @@ import java.sql.Statement;
 public final class DatabaseManager {
 
     private static Path databaseFilePath;
+    private static HikariDataSource dataSource;
+    
+    private static final Object STATIC_LOCK = new Object();
 
     private DatabaseManager() {}
 
     /**
      * Gets the path to the SQLite database file, located in the same directory as the settings file.
      */
-    public static synchronized Path getDatabaseFilePath() {
-        if (databaseFilePath == null) {
-            Path settingsPath = SettingsManager.getSettingsPath().toPath();
-            Path settingsDir = settingsPath.getParent();
-            if (settingsDir == null) {
-                settingsDir = Path.of("");
+    public static Path getDatabaseFilePath() {
+        synchronized (STATIC_LOCK) {
+            if (databaseFilePath == null) {
+                Path settingsPath = SettingsManager.getSettingsPath().toPath();
+                Path settingsDir = settingsPath.getParent();
+                if (settingsDir == null) {
+                    settingsDir = Path.of("");
+                }
+                databaseFilePath = settingsDir.resolve("ship_editor_database.sqlite");
             }
-            databaseFilePath = settingsDir.resolve("ship_editor_database.sqlite");
+            return databaseFilePath;
         }
-        return databaseFilePath;
     }
 
     /**
@@ -102,26 +110,59 @@ public final class DatabaseManager {
     }
 
     /**
+     * Initializes the connection pool using HikariCP and SQLiteConfig.
+     */
+    private static void initDataSource() {
+        synchronized (STATIC_LOCK) {
+            if (dataSource != null) {
+                return;
+            }
+            String dbUrl = "jdbc:sqlite:" + getDatabaseFilePath().toAbsolutePath().toString().replace("\\", "/");
+
+        SQLiteConfig sqliteConfig = new SQLiteConfig();
+        sqliteConfig.enforceForeignKeys(true);
+        sqliteConfig.setSynchronous(SQLiteConfig.SynchronousMode.NORMAL);
+        sqliteConfig.setCacheSize(-64000);
+        sqliteConfig.setTempStore(SQLiteConfig.TempStore.MEMORY);
+        sqliteConfig.setBusyTimeout(5000);
+
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(dbUrl);
+        config.setPoolName("SQLite-Pool");
+        config.setMaximumPoolSize(10);
+        config.setDataSourceProperties(sqliteConfig.toProperties());
+
+        dataSource = new HikariDataSource(config);
+        }
+        ensureTablesExist();
+    }
+
+    /**
      * Opens and returns a new connection to the SQLite database.
      */
     public static Connection getConnection() throws SQLException {
-        // Ensure JDBC class is loaded
-        try {
-            Class.forName("org.sqlite.JDBC");
-        } catch (ClassNotFoundException e) {
-            log.error("SQLite JDBC Driver not found in classpath!", e);
-            throw new SQLException("SQLite JDBC Driver not found", e);
+        if (dataSource == null) {
+            initDataSource();
         }
+        return dataSource.getConnection();
+    }
 
-        String dbUrl = "jdbc:sqlite:" + getDatabaseFilePath().toAbsolutePath().toString().replace("\\", "/") + "?busy_timeout=5000";
-        Connection conn = DriverManager.getConnection(dbUrl);
-        try (Statement stmt = conn.createStatement()) {
-            stmt.execute("PRAGMA foreign_keys = ON;");
-            stmt.execute("PRAGMA synchronous = NORMAL;");
-            stmt.execute("PRAGMA cache_size = -64000;");
-            stmt.execute("PRAGMA temp_store = MEMORY;");
+    public static void deleteDatabase() {
+        try {
+            synchronized (STATIC_LOCK) {
+                if (dataSource != null) {
+                    dataSource.close();
+                    dataSource = null;
+                }
+            }
+            Path dbPath = getDatabaseFilePath();
+            Files.deleteIfExists(dbPath);
+            Files.deleteIfExists(Path.of(dbPath.toString() + "-wal"));
+            Files.deleteIfExists(Path.of(dbPath.toString() + "-shm"));
+            log.info("Successfully deleted database files.");
+        } catch (IOException e) {
+            log.error("Failed to delete database file at: {}", getDatabaseFilePath(), e);
         }
-        return conn;
     }
 
     /**
@@ -132,13 +173,18 @@ public final class DatabaseManager {
 
         if (databaseExists() && !isDatabaseValid()) {
             log.warn("Database file exists but is invalid or corrupted. Deleting and recreating database...");
-            try {
-                Files.deleteIfExists(getDatabaseFilePath());
-            } catch (IOException e) {
-                log.error("Failed to delete corrupted database file at: {}", getDatabaseFilePath(), e);
-            }
+            deleteDatabase();
         }
 
+        if (dataSource == null) {
+            initDataSource();
+        } else {
+            ensureTablesExist();
+        }
+        log.info("Database tables and indexes verified/created successfully.");
+    }
+
+    private static void ensureTablesExist() {
         try {
             Path parentDir = getDatabaseFilePath().getParent();
             if (parentDir != null) {
@@ -167,48 +213,76 @@ public final class DatabaseManager {
                 file_name TEXT NOT NULL,
                 file_path TEXT NOT NULL,
                 last_modified INTEGER NOT NULL,
-                parsed_data TEXT,
                 file_hash TEXT,
+                sprite_path TEXT,
+                designation TEXT,
+                metadata_json TEXT,
                 FOREIGN KEY(mod_id) REFERENCES mods(id) ON DELETE CASCADE
             );
             """;
 
         String createIndexEntityId = "CREATE INDEX IF NOT EXISTS idx_entity_id ON indexed_files(entity_id);";
         String createIndexEntityType = "CREATE INDEX IF NOT EXISTS idx_entity_type ON indexed_files(entity_type);";
+        String createIndexFilePath = "CREATE UNIQUE INDEX IF NOT EXISTS idx_file_path ON indexed_files(file_path);";
+        String createIndexModId = "CREATE INDEX IF NOT EXISTS idx_mod_id ON indexed_files(mod_id);";
+        String createIndexModType = "CREATE INDEX IF NOT EXISTS idx_mod_type ON indexed_files(mod_id, entity_type);";
 
-        try (Connection conn = getConnection();
+        String createCsvCacheTable = """
+            CREATE TABLE IF NOT EXISTS csv_cache (
+                csv_path TEXT PRIMARY KEY,
+                mod_id TEXT NOT NULL,
+                last_modified INTEGER NOT NULL,
+                rows_json TEXT NOT NULL,
+                FOREIGN KEY(mod_id) REFERENCES mods(id) ON DELETE CASCADE
+            );
+            """;
+
+        try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
 
             stmt.execute("PRAGMA foreign_keys = ON;");
             stmt.execute("PRAGMA journal_mode = WAL;");
             stmt.execute(createModsTable);
             stmt.execute(createFilesTable);
+            stmt.execute(createCsvCacheTable);
             stmt.execute(createIndexEntityId);
             stmt.execute(createIndexEntityType);
+            stmt.execute(createIndexFilePath);
+            stmt.execute(createIndexModId);
+            stmt.execute(createIndexModType);
 
-            // Add parsed_data and file_hash columns to existing databases
+            // Add new columns to existing databases
             try (ResultSet rs = stmt.executeQuery("PRAGMA table_info(indexed_files);")) {
-                boolean hasParsedData = false;
                 boolean hasFileHash = false;
+                boolean hasSpritePath = false;
+                boolean hasDesignation = false;
+                boolean hasMetadataJson = false;
+
                 while(rs.next()) {
                     String colName = rs.getString("name");
-                    if ("parsed_data".equals(colName)) {
-                        hasParsedData = true;
-                    } else if ("file_hash".equals(colName)) {
-                        hasFileHash = true;
-                    }
+                    if ("file_hash".equals(colName)) hasFileHash = true;
+                    if ("sprite_path".equals(colName)) hasSpritePath = true;
+                    if ("designation".equals(colName)) hasDesignation = true;
+                    if ("metadata_json".equals(colName)) hasMetadataJson = true;
                 }
-                if (!hasParsedData) {
-                    stmt.execute("ALTER TABLE indexed_files ADD COLUMN parsed_data TEXT;");
-                    log.info("Added parsed_data column to indexed_files table.");
-                }
+                
                 if (!hasFileHash) {
                     stmt.execute("ALTER TABLE indexed_files ADD COLUMN file_hash TEXT;");
                     log.info("Added file_hash column to indexed_files table.");
                 }
+                if (!hasSpritePath) {
+                    stmt.execute("ALTER TABLE indexed_files ADD COLUMN sprite_path TEXT;");
+                    log.info("Added sprite_path column to indexed_files table.");
+                }
+                if (!hasDesignation) {
+                    stmt.execute("ALTER TABLE indexed_files ADD COLUMN designation TEXT;");
+                    log.info("Added designation column to indexed_files table.");
+                }
+                if (!hasMetadataJson) {
+                    stmt.execute("ALTER TABLE indexed_files ADD COLUMN metadata_json TEXT;");
+                    log.info("Added metadata_json column to indexed_files table.");
+                }
             }
-
-            log.info("Database tables and indexes verified/created successfully.");
         } catch (SQLException e) {
             log.error("Failed to initialize database tables", e);
         }

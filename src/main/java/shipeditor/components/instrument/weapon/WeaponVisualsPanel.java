@@ -420,8 +420,8 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
         if (color != null) {
             valueLabel.setIcon(ComponentUtilities.createIconFromColor(color, 10, 10));
             valueLabel.setOpaque(true);
-            valueLabel.setBorder(new FlatLineBorder(new Insets(2, 2, 2, 2), Color.GRAY));
-            valueLabel.setBackground(Color.LIGHT_GRAY);
+            valueLabel.setBorder(new FlatLineBorder(new Insets(2, 2, 2, 2), Themes.getBorderColor()));
+            valueLabel.setBackground(Themes.getPanelHighlightColor());
             valueLabel.setToolTipText(ColorUtilities.getColorBreakdown(color));
             valueLabel.setText(null);
         } else {

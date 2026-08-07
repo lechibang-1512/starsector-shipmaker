@@ -17,7 +17,7 @@ import java.awt.KeyboardFocusManager;
 
 public abstract class AngledPointPainter extends MirrorablePointPainter {
 
-    private KeyEventDispatcher hotkeyDispatcher;
+
 
     protected AngledPointPainter(LayerPainter parent) {
         super(parent);
@@ -27,7 +27,6 @@ public abstract class AngledPointPainter extends MirrorablePointPainter {
     @Override
     public void cleanupListeners() {
         super.cleanupListeners();
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(hotkeyDispatcher);
     }
 
     protected abstract int getControlHotkey();
@@ -39,38 +38,34 @@ public abstract class AngledPointPainter extends MirrorablePointPainter {
     protected abstract void setCreationHotkeyPressed(boolean pressed);
 
     protected void initHotkeys() {
-        hotkeyDispatcher = ke -> {
+        EventBus.subscribe(this, event -> {
             if (!this.getParentLayer().isLayerActive()) {
-                return false;
+                return;
             }
-            int keyCode = ke.getKeyCode();
-            boolean isControlHotkey = (keyCode == getControlHotkey());
-            boolean isCreationHotkey = (keyCode == getCreationHotkey());
-            switch (ke.getID()) {
-                case KeyEvent.KEY_PRESSED:
-                    if (isControlHotkey) {
-                        setControlHotkeyPressed(true);
-                        EventBus.publish(new ViewerRepaintQueued());
-                    } else if (isCreationHotkey) {
-                        setCreationHotkeyPressed(true);
-                        EventBus.publish(new ViewerRepaintQueued());
-                    }
-                    break;
-                case KeyEvent.KEY_RELEASED:
-                    if (isControlHotkey) {
-                        setControlHotkeyPressed(false);
-                        EventBus.publish(new ViewerRepaintQueued());
-                    } else if (isCreationHotkey) {
-                        setCreationHotkeyPressed(false);
-                        EventBus.publish(new ViewerRepaintQueued());
-                    }
-                    break;
-                default:
-                    break;
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
+                int keyCode = pressedEvent.keyEvent().getKeyCode();
+                boolean isControlHotkey = (keyCode == getControlHotkey());
+                boolean isCreationHotkey = (keyCode == getCreationHotkey());
+                if (isControlHotkey) {
+                    setControlHotkeyPressed(true);
+                    EventBus.publish(new ViewerRepaintQueued());
+                } else if (isCreationHotkey) {
+                    setCreationHotkeyPressed(true);
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
+            } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
+                int keyCode = releasedEvent.keyEvent().getKeyCode();
+                boolean isControlHotkey = (keyCode == getControlHotkey());
+                boolean isCreationHotkey = (keyCode == getCreationHotkey());
+                if (isControlHotkey) {
+                    setControlHotkeyPressed(false);
+                    EventBus.publish(new ViewerRepaintQueued());
+                } else if (isCreationHotkey) {
+                    setCreationHotkeyPressed(false);
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
             }
-            return false;
-        };
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(hotkeyDispatcher);
+        });
     }
 
     protected void changePointAngleByTarget(Point2D worldTarget) {

@@ -55,7 +55,6 @@ public class LaunchBayPainter extends MirrorablePointPainter {
     private static final int addPortHotkey = KeyEvent.VK_SHIFT;
     private static final int addBayHotkey = KeyEvent.VK_CONTROL;
 
-    private KeyEventDispatcher hotkeyDispatcher;
 
     public LaunchBayPainter(ShipPainter parent) {
         super(parent);
@@ -77,7 +76,6 @@ public class LaunchBayPainter extends MirrorablePointPainter {
     @Override
     public void cleanupListeners() {
         super.cleanupListeners();
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(hotkeyDispatcher);
     }
 
     @Override
@@ -110,38 +108,34 @@ public class LaunchBayPainter extends MirrorablePointPainter {
     }
 
     private void initHotkeys() {
-        hotkeyDispatcher = ke -> {
+        EventBus.subscribe(this, event -> {
             if (!this.getParentLayer().isLayerActive()) {
-                return false;
+                return;
             }
-            int keyCode = ke.getKeyCode();
-            boolean isPortHotkey = (keyCode == addPortHotkey);
-            boolean isBayHotkey = (keyCode == addBayHotkey);
-            switch (ke.getID()) {
-                case KeyEvent.KEY_PRESSED:
-                    if (isPortHotkey) {
-                        addPortHotkeyPressed = true;
-                        EventBus.publish(new ViewerRepaintQueued());
-                    } else if (isBayHotkey) {
-                        addBayHotkeyPressed = true;
-                        EventBus.publish(new ViewerRepaintQueued());
-                    }
-                    break;
-                case KeyEvent.KEY_RELEASED:
-                    if (isPortHotkey) {
-                        addPortHotkeyPressed = false;
-                        EventBus.publish(new ViewerRepaintQueued());
-                    } else if (isBayHotkey) {
-                        addBayHotkeyPressed = false;
-                        EventBus.publish(new ViewerRepaintQueued());
-                    }
-                    break;
-                default:
-                    break;
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
+                int keyCode = pressedEvent.keyEvent().getKeyCode();
+                boolean isPortHotkey = (keyCode == addPortHotkey);
+                boolean isBayHotkey = (keyCode == addBayHotkey);
+                if (isPortHotkey) {
+                    addPortHotkeyPressed = true;
+                    EventBus.publish(new ViewerRepaintQueued());
+                } else if (isBayHotkey) {
+                    addBayHotkeyPressed = true;
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
+            } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
+                int keyCode = releasedEvent.keyEvent().getKeyCode();
+                boolean isPortHotkey = (keyCode == addPortHotkey);
+                boolean isBayHotkey = (keyCode == addBayHotkey);
+                if (isPortHotkey) {
+                    addPortHotkeyPressed = false;
+                    EventBus.publish(new ViewerRepaintQueued());
+                } else if (isBayHotkey) {
+                    addBayHotkeyPressed = false;
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
             }
-            return false;
-        };
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(hotkeyDispatcher);
+        });
     }
 
     @Override

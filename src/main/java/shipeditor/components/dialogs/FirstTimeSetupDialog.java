@@ -23,12 +23,14 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import javax.swing.JComboBox;
+
 @Log4j2
 public class FirstTimeSetupDialog extends JDialog {
 
     private String confirmedPath = null;
 
-    private FirstTimeSetupDialog(String detectedPath, Settings settings) {
+    private FirstTimeSetupDialog(String detectedPath, java.util.List<String> candidatePaths, Settings settings) {
         super(PrimaryWindow.getInstance(), "First-Time Setup", true);
         this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
@@ -41,20 +43,86 @@ public class FirstTimeSetupDialog extends JDialog {
         mainPanel.add(infoPanel, BorderLayout.NORTH);
 
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
-        JTextField pathField = new JTextField(detectedPath != null ? detectedPath : "");
-        inputPanel.add(pathField, BorderLayout.CENTER);
+        JComboBox<String> pathComboBox = new JComboBox<>();
+        pathComboBox.setEditable(true);
+        pathComboBox.setPrototypeDisplayValue("                                                                                ");
+        pathComboBox.setMaximumRowCount(8);
+        
+        java.awt.Component editorComponent = pathComboBox.getEditor().getEditorComponent();
+        if (editorComponent instanceof JTextField textField) {
+            textField.putClientProperty("JTextField.placeholderText", "Select or type path to Starsector folder...");
+        }
+
+        if (candidatePaths != null) {
+            for (String cand : candidatePaths) {
+                if (cand != null && !cand.isEmpty()) {
+                    boolean exists = false;
+                    for (int i = 0; i < pathComboBox.getItemCount(); i++) {
+                        if (cand.equals(pathComboBox.getItemAt(i))) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists) {
+                        pathComboBox.addItem(cand);
+                    }
+                }
+            }
+        }
+
+        if (detectedPath != null && !detectedPath.isEmpty()) {
+            boolean exists = false;
+            for (int i = 0; i < pathComboBox.getItemCount(); i++) {
+                if (detectedPath.equals(pathComboBox.getItemAt(i))) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                pathComboBox.addItem(detectedPath);
+            }
+            pathComboBox.setSelectedItem(detectedPath);
+        } else if (pathComboBox.getItemCount() > 0) {
+            pathComboBox.setSelectedIndex(0);
+        }
+
+        Object initialSel = pathComboBox.getSelectedItem();
+        if (initialSel != null) {
+            pathComboBox.setToolTipText(initialSel.toString());
+        }
+        pathComboBox.addActionListener(e -> {
+            Object sel = pathComboBox.getSelectedItem();
+            if (sel != null) {
+                pathComboBox.setToolTipText(sel.toString());
+            }
+        });
+
+        inputPanel.add(pathComboBox, BorderLayout.CENTER);
 
         JButton browseButton = new JButton("Browse...");
         browseButton.addActionListener(e -> {
             JFileChooser folderChooser = new JFileChooser();
             folderChooser.setDialogTitle("Choose folder containing installed game");
             folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if (detectedPath != null && !detectedPath.isEmpty()) {
-                folderChooser.setCurrentDirectory(new File(detectedPath));
+            Object curSel = pathComboBox.getSelectedItem();
+            String startPath = curSel != null ? curSel.toString() : detectedPath;
+            if (startPath != null && !startPath.isEmpty()) {
+                folderChooser.setCurrentDirectory(new File(startPath));
             }
             int returnVal = folderChooser.showOpenDialog(this);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                pathField.setText(folderChooser.getSelectedFile().getAbsolutePath());
+                String selected = folderChooser.getSelectedFile().getAbsolutePath();
+                boolean exists = false;
+                for (int i = 0; i < pathComboBox.getItemCount(); i++) {
+                    if (selected.equals(pathComboBox.getItemAt(i))) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    pathComboBox.addItem(selected);
+                }
+                pathComboBox.setSelectedItem(selected);
             }
         });
         inputPanel.add(browseButton, BorderLayout.EAST);
@@ -63,13 +131,14 @@ public class FirstTimeSetupDialog extends JDialog {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton confirmButton = new JButton("Confirm");
         confirmButton.addActionListener(e -> {
-            String currentPath = pathField.getText();
-            if (currentPath == null || currentPath.trim().isEmpty()) {
+            Object selectedItem = pathComboBox.getSelectedItem();
+            String currentPath = selectedItem != null ? selectedItem.toString().trim() : "";
+            if (currentPath.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Path cannot be empty.", "Invalid Path", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            Path path = Paths.get(currentPath.trim());
+            Path path = Paths.get(currentPath);
             if (Initializations.checkGameFolderEligibility(path, settings)) {
                 confirmedPath = path.toAbsolutePath().toString();
                 this.dispose();
@@ -104,7 +173,11 @@ public class FirstTimeSetupDialog extends JDialog {
     }
 
     public static String promptForGameFolder(String detectedPath, Settings settings) {
-        FirstTimeSetupDialog dialog = new FirstTimeSetupDialog(detectedPath, settings);
+        return promptForGameFolder(detectedPath, java.util.Collections.emptyList(), settings);
+    }
+
+    public static String promptForGameFolder(String detectedPath, java.util.List<String> candidatePaths, Settings settings) {
+        FirstTimeSetupDialog dialog = new FirstTimeSetupDialog(detectedPath, candidatePaths, settings);
         dialog.setVisible(true);
         if (dialog.confirmedPath == null) {
             log.info("Game folder selection cancelled by user, exiting.");

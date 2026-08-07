@@ -76,7 +76,7 @@ public class DataTreeSearchController {
                     Object userObject = node.getUserObject();
                     if (userObject == null) return false;
                     String toString = userObject.toString().toLowerCase(Locale.ROOT);
-                    return toString.matches(".*" + input.toLowerCase(java.util.Locale.ROOT) + ".*");
+                    return toString.contains(input.toLowerCase(java.util.Locale.ROOT));
                 })
                 .collect(Collectors.toList());
     }

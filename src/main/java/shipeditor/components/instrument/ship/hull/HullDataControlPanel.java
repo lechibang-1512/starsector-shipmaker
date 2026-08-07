@@ -333,8 +333,8 @@ public class HullDataControlPanel extends JPanel {
             ImageIcon colorIcon = ComponentUtilities.createIconFromColor(coversColor, 10, 10);
             coversColorValue.setIcon(colorIcon);
             coversColorValue.setOpaque(true);
-            coversColorValue.setBorder(new FlatLineBorder(new Insets(2, 2, 2, 2), Color.GRAY));
-            coversColorValue.setBackground(Color.LIGHT_GRAY);
+            coversColorValue.setBorder(new FlatLineBorder(new Insets(2, 2, 2, 2), Themes.getBorderColor()));
+            coversColorValue.setBackground(Themes.getPanelHighlightColor());
             coversColorValue.setToolTipText(ColorUtilities.getColorBreakdown(coversColor));
             coversColorValue.setText(null);
         } else {

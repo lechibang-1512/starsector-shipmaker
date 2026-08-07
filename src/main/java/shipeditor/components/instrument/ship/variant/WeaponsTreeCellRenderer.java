@@ -23,6 +23,9 @@ import javax.swing.border.EmptyBorder;
 import java.awt.Color;
 import java.awt.Component;
 
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
 public class WeaponsTreeCellRenderer extends SortableTreeCellRenderer {
     private final JLabel slotTypeIcon;
     private final JLabel builtInIcon;
@@ -186,43 +189,57 @@ public class WeaponsTreeCellRenderer extends SortableTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected,
                                                   boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        CustomTreeNode treeNode = (CustomTreeNode) value;
-        Object object = treeNode.getUserObject();
-        JLabel iconLabel = getIconLabel();
-        JLabel textLabel = getTextLabel();
+        try {
+            super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+            
+            if (!(value instanceof CustomTreeNode treeNode)) {
+                return this;
+            }
+            
+            Object object = treeNode.getUserObject();
+            if (object == null) {
+                return this;
+            }
+            JLabel iconLabel = getIconLabel();
+            JLabel textLabel = getTextLabel();
 
-        iconLabel.setBorder(UIConstants.EMPTY_BORDER);
-        iconLabel.setIcon(null);
-        iconLabel.setText("");
+            iconLabel.setBorder(UIConstants.EMPTY_BORDER);
+            iconLabel.setIcon(null);
+            iconLabel.setText("");
 
-        slotTypeIcon.setOpaque(false);
-        slotTypeIcon.setBorder(null);
-        slotTypeIcon.setIcon(null);
-        slotTypeIcon.setText("");
-        slotTypeIcon.setVisible(false);
+            slotTypeIcon.setOpaque(false);
+            slotTypeIcon.setBorder(null);
+            slotTypeIcon.setIcon(null);
+            slotTypeIcon.setText("");
+            slotTypeIcon.setVisible(false);
 
-        builtInIcon.setIcon(null);
-        builtInIcon.setText("");
-        builtInIcon.setVisible(false);
+            builtInIcon.setIcon(null);
+            builtInIcon.setText("");
+            builtInIcon.setVisible(false);
 
-        upperRightLabel.setText("");
-        lowerLeftLabel.setText("");
-        lowerRightLabel.setText("");
+            upperRightLabel.setText("");
+            lowerLeftLabel.setText("");
+            lowerRightLabel.setText("");
 
-        setBackgroundNonSelectionColor(Themes.getListBackgroundColor());
+            setBackgroundNonSelectionColor(Themes.getListBackgroundColor());
 
-        treeNode.setSecondLineTip(null);
-        treeNode.setFirstLineTip(null);
-        textLabel.setBorder(new EmptyBorder(0, 4, 0, 0));
-        if (object instanceof FittedWeaponGroup checked) {
-            this.handleGroupAppearance(treeNode, checked);
-        } else if (object instanceof InstalledFeature checked && leaf) {
-            this.handleFeatureAppearance(treeNode, checked);
-        } else {
-            textLabel.setText(" " + value);
+            treeNode.setSecondLineTip(null);
+            treeNode.setFirstLineTip(null);
+            textLabel.setBorder(new EmptyBorder(0, 4, 0, 0));
+            if (object instanceof FittedWeaponGroup checked) {
+                this.handleGroupAppearance(treeNode, checked);
+            } else if (object instanceof InstalledFeature checked && leaf) {
+                this.handleFeatureAppearance(treeNode, checked);
+            } else {
+                textLabel.setText(" " + value);
+            }
+
+            return this;
+        } catch (Exception e) {
+            log.error("Silent Swing exception caught during cell render for row {}", row, e);
+            getTextLabel().setText(" [Render Error]");
+            getTextLabel().setForeground(Color.RED);
+            return this;
         }
-
-        return this;
     }
 }

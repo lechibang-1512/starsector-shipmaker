@@ -34,7 +34,7 @@ public abstract class AbstractInstrumentsPane extends JTabbedPane {
     @Getter @Setter
     private boolean instrumentPaneMinimized;
 
-    private final Dimension preferredSize = new Dimension(300, 0);
+    private final Dimension preferredSize = new Dimension(350, 0);
 
     protected final Map<JPanel, EditorInstrument> panelMode = new HashMap<>();
 

@@ -44,6 +44,8 @@ build/
 ship_editor_settings.json
 *.jar
 *.sqlite
+*.sqlite-wal
+*.sqlite-shm
 *.log
 *.log.*
 

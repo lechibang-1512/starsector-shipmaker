@@ -50,10 +50,16 @@ public class WeaponPainter extends LayerPainter {
     private WeaponRenderOrdering renderOrderType;
 
     /**
-     * Stamp-pattern: single instance is mutated and painted for each offset point.
+     * Base template for loaded missiles. Independent instances are created for each offset.
      */
-    @Getter @Setter
+    @Getter
     private ProjectilePainter projectilePainter;
+    private final List<ProjectilePainter> loadedProjectilePainters = new java.util.ArrayList<>();
+
+    public void setProjectilePainter(ProjectilePainter projectilePainter) {
+        this.projectilePainter = projectilePainter;
+        this.loadedProjectilePainters.clear();
+    }
 
     @Getter @Setter
     private double recoilPreviewFraction = 0.0;
@@ -127,26 +133,34 @@ public class WeaponPainter extends LayerPainter {
     }
 
     private void paintLoadedMissilesGL(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
-        boolean renderLoadedMissiles = hasHint(WeaponRenderHints.RENDER_LOADED_MISSILES);
-        boolean renderMissilesNotHidden = mount != WeaponMount.HIDDEN
-                && hasHint(WeaponRenderHints.RENDER_LOADED_MISSILES_UNLESS_HIDDEN);
-        boolean render = renderLoadedMissiles || renderMissilesNotHidden;
+        boolean render = WeaponRenderHints.shouldRenderMissiles(renderHints, mount);
 
         if (!render || projectilePainter == null) return;
         var offsetPainter = this.getOffsetPainter();
         var offsets = offsetPainter.getOffsetPoints();
         if (offsets.isEmpty()) return;
 
-        AffineTransform rotTrans = this.getRotationTransform();
+        while (loadedProjectilePainters.size() < offsets.size()) {
+            loadedProjectilePainters.add(new ProjectilePainter(projectilePainter));
+        }
+        while (loadedProjectilePainters.size() > offsets.size()) {
+            loadedProjectilePainters.remove(loadedProjectilePainters.size() - 1);
+        }
+
+        double rotRads = this.getRotationRadians();
+
         for (int i = 0; i < offsets.size(); i++) {
             OffsetPoint offsetPoint = offsets.get(i);
+            ProjectilePainter painter = loadedProjectilePainters.get(i);
             Point2D ptPos = offsetPoint.getPosition();
-            Point2D rotatedPos = rotTrans.transform(ptPos, null);
 
-            projectilePainter.setPaintAnchor(rotatedPos);
-            projectilePainter.setRotationRadians(this.getRotationRadians() + Math.toRadians(-offsetPoint.getAngle()));
-            projectilePainter.setSpriteOpacity(this.getSpriteOpacity());
-            projectilePainter.paint(spriteRenderer, shapeRenderer, projection, view);
+            painter.setPaintAnchor(ptPos);
+            // Starsector recoils and orientates missiles along the weapon's angle plus the offset's angle.
+            // Math.toRadians(-offsetPoint.getAngle()) converts the CCW world angle to CW rotation radians.
+            // rotRads is already factored into offsetPoint's world angle via LayerPainter.setRotationRadians, so adding it again causes a double-rotation bug!
+            painter.setRotationRadians(Math.toRadians(-offsetPoint.getAngle()));
+            painter.setSpriteOpacity(this.getSpriteOpacity());
+            painter.paint(spriteRenderer, shapeRenderer, projection, view);
         }
     }
 
@@ -175,10 +189,8 @@ public class WeaponPainter extends LayerPainter {
                 if (offsets.isEmpty()) {
                     this.drawSpritePartGL(spriteRenderer, projection, view, gunSprite, 0.0, isAdditive, GHOST_OPACITY);
                 } else {
-                    AffineTransform rotTrans = this.getRotationTransform();
                     for (OffsetPoint pt : offsets) {
-                        Point2D rotatedPos = rotTrans.transform(pt.getPosition(), null);
-                        this.drawSpritePartAtGL(spriteRenderer, projection, view, gunSprite, rotatedPos, pt.getAngle(), 0.0, isAdditive, GHOST_OPACITY);
+                        this.drawSpritePartAtGL(spriteRenderer, projection, view, gunSprite, pt.getPosition(), pt.getAngle(), 0.0, isAdditive, GHOST_OPACITY);
                     }
                 }
             } else {
@@ -192,15 +204,18 @@ public class WeaponPainter extends LayerPainter {
             if (offsets.isEmpty()) {
                 this.drawSpritePartGL(spriteRenderer, projection, view, gunSprite, recoilOffset, isAdditive);
             } else {
-                AffineTransform rotTrans = this.getRotationTransform();
                 for (OffsetPoint pt : offsets) {
-                    Point2D rotatedPos = rotTrans.transform(pt.getPosition(), null);
-                    this.drawSpritePartAtGL(spriteRenderer, projection, view, gunSprite, rotatedPos, pt.getAngle(), recoilOffset, isAdditive);
+                    this.drawSpritePartAtGL(spriteRenderer, projection, view, gunSprite, pt.getPosition(), pt.getAngle(), recoilOffset, isAdditive);
                 }
             }
         } else {
             this.drawSpritePartGL(spriteRenderer, projection, view, gunSprite, recoilOffset, isAdditive);
         }
+    }
+
+    private Point2D.Double calculateRecoilVector(double recoilOffset) {
+        double rotRads = this.getRotationRadians();
+        return new Point2D.Double(-Math.cos(rotRads) * recoilOffset, -Math.sin(rotRads) * recoilOffset);
     }
 
     private void drawSpritePartGL(SpriteRenderer spriteRenderer, Matrix4f projection, Matrix4f view, Sprite part, boolean additive) {
@@ -224,8 +239,9 @@ public class WeaponPainter extends LayerPainter {
         double positionY = rotationAnchor2D.getY() - center.getY();
 
         double rotRads = this.getRotationRadians();
-        double offsetX = -Math.cos(rotRads) * recoilOffset;
-        double offsetY = -Math.sin(rotRads) * recoilOffset;
+        Point2D.Double recoilVector = calculateRecoilVector(recoilOffset);
+        double offsetX = recoilVector.getX();
+        double offsetY = recoilVector.getY();
 
         double finalPosX = positionX + offsetX;
         double finalPosY = positionY + offsetY;
@@ -263,8 +279,9 @@ public class WeaponPainter extends LayerPainter {
         // Note: Starsector recoils along the weapon's angle, not the offset's angle.
         double rotRads = this.getRotationRadians();
 
-        double offsetX = -Math.cos(rotRads) * recoilOffset;
-        double offsetY = -Math.sin(rotRads) * recoilOffset;
+        Point2D.Double recoilVector = calculateRecoilVector(recoilOffset);
+        double offsetX = recoilVector.getX();
+        double offsetY = recoilVector.getY();
 
         double finalPosX = pointPosition.getX() - (spriteImage.getWidth() / 2.0) + offsetX;
         double finalPosY = pointPosition.getY() - (spriteImage.getHeight() / 2.0) + offsetY;

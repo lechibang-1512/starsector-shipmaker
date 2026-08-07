@@ -11,7 +11,7 @@ public final class StringValues {
     public static final String LAYER_PROPERTIES = "Layer properties";
     public static final String TOGGLED_ON_PER_LAYER_BASIS = "Toggled on per-layer basis";
     public static final String OPEN_CONTAINING_FOLDER = "Open containing folder";
-    public static final String NO_ENTRY_SELECTED = "No entry selected";
+    public static final String NO_ENTRY_SELECTED = "";
     public static final String OPEN_SOURCE_FILE = "Open source file";
     public static final String NOT_INITIALIZED = "Not initialized";
     public static final String OPEN_DATA_PACKAGE = "Open data package";

@@ -178,6 +178,9 @@ public final class Initializations {
             loaded = SettingsManager.createDefault();
             SettingsManager.writeSettingsToFile(mapper, settingsFile, loaded);
         }
+        if (loaded != null) {
+            loaded.deduplicateDataPackages();
+        }
         SettingsManager.setSettings(loaded);
         SettingsManager.getCorePackage();
     }
@@ -290,14 +293,20 @@ public final class Initializations {
         }
 
         List<Path> potentialPaths = Initializations.getPotentialGameFolders();
-
+        List<String> candidatePaths = new ArrayList<>();
         String detectedPath = null;
+
         for (Path potentialFolderPath : potentialPaths) {
             if (Files.exists(potentialFolderPath) && Files.isDirectory(potentialFolderPath)) {
+                String absPath = potentialFolderPath.toAbsolutePath().toString();
                 if (Initializations.checkGameFolderEligibility(potentialFolderPath, settings)) {
-                    log.info("Auto-detected valid path: {}", potentialFolderPath);
-                    detectedPath = potentialFolderPath.toAbsolutePath().toString();
-                    break;
+                    if (detectedPath == null) {
+                        log.info("Auto-detected valid path: {}", potentialFolderPath);
+                        detectedPath = absPath;
+                    }
+                }
+                if (!candidatePaths.contains(absPath)) {
+                    candidatePaths.add(absPath);
                 }
             }
         }
@@ -312,61 +321,65 @@ public final class Initializations {
             throw new RuntimeException("Game folder selection failed! No predefined path found and cannot open setup dialog in headless mode.");
         }
 
-        String confirmedPath = shipeditor.components.dialogs.FirstTimeSetupDialog.promptForGameFolder(detectedPath, settings);
+        String confirmedPath = shipeditor.components.dialogs.FirstTimeSetupDialog.promptForGameFolder(detectedPath, candidatePaths, settings);
         log.info("Saving game folder path: {}", confirmedPath);
         settings.setGameFolderPath(confirmedPath);
     }
 
     public static boolean checkGameFolderEligibility(Path filePath, Settings settings) {
-        boolean folderHasCore = false;
-        boolean folderHasMods = false;
-        try (Stream<Path> pathStream = Files.walk(filePath, 5)) {
-            Stream<Path> filtered = pathStream.filter(Files::isDirectory);
-            for (Path path : filtered.toArray(Path[]::new)) {
-                Path fileNamePath = path.getFileName();
-                if (fileNamePath == null) continue;
-                String folderName = fileNamePath.toString();
-                String coreFolderPath = path.toString();
-
-                if (Initializations.isCoreFolder(path)) {
-                    settings.setCoreFolderPath(coreFolderPath);
-                    SettingsManager.setCoreFolderName(FileUtilities.extractFolderName(coreFolderPath));
-                    folderHasCore = true;
-                }
-
-                if ("mods".equals(folderName)) {
-                    settings.setModFolderPath(coreFolderPath);
-                    folderHasMods = true;
-                }
-            }
-        } catch (IOException e) {
-            Errors.printToStream(e);
+        if (!Files.isDirectory(filePath)) {
             return false;
         }
-        return folderHasCore && folderHasMods;
+
+        Path modsPath = filePath.resolve("mods");
+        if (!Files.isDirectory(modsPath)) {
+            modsPath = filePath.resolve("Contents").resolve("Resources").resolve("mods");
+        }
+        boolean folderHasMods = Files.isDirectory(modsPath);
+
+        Path corePath = null;
+        Path defaultCore = filePath.resolve("starsector-core");
+        Path macCore = filePath.resolve("Contents").resolve("Resources").resolve("Java");
+        
+        if (Files.isDirectory(defaultCore) && isCoreFolder(defaultCore)) {
+            corePath = defaultCore;
+        } else if (Files.isDirectory(macCore) && isCoreFolder(macCore)) {
+            corePath = macCore;
+        } else if (isCoreFolder(filePath)) {
+            corePath = filePath;
+        }
+
+        if (corePath != null && folderHasMods) {
+            settings.setCoreFolderPath(corePath.toAbsolutePath().toString());
+            SettingsManager.setCoreFolderName(FileUtilities.extractFolderName(corePath.toString()));
+            settings.setModFolderPath(modsPath.toAbsolutePath().toString());
+            return true;
+        }
+
+        return false;
     }
 
     private static boolean isCoreFolder(Path folderPath) {
         if (!Files.isDirectory(folderPath)) {
             return false;
         }
-        
+
         Path fileNamePath = folderPath.getFileName();
         if (fileNamePath == null) return false;
 
-        // A mod folder will also contain data and graphics, so we must exclude it.
-        // We do this by checking for the absence of 'mod_info.json', which uniquely identifies mods.
-        if (Files.exists(folderPath.resolve("mod_info.json"))) {
+        Path shipDataCsv = folderPath.resolve("data").resolve("hulls").resolve("ship_data.csv");
+        if (!Files.exists(shipDataCsv)) {
             return false;
         }
 
-        String[] childFolderNames = {"data", "graphics"};
+        Path starfarerApiJar = folderPath.resolve("starfarer.api.jar");
+        if (!Files.exists(starfarerApiJar)) {
+            return false;
+        }
 
-        for (String childFolderName : childFolderNames) {
-            Path childFolderPath = folderPath.resolve(childFolderName);
-            if (!Files.isDirectory(childFolderPath)) {
-                return false;
-            }
+        Path modInfo = folderPath.resolve("mod_info.json");
+        if (Files.exists(modInfo)) {
+            return false;
         }
 
         return true;

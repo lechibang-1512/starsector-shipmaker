@@ -17,6 +17,7 @@ import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.graphics.Sprite;
+import shipeditor.persistence.database.IndexedFile;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -49,36 +50,24 @@ import java.util.Map;
 import shipeditor.utility.components.UIConstants;
 import shipeditor.communication.events.components.ComponentEvents.SelectWeaponDataEntry;
 import shipeditor.communication.events.files.FileEvents.WeaponTreeReloadQueued;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Log4j2
-public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
+public class WeaponsTreePanel extends DataTreePanel {
 
     private boolean autoExpandNodes;
-
     public WeaponsTreePanel() {
         super("Weapon file packages");
     }
 
     @Override
     protected Action getLoadDataAction() {
-        return FileLoading.loadDataAsync(FileLoading.getLoadWeapons());
+        return new javax.swing.AbstractAction("Reload") { @Override public void actionPerformed(java.awt.event.ActionEvent e) { reload(); } };
     }
 
     @Override
-    protected String getEntryTypeName() {
-        return "weapon";
-    }
-
-    @Override
-    protected Map<String, WeaponCSVEntry> getRepository() {
-        GameDataRepository gameData = SettingsManager.getGameData();
-        return gameData.getAllWeaponEntries();
-    }
-
-    @Override
-    protected Map<Path, List<WeaponCSVEntry>> getPackageList() {
-        GameDataRepository gameData = SettingsManager.getGameData();
-        return gameData.getWeaponEntriesByPackage();
+    protected boolean isDataLoaded() {
+        return SettingsManager.getGameData().isWeaponsDataLoaded();
     }
 
     @Override
@@ -88,36 +77,35 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
         return custom;
     }
 
-    /**
-     * This could very well be a full-fledged panel stamp, with type icon borders and size icon too.
-     * Unfortunately, there's not enough development time for that.
-     */
     private static class WeaponsTreeCellRenderer extends DefaultTreeCellRenderer {
-
-        @SuppressWarnings("ParameterHidesMemberVariable")
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
                                                       boolean expanded, boolean leaf, int row, boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-            Object object = ((DefaultMutableTreeNode) value).getUserObject();
+            if (!(value instanceof DefaultMutableTreeNode treeNode)) {
+                return this;
+            }
+            Object object = treeNode.getUserObject();
+            if (object == null) {
+                return this;
+            }
             DataTreePanel.configureCellRendererColors(object, this);
-            if (object instanceof WeaponCSVEntry checked && leaf) {
-                WeaponType hullSize = checked.getType();
-                setIcon(ComponentUtilities.createIconFromColor(hullSize.getColor(), 10, 10));
+            if (object instanceof IndexedFile file && leaf) {
+                WeaponCSVEntry entry = SettingsManager.getGameData().getAllWeaponEntries().get(file.getEntityId());
+                if (entry != null) {
+                    WeaponType weaponType = entry.getLazyType();
+                    setIcon(ComponentUtilities.createIconFromColor(weaponType.getColor(), 10, 10));
+                    setText(entry.toString());
+                } else {
+                    setText(file.getEntityName());
+                }
             }
             return this;
         }
-
     }
 
     @Override
-    protected void setLoadedStatus() {
-        GameDataRepository gameData = SettingsManager.getGameData();
-        gameData.setWeaponsDataLoaded(true);
-    }
-
-    @Override
-    protected void initWalkerListening() {
+    protected void initTreePanelListeners(JPanel passedTreePanel) {
         EventBus.subscribe(this, event -> {
             if (event instanceof WeaponTreeReloadQueued) {
                 this.queueReload();
@@ -126,40 +114,87 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
         EventBus.subscribe(this, event -> {
             if (event instanceof SelectWeaponDataEntry checked) {
                 WeaponCSVEntry entry = checked.entry();
-                DefaultMutableTreeNode node = getNodeOfEntry(entry);
-                if (node != null) {
+                DefaultMutableTreeNode root = getRootNode();
+                DefaultMutableTreeNode foundNode = null;
+                for (int i = 0; i < root.getChildCount(); i++) {
+                    DefaultMutableTreeNode packageNode = (DefaultMutableTreeNode) root.getChildAt(i);
+                    for (int j = 0; j < packageNode.getChildCount(); j++) {
+                        DefaultMutableTreeNode weaponNode = (DefaultMutableTreeNode) packageNode.getChildAt(j);
+                        if (weaponNode.getUserObject() instanceof IndexedFile file && file.getEntityId().equals(entry.getWeaponID())) {
+                            foundNode = weaponNode;
+                            break;
+                        }
+                    }
+                    if (foundNode != null) break;
+                }
+                if (foundNode != null) {
                     JTree tree = this.getTree();
-                    TreePath path = new TreePath(node.getPath());
+                    TreePath path = new TreePath(foundNode.getPath());
                     tree.setSelectionPath(path);
                     tree.scrollPathToVisible(path);
                 }
             }
         });
+        getTree().addMouseListener(new DoubleClickLayerLoader());
     }
 
     @Override
-    public void reload() {
-        Map<Path, List<WeaponCSVEntry>> weaponPackageList = WeaponFilterPanel.getFilteredEntries();
-        populateEntries(weaponPackageList);
+    protected Class<?> getEntryClass() {
+        return IndexedFile.class;
+    }
 
-        JTree tree = getTree();
+    @Override
+    protected java.util.List<DefaultMutableTreeNode> buildTreeNodesBackground() {
+        Map<String, List<IndexedFile>> entries = WeaponFilterPanel.getFilteredEntries();
+        if (entries == null || entries.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        java.util.List<DefaultMutableTreeNode> packageRoots = new java.util.ArrayList<>();
+        for (Map.Entry<String, List<IndexedFile>> entryFolder : entries.entrySet()) {
+            String modId = entryFolder.getKey();
+            if (SettingsManager.isModActive(modId)) {
+                DefaultMutableTreeNode packageRoot;
+                if (SettingsManager.isCoreFolder(modId)) {
+                    GameDataPackage corePackage = SettingsManager.getCorePackage();
+                    packageRoot = new DefaultMutableTreeNode(corePackage);
+                } else {
+                    Settings settings = SettingsManager.getSettings();
+                    GameDataPackage modPackage = settings.getPackage(modId);
+                    if (modPackage == null) {
+                        modPackage = new GameDataPackage(modId, false, false);
+                    }
+                    packageRoot = new DefaultMutableTreeNode(modPackage);
+                }
+                for (IndexedFile file : entryFolder.getValue()) {
+                    MutableTreeNode entryNode = new DefaultMutableTreeNode(file);
+                    packageRoot.add(entryNode);
+                }
+                packageRoots.add(packageRoot);
+            }
+        }
+        return packageRoots;
+    }
 
+    @Override
+    protected void onTreePopulated() {
         if (autoExpandNodes) {
             this.expandAllNodes();
         }
-
-        tree.repaint();
     }
 
     @Override
     void resetInfoPanel() {
-        super.resetInfoPanel();
+        JPanel infoPanel = getLeftInfoPanel();
+        infoPanel.removeAll();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.add(new JLabel("Select a weapon to view information."));
+        infoPanel.revalidate();
+        infoPanel.repaint();
     }
 
     protected JPanel createSearchContainer() {
         JPanel searchContainer = new JPanel(new GridBagLayout());
         searchContainer.setBorder(UIConstants.EMPTY_BORDER);
-
         JTextField searchField = this.getTextField();
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -172,13 +207,11 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
     private JTextField getTextField() {
         JTextField searchField = new JTextField();
         searchField.setToolTipText("Input is checked against displayed filename and weapon ID as a substring.");
-
         javax.swing.Timer timer = new javax.swing.Timer(300, e -> {
             WeaponFilterPanel.setCurrentTextFilter(searchField.getText());
             this.reload();
         });
         timer.setRepeats(false);
-
         Document document = searchField.getDocument();
         document.addDocumentListener(new SearchFieldDocumentListener(timer));
         return searchField;
@@ -187,158 +220,73 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
     @Override
     protected JPanel createTopPanel() {
         JPanel topPanel = new JPanel();
-
         JCheckBox expandNodes = new JCheckBox("Auto-expand nodes");
         expandNodes.addActionListener(e -> this.autoExpandNodes = expandNodes.isSelected());
-
         topPanel.add(expandNodes);
-
         return topPanel;
     }
 
     @Override
-    protected void loadAllEntries(Map<Path, List<WeaponCSVEntry>> entries) {
-        if (entries == null || entries.isEmpty()) {
-            log.info("No entries registered: input empty.");
-            return;
-        }
-
-        int nodeCount = 0;
-
-        for (Map.Entry<Path, List<WeaponCSVEntry>> entryFolder : entries.entrySet()) {
-            Settings settings = SettingsManager.getSettings();
-            Path path = entryFolder.getKey();
-            String folderName = FileUtilities.extractFolderName(path.toString());
-            GameDataPackage dataPackage = settings.getPackage(folderName);
-            if (dataPackage == null || dataPackage.isDisabled()) {
-                continue;
-            }
-
-            DefaultMutableTreeNode packageRoot;
-            if (SettingsManager.isCoreFolder(folderName)) {
-                GameDataPackage corePackage = SettingsManager.getCorePackage();
-                packageRoot = new DefaultMutableTreeNode(corePackage);
-                for (WeaponCSVEntry entry : entryFolder.getValue()) {
-                    MutableTreeNode entryNode = new DefaultMutableTreeNode(entry);
-                    packageRoot.add(entryNode);
-                    nodeCount++;
-                }
-            } else {
-                GameDataPackage modPackage = settings.getPackage(folderName);
-                packageRoot = new DefaultMutableTreeNode(modPackage);
-
-                for (WeaponCSVEntry entry : entryFolder.getValue()) {
-                    MutableTreeNode entryNode = new DefaultMutableTreeNode(entry);
-                    packageRoot.add(entryNode);
-                    nodeCount++;
-                }
-            }
-
-            DefaultMutableTreeNode rootNode = getRootNode();
-            rootNode.add(packageRoot);
-        }
-        log.info("Total {} {} entry nodes shown.", nodeCount, getEntryTypeName());
-        setLoadedStatus();
-    }
-
-    @Override
     protected String getTooltipForEntry(Object entry) {
-        if (entry instanceof WeaponCSVEntry weaponEntry) {
-            String dragHint = "(Double-click or drag to load as weapon layer)";
-            return weaponEntry.getMultilineTooltip(dragHint);
+        if (entry instanceof IndexedFile file) {
+            String dragHint = "(Double-click or drag to load weapon sprite)";
+            WeaponCSVEntry weaponEntry = SettingsManager.getGameData().getAllWeaponEntries().get(file.getEntityId());
+            String displayName = weaponEntry != null ? weaponEntry.toString() : "Weapon ID: " + file.getEntityId();
+            return displayName + "\n" + dragHint;
+        } else if (entry instanceof GameDataPackage dataPackage) {
+            return DataTreePanel.getTooltipForPackage(dataPackage);
         }
-        return super.getTooltipForEntry(entry);
+        return null;
     }
 
-    @Override
-    protected void updateEntryPanel(WeaponCSVEntry selected) {
-        JPanel rightPanel = getRightPanel();
-        rightPanel.removeAll();
+    private void updateEntryPanel(WeaponCSVEntry selected) {
+        JPanel infoPanel = getLeftInfoPanel();
+        infoPanel.removeAll();
+        infoPanel.setLayout(new javax.swing.BoxLayout(infoPanel, javax.swing.BoxLayout.Y_AXIS));
+        ComponentUtilities.InfoPanelBuilder builder = new ComponentUtilities.InfoPanelBuilder("Weapon Info");
+        builder.addSpritePreview(selected.getWeaponImage());
 
-        GridBagConstraints constraints = DataTreePanel.getDefaultConstraints();
-        constraints.gridy = 0;
-        constraints.insets = new Insets(0, 5, 0, 5);
-        Sprite sprite = selected.getWeaponImage();
-        if (sprite != null) {
-            String tooltip = Utility.getTooltipForSprite(sprite);
-            JLabel spriteIcon = ComponentUtilities.createIconFromImage(sprite.getImage(), tooltip, 128);
-            JPanel iconPanel = new JPanel();
-            iconPanel.add(spriteIcon);
-            rightPanel.add(iconPanel, constraints);
+        javax.swing.JTextArea nameLabel = ComponentUtilities.createWrappingLabel("Weapon name: " + selected.toString());
+        builder.addCustomComponent(nameLabel);
+
+        shipeditor.representation.weapon.WeaponEnums.WeaponSize size = selected.getSize();
+        if (size != null) {
+            javax.swing.JTextArea sizeLabel = ComponentUtilities.createWrappingLabel("Weapon size: " + size.getDisplayedName());
+            builder.addCustomComponent(sizeLabel);
         }
-
-        JPanel specFilePanel = new JPanel();
-        specFilePanel.setLayout(new FlowLayout(FlowLayout.LEADING, 0, 0));
-
-        ComponentUtilities.outfitPanelWithTitle(specFilePanel, new Insets(1, 0, 0, 0),
-                "Weapon Info");
-        specFilePanel.setAlignmentX(LEFT_ALIGNMENT);
-
-        JPanel labelContainer = new JPanel();
-        labelContainer.setAlignmentX(LEFT_ALIGNMENT);
-        labelContainer.setBorder(new EmptyBorder(2, 0, 0, 0));
-        labelContainer.setLayout(new BoxLayout(labelContainer, BoxLayout.PAGE_AXIS));
 
         WeaponSpecFile specFile = selected.getSpecFile();
-        labelContainer.add(WeaponsTreePanel.createWeaponFileLabel(specFile));
-
+        builder.addWrappingPathLabel("Weapon file: ", specFile.getWeaponSpecFilePath());
         var projectileSpecFile = GameDataRepository.getProjectileByID(specFile.getProjectileSpecId());
         if (projectileSpecFile != null) {
-            labelContainer.add(Box.createVerticalStrut(2));
-            labelContainer.add(WeaponsTreePanel.createProjectileFileLabel(projectileSpecFile));
+            builder.addWrappingPathLabel("Projectile file: ", projectileSpecFile.getProjectileSpecFilePath());
         }
-
         WeaponSprites sprites = selected.getSprites();
-        WeaponsTreePanel.populateSpriteFileLabels(labelContainer, sprites);
-
-        labelContainer.add(Box.createVerticalStrut(4));
-        labelContainer.add(WeaponsTreePanel.createInstallableSlotsLabel(selected));
-
-        specFilePanel.add(labelContainer);
-        constraints.gridy = 1;
-        rightPanel.add(specFilePanel, constraints);
-
-        createRightPanelDataTable(selected);
-
+        populateSpriteFileLabels(builder, sprites);
+        builder.addCustomComponent(createInstallableSlotsLabel(selected));
+        infoPanel.add(builder.getPanel());
+        infoPanel.add(javax.swing.Box.createVerticalStrut(20));
+        
         FeaturesOverseer.setWeaponForInstall(selected);
+        infoPanel.revalidate();
+        infoPanel.repaint();
     }
 
-    private static void populateSpriteFileLabels(JPanel labelContainer, WeaponSprites sprites) {
-        Sprite turretSprite = sprites.getTurretSprite();
-        WeaponsTreePanel.addSpriteLabel(labelContainer, turretSprite, "Turret sprite: ");
-        Sprite turretGunSprite = sprites.getTurretGunSprite();
-        WeaponsTreePanel.addSpriteLabel(labelContainer, turretGunSprite, "Turret gun sprite: ");
-        Sprite turretGlowSprite = sprites.getTurretGlowSprite();
-        WeaponsTreePanel.addSpriteLabel(labelContainer, turretGlowSprite, "Turret glow sprite: ");
-        Sprite turretUnderSprite = sprites.getTurretUnderSprite();
-        WeaponsTreePanel.addSpriteLabel(labelContainer, turretUnderSprite, "Turret under sprite: ");
-
-        Sprite hardpointSprite = sprites.getHardpointSprite();
-        WeaponsTreePanel.addSpriteLabel(labelContainer, hardpointSprite, "Hardpoint sprite: ");
-        Sprite hardpointGunSprite = sprites.getHardpointGunSprite();
-        WeaponsTreePanel.addSpriteLabel(labelContainer, hardpointGunSprite, "Hardpoint gun sprite: ");
-        Sprite hardpointGlowSprite = sprites.getHardpointGlowSprite();
-        WeaponsTreePanel.addSpriteLabel(labelContainer, hardpointGlowSprite, "Hardpoint glow sprite: ");
-        Sprite hardpointUnderSprite = sprites.getHardpointUnderSprite();
-        WeaponsTreePanel.addSpriteLabel(labelContainer, hardpointUnderSprite, "Hardpoint under sprite: ");
+    private static void populateSpriteFileLabels(ComponentUtilities.InfoPanelBuilder builder, WeaponSprites sprites) {
+        addSpriteLabel(builder, sprites.getTurretSprite(), "Turret sprite: ");
+        addSpriteLabel(builder, sprites.getTurretGunSprite(), "Turret gun sprite: ");
+        addSpriteLabel(builder, sprites.getTurretGlowSprite(), "Turret glow sprite: ");
+        addSpriteLabel(builder, sprites.getTurretUnderSprite(), "Turret under sprite: ");
+        addSpriteLabel(builder, sprites.getHardpointSprite(), "Hardpoint sprite: ");
+        addSpriteLabel(builder, sprites.getHardpointGunSprite(), "Hardpoint gun sprite: ");
+        addSpriteLabel(builder, sprites.getHardpointGlowSprite(), "Hardpoint glow sprite: ");
+        addSpriteLabel(builder, sprites.getHardpointUnderSprite(), "Hardpoint under sprite: ");
     }
 
-    private static void addSpriteLabel(JPanel labelContainer, Sprite sprite, String description) {
+    private static void addSpriteLabel(ComponentUtilities.InfoPanelBuilder builder, Sprite sprite, String description) {
         if (sprite != null) {
-            JLabel label = ComponentUtilities.createFileLabel(sprite.getPath(), description);
-            labelContainer.add(Box.createVerticalStrut(2));
-            labelContainer.add(label);
+            builder.addWrappingPathLabel(description, sprite.getPath());
         }
-    }
-
-    private static JLabel createWeaponFileLabel(WeaponSpecFile weaponSpecFile) {
-        Path weaponSpecFilePath = weaponSpecFile.getWeaponSpecFilePath();
-        return ComponentUtilities.createFileLabel(weaponSpecFilePath, "Weapon file : ");
-    }
-
-    private static JLabel createProjectileFileLabel(ProjectileSpecFile projectileSpecFile) {
-        Path projectileSpecFilePath = projectileSpecFile.getProjectileSpecFilePath();
-        return ComponentUtilities.createFileLabel(projectileSpecFilePath, "Projectile file : ");
     }
 
     private static JLabel createInstallableSlotsLabel(WeaponCSVEntry weapon) {
@@ -365,7 +313,6 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
         if (type == WeaponType.COMPOSITE || type == WeaponType.BALLISTIC || type == WeaponType.MISSILE) {
             installableIn.add("Composite");
         }
-        
         String text = installableIn.isEmpty() ? "Installable in slots: None" : "Installable in slots: " + String.join(", ", installableIn);
         return new JLabel(text);
     }
@@ -374,7 +321,7 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
     JPopupMenu getContextMenu() {
         JPopupMenu menu = super.getContextMenu();
         DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-        if (cachedSelectForMenu.getUserObject() instanceof WeaponCSVEntry) {
+        if (cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof IndexedFile) {
             JMenuItem loadAsLayer = new JMenuItem("Load as weapon layer");
             loadAsLayer.addActionListener(new LoadWeaponLayerFromTree());
             menu.insert(loadAsLayer, 0);
@@ -387,72 +334,70 @@ public class WeaponsTreePanel extends CSVDataTreePanel<WeaponCSVEntry>{
         @Override
         public boolean isEnabled() {
             DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-            return super.isEnabled() && cachedSelectForMenu.getUserObject() instanceof WeaponCSVEntry;
+            return super.isEnabled() && cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof IndexedFile;
         }
         @Override
         public void actionPerformed(ActionEvent e) {
             DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-            if (cachedSelectForMenu.getUserObject() instanceof WeaponCSVEntry checked) {
-                checked.loadLayerFromEntry();
+            if (cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof IndexedFile checked) {
+                WeaponCSVEntry entry = SettingsManager.getGameData().getAllWeaponEntries().get(checked.getEntityId());
+                if (entry != null) {
+                    entry.loadLayerFromEntry();
+                }
             }
         }
     }
 
     @Override
-    protected WeaponCSVEntry getObjectFromNode(DefaultMutableTreeNode node) {
-        Object userObject = node.getUserObject();
-        if (!(userObject instanceof WeaponCSVEntry checked)) return null;
-        return checked;
-    }
-
-    @Override
-    protected Class<?> getEntryClass() {
-        return WeaponCSVEntry.class;
-    }
-
-    @Override
-    protected void initTreePanelListeners(JPanel passedTreePanel) {
-        super.initTreePanelListeners(passedTreePanel);
-        getTree().addMouseListener(new DoubleClickLayerLoader());
+    protected void openEntryPath(shipeditor.components.ComponentEnums.OpenDataTarget target) {
+        DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
+        if (cachedSelectForMenu == null || !(cachedSelectForMenu.getUserObject() instanceof IndexedFile checked))
+            return;
+        Path toOpen = checked.getFilePath();
+        if (target == shipeditor.components.ComponentEnums.OpenDataTarget.CONTAINER && toOpen != null) {
+            toOpen = toOpen.getParent();
+        }
+        if (toOpen != null) {
+            FileUtilities.openPathInDesktop(toOpen);
+        }
     }
 
     private class DoubleClickLayerLoader extends java.awt.event.MouseAdapter {
-        @SuppressWarnings("ChainOfInstanceofChecks")
         @Override
-        public void mouseClicked(java.awt.event.MouseEvent e) {
-            if (e.getButton() != java.awt.event.MouseEvent.BUTTON1 || e.getClickCount() < 2) return;
+        public void mousePressed(java.awt.event.MouseEvent e) {
             JTree tree = getTree();
             java.awt.Point eventPoint = e.getPoint();
             TreePath pathForLocation = tree.getPathForLocation(eventPoint.x, eventPoint.y);
             if (pathForLocation == null) return;
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) pathForLocation.getLastPathComponent();
-            if (node.getUserObject() instanceof WeaponCSVEntry checked) {
-                checked.loadLayerFromEntry();
+            if (node.getUserObject() instanceof IndexedFile checked) {
+                WeaponCSVEntry entry = SettingsManager.getGameData().getAllWeaponEntries().get(checked.getEntityId());
+                if (entry != null) {
+                    if (e.getButton() == java.awt.event.MouseEvent.BUTTON1 && e.getClickCount() == 2) {
+                        entry.loadLayerFromEntry();
+                    } else {
+                        // Async info panel: load sprite off EDT, then update UI
+                        JPanel infoPanel = getLeftInfoPanel();
+                        infoPanel.removeAll();
+                        infoPanel.add(new JLabel("Loading..."));
+                        infoPanel.revalidate();
+                        infoPanel.repaint();
+
+                        java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                            entry.getWeaponImage(); // pre-load sprite off EDT
+                            return entry;
+                        }).thenAccept(loaded -> javax.swing.SwingUtilities.invokeLater(() -> updateEntryPanel(loaded)));
+                    }
+                }
             }
         }
     }
 
     private static class SearchFieldDocumentListener implements DocumentListener {
         private final javax.swing.Timer timer;
-
-        SearchFieldDocumentListener(javax.swing.Timer timer) {
-            this.timer = timer;
-        }
-
-        @Override
-        public void insertUpdate(DocumentEvent e) {
-            timer.restart();
-        }
-
-        @Override
-        public void removeUpdate(DocumentEvent e) {
-            timer.restart();
-        }
-
-        @Override
-        public void changedUpdate(DocumentEvent e) {
-            timer.restart();
-        }
+        SearchFieldDocumentListener(javax.swing.Timer timer) { this.timer = timer; }
+        @Override public void insertUpdate(DocumentEvent e) { timer.restart(); }
+        @Override public void removeUpdate(DocumentEvent e) { timer.restart(); }
+        @Override public void changedUpdate(DocumentEvent e) { timer.restart(); }
     }
-
 }

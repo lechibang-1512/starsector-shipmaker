@@ -2,6 +2,9 @@ package shipeditor.utility.graphics.opengl;
 
 import org.joml.Matrix4f;
 
+/**
+ * Core interface for any visual component or layer painter rendered inside the LWJGL/AWTGLCanvas viewer context.
+ */
 public interface OpenGLPainter {
     /**
      * Called during the render loop.

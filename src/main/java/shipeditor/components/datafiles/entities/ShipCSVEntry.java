@@ -206,7 +206,19 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
         if (activeSkinSpecFile != null && !activeSkinSpecFile.isBase()) {
             return activeSkinSpecFile.getHullName();
         }
-        return rowData.get(StringConstants.NAME);
+        String name = rowData.get(StringConstants.NAME);
+        return name != null ? name : "";
+    }
+
+    public String getShipDesignation() {
+        if (activeSkinSpecFile != null && !activeSkinSpecFile.isBase()) {
+            String skinDesignation = activeSkinSpecFile.getHullDesignation();
+            if (skinDesignation != null && !skinDesignation.isEmpty()) {
+                return skinDesignation;
+            }
+        }
+        String designation = rowData.get(StringConstants.DESIGNATION);
+        return designation != null ? designation : "";
     }
 
     public int getTotalOPWithSkin() {
@@ -316,10 +328,10 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
     @Override
     public String toString() {
         String displayedName = rowData.get(StringConstants.NAME);
-        if (displayedName.isEmpty()) {
+        if (displayedName == null || displayedName.isEmpty()) {
             displayedName = rowData.get(StringConstants.DESIGNATION);
         }
-        return displayedName;
+        return displayedName != null ? displayedName : "Unknown Ship";
     }
 
     @SuppressWarnings("MethodWithMultipleReturnPoints")

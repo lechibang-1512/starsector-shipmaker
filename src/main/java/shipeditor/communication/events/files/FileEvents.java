@@ -24,10 +24,6 @@ public class FileEvents {
 
     }
 
-    public static record HullTreeEntryCleared() implements BusEvent {
-
-    }
-
     public static record HullmodDataSet() implements BusEvent {
 
     }

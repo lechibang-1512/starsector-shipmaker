@@ -33,6 +33,21 @@ public class ArticleTreePanel extends DataTreePanel {
     }
 
     @Override
+    protected List<DefaultMutableTreeNode> buildTreeNodesBackground() {
+        return java.util.Collections.emptyList();
+    }
+
+    @Override
+    protected boolean isDataLoaded() {
+        return true;
+    }
+
+    @Override
+    protected javax.swing.Action getLoadDataAction() {
+        return null;
+    }
+
+    @Override
     protected JPanel createTopPanel() {
         return null;
     }
@@ -61,7 +76,7 @@ public class ArticleTreePanel extends DataTreePanel {
     }
 
     private void updateEntryPanel(HelpArticle selected) {
-        JPanel rightPanel = getRightPanel();
+        JPanel rightPanel = getConsolePanel();
         rightPanel.removeAll();
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.PAGE_AXIS));
 

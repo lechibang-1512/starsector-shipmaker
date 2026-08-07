@@ -38,8 +38,25 @@ abstract class AbstractStylesPanel extends JPanel {
         JScrollBar verticalScrollBar = scroller.getVerticalScrollBar();
         verticalScrollBar.setUnitIncrement(12);
         this.add(scroller, BorderLayout.CENTER);
+        this.addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & java.awt.event.HierarchyEvent.SHOWING_CHANGED) != 0) {
+                if (this.isShowing()) {
+                    if (!this.isDataLoaded() && !shipeditor.parsing.loading.FileLoading.isLoadingInProgress()) {
+                        javax.swing.Action loadAction = this.getLoadDataAction();
+                        if (loadAction != null) {
+                            loadAction.actionPerformed(null);
+                        }
+                    }
+                }
+            }
+        });
+
         this.initListeners();
     }
+
+    protected abstract boolean isDataLoaded();
+
+    protected abstract javax.swing.Action getLoadDataAction();
 
     protected abstract JPanel createTopPanel();
 

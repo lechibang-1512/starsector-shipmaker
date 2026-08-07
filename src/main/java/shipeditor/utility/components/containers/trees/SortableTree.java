@@ -33,7 +33,10 @@ public abstract class SortableTree extends JTree {
     @SuppressWarnings("TransientFieldNotInitialized")
     private final transient DragSourceListener listener = new NodeDragSourceListener();
 
-    SortableTree(DefaultMutableTreeNode root) {}
+    SortableTree(DefaultMutableTreeNode root) {
+        super(root);
+        setToggleClickCount(1);
+    }
 
     @Override
     public void updateUI() {
@@ -45,6 +48,11 @@ public abstract class SortableTree extends JTree {
         if (Objects.isNull(treeDropTarget)) {
             treeDropTarget = new DropTarget(this, new NodeDropTargetListener());
         }
+    }
+
+    @Override
+    protected boolean removeDescendantSelectedPaths(TreePath path, boolean includePath) {
+        return false;
     }
 
     /**

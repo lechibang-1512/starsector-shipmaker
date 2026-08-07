@@ -86,6 +86,7 @@ public class DataTreeTableBuilder {
                 return tip;
             }
         };
+        table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
         return new JScrollPane(table);
     }
 

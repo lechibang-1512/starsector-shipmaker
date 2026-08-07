@@ -14,6 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+
+import shipeditor.persistence.SettingsManager;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Handles all SQLite queries, indexing operations, and lookups.
@@ -25,8 +30,23 @@ import java.util.concurrent.CompletableFuture;
 public final class DatabaseQueryService {
 
     public record FileInfo(long lastModified, String fileHash) {}
+    public record FileDbInfo(long lastModified, String fileHash, UUID uuid) {}
+
+    private static boolean isModActive(String modId) {
+        return SettingsManager.isModActive(modId);
+    }
+
+    private static final Map<String, List<IndexedFile>> typeCache = new ConcurrentHashMap<>();
 
     private DatabaseQueryService() {}
+
+    /**
+     * Clears the in-memory type query cache. Must be called after any indexing
+     * operation completes or when the active mod list changes.
+     */
+    public static void clearTypeCache() {
+        typeCache.clear();
+    }
 
     // --- Synchronous Modifications (Used by Background Scanner) ---
 
@@ -53,26 +73,49 @@ public final class DatabaseQueryService {
         }
     }
 
-    public static void deleteMod(String id) {
-        String sql = "DELETE FROM mods WHERE id = ?;";
+    public static void ensureModExists(String id, String name, String folderPath) {
+        String sql = """
+            INSERT INTO mods (id, name, folder_path, last_scanned)
+            VALUES (?, ?, ?, 0)
+            ON CONFLICT(id) DO NOTHING;
+            """;
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
+            pstmt.setString(2, name);
+            pstmt.setString(3, folderPath);
             pstmt.executeUpdate();
+        } catch (SQLException e) {
+            log.error("Failed to ensure mod exists: {}", id, e);
+        }
+    }
+
+    public static void deleteMod(String id) {
+        String deleteFilesSql = "DELETE FROM indexed_files WHERE mod_id = ?;";
+        String sql = "DELETE FROM mods WHERE id = ?;";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt1 = conn.prepareStatement(deleteFilesSql);
+             PreparedStatement pstmt2 = conn.prepareStatement(sql)) {
+            pstmt1.setString(1, id);
+            pstmt1.executeUpdate();
+            pstmt2.setString(1, id);
+            pstmt2.executeUpdate();
             log.info("Deleted mod package from database: {}", id);
         } catch (SQLException e) {
             log.error("Failed to delete mod: {}", id, e);
         }
     }
 
-    public static Map<String, Long> getScannedModsMap() {
-        Map<String, Long> mods = new HashMap<>();
-        String sql = "SELECT id, last_scanned FROM mods;";
+    public record ModInfo(long lastScanned, String folderPath) {}
+
+    public static Map<String, ModInfo> getScannedModsMap() {
+        Map<String, ModInfo> mods = new HashMap<>();
+        String sql = "SELECT id, last_scanned, folder_path FROM mods;";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
-                mods.put(rs.getString("id"), rs.getLong("last_scanned"));
+                mods.put(rs.getString("id"), new ModInfo(rs.getLong("last_scanned"), rs.getString("folder_path")));
             }
         } catch (SQLException e) {
             log.error("Failed to query mods list", e);
@@ -80,10 +123,10 @@ public final class DatabaseQueryService {
         return mods;
     }
 
-    public static void upsertIndexedFile(IndexedFile file) {
-        String sql = """
-            INSERT INTO indexed_files (uuid, mod_id, entity_id, entity_name, entity_type, file_name, file_path, last_modified, parsed_data, file_hash)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    public static void upsertFiles(List<IndexedFile> files) {
+        String query = """
+            INSERT INTO indexed_files (uuid, mod_id, entity_id, entity_name, entity_type, file_name, file_path, last_modified, file_hash, sprite_path, designation, metadata_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(uuid) DO UPDATE SET
                 mod_id = excluded.mod_id,
                 entity_id = excluded.entity_id,
@@ -92,26 +135,36 @@ public final class DatabaseQueryService {
                 file_name = excluded.file_name,
                 file_path = excluded.file_path,
                 last_modified = excluded.last_modified,
-                parsed_data = excluded.parsed_data,
-                file_hash = excluded.file_hash;
+                file_hash = excluded.file_hash,
+                sprite_path = excluded.sprite_path,
+                designation = excluded.designation,
+                metadata_json = excluded.metadata_json;
             """;
 
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, file.getUuid().toString());
-            pstmt.setString(2, file.getModId());
-            pstmt.setString(3, file.getEntityId());
-            pstmt.setString(4, file.getEntityName());
-            pstmt.setString(5, file.getEntityType());
-            pstmt.setString(6, file.getFileName());
-            pstmt.setString(7, file.getFilePath().toAbsolutePath().toString());
-            pstmt.setLong(8, file.getLastModified());
-            pstmt.setString(9, file.getParsedData());
-            pstmt.setString(10, file.getFileHash());
-            pstmt.executeUpdate();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            
+            conn.setAutoCommit(false);
+            
+            for (IndexedFile file : files) {
+                pstmt.setString(1, file.getUuid().toString());
+                pstmt.setString(2, file.getModId());
+                pstmt.setString(3, file.getEntityId());
+                pstmt.setString(4, file.getEntityName());
+                pstmt.setString(5, file.getEntityType());
+                pstmt.setString(6, file.getFileName());
+                pstmt.setString(7, file.getFilePath().toString());
+                pstmt.setLong(8, file.getLastModified());
+                pstmt.setString(9, file.getFileHash());
+                pstmt.setString(10, file.getSpritePath());
+                pstmt.setString(11, file.getDesignation());
+                pstmt.setString(12, file.getMetadataJson());
+                pstmt.addBatch();
+            }
+            pstmt.executeBatch();
+            conn.commit();
         } catch (SQLException e) {
-            log.error("Failed to upsert indexed file: {}", file.getFilePath(), e);
+            log.error("Failed to upsert indexed files", e);
         }
     }
 
@@ -140,7 +193,6 @@ public final class DatabaseQueryService {
             }
             return;
         }
-
         java.util.Set<String> activeSet = new java.util.HashSet<>(activePaths);
         List<String> toDelete = new ArrayList<>();
 
@@ -182,12 +234,39 @@ public final class DatabaseQueryService {
 
     // --- Synchronous Lookups (Used by GameDataRepository) ---
 
+    private static List<String> getActiveModIds() {
+        List<String> activeIds = new ArrayList<>();
+        Map<String, ModInfo> allMods = getScannedModsMap();
+        for (String modId : allMods.keySet()) {
+            if (!"starsector-core".equals(modId) && isModActive(modId)) {
+                activeIds.add(modId);
+            }
+        }
+        return activeIds;
+    }
+
     public static String getFileNameForEntity(String entityId, String type) {
-        String sql = "SELECT file_name FROM indexed_files WHERE entity_id = ? AND entity_type = ? LIMIT 1;";
+        IndexedFile coreFile = CoreIndexManager.getFileByEntityId(entityId, type);
+        if (coreFile != null) return coreFile.getFileName();
+
+        List<String> activeMods = getActiveModIds();
+        if (activeMods.isEmpty()) return "";
+
+        StringBuilder sql = new StringBuilder("SELECT file_name FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
+        for (int i = 0; i < activeMods.size(); i++) {
+            sql.append(i == 0 ? "?" : ",?");
+        }
+        sql.append(") LIMIT 1;");
+
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            
             pstmt.setString(1, entityId);
             pstmt.setString(2, type);
+            for (int i = 0; i < activeMods.size(); i++) {
+                pstmt.setString(3 + i, activeMods.get(i));
+            }
+            
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getString("file_name");
@@ -200,12 +279,27 @@ public final class DatabaseQueryService {
     }
 
     public static Path getFilePathForEntity(String entityId, String type) {
-        String sql = "SELECT file_path FROM indexed_files WHERE entity_id = ? AND entity_type = ? LIMIT 1;";
+        IndexedFile coreFile = CoreIndexManager.getFileByEntityId(entityId, type);
+        if (coreFile != null) return coreFile.getFilePath();
+
+        List<String> activeMods = getActiveModIds();
+        if (activeMods.isEmpty()) return null;
+
+        StringBuilder sql = new StringBuilder("SELECT file_path FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
+        for (int i = 0; i < activeMods.size(); i++) {
+            sql.append(i == 0 ? "?" : ",?");
+        }
+        sql.append(") LIMIT 1;");
+
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
             pstmt.setString(1, entityId);
             pstmt.setString(2, type);
+            for (int i = 0; i < activeMods.size(); i++) {
+                pstmt.setString(3 + i, activeMods.get(i));
+            }
+
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return Path.of(rs.getString("file_path"));
@@ -218,6 +312,9 @@ public final class DatabaseQueryService {
     }
 
     public static IndexedFile getFileByPath(String path) {
+        IndexedFile coreFile = CoreIndexManager.getFileByPath(path);
+        if (coreFile != null) return coreFile;
+
         String sql = "SELECT * FROM indexed_files WHERE file_path = ? LIMIT 1;";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -267,25 +364,68 @@ public final class DatabaseQueryService {
         return uuidMap;
     }
 
+    public static Map<String, FileDbInfo> getFilesDbInfoMap(Connection conn, String modId) {
+        Map<String, FileDbInfo> fileMap = new HashMap<>();
+        String sql = "SELECT file_path, last_modified, file_hash, uuid FROM indexed_files WHERE mod_id = ?;";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, modId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    fileMap.put(rs.getString("file_path"), new FileDbInfo(
+                        rs.getLong("last_modified"),
+                        rs.getString("file_hash"),
+                        UUID.fromString(rs.getString("uuid"))
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Failed to query files DB info for mod: {}", modId, e);
+        }
+        return fileMap;
+    }
+
     // --- Synchronous Lookups (Used by loading actions) ---
 
     /**
      * Returns all indexed files of a given type across all mods.
+     * Results are cached in memory after the first query; call {@link #clearTypeCache()}
+     * after re-indexing to refresh.
      */
     public static List<IndexedFile> getFilesByType(String type) {
-        List<IndexedFile> results = new ArrayList<>();
-        String sql = "SELECT * FROM indexed_files WHERE entity_type = ? ORDER BY mod_id ASC, entity_id ASC;";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, type);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    results.add(mapRowToIndexedFile(rs));
-                }
-            }
-        } catch (SQLException e) {
-            log.error("Failed to query files by type: {}", type, e);
+        List<IndexedFile> cached = typeCache.get(type);
+        if (cached != null) {
+            return cached;
         }
+
+        List<IndexedFile> results = new ArrayList<>(CoreIndexManager.getFilesByType(type));
+
+        List<String> activeMods = getActiveModIds();
+        if (!activeMods.isEmpty()) {
+            StringBuilder sql = new StringBuilder("SELECT * FROM indexed_files WHERE entity_type = ? AND mod_id IN (");
+            for (int i = 0; i < activeMods.size(); i++) {
+                sql.append(i == 0 ? "?" : ",?");
+            }
+            sql.append(") ORDER BY mod_id ASC, entity_id ASC;");
+
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+                pstmt.setString(1, type);
+                for (int i = 0; i < activeMods.size(); i++) {
+                    pstmt.setString(2 + i, activeMods.get(i));
+                }
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        results.add(mapRowToIndexedFile(rs));
+                    }
+                }
+            } catch (SQLException e) {
+                log.error("Failed to query files by type: {}", type, e);
+            }
+        }
+
+        typeCache.put(type, results);
         return results;
     }
 
@@ -302,45 +442,55 @@ public final class DatabaseQueryService {
 
     // --- Asynchronous Lookups (Used by UI for instant rendering) ---
 
-    public static CompletableFuture<List<IndexedFile>> getFilesByTypeAsync(String type) {
-        return CompletableFuture.supplyAsync(() -> {
-            List<IndexedFile> results = new ArrayList<>();
-            String sql = "SELECT * FROM indexed_files WHERE entity_type = ? ORDER BY entity_id ASC;";
-            try (Connection conn = DatabaseManager.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-                pstmt.setString(1, type);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    while (rs.next()) {
-                        results.add(mapRowToIndexedFile(rs));
-                    }
+
+    public static CompletableFuture<List<IndexedFile>> getFilesByTypeAsync(String type) {
+        return CompletableFuture.supplyAsync(() -> getFilesByType(type));
+    }
+
+    public static List<IndexedFile> getFilesByModAndType(String modId, String type) {
+        if ("starsector-core".equals(modId)) {
+            return CoreIndexManager.getFilesByType(type);
+        }
+        if (!isModActive(modId)) return new ArrayList<>();
+
+        List<IndexedFile> results = new ArrayList<>();
+        String sql = "SELECT * FROM indexed_files WHERE mod_id = ? AND entity_type = ? ORDER BY entity_id ASC;";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, modId);
+            pstmt.setString(2, type);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    results.add(mapRowToIndexedFile(rs));
                 }
-            } catch (SQLException e) {
-                log.error("Failed to query files by type: {}", type, e);
             }
-            return results;
-        });
+        } catch (SQLException e) {
+            log.error("Failed to query files by mod and type: {}, {}", modId, type, e);
+        }
+        return results;
     }
 
     public static CompletableFuture<List<IndexedFile>> getFilesByModAndTypeAsync(String modId, String type) {
-        return CompletableFuture.supplyAsync(() -> {
-            List<IndexedFile> results = new ArrayList<>();
-            String sql = "SELECT * FROM indexed_files WHERE mod_id = ? AND entity_type = ? ORDER BY entity_id ASC;";
-            try (Connection conn = DatabaseManager.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        return CompletableFuture.supplyAsync(() -> getFilesByModAndType(modId, type));
+    }
 
-                pstmt.setString(1, modId);
-                pstmt.setString(2, type);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    while (rs.next()) {
-                        results.add(mapRowToIndexedFile(rs));
-                    }
+    public static List<IndexedFile> getFilesByModId(String modId) {
+        List<IndexedFile> results = new ArrayList<>();
+        String sql = "SELECT * FROM indexed_files WHERE mod_id = ? ORDER BY entity_type ASC, entity_id ASC;";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, modId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    results.add(mapRowToIndexedFile(rs));
                 }
-            } catch (SQLException e) {
-                log.error("Failed to query files by mod and type: {} ({})", modId, type, e);
             }
-            return results;
-        });
+        } catch (SQLException e) {
+            log.error("Failed to query indexed_files for mod_id: {}", modId, e);
+        }
+        return results;
     }
 
     // --- Helper Methods ---
@@ -355,9 +505,101 @@ public final class DatabaseQueryService {
                 .fileName(rs.getString("file_name"))
                 .filePath(Path.of(rs.getString("file_path")))
                 .lastModified(rs.getLong("last_modified"))
-                .parsedData(rs.getString("parsed_data"))
                 .fileHash(rs.getString("file_hash"))
+                .spritePath(rs.getString("sprite_path"))
+                .designation(rs.getString("designation"))
+                .metadataJson(rs.getString("metadata_json"))
                 .build();
     }
 
+    public static Map<String, JsonNode> getAggregatedCSVMetadata(String csvType) {
+        Map<String, JsonNode> aggregated = new HashMap<>();
+        List<IndexedFile> csvFiles = getFilesByType(csvType);
+        ObjectMapper mapper = SettingsManager.getMapperForSettingsFile();
+        
+        for (IndexedFile file : csvFiles) {
+            String json = file.getMetadataJson();
+            if (json == null || json.isEmpty()) continue;
+            
+            try {
+                JsonNode root = mapper.readTree(json);
+                if (root.isObject()) {
+                    root.fields().forEachRemaining(entry -> {
+                        // Mods loaded later in the active list will overwrite earlier ones 
+                        aggregated.put(entry.getKey(), entry.getValue());
+                    });
+                }
+            } catch (Exception e) {
+                log.error("Failed to parse metadata JSON for {}", file.getFileName(), e);
+            }
+        }
+        return aggregated;
+    }
+
+    // --- CSV Cache Operations ---
+
+    public record CsvCacheRow(String csvPath, String modId, long lastModified, String rowsJson) {}
+
+    public static CsvCacheRow getCsvCache(Path csvPath) {
+        String sql = "SELECT csv_path, mod_id, last_modified, rows_json FROM csv_cache WHERE csv_path = ?;";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, csvPath.toAbsolutePath().toString());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new CsvCacheRow(
+                            rs.getString("csv_path"),
+                            rs.getString("mod_id"),
+                            rs.getLong("last_modified"),
+                            rs.getString("rows_json")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Failed to query csv_cache for: {}", csvPath, e);
+        }
+        return null;
+    }
+
+    public static void upsertCsvCache(Path csvPath, String modId, long lastModified, String rowsJson) {
+        String sql = """
+                INSERT INTO csv_cache (csv_path, mod_id, last_modified, rows_json)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(csv_path) DO UPDATE SET
+                    mod_id = excluded.mod_id,
+                    last_modified = excluded.last_modified,
+                    rows_json = excluded.rows_json;
+                """;
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, csvPath.toAbsolutePath().toString());
+            pstmt.setString(2, modId);
+            pstmt.setLong(3, lastModified);
+            pstmt.setString(4, rowsJson);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            log.error("Failed to upsert csv_cache for: {}", csvPath, e);
+        }
+    }
+
+    public static void clearCsvCache() {
+        String sql = "DELETE FROM csv_cache;";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            log.error("Failed to clear csv_cache", e);
+        }
+    }
+
+    public static void deleteCsvCacheForMod(String modId) {
+        String sql = "DELETE FROM csv_cache WHERE mod_id = ?;";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, modId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            log.error("Failed to delete csv_cache for mod: {}", modId, e);
+        }
+    }
 }

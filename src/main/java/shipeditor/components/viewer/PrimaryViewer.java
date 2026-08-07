@@ -149,7 +149,7 @@ public final class PrimaryViewer extends JPanel implements LayerViewer {
         this.paintOrderController = new PaintOrderController(this);
 
         EventBus.publish(new ViewerGuidesToggled(true, true,
-                true, true));
+                true));
 
         glCanvas.addMouseListener(new MouseAdapter() {
             @Override

@@ -168,7 +168,22 @@ public class BoundsPanel extends AbstractShipPropertiesPanel {
         var reorderCheckbox = reorderWidget.getSecond();
         registerWidgetListeners(reorderCheckbox, layerPainter -> reorderCheckbox.setEnabled(false),
                 layerPainter -> reorderCheckbox.setEnabled(true));
-        centerContainer.add(reorderWidget.getFirst(), BorderLayout.PAGE_START);
+        
+        JPanel listHeaderPanel = new JPanel(new BorderLayout());
+        listHeaderPanel.add(reorderWidget.getFirst(), BorderLayout.WEST);
+
+        javax.swing.JButton autoGenBtn = new javax.swing.JButton("Auto-Generate");
+        autoGenBtn.setToolTipText("Automatically generate collision bounds based on the sprite's opaque pixels.");
+        autoGenBtn.addActionListener(e -> autoGenerateBounds());
+        registerWidgetListeners(autoGenBtn, 
+                layerPainter -> autoGenBtn.setEnabled(false),
+                layerPainter -> {
+                    boolean hasSprite = layerPainter instanceof ShipPainter shipPainter && shipPainter.getSprite() != null && shipPainter.getSprite().getImage() != null;
+                    autoGenBtn.setEnabled(hasSprite);
+                });
+        listHeaderPanel.add(autoGenBtn, BorderLayout.EAST);
+
+        centerContainer.add(listHeaderPanel, BorderLayout.PAGE_START);
 
         centerContainer.add(scrollableContainer, BorderLayout.CENTER);
 
@@ -221,6 +236,32 @@ public class BoundsPanel extends AbstractShipPropertiesPanel {
 
     private PointLocationWidget createSelectedBoundLocationWidget() {
         return new BoundLocationWidget(this);
+    }
+
+    private void autoGenerateBounds() {
+        LayerPainter layerPainter = getCachedLayerPainter();
+        if (!(layerPainter instanceof ShipPainter shipPainter)) return;
+        
+        java.awt.image.BufferedImage image = shipPainter.getSprite().getImage();
+        if (image == null) return;
+
+        java.awt.geom.Point2D centerOffset = shipPainter.getCenterPointPainter().getCenterPoint().getPosition();
+        java.util.List<java.awt.geom.Point2D> generatedPoints = shipeditor.utility.graphics.CollisionHullGenerator.generateBounds(image, centerOffset);
+        
+        if (generatedPoints.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Could not generate bounds. Sprite might be completely transparent.", "Warning", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        BoundPointsPainter boundsPainter = shipPainter.getBoundsPainter();
+        java.util.List<BoundPoint> oldBounds = new java.util.ArrayList<>(boundsPainter.getPointsIndex());
+        
+        java.util.List<BoundPoint> newBounds = new java.util.ArrayList<>();
+        for (java.awt.geom.Point2D point : generatedPoints) {
+            newBounds.add(new BoundPoint(point, shipPainter));
+        }
+
+        shipeditor.undo.EditDispatch.postBoundsReplaced(boundsPainter, oldBounds, newBounds);
     }
 
 }

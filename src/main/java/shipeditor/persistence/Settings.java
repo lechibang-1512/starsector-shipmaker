@@ -62,6 +62,21 @@ public class Settings {
     @JsonProperty("windowMaximized")
     boolean windowMaximized;
 
+    @JsonProperty("promptForModsAtStart")
+    boolean promptForModsAtStart = true;
+
+    @JsonProperty("blacklistedMods")
+    private List<String> blacklistedMods = new ArrayList<>(List.of(
+            "magiclib",
+            "lazylib",
+            "graphicslib",
+            "lunalib",
+            "console commands",
+            "lw_lazylib",
+            "lw_console",
+            "shaderlib"
+    ));
+
     @JsonProperty("dataPackages")
     private List<GameDataPackage> dataPackages = new ArrayList<>();
 
@@ -117,19 +132,29 @@ public class Settings {
         SettingsManager.updateFileFromRuntime();
     }
 
+    public void setPromptForModsAtStart(boolean promptForMods) {
+        this.promptForModsAtStart = promptForMods;
+        SettingsManager.updateFileFromRuntime();
+    }
+
     public void setNumericSuffixesForSlots(boolean numericSuffixes) {
         this.numericSuffixesForSlots = numericSuffixes;
         SettingsManager.updateFileFromRuntime();
     }
 
-    void addDataPackage(Path folder) {
+    public void setBlacklistedMods(List<String> blacklistedMods) {
+        this.blacklistedMods = blacklistedMods;
+        SettingsManager.updateFileFromRuntime();
+    }
+
+    public void addDataPackage(Path folder) {
         Path fileNamePath = folder.getFileName();
         if (fileNamePath == null) return;
         String folderName = fileNamePath.toString();
         addDataPackage(folderName);
     }
 
-    private void addDataPackage(String folderName) {
+    public void addDataPackage(String folderName) {
         if (getPackage(folderName) != null) {
             return;
         }
@@ -145,17 +170,35 @@ public class Settings {
     }
 
     public GameDataPackage getPackage(String folderName) {
-        if (dataPackages == null) return null;
+        if (dataPackages == null || folderName == null) return null;
         if (SettingsManager.isCoreFolder(folderName)) {
             return SettingsManager.getCorePackage();
         }
         for (GameDataPackage gameDataPackage : dataPackages) {
             String packageFolderName = gameDataPackage.getFolderName();
-            if (packageFolderName.equals(folderName)) {
+            if (packageFolderName != null && packageFolderName.equalsIgnoreCase(folderName)) {
                 return gameDataPackage;
             }
         }
         return null;
+    }
+
+    public void deduplicateDataPackages() {
+        if (dataPackages == null) return;
+        List<GameDataPackage> uniquePackages = new ArrayList<>();
+        List<String> seenFolderNames = new ArrayList<>();
+        for (GameDataPackage pkg : dataPackages) {
+            String folderName = pkg.getFolderName();
+            if (!seenFolderNames.contains(folderName)) {
+                seenFolderNames.add(folderName);
+                uniquePackages.add(pkg);
+            }
+        }
+        if (uniquePackages.size() != dataPackages.size()) {
+            dataPackages.clear();
+            dataPackages.addAll(uniquePackages);
+            SettingsManager.updateFileFromRuntime();
+        }
     }
 
 }

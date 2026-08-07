@@ -41,8 +41,8 @@ import java.util.Map;
 import shipeditor.utility.components.UIConstants;
 import shipeditor.communication.events.components.ComponentEvents.SelectShipDataEntry;
 import shipeditor.communication.events.components.ComponentEvents.GameDataPanelResized;
-import shipeditor.communication.events.files.FileEvents.HullTreeEntryCleared;
 import shipeditor.communication.events.files.FileEvents.HullTreeReloadQueued;
+import shipeditor.persistence.database.IndexedFile;
 
 @Log4j2
 public class HullsTreePanel extends DataTreePanel {
@@ -54,13 +54,14 @@ public class HullsTreePanel extends DataTreePanel {
     @SuppressWarnings("ChainOfInstanceofChecks")
     @Override
     protected String getTooltipForEntry(Object entry) {
-        if (entry instanceof ShipCSVEntry shipEntry) {
-
-            String dragHint = "(Double-click or drag to load as layer)";
+        if (entry instanceof IndexedFile file) {
+            String dragHint = "(Double-click or drag to load sprite)";
             if (StaticController.getEditorMode() == EditorInstrument.VARIANT_MODULES) {
                 dragHint = "(Drag to install as module)";
             }
-            return shipEntry.getMultilineTooltip(dragHint);
+            shipeditor.components.datafiles.entities.ShipCSVEntry shipEntry = SettingsManager.getGameData().getAllShipEntries().get(file.getEntityId());
+            String displayName = shipEntry != null ? shipEntry.toString() : "Hull ID: " + file.getEntityId();
+            return displayName + "\n" + dragHint;
         } else if (entry instanceof GameDataPackage dataPackage) {
             return DataTreePanel.getTooltipForPackage(dataPackage);
         }
@@ -76,13 +77,6 @@ public class HullsTreePanel extends DataTreePanel {
     private void initBusListening() {
         JTree tree = getTree();
         EventBus.subscribe(this, event -> {
-            if (event instanceof HullTreeEntryCleared) {
-                resetInfoPanel();
-                repaint();
-                tree.repaint();
-            }
-        });
-        EventBus.subscribe(this, event -> {
             if (event instanceof HullTreeReloadQueued) {
                 this.queueReload();
             }
@@ -90,9 +84,22 @@ public class HullsTreePanel extends DataTreePanel {
         EventBus.subscribe(this, event -> {
             if (event instanceof SelectShipDataEntry checked) {
                 ShipCSVEntry entry = checked.entry();
-                DefaultMutableTreeNode node = getNodeOfEntry(entry);
-                if (node != null) {
-                    TreePath path = new TreePath(node.getPath());
+                // Find node by entity ID
+                DefaultMutableTreeNode root = getRootNode();
+                DefaultMutableTreeNode foundNode = null;
+                for (int i = 0; i < root.getChildCount(); i++) {
+                    DefaultMutableTreeNode packageNode = (DefaultMutableTreeNode) root.getChildAt(i);
+                    for (int j = 0; j < packageNode.getChildCount(); j++) {
+                        DefaultMutableTreeNode shipNode = (DefaultMutableTreeNode) packageNode.getChildAt(j);
+                        if (shipNode.getUserObject() instanceof IndexedFile file && file.getEntityId().equals(entry.getHullID())) {
+                            foundNode = shipNode;
+                            break;
+                        }
+                    }
+                    if (foundNode != null) break;
+                }
+                if (foundNode != null) {
+                    TreePath path = new TreePath(foundNode.getPath());
                     tree.setSelectionPath(path);
                     tree.scrollPathToVisible(path);
                 }
@@ -100,16 +107,17 @@ public class HullsTreePanel extends DataTreePanel {
         });
     }
 
-    @SuppressWarnings("WeakerAccess")
+    private int batchGeneration;
+
+
     @Override
-    public void reload() {
-        JTree tree = getTree();
-        DefaultMutableTreeNode rootNode = getRootNode();
-        rootNode.removeAllChildren();
-        reloadHullList();
-        sortAndExpandTree();
-        repaint();
-        tree.repaint();
+    protected boolean isDataLoaded() {
+        return SettingsManager.getGameData().isShipDataLoaded();
+    }
+
+    @Override
+    protected javax.swing.Action getLoadDataAction() {
+        return new javax.swing.AbstractAction("Reload") { @Override public void actionPerformed(java.awt.event.ActionEvent e) { queueReload(); } };
     }
 
     @Override
@@ -131,7 +139,7 @@ public class HullsTreePanel extends DataTreePanel {
 
     private JTextField getSearchField() {
         JTextField searchField = new JTextField();
-        searchField.setToolTipText("Input is checked against displayed filename and base hull ID as a substring.");
+        searchField.setToolTipText("Search by ship name, hull ID, or filename.");
         javax.swing.Timer timer = new javax.swing.Timer(300, e -> {
             ShipFilterPanel.setCurrentTextFilter(searchField.getText());
             this.reload();
@@ -151,80 +159,98 @@ public class HullsTreePanel extends DataTreePanel {
             if (selectedNode == null)
                 return;
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectedNode.getLastPathComponent();
-            if (node.getUserObject() instanceof ShipCSVEntry checked) {
-                JPanel rightPanel = getRightPanel();
-                rightPanel.removeAll();
-                rightPanel.add(new javax.swing.JLabel("Loading..."));
-                rightPanel.revalidate();
-                rightPanel.repaint();
+            if (node.getUserObject() instanceof shipeditor.persistence.database.IndexedFile file) {
+                JPanel consolePanel = getConsolePanel();
+                consolePanel.removeAll();
+                consolePanel.add(new javax.swing.JLabel("Loading..."));
+                consolePanel.revalidate();
+                consolePanel.repaint();
 
-                checked.lazyLoadSpecAndSkins().thenAccept(v -> {
-                    javax.swing.SwingUtilities.invokeLater(() -> {
-                        updateEntryPanel(checked);
-                        EventBus.publish(new GameDataPanelResized(this.getMinimumSize()));
+                JPanel leftPanel = getLeftInfoPanel();
+                leftPanel.removeAll();
+                leftPanel.add(new javax.swing.JLabel("Loading..."));
+                leftPanel.revalidate();
+                leftPanel.repaint();
+
+                ShipCSVEntry checked = null;
+                var shipEntries = SettingsManager.getGameData().getAllShipEntries();
+                if (shipEntries != null) {
+                    checked = shipEntries.get(file.getEntityId());
+                }
+
+                if (checked != null) {
+                    ShipCSVEntry finalChecked = checked;
+                    checked.lazyLoadSpecAndSkins().thenAccept(v -> {
+                        javax.swing.SwingUtilities.invokeLater(() -> {
+                            updateEntryPanel(finalChecked);
+                            EventBus.publish(new GameDataPanelResized(this.getMinimumSize()));
+                        });
                     });
-                });
+                } else {
+                    resetInfoPanel();
+                }
+            } else {
+                resetInfoPanel();
             }
         });
         tree.addMouseListener(new DoubleClickLayerLoader());
     }
 
     void updateEntryPanel(ShipCSVEntry selected) {
-        JPanel rightPanel = getRightPanel();
-        rightPanel.removeAll();
-        GridBagConstraints constraints = DataTreePanel.getDefaultConstraints();
-        constraints.gridy = 1;
-        constraints.insets = new Insets(0, 5, 0, 5);
-        ShipFilesSubpanel shipFilesSubpanel = new ShipFilesSubpanel(rightPanel);
-        JPanel shipFilesPanel = shipFilesSubpanel.createShipFilesPanel(selected, this);
+        JPanel infoPanel = getLeftInfoPanel();
+        infoPanel.removeAll();
+        infoPanel.setLayout(new javax.swing.BoxLayout(infoPanel, javax.swing.BoxLayout.Y_AXIS));
 
-        rightPanel.add(shipFilesPanel, constraints);
+        ShipFilesSubpanel shipFilesSubpanel = new ShipFilesSubpanel(infoPanel);
+        JPanel shipFilesPanel = shipFilesSubpanel.createShipFilesPanel(selected, this);
+        shipFilesPanel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+
+        infoPanel.add(shipFilesPanel);
+        infoPanel.add(javax.swing.Box.createVerticalStrut(20));
 
         createRightPanelDataTable(selected);
 
-        rightPanel.revalidate();
-        rightPanel.repaint();
+        infoPanel.revalidate();
+        infoPanel.repaint();
     }
 
-    private void reloadHullList() {
-        Map<Path, List<ShipCSVEntry>> shipEntries = ShipFilterPanel.getFilteredEntries();
-
-        if (shipEntries == null || shipEntries.isEmpty())
-            return;
-
-        for (Map.Entry<Path, List<ShipCSVEntry>> hullFolder : shipEntries.entrySet()) {
-            Settings settings = SettingsManager.getSettings();
-            GameDataPackage dataPackage = settings.getPackage(hullFolder.getKey());
-            if (dataPackage == null || dataPackage.isDisabled()) {
-                continue;
-            }
-
-            DefaultMutableTreeNode packageRoot = HullsTreePanel.createPackageNode(hullFolder);
-            DefaultMutableTreeNode rootNode = getRootNode();
-            rootNode.add(packageRoot);
+    @Override
+    protected java.util.List<DefaultMutableTreeNode> buildTreeNodesBackground() {
+        Map<String, List<shipeditor.persistence.database.IndexedFile>> shipEntries = ShipFilterPanel.getFilteredEntries();
+        if (shipEntries == null || shipEntries.isEmpty()) {
+            return java.util.Collections.emptyList();
         }
+        java.util.List<DefaultMutableTreeNode> packageRoots = new java.util.ArrayList<>();
+        for (Map.Entry<String, List<shipeditor.persistence.database.IndexedFile>> hullFolder : shipEntries.entrySet()) {
+            String modId = hullFolder.getKey();
+            if (SettingsManager.isModActive(modId)) {
+                packageRoots.add(createPackageNode(hullFolder));
+            }
+        }
+        return packageRoots;
     }
 
-    private static DefaultMutableTreeNode createPackageNode(Map.Entry<Path, List<ShipCSVEntry>> hullFolder) {
-        Path folderPath = hullFolder.getKey();
-        Path fileNamePath = folderPath.getFileName();
-        String packageName = fileNamePath != null ? fileNamePath.toString() : "";
+    private static DefaultMutableTreeNode createPackageNode(Map.Entry<String, List<shipeditor.persistence.database.IndexedFile>> hullFolder) {
+        String packageName = hullFolder.getKey();
 
         Settings settings = SettingsManager.getSettings();
 
         DefaultMutableTreeNode result;
-        if (SettingsManager.isCoreFolder(folderPath)) {
+        if ("starsector-core".equals(packageName)) {
             GameDataPackage corePackage = SettingsManager.getCorePackage();
             result = new DefaultMutableTreeNode(corePackage);
-            for (ShipCSVEntry entry : hullFolder.getValue()) {
+            for (shipeditor.persistence.database.IndexedFile entry : hullFolder.getValue()) {
                 MutableTreeNode shipNode = new DefaultMutableTreeNode(entry);
                 result.add(shipNode);
             }
         } else {
             GameDataPackage dataPackage = settings.getPackage(packageName);
+            if (dataPackage == null) {
+                dataPackage = new GameDataPackage(packageName, false, false);
+            }
             result = new DefaultMutableTreeNode(dataPackage);
 
-            for (ShipCSVEntry entry : hullFolder.getValue()) {
+            for (shipeditor.persistence.database.IndexedFile entry : hullFolder.getValue()) {
                 MutableTreeNode shipNode = new DefaultMutableTreeNode(entry);
                 result.add(shipNode);
             }
@@ -237,21 +263,27 @@ public class HullsTreePanel extends DataTreePanel {
         @Override
         public boolean isEnabled() {
             DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-            return super.isEnabled() && cachedSelectForMenu.getUserObject() instanceof ShipCSVEntry;
+            return super.isEnabled() && cachedSelectForMenu.getUserObject() instanceof shipeditor.persistence.database.IndexedFile;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
             DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-            if (cachedSelectForMenu.getUserObject() instanceof ShipCSVEntry checked) {
-                checked.loadLayerFromEntry();
+            if (cachedSelectForMenu.getUserObject() instanceof shipeditor.persistence.database.IndexedFile file) {
+                var shipEntries = SettingsManager.getGameData().getAllShipEntries();
+                if (shipEntries != null) {
+                    ShipCSVEntry checked = shipEntries.get(file.getEntityId());
+                    if (checked != null) {
+                        checked.loadLayerFromEntry();
+                    }
+                }
             }
         }
     }
 
     @Override
     protected Class<?> getEntryClass() {
-        return ShipCSVEntry.class;
+        return shipeditor.persistence.database.IndexedFile.class;
     }
 
     @Override
@@ -270,11 +302,17 @@ public class HullsTreePanel extends DataTreePanel {
         menu.insert(loadAsLayer, 0);
         menu.insert(new JPopupMenu.Separator(), 1);
 
-        if (cachedSelectForMenu.getUserObject() instanceof ShipCSVEntry checked) {
-            JMenuItem openSkin = HullsTreePanel.addOpenSkinOption(checked);
-            if (openSkin != null) {
-                menu.addSeparator();
-                menu.add(openSkin);
+        if (cachedSelectForMenu.getUserObject() instanceof shipeditor.persistence.database.IndexedFile file) {
+            var shipEntries = SettingsManager.getGameData().getAllShipEntries();
+            if (shipEntries != null) {
+                ShipCSVEntry checked = shipEntries.get(file.getEntityId());
+                if (checked != null) {
+                    JMenuItem openSkin = HullsTreePanel.addOpenSkinOption(checked);
+                    if (openSkin != null) {
+                        menu.addSeparator();
+                        menu.add(openSkin);
+                    }
+                }
             }
         }
         return menu;
@@ -295,22 +333,20 @@ public class HullsTreePanel extends DataTreePanel {
     @Override
     protected void openEntryPath(OpenDataTarget target) {
         DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-        if (!(cachedSelectForMenu.getUserObject() instanceof ShipCSVEntry checked))
+        if (!(cachedSelectForMenu.getUserObject() instanceof shipeditor.persistence.database.IndexedFile file))
             return;
-        HullSpecFile hullSpecFileFile = checked.getHullSpecFile();
-        if (hullSpecFileFile == null) {
-            log.error("Hull spec file not loaded for ID: {}", checked.getHullID());
-            return;
-        }
+            
         Path toOpen;
         switch (target) {
-            case FILE -> toOpen = hullSpecFileFile.getFilePath();
+            case FILE -> toOpen = file.getFilePath();
             case CONTAINER -> {
-                toOpen = hullSpecFileFile.getFilePath().getParent();
+                toOpen = file.getFilePath().getParent();
                 if (toOpen == null)
                     return;
             }
-            default -> toOpen = checked.getPackageFolderPath();
+            default -> {
+                toOpen = SettingsManager.getFolderForModId(file.getModId());
+            }
         }
         FileUtilities.openPathInDesktop(toOpen);
     }
@@ -322,13 +358,21 @@ public class HullsTreePanel extends DataTreePanel {
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
                 boolean expanded, boolean leaf, int row, boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-            Object object = ((DefaultMutableTreeNode) value).getUserObject();
+            if (!(value instanceof DefaultMutableTreeNode treeNode)) {
+                return this;
+            }
+            Object object = treeNode.getUserObject();
+            if (object == null) {
+                return this;
+            }
             DataTreePanel.configureCellRendererColors(object, this);
             setIcon(null);
-            if (object instanceof ShipCSVEntry checked && leaf) {
-                HullSize hullSize = checked.getSize();
-                if (hullSize != null) {
-                    setText("[" + hullSize.getDisplayedName() + "] " + getText());
+            if (object instanceof shipeditor.persistence.database.IndexedFile file && leaf) {
+                ShipCSVEntry entry = SettingsManager.getGameData().getAllShipEntries().get(file.getEntityId());
+                if (entry != null) {
+                    setText(entry.toString());
+                } else {
+                    setText(file.getEntityName());
                 }
             }
             return this;
@@ -340,9 +384,9 @@ public class HullsTreePanel extends DataTreePanel {
 
         @SuppressWarnings("ChainOfInstanceofChecks")
         @Override
-        public void mouseClicked(MouseEvent e) {
+        public void mousePressed(MouseEvent e) {
             // Check for double-click.
-            if (e.getButton() != MouseEvent.BUTTON1 || e.getClickCount() < 2)
+            if (e.getButton() != MouseEvent.BUTTON1 || e.getClickCount() != 2)
                 return;
             JTree tree = getTree();
             Point eventPoint = e.getPoint();
@@ -350,8 +394,14 @@ public class HullsTreePanel extends DataTreePanel {
             if (pathForLocation == null)
                 return;
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) pathForLocation.getLastPathComponent();
-            if (node.getUserObject() instanceof ShipCSVEntry checked) {
-                checked.loadLayerFromEntry();
+            if (node.getUserObject() instanceof shipeditor.persistence.database.IndexedFile file) {
+                var shipEntries = SettingsManager.getGameData().getAllShipEntries();
+                if (shipEntries != null) {
+                    ShipCSVEntry checked = shipEntries.get(file.getEntityId());
+                    if (checked != null) {
+                        checked.loadLayerFromEntry();
+                    }
+                }
             }
         }
     }

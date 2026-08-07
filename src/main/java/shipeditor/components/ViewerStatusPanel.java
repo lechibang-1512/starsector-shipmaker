@@ -146,13 +146,14 @@ final class ViewerStatusPanel extends JPanel {
             EventBus.publish(new MirrorModeChange(mirrorModeOn));
         });
         mirrorModeCheckbox.setSelected(true);
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(ke -> {
-            int keyCode = ke.getKeyCode();
-            PrimaryViewer viewer = StaticController.getViewer();
-            if (viewer != null && viewer.isCursorInViewer() && ke.getID() == KeyEvent.KEY_RELEASED && keyCode == KeyEvent.VK_SPACE) {
-                mirrorModeCheckbox.setSelected(!mirrorModeCheckbox.isSelected());
+        EventBus.subscribe(mirrorModeCheckbox, event -> {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
+                int keyCode = releasedEvent.keyEvent().getKeyCode();
+                PrimaryViewer viewer = StaticController.getViewer();
+                if (viewer != null && viewer.isCursorInViewer() && keyCode == java.awt.event.KeyEvent.VK_SPACE) {
+                    mirrorModeCheckbox.setSelected(!mirrorModeCheckbox.isSelected());
+                }
             }
-            return false;
         });
         mirrorModeCheckbox.setMnemonic(KeyEvent.VK_SPACE);
         mirrorModeCheckbox.setToolTipText("Spacebar to toggle");
@@ -163,7 +164,7 @@ final class ViewerStatusPanel extends JPanel {
         container.add(Box.createRigidArea(new Dimension(margin,0)));
         JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
         separator.setPreferredSize(new Dimension(2, 24));
-        separator.setForeground(Color.GRAY);
+        separator.setForeground(Themes.getBorderColor());
         container.add(separator);
         container.add(Box.createRigidArea(new Dimension(margin,0)));
         container.add(toleranceLabel);
@@ -312,7 +313,7 @@ final class ViewerStatusPanel extends JPanel {
     private void addSeparator() {
         JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
         separator.setPreferredSize(new Dimension(2, 24));
-        separator.setForeground(Color.GRAY);
+        separator.setForeground(Themes.getBorderColor());
         leftsideContainer.add(separator);
     }
 
@@ -327,7 +328,11 @@ final class ViewerStatusPanel extends JPanel {
                 this.cursorNeedsUpdate = true;
             } else if (event instanceof LayerSpriteLoadConfirmed checked) {
                 Sprite sprite = checked.sprite();
-                this.setDimensionsLabel(sprite.getImage());
+                if (sprite != null) {
+                    this.setDimensionsLabel(sprite.getImage());
+                } else {
+                    this.setDimensionsLabel(null);
+                }
             } else if (event instanceof LayerWasSelected checked) {
                 ViewerLayer layer = checked.selected();
                 if (layer == null) return;

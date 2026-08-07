@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import shipeditor.utility.themes.Themes;
 
 public class SkinHullmodsListPane extends JPanel {
 
@@ -46,7 +47,7 @@ public class SkinHullmodsListPane extends JPanel {
 
         this.modsList = new HullmodsList(removeAction, modsModel, sortAction);
 
-        modsList.setBorder(new LineBorder(Color.LIGHT_GRAY));
+        modsList.setBorder(new LineBorder(Themes.getBorderColor()));
         this.setLayout(new BorderLayout());
         this.add(modsList, BorderLayout.CENTER);
     }

@@ -292,7 +292,8 @@ public class ShipVariant implements Variant {
         weaponGroups = new ArrayList<>();
 
         List<SpecWeaponGroup> specWeaponGroups = file.getWeaponGroups();
-        for (SpecWeaponGroup weaponGroup : specWeaponGroups) {
+        if (specWeaponGroups != null) {
+            for (SpecWeaponGroup weaponGroup : specWeaponGroups) {
              String weaponGroupMode = weaponGroup.getMode();
              FireMode mode;
              if (weaponGroupMode == null) {
@@ -324,6 +325,7 @@ public class ShipVariant implements Variant {
                 fitted.put(slotID, feature);
             }
             weaponGroups.add(initialized);
+        }
         }
 
         var installedModules = file.getModules();

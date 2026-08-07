@@ -15,11 +15,24 @@ public class HullStylesPanel extends AbstractStylesPanel {
 
     @Override
     protected JPanel createTopPanel() {
-        return null;
+        return new JPanel();
+    }
+
+    @Override
+    protected boolean isDataLoaded() {
+        return shipeditor.persistence.SettingsManager.getGameData().getAllHullStyles() != null;
+    }
+
+    @Override
+    protected javax.swing.Action getLoadDataAction() {
+        return new javax.swing.AbstractAction("Reload") { @Override public void actionPerformed(java.awt.event.ActionEvent e) { populatePanel(shipeditor.persistence.SettingsManager.getGameData().getAllHullStyles()); } };
     }
 
     @Override
     protected void initListeners() {
+        if (shipeditor.persistence.SettingsManager.getGameData().getAllHullStyles() != null) {
+            populatePanel(shipeditor.persistence.SettingsManager.getGameData().getAllHullStyles());
+        }
         EventBus.subscribe(this, event -> {
             if (event instanceof HullStylesLoaded checked) {
                 populatePanel(checked.hullStyles());
@@ -28,6 +41,7 @@ public class HullStylesPanel extends AbstractStylesPanel {
     }
 
     private void populatePanel(Map<String, HullStyle> hullStyles) {
+        if (hullStyles == null) return;
         JPanel scrollerContent = getScrollerContent();
         scrollerContent.removeAll();
         for (HullStyle style : hullStyles.values()) {

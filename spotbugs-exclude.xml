@@ -49,4 +49,29 @@
     <Match><Bug pattern="NM_CONFUSING" /></Match>
     <Match><Bug pattern="CT_CONSTRUCTOR_THROW" /></Match>
     <Match><Bug pattern="UPM_UNCALLED_PRIVATE_METHOD" /></Match>
+
+    <!-- Global suppressions make local suppressions 'useless', which is expected -->
+    <Match><Bug pattern="US_USELESS_SUPPRESSION_ON_CLASS" /></Match>
+    <Match><Bug pattern="US_USELESS_SUPPRESSION" /></Match>
+
+    <!-- Increasing accessibility is intentional when exposing protected library methods -->
+    <Match><Bug pattern="IAOM_DO_NOT_INCREASE_METHOD_ACCESSIBILITY" /></Match>
+
+    <!-- Redundant interfaces and declaring runtime exceptions in throws clause are pedantic -->
+    <Match><Bug pattern="RI_REDUNDANT_INTERFACES" /></Match>
+    <Match><Bug pattern="THROWS_METHOD_THROWS_RUNTIMEEXCEPTION" /></Match>
+
+    <!-- Jackson serialization requires public non-private constructors on DTO singletons -->
+    <Match><Bug pattern="SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR" /></Match>
+    <Match><Bug pattern="SING_SINGLETON_GETTER_NOT_SYNCHRONIZED" /></Match>
+    <Match><Bug pattern="SING_SINGLETON_IMPLEMENTS_SERIALIZABLE" /></Match>
+
+    <!-- Sometimes we want to catch generic Exceptions (e.g. Swing Event thread boundaries) -->
+    <Match><Bug pattern="REC_CATCH_EXCEPTION" /></Match>
+
+    <!-- Useless control flow often flags empty Swing init methods or debug blocks -->
+    <Match><Bug pattern="UCF_USELESS_CONTROL_FLOW" /></Match>
+
+    <!-- Lazy init static is fine for our non-thread-critical caches -->
+    <Match><Bug pattern="LI_LAZY_INIT_STATIC" /></Match>
 </FindBugsFilter>

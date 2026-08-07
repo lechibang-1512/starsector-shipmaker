@@ -65,6 +65,35 @@ public final class PointEdits {
         }
     }
 
+    public static class BoundsReplaceEdit extends AbstractEdit {
+        private final BoundPointsPainter pointPainter;
+        private final List<BoundPoint> oldList;
+        private final List<BoundPoint> newList;
+
+        public BoundsReplaceEdit(BoundPointsPainter painter, List<BoundPoint> old, List<BoundPoint> changed) {
+            this.pointPainter = painter;
+            this.oldList = old;
+            this.newList = changed;
+        }
+
+        @Override
+        public void undo() {
+            pointPainter.setBoundPoints(oldList);
+            Events.repaintShipView();
+        }
+
+        @Override
+        public void redo() {
+            pointPainter.setBoundPoints(newList);
+            Events.repaintShipView();
+        }
+
+        @Override
+        public String getName() {
+            return "Auto-Generate Bounds";
+        }
+    }
+
     public static class CollisionRadiusEdit extends AbstractEdit {
         private final ShipCenterPoint parentPoint;
         private final float oldRadius;

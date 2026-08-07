@@ -24,10 +24,4 @@ if [ "$JAVA_CMD" = "java" ]; then
     echo "Local JRE not found. Launching with system Java..."
 fi
 
-if [ "$1" = "--cli" ]; then
-    shift
-    $JAVA_CMD $JVM_OPTS -cp ship_editor.jar shipeditor.CliMain "$@"
-    exit $?
-fi
-
 $JAVA_CMD $JVM_OPTS -jar ./ship_editor.jar

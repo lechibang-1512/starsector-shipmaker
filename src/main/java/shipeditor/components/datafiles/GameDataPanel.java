@@ -14,6 +14,9 @@ import shipeditor.communication.events.components.ComponentEvents.DataTreesReloa
 import shipeditor.communication.events.components.ComponentEvents.SelectWingsDataTab;
 import shipeditor.communication.events.components.ComponentEvents.SelectShipDataEntry;
 import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
+import shipeditor.components.datafiles.styles.EngineStylesPanel;
+import shipeditor.components.datafiles.styles.HullStylesPanel;
+import shipeditor.utility.text.StringValues;
 
 @Log4j2
 public class GameDataPanel extends JPanel {
@@ -23,23 +26,18 @@ public class GameDataPanel extends JPanel {
     private final WeaponsTreePanel weaponsTreePanel;
     private final ProjectilesTreePanel projectilesTreePanel;
     private final WingsTreePanel wingsTreePanel;
-    private final JTabbedPane weaponsTabbedPane;
+    private final HullmodsTreePanel hullmodsTreePanel;
+    private final ShipSystemsTreePanel systemsTreePanel;
 
     public GameDataPanel() {
         dataTabsContainer = new JTabbedPane(SwingConstants.TOP);
         dataTabsContainer.putClientProperty("JTabbedPane.tabWidthMode", "compact");
 
         hullsTreePanel = new HullsTreePanel();
-        JTabbedPane hullsTabbedPane = new JTabbedPane(SwingConstants.BOTTOM);
-        hullsTabbedPane.addTab("List", hullsTreePanel);
-        hullsTabbedPane.addTab("Filters", new ShipFilterPanel());
-        dataTabsContainer.addTab("Hulls", null, hullsTabbedPane, "Hulls");
+        dataTabsContainer.addTab("Hulls", null, hullsTreePanel, "Hulls");
 
         weaponsTreePanel = new WeaponsTreePanel();
-        weaponsTabbedPane = new JTabbedPane(SwingConstants.BOTTOM);
-        weaponsTabbedPane.addTab("List", weaponsTreePanel);
-        weaponsTabbedPane.addTab("Filters", new WeaponFilterPanel());
-        dataTabsContainer.addTab("Weapons", null, weaponsTabbedPane, "Weapons");
+        dataTabsContainer.addTab("Weapons", null, weaponsTreePanel, "Weapons");
 
         projectilesTreePanel = new ProjectilesTreePanel();
         dataTabsContainer.addTab("Projectiles", null, projectilesTreePanel, "Projectiles");
@@ -47,7 +45,16 @@ public class GameDataPanel extends JPanel {
         wingsTreePanel = new WingsTreePanel();
         dataTabsContainer.addTab("Wings", null, wingsTreePanel, "Fighter wings");
 
-        dataTabsContainer.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
+        hullmodsTreePanel = new HullmodsTreePanel();
+        dataTabsContainer.addTab(StringValues.HULLMODS, hullmodsTreePanel);
+
+        systemsTreePanel = new ShipSystemsTreePanel();
+        dataTabsContainer.addTab("Shipsystems", systemsTreePanel);
+
+        dataTabsContainer.addTab("Hull styles", new HullStylesPanel());
+        dataTabsContainer.addTab("Engine styles", new EngineStylesPanel());
+
+        dataTabsContainer.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         this.setLayout(new BorderLayout());
         this.add(dataTabsContainer, BorderLayout.CENTER);
 
@@ -67,6 +74,8 @@ public class GameDataPanel extends JPanel {
                 weaponsTreePanel.queueReload();
                 projectilesTreePanel.queueReload();
                 wingsTreePanel.queueReload();
+                hullmodsTreePanel.queueReload();
+                systemsTreePanel.queueReload();
             } else if (event instanceof SelectWingsDataTab) {
                 selectWingsTab();
             }
@@ -84,16 +93,11 @@ public class GameDataPanel extends JPanel {
     }
 
     private void selectShipTab() {
-        java.awt.Component comp = hullsTreePanel.getParent().getParent();
-        if (dataTabsContainer.indexOfComponent(comp) != -1) {
-            dataTabsContainer.setSelectedComponent(comp);
-        }
+        dataTabsContainer.setSelectedComponent(hullsTreePanel);
     }
 
     private void selectWeaponTab() {
-        if (dataTabsContainer.indexOfComponent(weaponsTabbedPane) != -1) {
-            dataTabsContainer.setSelectedComponent(weaponsTabbedPane);
-        }
+        dataTabsContainer.setSelectedComponent(weaponsTreePanel);
     }
 
     private void selectWingsTab() {

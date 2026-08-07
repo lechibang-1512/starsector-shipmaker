@@ -20,6 +20,26 @@ public final class EventBus {
 
     // Lifecycle subscribers: the parent component is the weak key. Listeners live as long as the parent lives.
     private final java.util.Map<Object, java.util.List<BusEventListener>> lifecycleSubscribers;
+    
+    // Holds strong references for non-JComponent parents that don't support putClientProperty
+    private final java.util.Map<Object, java.util.List<BusEventListener>> fallbackStrongReferences;
+
+    public interface ExceptionHandler {
+        void handle(Throwable throwable, BusEventListener listener, BusEvent event);
+    }
+
+    private static ExceptionHandler exceptionHandler = (throwable, receiver, event) -> {
+        log.error("Error in listener {} handling event {}", getListenerName(receiver), event.getClass().getSimpleName());
+        Errors.printToStream(throwable);
+    };
+
+    public static void setExceptionHandler(ExceptionHandler handler) {
+        exceptionHandler = handler;
+    }
+
+    public static ExceptionHandler getExceptionHandler() {
+        return exceptionHandler;
+    }
 
     private static final ThreadLocal<DispatchContext> threadDispatchContext = ThreadLocal.withInitial(DispatchContext::new);
 
@@ -38,6 +58,7 @@ public final class EventBus {
     private EventBus() {
         this.floatingSubscribers = java.util.Collections.synchronizedSet(java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>()));
         this.lifecycleSubscribers = new java.util.WeakHashMap<>();
+        this.fallbackStrongReferences = new java.util.WeakHashMap<>();
     }
 
     /**
@@ -55,8 +76,23 @@ public final class EventBus {
      * The listener will be kept alive as long as the parent is not garbage collected.
      */
     public static BusEventListener subscribe(Object lifecycleParent, BusEventListener listener) {
+        if (lifecycleParent instanceof javax.swing.JComponent) {
+            javax.swing.JComponent comp = (javax.swing.JComponent) lifecycleParent;
+            @SuppressWarnings("unchecked")
+            java.util.List<BusEventListener> keptAlive = (java.util.List<BusEventListener>) comp.getClientProperty("EventBus.listeners");
+            if (keptAlive == null) {
+                keptAlive = new java.util.ArrayList<>();
+                comp.putClientProperty("EventBus.listeners", keptAlive);
+            }
+            keptAlive.add(listener);
+        } else {
+            synchronized (bus.fallbackStrongReferences) {
+                bus.fallbackStrongReferences.computeIfAbsent(lifecycleParent, k -> new java.util.ArrayList<>()).add(listener);
+            }
+        }
+
         synchronized (bus.lifecycleSubscribers) {
-            bus.lifecycleSubscribers.computeIfAbsent(lifecycleParent, k -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(listener);
+            bus.lifecycleSubscribers.computeIfAbsent(lifecycleParent, k -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(new WeakListenerWrapper(listener));
         }
         return listener;
     }
@@ -65,6 +101,11 @@ public final class EventBus {
         bus.floatingSubscribers.remove(listener);
         synchronized (bus.lifecycleSubscribers) {
             for (java.util.List<BusEventListener> list : bus.lifecycleSubscribers.values()) {
+                list.removeIf(l -> l == listener || (l instanceof WeakListenerWrapper && ((WeakListenerWrapper) l).get() == listener));
+            }
+        }
+        synchronized (bus.fallbackStrongReferences) {
+            for (java.util.List<BusEventListener> list : bus.fallbackStrongReferences.values()) {
                 list.remove(listener);
             }
         }
@@ -77,9 +118,24 @@ public final class EventBus {
         synchronized (bus.lifecycleSubscribers) {
             bus.lifecycleSubscribers.remove(lifecycleParent);
         }
+        synchronized (bus.fallbackStrongReferences) {
+            bus.fallbackStrongReferences.remove(lifecycleParent);
+        }
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("MS_SHOULD_BE_FINAL")
+    public static boolean TRACE_ENABLED = false;
+
     public static void publish(BusEvent event) {
+        if (!javax.swing.SwingUtilities.isEventDispatchThread()) {
+            javax.swing.SwingUtilities.invokeLater(() -> publish(event));
+            return;
+        }
+
+        if (TRACE_ENABLED && log.isTraceEnabled()) {
+            log.trace("Publishing event: {}", event.getClass().getSimpleName());
+        }
+        
         DispatchContext context = threadDispatchContext.get();
         java.util.List<BusEventListener> activeListeners = context.getListForDepth();
         context.currentDepth++;
@@ -108,8 +164,9 @@ public final class EventBus {
                 try {
                     receiver.handleEvent(event);
                 } catch (Throwable throwable) {
-                    log.error("Error in listener {} handling event {}", getListenerName(receiver), event.getClass().getSimpleName());
-                    Errors.printToStream(throwable);
+                    if (exceptionHandler != null) {
+                        exceptionHandler.handle(throwable, receiver, event);
+                    }
                 }
             }
         } finally {
@@ -124,6 +181,26 @@ public final class EventBus {
         String pattern = "/0x.*";
         // Apply the pattern and trim the string.
         return shortName.replaceAll(pattern, "");
+    }
+
+    private static class WeakListenerWrapper implements BusEventListener {
+        final java.lang.ref.WeakReference<BusEventListener> ref;
+        
+        WeakListenerWrapper(BusEventListener listener) {
+            this.ref = new java.lang.ref.WeakReference<>(listener);
+        }
+        
+        @Override
+        public void handleEvent(BusEvent event) {
+            BusEventListener listener = ref.get();
+            if (listener != null) {
+                listener.handleEvent(event);
+            }
+        }
+        
+        public BusEventListener get() { 
+            return ref.get(); 
+        }
     }
 
 }

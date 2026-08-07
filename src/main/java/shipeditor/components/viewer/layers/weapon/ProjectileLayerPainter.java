@@ -17,11 +17,10 @@ import java.awt.geom.Point2D;
 public class ProjectileLayerPainter extends LayerPainter {
 
     private final ProjectilePainter corePainter;
-    private final Sprite sprite;
 
     public ProjectileLayerPainter(ViewerLayer layer, Sprite sprite, ProjectileSpecFile specFile) {
         super(layer);
-        this.sprite = sprite;
+        this.setSprite(sprite);
         double width = specFile.getSize()[0];
         double height = specFile.getSize()[1];
         Point2D center = specFile.getCenter();
@@ -35,14 +34,9 @@ public class ProjectileLayerPainter extends LayerPainter {
     }
 
     @Override
-    public Sprite getSprite() {
-        return this.sprite;
-    }
-
-    @Override
     protected void paintContent(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
         corePainter.setPaintAnchor(this.getAnchor());
-        corePainter.setRotationRadians(0); // Projectile layers don't have rotation natively yet, maybe add later
+        corePainter.setRotationRadians(this.getRotationRadians());
         corePainter.setSpriteOpacity(this.getSpriteOpacity());
         corePainter.paint(spriteRenderer, shapeRenderer, projection, view);
     }

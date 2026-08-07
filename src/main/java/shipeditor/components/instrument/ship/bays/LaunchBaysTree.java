@@ -219,7 +219,13 @@ public class LaunchBaysTree extends DynamicWidthTree {
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected,
                                                       boolean expanded, boolean leaf, int row, boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-            Object object = ((DefaultMutableTreeNode) value).getUserObject();
+            if (!(value instanceof DefaultMutableTreeNode treeNode)) {
+                return this;
+            }
+            Object object = treeNode.getUserObject();
+            if (object == null) {
+                return this;
+            }
             JLabel iconLabel = getIconLabel();
             JLabel textLabel = getTextLabel();
             iconLabel.setIcon(null);

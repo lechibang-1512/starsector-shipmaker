@@ -94,7 +94,7 @@ public final class InstalledFeaturePainter {
                 modules.forEach(toPrepare::putIfAbsent);
             }
             var allWeapons = shipVariant.getAllFittedWeapons();
-            if (allWeapons != null) {
+            if (allWeapons != null && !shipeditor.components.viewer.PaintOrderController.isHideNonBuiltInWeapons()) {
                 allWeapons.forEach(toPrepare::putIfAbsent);
             }
         }

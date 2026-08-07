@@ -44,6 +44,8 @@ public class ViewerDropReceiver extends DropTarget {
     @Getter
     private static DataFlavor currentFlavor;
 
+    private static final Object STATIC_LOCK = new Object();
+
     @Getter
     private static boolean dragToViewerInProgress;
 
@@ -73,20 +75,24 @@ public class ViewerDropReceiver extends DropTarget {
     }
 
     @SuppressWarnings("SynchronizedMethod")
-    public static synchronized void commenceDragToViewer(InstallableEntry dragged, DataFlavor flavor) {
-        dragToViewerInProgress = true;
-        draggedEntry = dragged;
-        currentFlavor = flavor;
+    public static void commenceDragToViewer(InstallableEntry dragged, DataFlavor flavor) {
+        synchronized (STATIC_LOCK) {
+            dragToViewerInProgress = true;
+            draggedEntry = dragged;
+            currentFlavor = flavor;
+        }
 
         PrimaryViewer viewer = StaticController.getViewer();
         viewer.setCursorInViewer(false);
     }
 
     @SuppressWarnings("SynchronizedMethod")
-    public static synchronized void finishDragToViewer() {
-        dragToViewerInProgress = false;
-        draggedEntry = null;
-        currentFlavor = null;
+    public static void finishDragToViewer() {
+        synchronized (STATIC_LOCK) {
+            dragToViewerInProgress = false;
+            draggedEntry = null;
+            currentFlavor = null;
+        }
     }
 
     @SuppressWarnings({"unchecked", "AccessToStaticFieldLockedOnInstance", "IfStatementWithTooManyBranches"})

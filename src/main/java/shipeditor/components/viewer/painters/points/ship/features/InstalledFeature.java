@@ -201,7 +201,7 @@ public final class InstalledFeature implements InstallableEntry {
         return result;
     }
 
-    void refreshPaintCircumstance(WeaponSlotPoint slotPoint) {
+    public void refreshPaintCircumstance(WeaponSlotPoint slotPoint) {
         LayerPainter painter = this.getFeaturePainter();
         painter.setShouldDrawPainter(false);
         if (slotPoint == null) {
@@ -213,11 +213,11 @@ public final class InstalledFeature implements InstallableEntry {
     }
 
     private static void configurePainterBySlot(WeaponSlotPoint slotPoint, LayerPainter painter) {
-        Point2D position = slotPoint.getPosition();
-        Point2D entityCenter = painter.getCenterAnchorDifference();
         if (painter instanceof WeaponPainter weaponPainter) {
             weaponPainter.setMount(slotPoint.getWeaponMount());
         }
+        Point2D position = slotPoint.getPosition();
+        Point2D entityCenter = painter.getCenterAnchorDifference();
         double x = position.getX() - entityCenter.getX();
         double y = position.getY() - entityCenter.getY();
         Point2D newAnchor = new Point2D.Double(x, y);

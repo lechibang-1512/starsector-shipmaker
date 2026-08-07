@@ -50,7 +50,7 @@ public class ShipSystemCSVEntry implements CSVEntry {
     @Override
     public String toString() {
         String displayedName = rowData.get(StringConstants.NAME);
-        if (displayedName.isEmpty()) {
+        if (displayedName == null || displayedName.isEmpty()) {
             displayedName = StringValues.UNTITLED;
         }
         return displayedName;

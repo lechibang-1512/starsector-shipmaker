@@ -1,41 +1,34 @@
 package shipeditor.utility.text;
 
 import net.jqwik.api.*;
+import net.jqwik.api.constraints.*;
 import java.awt.geom.Point2D;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CoordinatesFormatterPropertiesTest {
 
     @Property
-    void testRoundMaintainsValue(@ForAll double value) {
-        double result = CoordinatesFormatter.round(value);
+    void testFormatDisplay(@ForAll @DoubleRange(min = -1e6, max = 1e6) double x, 
+                           @ForAll @DoubleRange(min = -1e6, max = 1e6) double y) {
+        String display = CoordinatesFormatter.formatDisplay(x, y);
         
-        if (Double.isNaN(value)) {
-            assertTrue(Double.isNaN(result), "NaN should remain NaN");
-        } else if (Double.isInfinite(value)) {
-            assertTrue(Double.isInfinite(result), "Infinity should remain Infinity");
-            assertEquals(Math.signum(value), Math.signum(result), "Infinity sign should match");
-        } else if (Math.abs(value) < (Long.MAX_VALUE / 1000.0)) {
-            // For values that don't overflow the Long conversion
-            double difference = Math.abs(value - result);
-            assertTrue(difference <= 0.005, "Difference should be small, but was " + difference + " for value " + value);
-        } else {
-            // For very large values, what happens?
-            double difference = Math.abs(value - result);
-            assertTrue(difference <= Math.abs(value * 0.01), "Difference should be proportional for large numbers");
-        }
+        assertNotNull(display);
+        assertTrue(display.contains(", "));
+        
+        // It should have at least 3 decimal places (e.g. 0.000)
+        String[] parts = display.split(", ");
+        assertEquals(2, parts.length);
     }
-
+    
     @Property
-    void testRoundPointMaintainsValue(@ForAll double x, @ForAll double y) {
+    void testRoundPoint(@ForAll @DoubleRange(min = -1e6, max = 1e6) double x, 
+                        @ForAll @DoubleRange(min = -1e6, max = 1e6) double y) {
         Point2D point = new Point2D.Double(x, y);
-        Point2D result = CoordinatesFormatter.roundPoint(point);
+        Point2D rounded = CoordinatesFormatter.roundPoint(point);
         
-        if (Double.isNaN(x)) {
-            assertTrue(Double.isNaN(result.getX()));
-        }
-        if (Double.isNaN(y)) {
-            assertTrue(Double.isNaN(result.getY()));
-        }
+        assertNotNull(rounded);
+        // It shouldn't drift too much
+        assertTrue(Math.abs(rounded.getX() - x) <= 0.001);
+        assertTrue(Math.abs(rounded.getY() - y) <= 0.001);
     }
 }

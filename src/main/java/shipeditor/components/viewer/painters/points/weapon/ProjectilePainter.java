@@ -35,6 +35,15 @@ public class ProjectilePainter implements OpenGLPainter {
         this.spriteDimensions = size;
     }
 
+    public ProjectilePainter(ProjectilePainter other) {
+        this.projectileSprite = other.projectileSprite;
+        this.projectileCenter = other.projectileCenter;
+        this.spriteDimensions = other.spriteDimensions;
+        this.paintAnchor = other.paintAnchor;
+        this.spriteOpacity = other.spriteOpacity;
+        this.rotationRadians = other.rotationRadians;
+    }
+
     @Override
     public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
         if (projectileSprite == null) return;

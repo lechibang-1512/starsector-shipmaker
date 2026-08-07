@@ -15,13 +15,14 @@ public class GameFolderDetectionTest {
         Settings settings = new Settings();
         
         Path linuxRoot = tempDir.resolve("Linux_Starsector_0.96");
-        Files.createDirectories(linuxRoot.resolve("data"));
+        Files.createDirectories(linuxRoot.resolve("data").resolve("hulls"));
+        Files.write(linuxRoot.resolve("data").resolve("hulls").resolve("ship_data.csv"), "".getBytes());
         Files.createDirectories(linuxRoot.resolve("graphics"));
         Files.createDirectories(linuxRoot.resolve("mods"));
         Files.createDirectories(linuxRoot.resolve("mods").resolve("SomeMod").resolve("data"));
         Files.createDirectories(linuxRoot.resolve("mods").resolve("SomeMod").resolve("graphics"));
         Files.write(linuxRoot.resolve("mods").resolve("SomeMod").resolve("mod_info.json"), "{}".getBytes());
-        Files.write(linuxRoot.resolve("starfarer.api.zip"), "".getBytes());
+        Files.write(linuxRoot.resolve("starfarer.api.jar"), "".getBytes());
         
         boolean valid = Initializations.checkGameFolderEligibility(linuxRoot, settings);
         assertTrue(valid, "Linux structure should be detected as a valid game folder");
@@ -34,9 +35,10 @@ public class GameFolderDetectionTest {
         
         Path winRoot = tempDir.resolve("Windows_Starsector");
         Path winCore = winRoot.resolve("starsector-core");
-        Files.createDirectories(winCore.resolve("data"));
+        Files.createDirectories(winCore.resolve("data").resolve("hulls"));
+        Files.write(winCore.resolve("data").resolve("hulls").resolve("ship_data.csv"), "".getBytes());
         Files.createDirectories(winCore.resolve("graphics"));
-        Files.write(winCore.resolve("starfarer.api.zip"), "".getBytes());
+        Files.write(winCore.resolve("starfarer.api.jar"), "".getBytes());
         Files.createDirectories(winRoot.resolve("mods"));
         Files.createDirectories(winRoot.resolve("mods").resolve("SomeMod").resolve("data"));
         Files.createDirectories(winRoot.resolve("mods").resolve("SomeMod").resolve("graphics"));
@@ -53,9 +55,10 @@ public class GameFolderDetectionTest {
         
         Path macRoot = tempDir.resolve("Starsector.app");
         Path macCore = macRoot.resolve("Contents").resolve("Resources").resolve("Java");
-        Files.createDirectories(macCore.resolve("data"));
+        Files.createDirectories(macCore.resolve("data").resolve("hulls"));
+        Files.write(macCore.resolve("data").resolve("hulls").resolve("ship_data.csv"), "".getBytes());
         Files.createDirectories(macCore.resolve("graphics"));
-        Files.write(macCore.resolve("starfarer.api.zip"), "".getBytes());
+        Files.write(macCore.resolve("starfarer.api.jar"), "".getBytes());
         Files.createDirectories(macRoot.resolve("Contents").resolve("Resources").resolve("mods"));
         Files.createDirectories(macRoot.resolve("Contents").resolve("Resources").resolve("mods").resolve("SomeMod").resolve("data"));
         Files.createDirectories(macRoot.resolve("Contents").resolve("Resources").resolve("mods").resolve("SomeMod").resolve("graphics"));

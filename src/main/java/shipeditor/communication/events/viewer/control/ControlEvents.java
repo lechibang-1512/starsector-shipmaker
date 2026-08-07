@@ -61,8 +61,7 @@ public class ControlEvents {
     public static record ViewerGuidesToggled(
         boolean guidesEnabled,
         boolean bordersEnabled,
-        boolean centerEnabled,
-        boolean axesEnabled
+        boolean centerEnabled
     ) implements ViewerEvent {
 
 }
@@ -95,6 +94,14 @@ public class ControlEvents {
 
 
     public static record ViewerRawMousePressed(MouseEvent mouseEvent) implements BusEvent {
+}
+
+
+    public static record ViewerRawKeyPressed(java.awt.event.KeyEvent keyEvent) implements BusEvent {
+}
+
+
+    public static record ViewerRawKeyReleased(java.awt.event.KeyEvent keyEvent) implements BusEvent {
 }
 
 

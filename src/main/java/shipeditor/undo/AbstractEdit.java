@@ -9,7 +9,7 @@ import java.util.*;
 
 @Getter
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
-public abstract class AbstractEdit implements Edit {
+public abstract class AbstractEdit implements Edit, shipeditor.undo.edits.LayerEdit {
 
     /**
      * These are meant to be consequential after the parent edit, meaning that first undo() of sub-edits is invoked.

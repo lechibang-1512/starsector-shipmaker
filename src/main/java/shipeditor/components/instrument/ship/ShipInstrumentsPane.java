@@ -116,12 +116,10 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
         VariantHullmodsPanel hullmodsPanel = new VariantHullmodsPanel();
         panelMode.put(hullmodsPanel, EditorInstrument.VARIANT_DATA);
         variantsTabs.addTab("Hullmods", null, hullmodsPanel, "Variant Hullmods");
-        variantsTabs.setMnemonicAt(variantsTabs.getTabCount() - 1, KeyEvent.VK_H);
 
         VariantWingsPanel wingsPanel = new VariantWingsPanel();
         panelMode.put(wingsPanel, EditorInstrument.VARIANT_DATA);
         variantsTabs.addTab("Wings", null, wingsPanel, "Variant Wings");
-        variantsTabs.setMnemonicAt(variantsTabs.getTabCount() - 1, KeyEvent.VK_W);
 
         variantsTabs.addChangeListener(event -> {
             Component activePanel = variantsTabs.getSelectedComponent();
@@ -143,8 +141,6 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
     private void createInnerTab(JTabbedPane parent, JPanel panel, EditorInstrument mode, int mnemonic) {
         panelMode.put(panel, mode);
         parent.addTab(mode.getTitle(), null, panel, mode.getTitle());
-        int index = parent.getTabCount() - 1;
-        parent.setMnemonicAt(index, mnemonic);
     }
 
     @Override

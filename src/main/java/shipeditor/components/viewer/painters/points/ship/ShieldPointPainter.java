@@ -41,7 +41,6 @@ public class ShieldPointPainter extends SinglePointPainter {
 
     private boolean shieldRadiusHotkeyPressed;
 
-    private KeyEventDispatcher hotkeyDispatcher;
 
     public ShieldPointPainter(ShipPainter parent) {
         super(parent);
@@ -53,7 +52,6 @@ public class ShieldPointPainter extends SinglePointPainter {
     @Override
     public void cleanupListeners() {
         super.cleanupListeners();
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(hotkeyDispatcher);
     }
 
     public void initShieldPoint(Point2D translated, HullSpecFile hullSpecFile) {
@@ -115,31 +113,26 @@ public class ShieldPointPainter extends SinglePointPainter {
     }
 
     private void initHotkeys() {
-        hotkeyDispatcher = ke -> {
+        EventBus.subscribe(this, event -> {
             if (!this.getParentLayer().isLayerActive()) {
-                return false;
+                return;
             }
-            int keyCode = ke.getKeyCode();
-            boolean isShieldHotkey = (keyCode == dragShieldRadiusHotkey);
-            switch (ke.getID()) {
-                case KeyEvent.KEY_PRESSED:
-                    if (isShieldHotkey) {
-                        this.shieldRadiusHotkeyPressed = true;
-                        EventBus.publish(new ViewerRepaintQueued());
-                    }
-                    break;
-                case KeyEvent.KEY_RELEASED:
-                    if (isShieldHotkey) {
-                        this.shieldRadiusHotkeyPressed = false;
-                        EventBus.publish(new ViewerRepaintQueued());
-                    }
-                    break;
-                default:
-                    break;
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
+                int keyCode = pressedEvent.keyEvent().getKeyCode();
+                boolean isShieldHotkey = (keyCode == dragShieldRadiusHotkey);
+                if (isShieldHotkey) {
+                    this.shieldRadiusHotkeyPressed = true;
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
+            } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
+                int keyCode = releasedEvent.keyEvent().getKeyCode();
+                boolean isShieldHotkey = (keyCode == dragShieldRadiusHotkey);
+                if (isShieldHotkey) {
+                    this.shieldRadiusHotkeyPressed = false;
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
             }
-            return false;
-        };
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(hotkeyDispatcher);
+        });
     }
 
     @Override

@@ -32,16 +32,37 @@ public final class Main {
 
     private Main() {}
 
+    /**
+     * Checks if the currently running JVM heap size meets the minimum 4GB requirement.
+     * If the allocated heap is below 4GB, this method forks a new Java process with {@code -Xmx4g}
+     * and essential JVM flags (such as disabling D3D/OpenGL hardware acceleration for Swing-LWJGL compatibility),
+     * then terminates the current process.
+     * 
+     * @param args Command line arguments to forward to the child JVM.
+     */
     private static void checkAndRelaunch(String[] args) {
         if (Boolean.getBoolean("shipeditor.relaunched")) {
             return;
         }
 
+        boolean needsRelaunch = false;
         long maxMemory = Runtime.getRuntime().maxMemory();
         long threshold = 3900L * 1024L * 1024L;
 
         if (maxMemory < threshold) {
-            log.info("Max memory available is {} MB, which is less than the 4 GB required. Relaunching JVM with -Xmx4g...", maxMemory / (1024 * 1024));
+            needsRelaunch = true;
+            log.info("Max memory available is {} MB, which is less than the 4 GB required.", maxMemory / (1024 * 1024));
+        }
+
+        if (System.getProperty("os.name").toLowerCase(java.util.Locale.ROOT).contains("linux") || System.getProperty("os.name").toLowerCase(java.util.Locale.ROOT).contains("nix")) {
+            if (!Boolean.getBoolean("sun.awt.noerasebackground") || !Boolean.getBoolean("sun.java2d.noddraw")) {
+                needsRelaunch = true;
+                log.info("Missing essential Linux UI properties for AWT/Swing compatibility.");
+            }
+        }
+
+        if (needsRelaunch) {
+            log.info("Relaunching JVM with updated arguments...");
             try {
                 String javaHome = System.getProperty("java.home");
                 String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
@@ -93,7 +114,7 @@ public final class Main {
 
                 System.exit(process.exitValue());
             } catch (java.io.IOException | java.net.URISyntaxException | SecurityException e) {
-                log.error("Failed to relaunch JVM with -Xmx4g", e);
+                log.error("Failed to relaunch JVM with required arguments", e);
             }
         }
     }
@@ -111,17 +132,25 @@ public final class Main {
             // These method calls are initialization block; the order of calls is important.
             Initializations.initializeSettingsFile();
             configureLaf();
+
+            Initializations.selectGameFolder();
+            Settings settings = SettingsManager.getSettings();
+
+            boolean shouldLoadData = settings.isLoadDataAtStart();
+            if (settings.isPromptForModsAtStart()) {
+                shipeditor.components.dialogs.ModSelectionDialog modDialog = new shipeditor.components.dialogs.ModSelectionDialog(null);
+                if (modDialog.showDialog()) {
+                    shouldLoadData = true;
+                }
+            }
+
             PrimaryWindow window = PrimaryWindow.create();
             Initializations.updateStateFromSettings(window);
 
-            Settings settings = SettingsManager.getSettings();
+            window.showGUI();
 
-            if (settings.isLoadDataAtStart()) {
-                window.showGUI();
-                FileLoading.loadGameData();
-            } else {
-                // No data preload — show window immediately.
-                window.showGUI();
+            if (shouldLoadData) {
+                SwingUtilities.invokeLater(FileLoading::forceReindexAndLoadGameData);
             }
 
             // Bind the error streams AFTER the UI is fully initialized and visible

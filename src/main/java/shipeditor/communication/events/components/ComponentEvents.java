@@ -88,9 +88,6 @@ public class ComponentEvents {
 
     }
 
-    public static record SelectReferenceDataTab() implements ComponentEvent {
-
-    }
 
     public static record SelectWingsDataTab() implements ComponentEvent {
 

@@ -1,5 +1,73 @@
 # Changelog
 
+## [0.0.1f-hf] - 2026-08-05
+
+### Features
+- **Persistent CSV Caching**: Implement persistent CSV file caching in SQLite via `CoreIndexManager` and `DatabaseQueryService`, storing parsed CSV rows with modification timestamps to skip redundant filesystem reads on subsequent startups. (`a20d0b19`)
+- **Automatic Mod Registration**: Auto-register mod entries in the `mods` table before upserting `indexed_files` to satisfy foreign key constraints during core index persistence. Add `ensureModExists()` utility in `DatabaseQueryService`. (`93cd287d`)
+- **Window & Dialog Sizing**: Set sensible default window dimensions (1440×900 clamped to screen) when no saved bounds exist, increase filter dialog from 300×350 to 400×500, preferences dialog from 400×300 to 600×450, and right instrument pane from 300px to 350px preferred width. (`2eaa3df6`)
+- **Descriptive Tree Tooltips**: Resolve `ShipCSVEntry` and `WeaponCSVEntry` in `getTooltipForEntry()` to display human-readable ship/weapon names instead of raw entity IDs. (`1e163f18`)
+- **Mod Selection & Persistence**: Add `ModSelectionDialog` for selecting active mods on startup and persisting mod selection state. Implement `ModInfo` metadata parsing to display rich mod cards, add a UI to configure custom mod blacklists in `PreferencesDialog`, and add refresh mechanisms. Revamp the mod selection dialog UI and add mod-aware filtering to database queries.
+- **Unified Info Panel**: Introduce `InfoPanelBuilder` to standardize side-panel data presentation across all data tree components. Display descriptive entry names, ship designations, hull sizes, and weapon info in the data panel UI by resolving CSV data.
+- **Canvas Export**: Add PNG canvas export functionality for ship/weapon viewer.
+- **EventBus Exception Handler**: Add configurable `ExceptionHandler` to `EventBus` to handle uncaught event subscriber errors.
+- **Lazy-Loaded Trees**: Implement lazy loading for CSV data trees with case-insensitive alphabetical sorting, recursive path expansion, and memory-optimized key/value string interning. Offload data tree population to background threads and pre-load CSV data during startup to improve UI responsiveness.
+- **Data Loading Pipeline**: Implement asynchronous and lazy-loading for variants, hull styles, and engine styles in `GameDataRepository`. Update data loading flags and tree rendering logic.
+- **First-Time Setup & Detection**: Enhance first-time setup game folder selection with candidate path drop-down (`JComboBox`), auto-population, macOS path support (`Contents/Resources`), and `starfarer.api.jar` core validation. Make library mod filtering configurable via settings.
+- **Collision Bounds & Variant Editor**: Add auto-generation for ship collision bounds using convex hull calculation (`CollisionHullGenerator`) and weapon installation preview in variant editor.
+
+### Refactoring & Performance
+- **Template Method Tree Architecture**: Centralize the `CompletableFuture.supplyAsync` background threading, `batchGeneration` concurrency guard, and single-atomic-EDT-update pattern into `DataTreePanel.reload()`. Subclasses (`HullsTreePanel`, `WeaponsTreePanel`, `ProjectilesTreePanel`, `CSVDataTreePanel`) now only implement `buildTreeNodesBackground()`. Removed ~200 lines of duplicated lazy-loading infrastructure (`lazyLoadMap`, `TreeWillExpandListener`) across 7 files. (`f29ac9a0`)
+- **Keystroke EventBus Migration**: Remove legacy `InputMap`/`ActionMap` key bindings from `LayerViewerControls` and `WeaponSlotList`. Subscribe to `ViewerRawKeyPressed` for unified hotkey handling via the event bus. (`614b0c5a`)
+- **Dead Code Removal**: Delete unused `HullTreeEntryCleared` event record from `FileEvents.java` and its orphaned listener in `HullsTreePanel`. Remove auto-expanding side panel behavior from `TripleSplitContainer` that forcibly resized the left pane on entity selection. (`1e163f18`, `2eaa3df6`)
+- **Single-Pass JSON Processor**: Rewrote `JsonProcessor` to use a single-pass O(N) linear sweep tokenizer, completely eliminating the regex engine and intermediate `String` allocations, reducing peak parsing memory footprint by ~65-75%. Improve parsing robustness with malformed character cleanup utilities.
+- **Database & Data Indexing Pipeline**:
+  - Remove MD5 file hashing from `IndexScannerTask` in favor of fast modification timestamp checking.
+  - Refactor `IndexScannerTask` to use per-file `try-catch` blocks, preventing a single unreadable/locked file from aborting the entire mod's database transaction.
+  - Optimize file change detection using extension whitelist pre-checks and streamlined background indexing.
+  - Implement Phase 3 and Phase 4 of the Data Pipeline Rework, eradicating legacy eager-loading caches and introducing `IndexedFile` lazy loading for all data tree panels.
+  - Offload `starsector-core` indexing to a persistent in-memory `CoreIndexManager` to decouple core assets from the SQLite database, using O(1) lookups and composite indexes.
+  - Parallelize file parsing operations to vastly speed up metadata extraction.
+  - Centralize mod activation logic and improve database initialization and data resetting flows.
+  - Remove `loadAllCsvEntries` and replace with iterative population from package-based maps, optimize CSV caching logic, and include core folders in CSV entry resolution.
+  - Standardize core package name and filter MagicLib files during processing.
+- **Threading & EDT Responsiveness**: Move data loading state mutations off the Swing Event Dispatch Thread (EDT) to eliminate progress bar freezes, optimize thread synchronization, replace `Collections.synchronizedList` lock contention in parallel streams with collector aggregation, and add volatility to repository maps.
+- **Input Handling & Navigation**:
+  - Migrate `KeyEventDispatcher` to an `EventBus`-based input handling architecture.
+  - Reorganize main menu bar, add support for layer creation and ship flipping, and remove redundant `WindowMenu`.
+- **UI Filtering & Controls**:
+  - Replace abstract filter panel with `JComboBox`-based selection for ship tech/manufacturer and size in `ShipFilterPanel`.
+  - Remove manual filter application buttons in favor of real-time instant filtering. Refactor filter panels to use SQLite metadata and direct CSV entry lookups instead of legacy in-memory JSON parsing.
+  - Expose lazy weapon type retrieval to optimize tree rendering performance and simplify `InfoConsolePanel` layout by removing redundant `JScrollPane` wrappers.
+  - Update data tree item interaction behavior to double-click loading.
+  - Prevent filter dropdown change events during UI updates and revert experimental `CSVDataTreePanel` refactoring in favor of stabilized implementation.
+  - Remove redundant tab mnemonics and improve tree table edit behavior on focus loss.
+  - Improve layout management for variant panels.
+  - Simplify `UndoOverseer` static access and improve SpotBugs compliance and locale-safe string operations.
+- **Rendering & Visuals**:
+  - Remove bake centerline functionality from sprite printing utilities and UI.
+  - Remove guide axes overlay from ship viewer.
+  - Remove redundant affine transformations from weapon painter position calculations.
+  - Optimize projectile rendering using instance-based painting, standardize missile render logic, and encapsulate `LayerPainter` fields.
+
+### Bug Fixes & Null Safety
+- **Double-Click & Drag-and-Drop Loading**: Fix broken double-click layer loading by switching from `mouseClicked` to `mousePressed` in `JTree` listeners. Fix drag-and-drop by unwrapping `IndexedFile` in `TreeDataGestureListener`. (`474fbc8f`)
+- **Weapon Spec Null Safety**: Add null-safety guards in `WeaponCSVEntry.getSpecFile()` and `getLazyType()` to prevent NPEs when weapon spec files are missing or unparseable. (`ced1d1c8`)
+- **Automated Tree Reloading**: Add `ComponentListener` to `DataTreePanel` that triggers `queueReload()` when the panel first becomes visible, ensuring trees populate without manual user action. (`ced1d1c8`)
+- **Weapon-to-Slot Compatibility**: Validate weapon-to-slot size compatibility during variant loading and update system weapon size logic.
+- **Type Safety & Exception Handling**: Strengthen type safety in tree cell renderers and fix `EventBus` subscription leaks. Add null checks to prevent NPEs in data tree sorting, repository updates, and `TwinSpinnerPanel`.
+- **Error Handling**: Add error handling for weapon offset inputs and tree cell rendering errors. Include `starsector-core` in validation checks, fix forced reindexing logic, and prevent adding invalid mod directories when `mod_info.json` is missing.
+- **Null Safety & Concurrency**: Fix silent data loading crash by preventing `null` entity IDs in `CoreIndexManager`'s concurrent maps, and add missing `synchronized` blocks to `loadCoreData()` to prevent race conditions during parallel execution.
+- **Variant Loading**: Fix empty variants tab by removing premature constructor initialization in `GameDataRepository` that bypassed lazy loading, and resolve `null` collection iteration crashes in `ShipVariant` by adding Jackson collection null-guards. Add a fallback in `JsonSpecLoader` to use filenames for variants missing the `variantId` JSON field.
+- **Data Deduplication**: Prevent ship data duplication in data trees by explicitly excluding `starsector-core` from active mod database queries in `DatabaseQueryService`.
+
+### Build, Testing & Documentation
+- **Unit Testing**: Add unit tests for data panel instantiation and ensure layout integrity. Add property-based testing suites using `jqwik` for utility, parsing, serialization modules, data repository validation, `UndoOverseer`, `ShapeUtilities`, and `ColorUtilities`. Remove unused CSV loading tests.
+- **Mutation Testing**: Add PIT mutation testing support.
+- **Test Infrastructure**: Expose `fetchWorker` to allow synchronous awaiting of mod loading states in integration tests. Add diagnostic load testing and debugging utilities.
+- **Build Output**: Configure build to output an executable JAR directly to the project root directory.
+- **Documentation**: Simplify installation instructions prioritizing zero-config setup using Starsector's bundled JRE. Add comprehensive Javadoc comments across core system interfaces.
+
 ## [0.0.1f] - 2026-08-02
 
 ### Features

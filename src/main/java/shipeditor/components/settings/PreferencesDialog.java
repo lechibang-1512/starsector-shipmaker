@@ -30,7 +30,7 @@ public class PreferencesDialog extends JDialog {
 
     private void initUI() {
         this.setLayout(new BorderLayout());
-        this.setSize(400, 300);
+        this.setSize(600, 450);
         this.setLocationRelativeTo(this.getOwner());
 
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -62,6 +62,13 @@ public class PreferencesDialog extends JDialog {
         );
         panel.add(autoLoadData);
 
+        JCheckBox togglePromptMods = new JCheckBox("Always show Mod Selection at startup");
+        togglePromptMods.setSelected(settings.isPromptForModsAtStart());
+        togglePromptMods.addActionListener(event ->
+                settings.setPromptForModsAtStart(togglePromptMods.isSelected())
+        );
+        panel.add(togglePromptMods);
+
         JCheckBox toggleFileErrorPopups = new JCheckBox("Enable file error pop-ups");
         toggleFileErrorPopups.setSelected(SettingsManager.areFileErrorPopupsEnabled());
         toggleFileErrorPopups.addActionListener(event ->
@@ -89,6 +96,33 @@ public class PreferencesDialog extends JDialog {
             FileUtilities.openPathInDesktop(editorFolder);
         });
         panel.add(openEditorFolder);
+
+        panel.add(javax.swing.Box.createVerticalStrut(10));
+
+        JPanel blacklistPanel = new JPanel(new BorderLayout(5, 5));
+        blacklistPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Mod Blacklist"));
+        javax.swing.JTextArea blacklistArea = new javax.swing.JTextArea(4, 20);
+        blacklistArea.setToolTipText("Comma-separated list of mod folder names or prefixes to ignore.");
+        if (settings.getBlacklistedMods() != null) {
+            blacklistArea.setText(String.join(", ", settings.getBlacklistedMods()));
+        }
+        blacklistArea.getDocument().addDocumentListener(new BlacklistDocumentListener(blacklistArea, settings));
+        blacklistPanel.add(new javax.swing.JScrollPane(blacklistArea), BorderLayout.CENTER);
+        panel.add(blacklistPanel);
+        panel.add(javax.swing.Box.createVerticalStrut(10));
+
+        JButton openModSelectionBtn = new JButton("Select Mod Packages...");
+        openModSelectionBtn.setToolTipText("Open the mod selection dialog to change indexed mods");
+        openModSelectionBtn.addActionListener(e -> {
+            shipeditor.components.dialogs.ModSelectionDialog dialog = 
+                new shipeditor.components.dialogs.ModSelectionDialog(
+                    (Frame) javax.swing.SwingUtilities.getWindowAncestor(this)
+                );
+            if (dialog.showDialog()) {
+                shipeditor.parsing.loading.FileLoading.forceReindexAndLoadGameData();
+            }
+        });
+        panel.add(openModSelectionBtn);
 
         return panel;
     }
@@ -132,5 +166,27 @@ public class PreferencesDialog extends JDialog {
         panel.add(new JLabel("Current version: " + projectVersion));
 
         return panel;
+    }
+    private static final class BlacklistDocumentListener implements javax.swing.event.DocumentListener {
+        private final javax.swing.JTextArea blacklistArea;
+        private final Settings settings;
+
+        BlacklistDocumentListener(javax.swing.JTextArea blacklistArea, Settings settings) {
+            this.blacklistArea = blacklistArea;
+            this.settings = settings;
+        }
+
+        private void update() {
+            String text = blacklistArea.getText();
+            java.util.List<String> list = java.util.Arrays.stream(text.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+            settings.setBlacklistedMods(list);
+        }
+
+        @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { update(); }
+        @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { update(); }
+        @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
     }
 }

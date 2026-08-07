@@ -15,11 +15,24 @@ public class EngineStylesPanel extends AbstractStylesPanel {
 
     @Override
     protected JPanel createTopPanel() {
-        return null;
+        return new JPanel();
+    }
+
+    @Override
+    protected boolean isDataLoaded() {
+        return shipeditor.persistence.SettingsManager.getGameData().getAllEngineStyles() != null;
+    }
+
+    @Override
+    protected javax.swing.Action getLoadDataAction() {
+        return new javax.swing.AbstractAction("Reload") { @Override public void actionPerformed(java.awt.event.ActionEvent e) { populatePanel(shipeditor.persistence.SettingsManager.getGameData().getAllEngineStyles()); } };
     }
 
     @Override
     protected void initListeners() {
+        if (shipeditor.persistence.SettingsManager.getGameData().getAllEngineStyles() != null) {
+            populatePanel(shipeditor.persistence.SettingsManager.getGameData().getAllEngineStyles());
+        }
         EventBus.subscribe(this, event -> {
             if (event instanceof EngineStylesLoaded checked) {
                 populatePanel(checked.engineStyles());
@@ -28,6 +41,7 @@ public class EngineStylesPanel extends AbstractStylesPanel {
     }
 
     private void populatePanel(Map<String, EngineStyle> engineStyles) {
+        if (engineStyles == null) return;
         JPanel scrollerContent = getScrollerContent();
         scrollerContent.removeAll();
         for (EngineStyle style : engineStyles.values()) {

@@ -17,6 +17,8 @@ import shipeditor.undo.UndoOverseer;
 import shipeditor.undo.edits.features.SkinOverrideEdits.SkinMapOverrideEdit;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.UIConstants;
+import shipeditor.utility.components.UIFactory;
+import shipeditor.utility.themes.Themes;
 import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 
 import javax.swing.*;
@@ -41,7 +43,7 @@ public class SkinEngineOverridesPanel extends JPanel {
     public SkinEngineOverridesPanel() {
         this.setLayout(new BorderLayout());
 
-        statusLabel = new JLabel("No skin active");
+        statusLabel = UIFactory.createLabel("No skin active");
         statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
         statusLabel.setBorder(new EmptyBorder(8, 8, 8, 8));
 
@@ -155,7 +157,7 @@ public class SkinEngineOverridesPanel extends JPanel {
 
         int selectedRow = overridesTable.getSelectedRow();
         if (selectedRow < 0 || selectedRow >= tableModel.getRowCount()) {
-            JLabel hint = new JLabel("Select an engine slot from the table to view/edit its override");
+            JLabel hint = UIFactory.createLabel("Select an engine slot from the table to view/edit its override");
             hint.setHorizontalAlignment(SwingConstants.CENTER);
             hint.setForeground(UIManager.getColor("Label.disabledForeground"));
             GridBagConstraints gbc = new GridBagConstraints();
@@ -193,7 +195,7 @@ public class SkinEngineOverridesPanel extends JPanel {
 
         String overrideStatus = row.hasOverride ? "✓ Has Override" : "✗ No Override";
         Color overrideColor = row.hasOverride
-                ? new Color(100, 200, 100)
+                ? Themes.getSuccessColor()
                 : UIManager.getColor("Label.disabledForeground");
         addColoredField(panel, "Status:", overrideStatus, overrideColor, labelGbc, fieldGbc, gridRow++);
 
@@ -231,7 +233,7 @@ public class SkinEngineOverridesPanel extends JPanel {
         addField(panel, "Override Style:", styleBox, labelGbc, fieldGbc, gridRow++);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton applyButton = new JButton("Apply Override");
+        JButton applyButton = UIFactory.createButton("Apply Override");
         applyButton.addActionListener(e -> {
             EngineDataOverride.EngineDataOverrideBuilder builder = EngineDataOverride.builder();
             builder.index(row.index);
@@ -246,7 +248,7 @@ public class SkinEngineOverridesPanel extends JPanel {
             commitOverride(row.index, builder.build());
         });
 
-        JButton clearButton = new JButton("Clear Override");
+        JButton clearButton = UIFactory.createButton("Clear Override");
         clearButton.setEnabled(row.hasOverride);
         clearButton.addActionListener(e -> {
             commitOverride(row.index, null);
@@ -299,7 +301,7 @@ public class SkinEngineOverridesPanel extends JPanel {
                                           GridBagConstraints labelGbc, GridBagConstraints fieldGbc, int row) {
         labelGbc.gridx = 0;
         labelGbc.gridy = row;
-        panel.add(new JLabel(labelText), labelGbc);
+        panel.add(UIFactory.createLabel(labelText), labelGbc);
 
         fieldGbc.gridx = 1;
         fieldGbc.gridy = row;
@@ -313,7 +315,7 @@ public class SkinEngineOverridesPanel extends JPanel {
                                  GridBagConstraints labelGbc, GridBagConstraints fieldGbc, int row) {
         labelGbc.gridx = 0;
         labelGbc.gridy = row;
-        panel.add(new JLabel(labelText), labelGbc);
+        panel.add(UIFactory.createLabel(labelText), labelGbc);
 
         fieldGbc.gridx = 1;
         fieldGbc.gridy = row;
@@ -324,11 +326,11 @@ public class SkinEngineOverridesPanel extends JPanel {
                                           GridBagConstraints labelGbc, GridBagConstraints fieldGbc, int row) {
         labelGbc.gridx = 0;
         labelGbc.gridy = row;
-        panel.add(new JLabel(labelText), labelGbc);
+        panel.add(UIFactory.createLabel(labelText), labelGbc);
 
         fieldGbc.gridx = 1;
         fieldGbc.gridy = row;
-        JLabel valueLabel = new JLabel(value);
+        JLabel valueLabel = UIFactory.createLabel(value);
         valueLabel.setForeground(color);
         panel.add(valueLabel, fieldGbc);
     }

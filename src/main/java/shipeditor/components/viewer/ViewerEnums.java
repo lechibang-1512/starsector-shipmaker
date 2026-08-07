@@ -101,7 +101,7 @@ public class ViewerEnums {
 
         visibilityList.setRenderer(PainterVisibility.createCellRenderer());
         visibilityList.addActionListener(chooseAction);
-        EventBus.subscribe(PainterVisibility.createBusEventListener(visibilityList, selectionAction));
+        EventBus.subscribe(visibilityList, PainterVisibility.createBusEventListener(visibilityList, selectionAction));
 
         visibilityList.setMaximumSize(visibilityList.getPreferredSize());
 

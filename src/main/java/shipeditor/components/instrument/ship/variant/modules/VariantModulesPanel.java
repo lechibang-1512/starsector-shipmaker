@@ -12,6 +12,8 @@ import shipeditor.components.viewer.painters.points.ship.features.InstalledFeatu
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.overseers.StaticController;
+import shipeditor.utility.components.UIFactory;
+import shipeditor.utility.themes.Themes;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -83,7 +85,7 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
         JPanel buttonContainer = new JPanel(new BorderLayout());
         buttonContainer.setBorder(new EmptyBorder(4, 4, 0, 4));
         
-        this.slotSummaryLabel = new javax.swing.JLabel("Modules: 0/0 slots filled");
+        this.slotSummaryLabel = UIFactory.createLabel("Modules: 0/0 slots filled");
         this.slotSummaryLabel.setBorder(new EmptyBorder(0, 0, 4, 0));
         
         JPanel topContainer = new JPanel(new BorderLayout());
@@ -106,7 +108,7 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
     }
 
     private JButton getLoadModulesButton() {
-        JButton loadModulesAsLayers = new JButton("Load modules as layers");
+        JButton loadModulesAsLayers = UIFactory.createButton("Load modules as layers");
 
         registerWidgetListeners(loadModulesAsLayers, layer ->
                 loadModulesAsLayers.setEnabled(false), layer -> {
@@ -201,13 +203,13 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
         
         this.slotSummaryLabel.setText(String.format("Modules: %d/%d slots filled", filledSlots, totalSlots));
         if (totalSlots == 0) {
-            this.slotSummaryLabel.setForeground(Color.GRAY);
+            this.slotSummaryLabel.setForeground(Themes.getDisabledTextColor());
         } else if (filledSlots == totalSlots) {
-            this.slotSummaryLabel.setForeground(new Color(0, 180, 0)); // Green
+            this.slotSummaryLabel.setForeground(Themes.getSuccessColor());
         } else if (filledSlots > 0) {
-            this.slotSummaryLabel.setForeground(new Color(200, 150, 0)); // Yellow/Orange
+            this.slotSummaryLabel.setForeground(Themes.getWarningColor());
         } else {
-            this.slotSummaryLabel.setForeground(Color.GRAY);
+            this.slotSummaryLabel.setForeground(Themes.getDisabledTextColor());
         }
     }
 
@@ -314,7 +316,7 @@ public class VariantModulesPanel extends AbstractShipPropertiesPanel {
                         variant.sortModules(rearranged));
 
         moduleList = new ModuleList(this::refreshModuleControlPane, model, removeAction, sortAction);
-        moduleList.setBorder(new LineBorder(Color.LIGHT_GRAY));
+        moduleList.setBorder(new LineBorder(Themes.getBorderColor()));
         return moduleList;
     }
 

@@ -107,16 +107,18 @@ public final class ColorUtilities {
     public static int getHueFromRGB(int red, int green, int blue) {
         float min = Math.min(Math.min(red, green), blue);
         float max = Math.max(Math.max(red, green), blue);
-        if (min == max) {
-            return 0;
-        }
         float hue;
-        if (max == red) {
-            hue = (green - blue) / (max - min);
-        } else if (max == green) {
-            hue = 2.0f + (blue - red) / (max - min);
+        if (Float.compare(min, max) == 0) {
+            hue = 0;
         } else {
-            hue = 4.0f + (red - green) / (max - min);
+            float delta = max - min;
+            if (Float.compare(max, red) == 0) {
+                hue = (green - blue) / delta;
+            } else if (Float.compare(max, green) == 0) {
+                hue = 2.0f + (blue - red) / delta;
+            } else {
+                hue = 4.0f + (red - green) / delta;
+            }
         }
         hue = hue * 60;
         if (hue < 0) hue = hue + 360;

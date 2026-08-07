@@ -8,6 +8,7 @@ import shipeditor.communication.EventBus;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.parsing.loading.FileLoading;
+import shipeditor.utility.Utility;
 import shipeditor.utility.components.containers.SortableList;
 import shipeditor.utility.components.containers.TextScrollPanel;
 import shipeditor.utility.graphics.ColorUtilities;
@@ -16,6 +17,7 @@ import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 
 import javax.swing.Action;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
@@ -31,6 +33,7 @@ import javax.swing.JSeparator;
 import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.border.*;
 import javax.swing.event.ChangeListener;
 import java.awt.Color;
@@ -84,9 +87,9 @@ public final class ComponentUtilities {
 
     @SuppressWarnings("WeakerAccess")
     public static JPanel createBoxLabelPanel(String leftName, JLabel rightValue, int sidePadding) {
-        JPanel infoContainer = new JPanel();
+        JPanel infoContainer = UIFactory.createPanel();
         infoContainer.setLayout(new BoxLayout(infoContainer, BoxLayout.LINE_AXIS));
-        JLabel label = new JLabel(leftName);
+        JLabel label = UIFactory.createLabel(leftName);
         ComponentUtilities.layoutAsOpposites(infoContainer, label, rightValue, sidePadding);
         return infoContainer;
     }
@@ -107,7 +110,7 @@ public final class ComponentUtilities {
     public static void setPanelTopLineBorder(JPanel panel, int height) {
         Border emptyBorder = new EmptyBorder(height, 0, 2, 0);
         Border lineBorder = new MatteBorder(
-                new Insets(1, 0, 0,0), Themes.getBorderColor()
+                UIConstants.INSETS_TOP_1, Themes.getBorderColor()
         );
         panel.setBorder(new CompoundBorder(emptyBorder, lineBorder));
     }
@@ -115,7 +118,7 @@ public final class ComponentUtilities {
     private static JLabel createIconLabelWithBorder(Icon icon) {
         JLabel imageLabel = new JLabel(icon);
         imageLabel.setOpaque(true);
-        imageLabel.setBorder(new FlatLineBorder(new Insets(2, 2, 2, 2), Color.GRAY));
+        imageLabel.setBorder(new FlatLineBorder(UIConstants.INSETS_SMALL, Themes.getBorderColor()));
         imageLabel.setBackground(Color.LIGHT_GRAY);
         return imageLabel;
     }
@@ -134,7 +137,7 @@ public final class ComponentUtilities {
     @SuppressWarnings("WeakerAccess")
     public static JLabel createIconFromImage(BufferedImage image, String tooltip, int maxSize) {
         if (image == null) {
-            JLabel fallbackLabel = new JLabel("?");
+            JLabel fallbackLabel = UIFactory.createLabel("?");
             if (tooltip != null && !tooltip.isEmpty()) {
                 fallbackLabel.setToolTipText(tooltip);
             }
@@ -184,7 +187,7 @@ public final class ComponentUtilities {
         Pair<JLabel, JSlider> widgets = ComponentUtilities.createOpacityWidget();
         JSlider slider = widgets.getSecond();
         slider.addChangeListener(change);
-        EventBus.subscribe(eventListener);
+        EventBus.subscribe(slider, eventListener);
 
         return widgets;
     }
@@ -235,15 +238,15 @@ public final class ComponentUtilities {
         opacitySlider.setEnabled(false);
         opacitySlider.setSnapToTicks(true);
         Dictionary<Integer, JLabel> labelTable = new Hashtable<>();
-        labelTable.put(0, new JLabel("0%"));
-        labelTable.put(50, new JLabel("50%"));
-        labelTable.put(100, new JLabel("100%"));
+        labelTable.put(0, UIFactory.createLabel("0%"));
+        labelTable.put(50, UIFactory.createLabel("50%"));
+        labelTable.put(100, UIFactory.createLabel("100%"));
         opacitySlider.setLabelTable(labelTable);
         opacitySlider.setMajorTickSpacing(50);
         opacitySlider.setMinorTickSpacing(10);
         opacitySlider.setPaintTicks(true);
         opacitySlider.setPaintLabels(true);
-        JLabel opacityLabel = new JLabel();
+        JLabel opacityLabel = UIFactory.createLabel("");
         opacityLabel.setAlignmentX(0.0f);
 
         return new Pair<>(opacityLabel, opacitySlider);
@@ -280,7 +283,7 @@ public final class ComponentUtilities {
     }
 
     public static JPanel createFileTitlePanel(Path filePath, Path packagePath, String titleText) {
-        JLabel label = new JLabel(titleText);
+        JLabel label = UIFactory.createLabel(titleText);
         Insets empty = new Insets(0, 3, 2, 4);
         label.setBorder(ComponentUtilities.createLabelSimpleBorder(empty));
 
@@ -299,7 +302,7 @@ public final class ComponentUtilities {
             label.setToolTipText("No file path associated");
         }
 
-        JPanel titleContainer = new JPanel();
+        JPanel titleContainer = UIFactory.createPanel();
         titleContainer.setLayout(new BoxLayout(titleContainer, BoxLayout.LINE_AXIS));
         titleContainer.add(label);
 
@@ -354,7 +357,7 @@ public final class ComponentUtilities {
     }
 
     public static JPanel createTitledSeparatorPanel(String text) {
-        var insets = new Insets(1, 0, 0, 0);
+        var insets = UIConstants.INSETS_TOP_1;
         return ComponentUtilities.createTitledSeparatorPanel(text, insets);
     }
 
@@ -374,6 +377,17 @@ public final class ComponentUtilities {
         return container;
     }
 
+    public static JTextArea createWrappingLabel(String text) {
+        JTextArea textArea = new JTextArea(text);
+        textArea.setEditable(false);
+        textArea.setFocusable(false);
+        textArea.setOpaque(false);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(false);
+        textArea.setFont(UIManager.getFont("Label.font"));
+        return textArea;
+    }
+
     private static JPanel createTitledSeparatorPanel(String text, Insets insets) {
         JPanel container = new JPanel();
         container.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
@@ -383,15 +397,15 @@ public final class ComponentUtilities {
     }
 
     public static void outfitPanelWithTitle(JPanel panel, String text) {
-        var insets = new Insets(1, 0, 0, 0);
-        MatteBorder matteLine = new MatteBorder(insets, Color.LIGHT_GRAY);
+        var insets = UIConstants.INSETS_TOP_1;
+        MatteBorder matteLine = new MatteBorder(insets, Themes.getBorderColor());
         Border titledBorder = new TitledBorder(matteLine, text,
                 TitledBorder.CENTER, TitledBorder.DEFAULT_POSITION);
         panel.setBorder(titledBorder);
     }
 
     public static void outfitPanelWithTitle(JPanel panel, Insets insets, String text) {
-        MatteBorder matteLine = new MatteBorder(insets, Color.LIGHT_GRAY);
+        MatteBorder matteLine = new MatteBorder(insets, Themes.getBorderColor());
         Border titledBorder = new TitledBorder(matteLine, text,
                 TitledBorder.CENTER, TitledBorder.DEFAULT_POSITION);
         panel.setBorder(titledBorder);
@@ -399,7 +413,7 @@ public final class ComponentUtilities {
 
     public static Pair<JPanel, JButton> createLoaderButtonPanel(String labelText, Action buttonAction) {
         JPanel topContainer = new JPanel();
-        topContainer.add(new JLabel(labelText));
+        topContainer.add(UIFactory.createLabel(labelText));
         JButton loadButton = new JButton(buttonAction);
         java.lang.ref.WeakReference<JButton> buttonRef = new java.lang.ref.WeakReference<>(loadButton);
         EventBus.subscribe(loadButton, event -> {
@@ -453,7 +467,7 @@ public final class ComponentUtilities {
     }
 
     public static JLabel getNoSelected() {
-        JLabel label = new JLabel(StringValues.NO_SELECTED);
+        JLabel label = UIFactory.createLabel(StringValues.NO_SELECTED);
         label.setBorder(new EmptyBorder(5, 0, 5, 0));
         return label;
     }
@@ -501,7 +515,7 @@ public final class ComponentUtilities {
         constraints.insets = new Insets(0, 0, 0, 4);
         constraints.anchor = GridBagConstraints.LINE_END;
 
-        JButton removeButton = new JButton("Remove");
+        JButton removeButton = UIFactory.createButton("Remove");
 
         removeButton.addActionListener(removeAction);
         removeButton.setToolTipText("Remove from list");
@@ -518,7 +532,7 @@ public final class ComponentUtilities {
         JPanel hintPanel = new JPanel();
         hintPanel.setLayout(new BoxLayout(hintPanel, BoxLayout.LINE_AXIS));
 
-        JLabel hintLabel = new JLabel(prefix);
+        JLabel hintLabel = UIFactory.createLabel(prefix);
         hintLabel.setBorder(new EmptyBorder(4, 4, 4, 4));
         hintLabel.setAlignmentY(0.5f);
         hintLabel.setFont(hintLabel.getFont().deriveFont(Font.BOLD));
@@ -542,7 +556,7 @@ public final class ComponentUtilities {
     public static JLabel createFileLabel(Path path, String description) {
         Path fileNamePath = path != null ? path.getFileName() : null;
         String fileName = fileNamePath != null ? fileNamePath.toString() : "Unknown";
-        JLabel label = new JLabel(description + fileName);
+        JLabel label = UIFactory.createLabel(description + fileName);
         label.setToolTipText(path != null ? path.toString() : "Unknown");
         label.setBorder(ComponentUtilities.createLabelSimpleBorder(ComponentUtilities.createLabelInsets()));
         if (path != null) {
@@ -552,4 +566,66 @@ public final class ComponentUtilities {
         return label;
     }
 
+    public static class InfoPanelBuilder {
+        private final JPanel panel;
+        private final GridBagConstraints gbc;
+        private int row = 0;
+
+        public InfoPanelBuilder(String title) {
+            panel = new JPanel(new java.awt.GridBagLayout());
+            panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            ComponentUtilities.outfitPanelWithTitle(panel, new Insets(1, 0, 0, 0), title);
+
+            gbc = new GridBagConstraints();
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.weightx = 1.0;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.anchor = GridBagConstraints.NORTHWEST;
+            gbc.insets = new Insets(2, 4, 4, 4);
+        }
+
+        public void addSpritePreview(shipeditor.utility.graphics.Sprite sprite) {
+            if (sprite != null) {
+                String tooltip = Utility.getTooltipForSprite(sprite);
+                JLabel spriteIcon = ComponentUtilities.createIconFromImage(sprite.getImage(), tooltip, 128);
+                JPanel spriteWrapper = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER));
+                spriteWrapper.add(spriteIcon);
+                panel.add(spriteWrapper, gbc);
+                gbc.gridy++;
+                row++;
+            }
+        }
+
+        public void addWrappingPathLabel(String prefix, java.nio.file.Path path) {
+            Path fileNamePath = path != null ? path.getFileName() : null;
+            String fileName = fileNamePath != null ? fileNamePath.toString() : "Not found";
+            String fullPath = path != null ? path.toString() : "Not found";
+            JLabel label = new JLabel(String.format("<html><b>%s%s</b></html>", prefix, fileName));
+            label.setToolTipText(fullPath);
+            label.setBorder(ComponentUtilities.createLabelSimpleBorder(new Insets(2, 4, 2, 4)));
+            panel.add(label, gbc);
+            gbc.gridy++;
+            row++;
+        }
+        
+        public void addCustomComponent(JComponent component) {
+            panel.add(component, gbc);
+            gbc.gridy++;
+            row++;
+        }
+
+        public JPanel getPanel() {
+            return panel;
+        }
+
+        public int getRow() {
+            return row;
+        }
+        
+        public void setRow(int row) {
+            this.row = row;
+            this.gbc.gridy = row;
+        }
+    }
 }

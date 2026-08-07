@@ -34,6 +34,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * Base abstraction for drawing entities (like Ships or Weapons) in the OpenGL viewer.
+ * <p>
+ * **Coordinate System & Math:**
+ * The Starsector Ship Editor translates between two primary coordinate spaces:
+ * <ul>
+ *   <li><b>World Space:</b> The game's coordinate system where entities exist, represented natively in Starsector JSONs.</li>
+ *   <li><b>Screen Space:</b> The window pixel coordinates where the user is looking.</li>
+ * </ul>
+ * 
+ * <b>Transforms:</b> The {@code LayerPainter} is responsible for supplying the necessary AffineTransformations to 
+ * map points accurately considering this layer's anchor and rotation.
+ */
 @Getter
 @SuppressWarnings("ClassWithTooManyMethods")
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
@@ -48,7 +61,7 @@ public abstract class LayerPainter implements OpenGLPainter {
     private double rotationRadians;
 
     public void setRotationRadians(double newRotation) {
-        double delta = newRotation - this.rotationRadians;
+        double delta = newRotation - this.getRotationRadians();
 
         if (delta != 0.0 && this.allPainters != null && !this.allPainters.isEmpty()) {
             Point2D rotationAnchor = this.getRotationAnchor();
@@ -106,8 +119,13 @@ public abstract class LayerPainter implements OpenGLPainter {
 
     public Dimension getSpriteSize() {
         Sprite spriteContainer = getSprite();
-        var spriteImage = spriteContainer.getImage();
-        return new Dimension(spriteImage.getWidth(), spriteImage.getHeight());
+        if (spriteContainer != null) {
+            var spriteImage = spriteContainer.getImage();
+            if (spriteImage != null) {
+                return new Dimension(spriteImage.getWidth(), spriteImage.getHeight());
+            }
+        }
+        return new Dimension(0, 0);
     }
 
     public BufferedImage getSpriteImage() {
@@ -251,6 +269,13 @@ public abstract class LayerPainter implements OpenGLPainter {
         EditDispatch.postLayerRotated(this, this.getRotationRadians(), Math.toRadians(rotationDegrees));
     }
 
+    /**
+     * Applies this layer's rotation on top of a base World-to-Screen transform.
+     * Use this when drawing components (like weapon arcs or bounding boxes) that need to rotate with the sprite.
+     * 
+     * @param worldToScreen The parent camera's affine transform.
+     * @return A new transform combining camera translation and layer rotation.
+     */
     public AffineTransform getWithRotation(AffineTransform worldToScreen) {
         AffineTransform transform = new AffineTransform(worldToScreen);
         transform.concatenate(getRotationTransform());
@@ -263,6 +288,11 @@ public abstract class LayerPainter implements OpenGLPainter {
         return transformCache;
     }
 
+    /**
+     * Creates an AffineTransform that applies the layer's rotation around its visual center anchor.
+     * 
+     * @return The rotation transform instance.
+     */
     public AffineTransform getRotationTransform() {
         double rotation = this.getRotationRadians();
         Point2D center = this.getRotationAnchor();
@@ -271,6 +301,14 @@ public abstract class LayerPainter implements OpenGLPainter {
         return AffineTransform.getRotateInstance(rotation, centerX, centerY);
     }
 
+    /**
+     * Creates an inverse transform (Screen-to-World reversing this layer's rotation).
+     * Useful for hit detection or mouse click coordinate resolution where the cursor's
+     * screen position needs to map back to an unrotated point on the sprite.
+     * 
+     * @param worldToScreen The parent camera's affine transform.
+     * @return The inverted transform matrix.
+     */
     public AffineTransform getWithRotationInverse(AffineTransform worldToScreen) {
         AffineTransform transform;
         AffineTransform worldToScreenCopy = new AffineTransform(worldToScreen);
@@ -318,6 +356,14 @@ public abstract class LayerPainter implements OpenGLPainter {
                 (currentAnchor.getY() + difference.getY()));
     }
 
+    /**
+     * Determines whether a given cursor coordinate (in World Space) falls inside the bounding box of this Layer's sprite.
+     * This method automatically accounts for the layer's rotation by inverse-transforming the cursor coordinate
+     * against the layer's rotation matrix before testing the standard axis-aligned bounding box.
+     * 
+     * @param worldCursor The mouse cursor coordinate in world space.
+     * @return True if the cursor intersects the sprite visual bounds, false otherwise.
+     */
     public boolean isWorldCursorInsideSprite(Point2D worldCursor) {
         try {
             Point2D currentAnchor = this.getAnchor();
@@ -352,6 +398,9 @@ public abstract class LayerPainter implements OpenGLPainter {
 
     public Point2D getSpriteCenterDifferenceToAnchor() {
         Sprite spriteContainer = getSprite();
+        if (spriteContainer == null) {
+            return new Point2D.Double(0, 0);
+        }
         var spriteImage = spriteContainer.getImage();
         return Utility.getSpriteCenterDifferenceToAnchor(spriteImage);
     }
@@ -376,7 +425,7 @@ public abstract class LayerPainter implements OpenGLPainter {
 
     @Override
     public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
-        if (!shouldDrawPainter)
+        if (!this.isShouldDrawPainter())
             return;
         this.paintContent(spriteRenderer, shapeRenderer, projection, view);
     }

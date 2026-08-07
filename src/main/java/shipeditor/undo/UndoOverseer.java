@@ -5,6 +5,7 @@ import shipeditor.utility.UtilityEnums.EditCategory;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
@@ -24,15 +25,26 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 
-/** * It is assumed by EditDispatch and general logic of implementation that this class enforces strict order of operations,
- * and undo/redo actions are served according to the LIFO order of the edit stack.
- * As such, exposing edit stack to the user for selective undo is strictly forbidden.*/
+/**
+ * The central manager for the Undo/Redo system in Starsector Ship Editor.
+ * <p>
+ * **Mechanics:** 
+ * This class enforces a strict LIFO (Last-In-First-Out) order of operations via two Deques (stacks).
+ * When a user action occurs, an {@link Edit} is created (typically via {@link shipeditor.undo.EditDispatch})
+ * and posted here using {@link #post(Edit)}. The system caps at {@value #MAX_UNDO_CAPACITY} edits to prevent memory leaks.
+ * <p>
+ * <b>Note:</b> Exposing the edit stack to the user for selective undo is strictly forbidden as it breaks 
+ * the sequential integrity of coordinate mutations and state changes.
+ */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 @Log4j2
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public final class UndoOverseer {
 
     private static final UndoOverseer seer = new UndoOverseer();
+
+    @Getter @Setter
+    private static boolean paused = false;
 
     private static final int MAX_UNDO_CAPACITY = 200;
 
@@ -47,10 +59,10 @@ public final class UndoOverseer {
     private final Action undoAction = new AbstractAction("Undo") {
         @Override
         public void actionPerformed(ActionEvent e) {
-            Deque<Edit> undo = seer.getUndoStack();
+            Deque<Edit> undo = UndoOverseer.getUndoStack();
             Edit head = undo.pop();
             head.undo();
-            Deque<Edit> redo = seer.getRedoStack();
+            Deque<Edit> redo = UndoOverseer.getRedoStack();
             redo.push(head);
             markActiveLayerDirty(head);
             updateActionState();
@@ -70,14 +82,12 @@ public final class UndoOverseer {
         }
     };
 
-    @Getter
     private final Deque<Edit> undoStack = new ArrayDeque<>();
 
-    @Getter
     private final Deque<Edit> redoStack = new ArrayDeque<>();
 
     private void updateActionState() {
-        Deque<Edit> undo = seer.getUndoStack();
+        Deque<Edit> undo = UndoOverseer.getUndoStack();
         String undoName = "Undo";
         if (undo.isEmpty()) {
             undoAction.setEnabled(false);
@@ -89,7 +99,7 @@ public final class UndoOverseer {
         undoAction.putValue(Action.NAME, undoName);
         undoAction.putValue(Action.SHORT_DESCRIPTION, undoName);
 
-        Deque<Edit> redo = seer.getRedoStack();
+        Deque<Edit> redo = UndoOverseer.getRedoStack();
         String redoName = "Redo";
         if (redo.isEmpty()) {
             redoAction.setEnabled(false);
@@ -110,18 +120,27 @@ public final class UndoOverseer {
         return seer.redoAction;
     }
 
+    public static Deque<Edit> getUndoStack() {
+        return seer.undoStack;
+    }
+
+    public static Deque<Edit> getRedoStack() {
+        return seer.redoStack;
+    }
+
     public static Edit getNextUndoable() {
-        Deque<Edit> stack = seer.getUndoStack();
+        Deque<Edit> stack = UndoOverseer.getUndoStack();
         return stack.peek();
     }
 
     private static Edit getNextRedoable() {
-        Deque<Edit> stack = seer.getRedoStack();
+        Deque<Edit> stack = UndoOverseer.getRedoStack();
         return stack.peek();
     }
 
     public static void post(Edit edit) {
-        Deque<Edit> stack = seer.getUndoStack();
+        if (paused) return;
+        Deque<Edit> stack = UndoOverseer.getUndoStack();
         stack.addFirst(edit);
         
         while (stack.size() > MAX_UNDO_CAPACITY) {

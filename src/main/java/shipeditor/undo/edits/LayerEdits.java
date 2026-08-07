@@ -72,8 +72,7 @@ public final class LayerEdits {
         }
 
         public void assimilate(Edit edit) {
-            if (isSimilar(edit)) {
-                HullCoversColorEdit checked = (HullCoversColorEdit) edit;
+            if (edit instanceof HullCoversColorEdit checked && isSimilar(checked)) {
                 checked.setFinished(true);
             }
         }

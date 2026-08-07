@@ -103,4 +103,19 @@ public final class Themes {
         UIManager.put("TabbedPane.selectedBackground", selectedTabColor);
     }
 
+    public static Color getSuccessColor() {
+        Color color = UIManager.getColor("Component.success.focusedBorderColor");
+        return color != null ? color : new Color(40, 167, 69);
+    }
+    
+    public static Color getWarningColor() {
+        Color color = UIManager.getColor("Component.warning.focusedBorderColor");
+        return color != null ? color : new Color(255, 193, 7);
+    }
+
+    public static Color getErrorColor() {
+        Color color = UIManager.getColor("Component.error.focusedBorderColor");
+        return color != null ? color : new Color(220, 53, 69);
+    }
+
 }

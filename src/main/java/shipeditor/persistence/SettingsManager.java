@@ -34,8 +34,12 @@ public final class SettingsManager {
 
     private static List<Path> cachedModFolders;
 
-    public static synchronized void clearModFoldersCache() {
-        cachedModFolders = null;
+    private static final Object STATIC_LOCK = new Object();
+
+    public static void clearModFoldersCache() {
+        synchronized (STATIC_LOCK) {
+            cachedModFolders = null;
+        }
     }
 
     @Getter
@@ -65,12 +69,9 @@ public final class SettingsManager {
 
     static void setCoreFolderName(String folderName) {
         SettingsManager.coreFolderName = folderName;
-        if (corePackage != null) {
-            corePackage.setFolderName(folderName);
-        }
     }
 
-    static ObjectMapper getMapperForSettingsFile() {
+    public static ObjectMapper getMapperForSettingsFile() {
         return FileUtilities.getConfigured();
     }
 
@@ -79,9 +80,11 @@ public final class SettingsManager {
      *         Caller is expected to do the filtering.
      */
     @SuppressWarnings("CallToPrintStackTrace")
-    public static synchronized List<Path> getAllModFolders() {
-        if (cachedModFolders != null) {
-            return new ArrayList<>(cachedModFolders);
+    public static List<Path> getAllModFolders() {
+        synchronized (STATIC_LOCK) {
+            if (cachedModFolders != null) {
+                return new ArrayList<>(cachedModFolders);
+            }
         }
         if (settings == null || settings.getModFolderPath() == null) {
             return new ArrayList<>();
@@ -90,13 +93,34 @@ public final class SettingsManager {
         Path modFolder = Paths.get(settings.getModFolderPath());
         if (Files.exists(modFolder) && Files.isDirectory(modFolder)) {
             try (Stream<Path> childDirectories = Files.list(modFolder)) {
-                childDirectories.filter(Files::isDirectory).forEach(dataFolders::add);
+                childDirectories.filter(Files::isDirectory).forEach(dir -> {
+                    if (Files.exists(dir.resolve("mod_info.json"))) {
+                        dataFolders.add(dir);
+                    } else {
+                        try (Stream<Path> subDirs = Files.list(dir)) {
+                            subDirs.filter(Files::isDirectory)
+                                   .filter(sub -> Files.exists(sub.resolve("mod_info.json")))
+                                   .findFirst()
+                                   .ifPresent(dataFolders::add);
+                        } catch (IOException e) {
+                            // Do not add the directory if an exception occurs and no mod_info.json was found
+                        }
+                    }
+                });
             } catch (IOException exception) {
                 log.error("Failed to list mod folders in: {}", modFolder, exception);
             }
         }
-        cachedModFolders = dataFolders;
+        synchronized (STATIC_LOCK) {
+            cachedModFolders = dataFolders;
+        }
         return new ArrayList<>(dataFolders);
+    }
+
+    public static void invalidateModCache() {
+        synchronized (STATIC_LOCK) {
+            cachedModFolders = null;
+        }
     }
 
     public static Path getCoreFolderPath() {
@@ -119,17 +143,19 @@ public final class SettingsManager {
         return settings.loadDataAtStart;
     }
 
-    public static synchronized File getSettingsPath() {
-        if (settingsFilePath != null) {
-            return settingsFilePath.toFile();
-        } else {
+    public static File getSettingsPath() {
+        synchronized (STATIC_LOCK) {
+            if (settingsFilePath != null) {
+                return settingsFilePath.toFile();
+            } else {
             Path workingDirectory = Paths.get("").toAbsolutePath();
             Path settingsPath = workingDirectory.resolve("ship_editor_settings.json");
 
-            applicationDirectory = settingsPath.getParent();
-            settingsFilePath = settingsPath;
+                applicationDirectory = settingsPath.getParent();
+                settingsFilePath = settingsPath;
 
-            return settingsPath.toFile();
+                return settingsPath.toFile();
+            }
         }
     }
 
@@ -163,7 +189,7 @@ public final class SettingsManager {
     }
 
     public static boolean isCoreFolder(String folderName) {
-        return folderName.equals(SettingsManager.getCoreFolderName());
+        return "starsector-core".equals(folderName) || folderName.equals(SettingsManager.getCoreFolderName());
     }
 
     /**
@@ -191,12 +217,13 @@ public final class SettingsManager {
         return null;
     }
 
-    public static synchronized GameDataPackage getCorePackage() {
-        String corePackageName = SettingsManager.getCoreFolderName();
-        if (corePackage == null) {
-            corePackage = new GameDataPackage(corePackageName, false, false);
+    public static GameDataPackage getCorePackage() {
+        synchronized (STATIC_LOCK) {
+            if (corePackage == null) {
+                corePackage = new GameDataPackage("starsector-core", false, false);
+            }
+            return corePackage;
         }
-        return corePackage;
     }
 
     public static <T> void announcePackages(Map<Path, List<T>> packages) {
@@ -209,6 +236,23 @@ public final class SettingsManager {
                 settings.addDataPackage(path);
             }
         }
+    }
+
+    public static boolean isModActive(String modId) {
+        if (modId == null || modId.isEmpty()) {
+            return false;
+        }
+        String folderName = shipeditor.parsing.FileUtilities.extractFolderName(modId);
+        if ("starsector-core".equalsIgnoreCase(folderName) || isCoreFolder(folderName)) {
+            return true;
+        }
+        if (settings != null) {
+            GameDataPackage pkg = settings.getPackage(folderName);
+            if (pkg != null) {
+                return !pkg.isDisabled();
+            }
+        }
+        return true;
     }
 
 }

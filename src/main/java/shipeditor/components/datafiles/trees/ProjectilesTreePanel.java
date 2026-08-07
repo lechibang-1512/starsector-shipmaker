@@ -57,6 +57,16 @@ public class ProjectilesTreePanel extends DataTreePanel {
     }
 
     @Override
+    protected boolean isDataLoaded() {
+        return SettingsManager.getGameData().isWeaponsDataLoaded();
+    }
+
+    @Override
+    protected javax.swing.Action getLoadDataAction() {
+        return new javax.swing.AbstractAction("Reload") { @Override public void actionPerformed(java.awt.event.ActionEvent e) { queueReload(); } };
+    }
+
+    @Override
     protected void initTreePanelListeners(JPanel passedTreePanel) {
         EventBus.subscribe(this, event -> {
             if (event instanceof WeaponTreeReloadQueued) {
@@ -66,58 +76,59 @@ public class ProjectilesTreePanel extends DataTreePanel {
 
         JTree tree = getTree();
         tree.addMouseListener(createContextMenuListener());
-        tree.addMouseListener(new DoubleClickLayerLoader());
+        getTree().addMouseListener(new DoubleClickLayerLoader());
         tree.addTreeSelectionListener(new ProjectileSelectionListener());
     }
 
-    @Override
-    public void reload() {
-        JTree tree = getTree();
-        DefaultMutableTreeNode rootNode = getRootNode();
-        rootNode.removeAllChildren();
-        reloadProjectileList();
-        sortAndExpandTree();
-        resetInfoPanel();
-        repaint();
-        tree.repaint();
-    }
-
-    private void reloadProjectileList() {
-        GameDataRepository gameData = SettingsManager.getGameData();
-        Map<Path, List<ProjectileSpecFile>> projectileEntries = gameData.getProjectileEntriesByPackage();
-
-        if (projectileEntries == null || projectileEntries.isEmpty())
-            return;
-
-        for (Map.Entry<Path, List<ProjectileSpecFile>> folder : projectileEntries.entrySet()) {
-            Settings settings = SettingsManager.getSettings();
-            GameDataPackage dataPackage = settings.getPackage(folder.getKey());
-            if (dataPackage == null || dataPackage.isDisabled()) {
-                continue;
+    private Map<String, List<shipeditor.persistence.database.IndexedFile>> fetchProjectilesByMod() {
+        java.util.List<shipeditor.persistence.database.IndexedFile> projFiles = shipeditor.persistence.database.DatabaseQueryService.getFilesByType(shipeditor.utility.text.StringConstants.PROJECTILE_TYPE);
+        Map<String, List<shipeditor.persistence.database.IndexedFile>> byMod = new java.util.LinkedHashMap<>();
+        if (projFiles != null) {
+            for (shipeditor.persistence.database.IndexedFile file : projFiles) {
+                byMod.computeIfAbsent(file.getModId(), k -> new java.util.ArrayList<>()).add(file);
             }
-
-            DefaultMutableTreeNode packageRoot = createPackageNode(folder);
-            DefaultMutableTreeNode rootNode = getRootNode();
-            rootNode.add(packageRoot);
         }
+        return byMod;
     }
 
-    private static DefaultMutableTreeNode createPackageNode(Map.Entry<Path, List<ProjectileSpecFile>> folder) {
-        Path folderPath = folder.getKey();
-        Path fileNamePath = folderPath.getFileName();
-        String packageName = fileNamePath != null ? fileNamePath.toString() : "";
+    @Override
+    protected java.util.List<DefaultMutableTreeNode> buildTreeNodesBackground() {
+        Map<String, List<shipeditor.persistence.database.IndexedFile>> byMod = fetchProjectilesByMod();
+        if (byMod == null || byMod.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        java.util.List<DefaultMutableTreeNode> packageRoots = new java.util.ArrayList<>();
+        for (Map.Entry<String, List<shipeditor.persistence.database.IndexedFile>> folder : byMod.entrySet()) {
+            String modId = folder.getKey();
+            if (SettingsManager.isModActive(modId)) {
+                packageRoots.add(createPackageNode(folder));
+            }
+        }
+        return packageRoots;
+    }
+
+    @Override
+    protected void onTreePopulated() {
+        resetInfoPanel();
+    }
+
+    private static DefaultMutableTreeNode createPackageNode(Map.Entry<String, List<shipeditor.persistence.database.IndexedFile>> folder) {
+        String modId = folder.getKey();
         Settings settings = SettingsManager.getSettings();
 
         DefaultMutableTreeNode result;
-        if (SettingsManager.isCoreFolder(folderPath)) {
+        if (SettingsManager.isCoreFolder(modId)) {
             GameDataPackage corePackage = SettingsManager.getCorePackage();
             result = new DefaultMutableTreeNode(corePackage);
         } else {
-            GameDataPackage dataPackage = settings.getPackage(packageName);
+            GameDataPackage dataPackage = settings.getPackage(modId);
+            if (dataPackage == null) {
+                dataPackage = new GameDataPackage(modId, false, false);
+            }
             result = new DefaultMutableTreeNode(dataPackage);
         }
 
-        for (ProjectileSpecFile entry : folder.getValue()) {
+        for (shipeditor.persistence.database.IndexedFile entry : folder.getValue()) {
             MutableTreeNode node = new DefaultMutableTreeNode(entry);
             result.add(node);
         }
@@ -127,7 +138,7 @@ public class ProjectilesTreePanel extends DataTreePanel {
 
     @Override
     protected Class<?> getEntryClass() {
-        return ProjectileSpecFile.class;
+        return shipeditor.persistence.database.IndexedFile.class;
     }
 
     @Override
@@ -137,8 +148,8 @@ public class ProjectilesTreePanel extends DataTreePanel {
 
     @Override
     protected String getTooltipForEntry(Object entry) {
-        if (entry instanceof ProjectileSpecFile proj) {
-            return "<html><b>" + proj.getId() + "</b><br>(Double-click to load as layer)</html>";
+        if (entry instanceof shipeditor.persistence.database.IndexedFile proj) {
+            return "<html><b>" + proj.getEntityId() + "</b><br>(Double-click to load sprite)</html>";
         } else if (entry instanceof GameDataPackage dataPackage) {
             return DataTreePanel.getTooltipForPackage(dataPackage);
         }
@@ -149,7 +160,7 @@ public class ProjectilesTreePanel extends DataTreePanel {
     JPopupMenu getContextMenu() {
         JPopupMenu menu = super.getContextMenu();
         DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-        if (cachedSelectForMenu.getUserObject() instanceof ProjectileSpecFile) {
+        if (cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof shipeditor.persistence.database.IndexedFile) {
             menu.addSeparator();
             JMenuItem loadAsLayer = new JMenuItem("Load as projectile layer");
             loadAsLayer.addActionListener(new LoadLayerFromTree());
@@ -161,9 +172,9 @@ public class ProjectilesTreePanel extends DataTreePanel {
     @Override
     protected void openEntryPath(OpenDataTarget target) {
         DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-        if (!(cachedSelectForMenu.getUserObject() instanceof ProjectileSpecFile checked))
+        if (cachedSelectForMenu == null || !(cachedSelectForMenu.getUserObject() instanceof shipeditor.persistence.database.IndexedFile checked))
             return;
-        Path toOpen = checked.getProjectileSpecFilePath();
+        Path toOpen = checked.getFilePath();
         if (target == OpenDataTarget.CONTAINER && toOpen != null) {
             toOpen = toOpen.getParent();
         }
@@ -183,8 +194,13 @@ public class ProjectilesTreePanel extends DataTreePanel {
                 return;
             }
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-            if (node.getUserObject() instanceof ProjectileSpecFile spec) {
-                updateEntryPanel(spec);
+            if (node.getUserObject() instanceof shipeditor.persistence.database.IndexedFile spec) {
+                ProjectileSpecFile parsed = GameDataRepository.getProjectileByID(spec.getEntityId());
+                if (parsed != null) {
+                    updateEntryPanel(parsed);
+                } else {
+                    resetInfoPanel();
+                }
             } else {
                 resetInfoPanel();
             }
@@ -192,38 +208,30 @@ public class ProjectilesTreePanel extends DataTreePanel {
     }
 
     private void updateEntryPanel(ProjectileSpecFile spec) {
-        JPanel rightPanel = getRightPanel();
-        rightPanel.removeAll();
+        JPanel consolePanel = getConsolePanel();
+        consolePanel.removeAll();
+        consolePanel.add(new javax.swing.JLabel("No CSV data for projectiles."));
+        consolePanel.revalidate();
+        consolePanel.repaint();
 
-        GridBagConstraints constraints = DataTreePanel.getDefaultConstraints();
-        constraints.gridy = 0;
-        constraints.insets = new Insets(0, 5, 0, 5);
+        JPanel infoPanel = getLeftInfoPanel();
+        infoPanel.removeAll();
+        infoPanel.setLayout(new javax.swing.BoxLayout(infoPanel, javax.swing.BoxLayout.Y_AXIS));
+
+        ComponentUtilities.InfoPanelBuilder builder = new ComponentUtilities.InfoPanelBuilder("Projectile Info");
 
         // Sprite preview
         Sprite sprite = loadProjectileSprite(spec);
-        if (sprite != null) {
-            String tooltip = Utility.getTooltipForSprite(sprite);
-            JLabel spriteIcon = ComponentUtilities.createIconFromImage(sprite.getImage(), tooltip, 128);
-            JPanel iconPanel = new JPanel();
-            iconPanel.add(spriteIcon);
-            rightPanel.add(iconPanel, constraints);
-        }
-
-        // Info panel
-        JPanel specFilePanel = new JPanel();
-        specFilePanel.setLayout(new GridBagLayout());
-        ComponentUtilities.outfitPanelWithTitle(specFilePanel, new Insets(1, 0, 0, 0),
-                "Projectile Info");
-        specFilePanel.setAlignmentX(LEFT_ALIGNMENT);
-
-        int row = 0;
+        builder.addSpritePreview(sprite);
 
         // File path
         Path specFilePath = spec.getProjectileSpecFilePath();
         if (specFilePath != null) {
-            ComponentUtilities.addLabelAndComponent(specFilePanel, new JLabel("Proj file:"),
-                    new JLabel(specFilePath.toString()), row++);
+            builder.addWrappingPathLabel("Proj file: ", specFilePath);
         }
+
+        JPanel specFilePanel = builder.getPanel();
+        int row = builder.getRow();
 
         // Core identity fields
         row = addStringEditor(specFilePanel, "ID", spec.getId(), spec::setId, row);
@@ -302,22 +310,13 @@ public class ProjectilesTreePanel extends DataTreePanel {
         glueConstraints.gridx = 0;
         glueConstraints.gridy = row;
         glueConstraints.weighty = 1.0;
-        specFilePanel.add(Box.createVerticalGlue(), glueConstraints);
+        specFilePanel.add(javax.swing.Box.createVerticalGlue(), glueConstraints);
 
-        JScrollPane scrollPane = new JScrollPane(specFilePanel);
-        scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        infoPanel.add(builder.getPanel());
+        infoPanel.add(javax.swing.Box.createVerticalStrut(20));
 
-        GridBagConstraints scrollConstraints = new GridBagConstraints();
-        scrollConstraints.gridx = 0;
-        scrollConstraints.gridy = 1;
-        scrollConstraints.fill = GridBagConstraints.BOTH;
-        scrollConstraints.weightx = 1.0;
-        scrollConstraints.weighty = 1.0;
-        rightPanel.add(scrollPane, scrollConstraints);
-
-        rightPanel.revalidate();
-        rightPanel.repaint();
+        infoPanel.revalidate();
+        infoPanel.repaint();
     }
 
     private Sprite loadProjectileSprite(ProjectileSpecFile spec) {
@@ -379,7 +378,7 @@ public class ProjectilesTreePanel extends DataTreePanel {
     private static int addDoubleEditor(JPanel container, String key, Double value,
             java.util.function.Consumer<Double> setter, int row) {
         String formatted = value != null
-                ? ((value == Math.floor(value)) ? String.valueOf(value.intValue()) : String.valueOf(value))
+                ? ((Double.compare(value, Math.floor(value)) == 0) ? String.valueOf(value.intValue()) : String.valueOf(value))
                 : "";
         javax.swing.JTextField field = new javax.swing.JTextField(formatted, 15);
         java.awt.event.ActionListener updater = e -> {
@@ -494,31 +493,36 @@ public class ProjectilesTreePanel extends DataTreePanel {
         @Override
         public boolean isEnabled() {
             DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-            return super.isEnabled() && cachedSelectForMenu.getUserObject() instanceof ProjectileSpecFile;
+            return super.isEnabled() && cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof shipeditor.persistence.database.IndexedFile;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
             DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-            if (cachedSelectForMenu.getUserObject() instanceof ProjectileSpecFile checked) {
-                loadProjectileAsLayer(checked);
+            if (cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof shipeditor.persistence.database.IndexedFile checked) {
+                ProjectileSpecFile parsed = GameDataRepository.getProjectileByID(checked.getEntityId());
+                if (parsed != null) {
+                    loadProjectileAsLayer(parsed);
+                }
             }
         }
     }
 
     private class DoubleClickLayerLoader extends MouseAdapter {
         @Override
-        public void mouseClicked(MouseEvent e) {
-            if (e.getButton() != MouseEvent.BUTTON1 || e.getClickCount() < 2)
-                return;
+        public void mousePressed(MouseEvent e) {
+            if (e.getButton() != MouseEvent.BUTTON1 || e.getClickCount() != 2) return;
             JTree tree = getTree();
             Point eventPoint = e.getPoint();
             TreePath pathForLocation = tree.getPathForLocation(eventPoint.x, eventPoint.y);
-            if (pathForLocation == null)
-                return;
+            if (pathForLocation == null) return;
+            
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) pathForLocation.getLastPathComponent();
-            if (node != null && node.getUserObject() instanceof ProjectileSpecFile checked) {
-                loadProjectileAsLayer(checked);
+            if (node != null && node.getUserObject() instanceof shipeditor.persistence.database.IndexedFile checked) {
+                ProjectileSpecFile parsed = GameDataRepository.getProjectileByID(checked.getEntityId());
+                if (parsed != null) {
+                    loadProjectileAsLayer(parsed);
+                }
             }
         }
     }
@@ -560,10 +564,16 @@ public class ProjectilesTreePanel extends DataTreePanel {
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
                 boolean expanded, boolean leaf, int row, boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-            Object object = ((DefaultMutableTreeNode) value).getUserObject();
+            if (!(value instanceof DefaultMutableTreeNode treeNode)) {
+                return this;
+            }
+            Object object = treeNode.getUserObject();
+            if (object == null) {
+                return this;
+            }
             DataTreePanel.configureCellRendererColors(object, this);
-            if (object instanceof ProjectileSpecFile checked && leaf) {
-                setText(checked.getId());
+            if (object instanceof shipeditor.persistence.database.IndexedFile checked && leaf) {
+                setText(checked.getEntityId());
             }
             return this;
         }

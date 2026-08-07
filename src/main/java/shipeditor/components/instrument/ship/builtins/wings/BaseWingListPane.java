@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import shipeditor.utility.themes.Themes;
 
 public class BaseWingListPane extends JPanel {
 
@@ -49,7 +50,7 @@ public class BaseWingListPane extends JPanel {
 
         this.wingsList = new WingsList(removeAction, wingsModel, sortAction);
 
-        wingsList.setBorder(new LineBorder(Color.LIGHT_GRAY));
+        wingsList.setBorder(new LineBorder(Themes.getBorderColor()));
         this.add(wingsList, BorderLayout.CENTER);
     }
 

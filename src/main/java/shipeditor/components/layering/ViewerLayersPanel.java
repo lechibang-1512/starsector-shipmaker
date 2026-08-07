@@ -14,6 +14,8 @@ import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelecte
 import shipeditor.communication.events.viewer.layers.LayerEvents.ViewerLayerRemovalConfirmed;
 import shipeditor.communication.events.viewer.layers.LayerEvents.ShipLayerCreated;
 import shipeditor.communication.events.viewer.layers.LayerEvents.WeaponLayerCreated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ShipLayerCreationQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.WeaponLayerCreationQueued;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
 import shipeditor.components.viewer.PrimaryViewer;
 import shipeditor.components.viewer.layers.LayerManager;
@@ -330,7 +332,26 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
                 int targetTab = paneUI.tabForCoordinate(ViewerLayersPanel.this, e.getX(), e.getY());
                 if (targetTab < 0) {
                     JPopupMenu menu = new JPopupMenu();
-                    menu.add(shipeditor.menubar.WindowMenu.createAddLayerOption());
+                    
+                    JMenuItem createLayer = new JMenuItem("Create new layer");
+                    createLayer.addActionListener(event -> {
+                        Object[] options = {"Ship Layer", "Weapon Layer"};
+                        int result = JOptionPane.showOptionDialog(null,
+                                "Select new layer type:",
+                                "Create New Layer",
+                                JOptionPane.YES_NO_CANCEL_OPTION,
+                                JOptionPane.QUESTION_MESSAGE,
+                                null,
+                                options,
+                                options[0]);
+                        if (result == 0) {
+                            EventBus.publish(new ShipLayerCreationQueued());
+                        } else if (result == 1) {
+                            EventBus.publish(new WeaponLayerCreationQueued());
+                        }
+                    });
+                    menu.add(createLayer);
+
                     menu.show(ViewerLayersPanel.this, e.getPoint().x, e.getPoint().y);
                     return;
                 }
@@ -401,7 +422,6 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
             menu.addSeparator();
 
             JMenuItem saveHullData = new JMenuItem("Save hull data");
-
             saveHullData.addActionListener(event -> EventBus.publish(new HullSaveQueued(shipLayer)));
             menu.add(saveHullData);
 

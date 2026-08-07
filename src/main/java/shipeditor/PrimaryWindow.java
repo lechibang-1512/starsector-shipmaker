@@ -98,16 +98,26 @@ public final class PrimaryWindow extends JFrame {
         instance = primaryWindow;
 
         primaryWindow.addWindowListener(new WindowAdapter() {
-            private final KeyEventDispatcher altDisabler = e -> e.getKeyCode() == KeyEvent.VK_ALT;
+            private final KeyEventDispatcher hotkeyDispatcher = e -> {
+                if (e.getKeyCode() == KeyEvent.VK_ALT) {
+                    return true;
+                }
+                if (e.getID() == java.awt.event.KeyEvent.KEY_PRESSED) {
+                    shipeditor.communication.EventBus.publish(new shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed(e));
+                } else if (e.getID() == java.awt.event.KeyEvent.KEY_RELEASED) {
+                    shipeditor.communication.EventBus.publish(new shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased(e));
+                }
+                return false;
+            };
 
             @Override
             public void windowActivated(WindowEvent e) {
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(altDisabler);
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(hotkeyDispatcher);
             }
 
             @Override
             public void windowDeactivated(WindowEvent e) {
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(altDisabler);
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(hotkeyDispatcher);
             }
 
             @Override
@@ -154,6 +164,12 @@ public final class PrimaryWindow extends JFrame {
             int height = Math.max(MINIMUM_WINDOW_SIZE.height, clampedHeight);
 
             this.setBounds(new Rectangle(x, y, width, height));
+        } else {
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            int defaultWidth = Math.min(1440, screenSize.width - 100);
+            int defaultHeight = Math.min(900, screenSize.height - 100);
+            this.setSize(new Dimension(defaultWidth, defaultHeight));
+            this.setLocationRelativeTo(null);
         }
 
         if (settings.isWindowMaximized()) {

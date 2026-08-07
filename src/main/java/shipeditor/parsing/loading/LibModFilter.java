@@ -12,16 +12,16 @@ public final class LibModFilter {
     /**
      * Known library mod folder names. Add new entries here as needed.
      */
-    private static final Set<String> LIB_MOD_FOLDERS = Set.of(
-            "MagicLib",
-            "LazyLib",
-            "GraphicsLib",
-            "LunaLib",
-            "Console Commands",
+    private static final String[] LIB_MOD_PREFIXES = {
+            "magiclib",
+            "lazylib",
+            "graphicslib",
+            "lunalib",
+            "console commands",
             "lw_lazylib",
             "lw_console",
-            "shaderLib"
-    );
+            "shaderlib"
+    };
 
     private LibModFilter() {}
 
@@ -30,7 +30,29 @@ public final class LibModFilter {
      * @return true if the folder name matches a known library mod.
      */
     public static boolean isLibMod(String folderName) {
-        return LIB_MOD_FOLDERS.contains(folderName);
+        if (folderName == null || folderName.isEmpty()) return false;
+        String lowerCaseName = folderName.toLowerCase(java.util.Locale.ROOT);
+        
+        boolean isLib = false;
+
+        for (String prefix : LIB_MOD_PREFIXES) {
+            if (lowerCaseName.contains(prefix)) {
+                isLib = true;
+                break;
+            }
+        }
+        
+        shipeditor.persistence.Settings settings = shipeditor.persistence.SettingsManager.getSettings();
+        if (!isLib && settings != null && settings.getBlacklistedMods() != null) {
+            for (String prefix : settings.getBlacklistedMods()) {
+                if (lowerCaseName.contains(prefix.toLowerCase(java.util.Locale.ROOT))) {
+                    isLib = true;
+                    break;
+                }
+            }
+        }
+        
+        return isLib;
     }
 
     /**
