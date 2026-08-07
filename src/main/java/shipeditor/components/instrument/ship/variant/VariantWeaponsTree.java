@@ -93,6 +93,33 @@ public class VariantWeaponsTree extends DynamicWidthTree {
             }
         });
         this.addMouseListener(new WeaponTreeContextMenuController(this));
+        
+        this.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                CustomTreeNode node = (CustomTreeNode) VariantWeaponsTree.this.getLastSelectedPathComponent();
+                if (node == null) return;
+                Object nodeObject = node.getUserObject();
+                
+                if (nodeObject instanceof InstalledFeature feature) {
+                    if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DELETE) {
+                        if (!feature.isContainedInBuiltIns()) {
+                            var group = feature.getParentGroup();
+                            EditDispatch.postFeatureUninstalled(group.getWeapons(), feature.getSlotID(), feature, null);
+                        }
+                    } else if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                        shipeditor.components.datafiles.entities.CSVEntry dataEntry = feature.getDataEntry();
+                        if (dataEntry instanceof shipeditor.components.datafiles.entities.WeaponCSVEntry weaponEntry) {
+                            EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.SelectWeaponDataEntry(weaponEntry));
+                        }
+                    }
+                } else if (nodeObject instanceof FittedWeaponGroup group) {
+                    if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DELETE) {
+                        removeWeaponGroup(group);
+                    }
+                }
+            }
+        });
     }
 
     void selectNode(WorldPoint point) {

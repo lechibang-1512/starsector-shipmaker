@@ -144,6 +144,7 @@ public class VariantChooserPanel extends JPanel {
         ShipPainter painter = checkedLayer.getPainter();
         Variant[] model = variantFiles.values().toArray(new Variant[0]);
         JComboBox<Variant> variantChooser = new JComboBox<>(model);
+        variantChooser.setRenderer(new VariantListCellRenderer());
         ShipVariant activeVariant = painter.getActiveVariant();
         if (activeVariant != null) {
             variantChooser.setSelectedItem(activeVariant);

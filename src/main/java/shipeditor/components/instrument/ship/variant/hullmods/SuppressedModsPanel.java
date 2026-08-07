@@ -99,9 +99,7 @@ class SuppressedModsPanel extends JPanel {
             oldList = new java.util.ArrayList<>(oldList);
         }
         
-        shipeditor.undo.edits.features.FeatureEdits.SuppressedModsEdit edit = new shipeditor.undo.edits.features.FeatureEdits.SuppressedModsEdit(variant, activeLayer, oldList, updatedList);
-        shipeditor.undo.UndoOverseer.post(edit);
-        edit.redo();
+        shipeditor.undo.EditDispatch.postSuppressedModsChanged(variant, activeLayer, oldList, updatedList);
     }
 
     void refreshListModel(ViewerLayer selected) {

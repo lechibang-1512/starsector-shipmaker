@@ -20,6 +20,7 @@ public class HullmodsList extends OrdnancedEntryList<HullmodCSVEntry> {
                         Consumer<List<HullmodCSVEntry>> sortSetter) {
         super(dataModel, sortSetter);
         this.removeAction = removeSetter;
+        this.setCellRenderer(new shipeditor.components.instrument.ship.variant.hullmods.HullmodCellRenderer());
     }
 
     @Override

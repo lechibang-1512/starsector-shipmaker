@@ -17,9 +17,9 @@ public class OrdnancedEntryCellRenderer extends PanelListCellRenderer<OrdnancedC
 
     private final JLabel iconLabel;
 
-    private final JLabel textLabel;
+    protected final JLabel textLabel;
 
-    private final JLabel ordnanceLabel;
+    protected final JLabel ordnanceLabel;
 
     public OrdnancedEntryCellRenderer() {
         iconLabel = new JLabel();

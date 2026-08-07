@@ -18,6 +18,8 @@ class DataSpinnerContainer<T extends Number> {
 
     private final JSpinner spinner;
 
+    private final javax.swing.JLabel maxLabel = new javax.swing.JLabel();
+
     private Consumer<T> setter;
 
     Consumer<T> getCurrentSetter() {
@@ -29,6 +31,7 @@ class DataSpinnerContainer<T extends Number> {
         model.setMaximum(0);
         model.setValue(0);
         spinner.setEnabled(false);
+        maxLabel.setText("");
     }
 
     void enableSpinner(ShipLayer shipLayer, T newCurrent, T newMaximum, Consumer<T> newSetter) {
@@ -37,6 +40,7 @@ class DataSpinnerContainer<T extends Number> {
         model.setMaximum(comparable);
         model.setValue(newCurrent);
         spinner.setEnabled(true);
+        maxLabel.setText(" / " + newMaximum);
         setter = newSetter;
     }
 

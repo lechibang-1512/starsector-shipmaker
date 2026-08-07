@@ -22,6 +22,7 @@ public class WingsList extends OrdnancedEntryList<WingCSVEntry> {
                      Consumer<List<WingCSVEntry>> sortAction) {
         super(dataModel, sortAction);
         this.removeAction = removeSetter;
+        this.setCellRenderer(new shipeditor.components.instrument.ship.variant.WingCellRenderer());
     }
 
     @Override

@@ -23,6 +23,7 @@ import shipeditor.components.instrument.ship.variant.VariantMainPanel;
 import shipeditor.components.instrument.ship.variant.VariantWingsPanel;
 import shipeditor.components.instrument.ship.variant.hullmods.VariantHullmodsPanel;
 import shipeditor.components.instrument.ship.variant.VariantWeaponsPanel;
+import shipeditor.components.instrument.ship.variant.OPSummaryBar;
 import shipeditor.components.instrument.ship.variant.modules.VariantModulesPanel;
 import shipeditor.utility.Utility;
 
@@ -106,6 +107,10 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
         this.addInnerTabChangeListener(skinsTabs);
 
         // Tab 4: Variants
+        JPanel variantsContainer = new JPanel(new java.awt.BorderLayout());
+        OPSummaryBar opSummaryBar = new OPSummaryBar();
+        variantsContainer.add(opSummaryBar, java.awt.BorderLayout.NORTH);
+
         JTabbedPane variantsTabs = new JTabbedPane(SwingConstants.TOP);
         variantsTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         this.styleSubTabbedPane(variantsTabs);
@@ -121,6 +126,9 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
         panelMode.put(wingsPanel, EditorInstrument.VARIANT_DATA);
         variantsTabs.addTab("Wings", null, wingsPanel, "Variant Wings");
 
+        variantsTabs.setMnemonicAt(3, KeyEvent.VK_U); // Hullmods
+        variantsTabs.setMnemonicAt(4, KeyEvent.VK_G); // Wings
+
         variantsTabs.addChangeListener(event -> {
             Component activePanel = variantsTabs.getSelectedComponent();
             VariantDataTab selected = VariantDataTab.MAIN;
@@ -131,8 +139,10 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
             }
             EventBus.publish(new VariantDataTabSelected(selected));
         });
+        
+        variantsContainer.add(variantsTabs, java.awt.BorderLayout.CENTER);
 
-        this.addTab("Variants", null, variantsTabs, "Ship Variants");
+        this.addTab("Variants", null, variantsContainer, "Ship Variants");
         this.addInnerTabChangeListener(variantsTabs);
 
         updateTooltipText();

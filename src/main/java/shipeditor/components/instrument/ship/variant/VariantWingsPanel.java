@@ -38,11 +38,6 @@ public class VariantWingsPanel extends JPanel {
 
     private final Function<ShipVariant, List<WingCSVEntry>> wingsGetter;
 
-    private JLabel shipOPCap;
-
-    private JLabel usedOPTotal;
-
-    private JLabel usedOPInWings;
 
     private JLabel totalBayCount;
 
@@ -89,28 +84,6 @@ public class VariantWingsPanel extends JPanel {
         ComponentUtilities.outfitPanelWithTitle(infoPanel, "Fitted wings");
         infoPanel.setLayout(new GridBagLayout());
 
-        JLabel shipOPCapLabel = new JLabel(StringValues.TOTAL_OP_CAPACITY);
-        shipOPCap = new JLabel();
-
-        ComponentUtilities.addLabelAndComponent(infoPanel, shipOPCapLabel, shipOPCap, 0);
-
-        JLabel usedOPTotalLabel = new JLabel("Used OP for ship:");
-        usedOPTotal = new JLabel();
-
-        ComponentUtilities.addLabelAndComponent(infoPanel, usedOPTotalLabel, usedOPTotal, 1);
-
-        JLabel usedOPLabel = new JLabel(StringValues.USED_OP_IN_WINGS);
-        usedOPInWings = new JLabel();
-
-        ComponentUtilities.addLabelAndComponent(infoPanel, usedOPLabel, usedOPInWings, 2);
-
-        
-        GridBagConstraints strutConstraints = new GridBagConstraints();
-        strutConstraints.gridx = 0;
-        strutConstraints.gridy = 3;
-        strutConstraints.gridwidth = 2;
-        infoPanel.add(Box.createVerticalStrut(10), strutConstraints);
-
         JLabel totalBaysLabel = new JLabel(StringValues.TOTAL_SHIP_BAYS);
         totalBayCount = new JLabel();
 
@@ -150,9 +123,6 @@ public class VariantWingsPanel extends JPanel {
         String notInitialized = StringValues.NOT_INITIALIZED;
 
         if (selected instanceof ShipLayer shipLayer) {
-
-            String totalOP = Utility.translateIntegerValue(shipLayer::getTotalOP);
-            shipOPCap.setText(totalOP);
             String totalBays = Utility.translateIntegerValue(shipLayer::getBayCount);
             totalBayCount.setText(totalBays);
             String totalBuiltIns =  Utility.translateIntegerValue(shipLayer::getBuiltInWingsCount);
@@ -160,24 +130,16 @@ public class VariantWingsPanel extends JPanel {
 
             var activeVariant = shipLayer.getActiveVariant();
             if (activeVariant == null) {
-                usedOPTotal.setText(notInitialized);
-                usedOPInWings.setText(notInitialized);
                 fittedWingsCount.setText(notInitialized);
                 return;
             }
 
-            int totalUsedOP = shipLayer.getTotalUsedOP();
-            usedOPTotal.setText(String.valueOf(totalUsedOP));
-
-            int totalOPInWings = shipLayer.getTotalOPInWings();
-            usedOPInWings.setText(String.valueOf(totalOPInWings));
-
             int wingsCount = activeVariant.getFittedWingsCount();
             fittedWingsCount.setText(String.valueOf(wingsCount));
         } else {
-            shipOPCap.setText(notInitialized);
-            usedOPTotal.setText(notInitialized);
-            usedOPInWings.setText(notInitialized);
+            totalBayCount.setText(notInitialized);
+            builtInWingsCount.setText(notInitialized);
+            fittedWingsCount.setText(notInitialized);
         }
     }
 

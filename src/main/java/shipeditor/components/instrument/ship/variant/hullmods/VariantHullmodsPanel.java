@@ -29,11 +29,6 @@ public class VariantHullmodsPanel extends JPanel {
 
     private final SuppressedModsPanel suppressedModsPanel;
 
-    private JLabel shipOPCap;
-
-    private JLabel usedOPTotal;
-
-    private JLabel usedOPInHullmods;
 
     public VariantHullmodsPanel() {
         this.setLayout(new BorderLayout());
@@ -69,34 +64,9 @@ public class VariantHullmodsPanel extends JPanel {
 
         this.add(scroller, BorderLayout.CENTER);
 
-        JPanel infoPanel = createInfoPanel();
-        this.add(infoPanel, BorderLayout.PAGE_START);
-
         this.initLayerListeners();
     }
 
-    private JPanel createInfoPanel() {
-        JPanel infoPanel = new JPanel();
-        ComponentUtilities.outfitPanelWithTitle(infoPanel, "Fitted hullmods");
-        infoPanel.setLayout(new GridBagLayout());
-
-        JLabel shipOPCapLabel = new JLabel(StringValues.TOTAL_OP_CAPACITY);
-        shipOPCap = new JLabel();
-
-        ComponentUtilities.addLabelAndComponent(infoPanel, shipOPCapLabel, shipOPCap, 0);
-
-        JLabel usedOPTotalLabel = new JLabel("Used OP for ship:");
-        usedOPTotal = new JLabel();
-
-        ComponentUtilities.addLabelAndComponent(infoPanel, usedOPTotalLabel, usedOPTotal, 1);
-
-        JLabel usedOPLabel = new JLabel(StringValues.USED_OP_IN_HULLMODS);
-        usedOPInHullmods = new JLabel();
-
-        ComponentUtilities.addLabelAndComponent(infoPanel, usedOPLabel, usedOPInHullmods, 2);
-
-        return infoPanel;
-    }
 
     private void initLayerListeners() {
         EventBus.subscribe(this, event -> {
@@ -120,30 +90,7 @@ public class VariantHullmodsPanel extends JPanel {
     }
 
     private void refreshLayerInfo(ViewerLayer selected) {
-        String notInitialized = StringValues.NOT_INITIALIZED;
-
-        if (selected instanceof ShipLayer shipLayer) {
-            String totalOP = Utility.translateIntegerValue(shipLayer::getTotalOP);
-            shipOPCap.setText(totalOP);
-
-            var activeVariant = shipLayer.getActiveVariant();
-            if (activeVariant == null) {
-                usedOPTotal.setText(notInitialized);
-                usedOPInHullmods.setText(notInitialized);
-                return;
-            }
-
-            int totalUsedOP = shipLayer.getTotalUsedOP();
-            usedOPTotal.setText(String.valueOf(totalUsedOP));
-
-            int totalOPInMods = activeVariant.getTotalOPInHullmods(shipLayer);
-            usedOPInHullmods.setText(String.valueOf(totalOPInMods));
-
-        } else {
-            shipOPCap.setText(notInitialized);
-            usedOPTotal.setText(notInitialized);
-            usedOPInHullmods.setText(notInitialized);
-        }
+        // Now handled globally by OPSummaryBar, but can keep this method in case we add other info later
     }
 
 }

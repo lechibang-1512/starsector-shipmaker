@@ -12,9 +12,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
+import shipeditor.utility.themes.Themes;
 
 public class VariantOrdnancePanel extends JPanel {
     private final JLabel shipOPCap;
@@ -74,26 +77,32 @@ public class VariantOrdnancePanel extends JPanel {
         opStatusTitle.setBorder(emptyBorder);
         opStatusLabel = new JLabel();
 
-        ComponentUtilities.addLabelAndComponent(this, shipOPCapLabel, shipOPCap, 0);
-        ComponentUtilities.addLabelAndComponent(this, usedOPTotalLabel, usedOPTotal, 1);
-        ComponentUtilities.addLabelAndComponent(this, usedOPInWeaponsLabel, usedOPInWeapons, 2);
-        ComponentUtilities.addLabelAndComponent(this, usedOPInModsLabel, usedOPInHullmods, 3);
-        ComponentUtilities.addLabelAndComponent(this, usedOPInWingsLabel, usedOPInWings, 4);
+        JPanel opPanel = new JPanel(new GridBagLayout());
+        ComponentUtilities.outfitPanelWithTitle(opPanel, "OP Breakdown");
+        JPanel fluxPanel = new JPanel(new GridBagLayout());
+        ComponentUtilities.outfitPanelWithTitle(fluxPanel, "Flux Stats");
 
-        ComponentUtilities.addLabelAndComponent(this, ventsMaxLabel, usedVentsAndMax, 5);
-        ComponentUtilities.addLabelAndComponent(this, capsMaxLabel, usedCapsAndMax, 6);
-        ComponentUtilities.addLabelAndComponent(this, fluxCapLabel, totalFluxCapacity, 7);
-        ComponentUtilities.addLabelAndComponent(this, fluxDissLabel, totalFluxDissipation, 8);
-        ComponentUtilities.addLabelAndComponent(this, opStatusTitle, opStatusLabel, 9);
+        ComponentUtilities.addLabelAndComponent(opPanel, shipOPCapLabel, shipOPCap, 0);
+        ComponentUtilities.addLabelAndComponent(opPanel, usedOPTotalLabel, usedOPTotal, 1);
+        ComponentUtilities.addLabelAndComponent(opPanel, usedOPInWeaponsLabel, usedOPInWeapons, 2);
+        ComponentUtilities.addLabelAndComponent(opPanel, usedOPInModsLabel, usedOPInHullmods, 3);
+        ComponentUtilities.addLabelAndComponent(opPanel, usedOPInWingsLabel, usedOPInWings, 4);
+        ComponentUtilities.addLabelAndComponent(opPanel, opStatusTitle, opStatusLabel, 5);
+        GridBagConstraints fillOP = new GridBagConstraints();
+        fillOP.gridy = 6; fillOP.weighty = 1;
+        opPanel.add(new JLabel(), fillOP);
 
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.insets = new Insets(3, 6, 0, 3);
-        constraints.gridx = 0;
-        constraints.gridy = 10;
-        constraints.weightx = 0.0;
-        constraints.weighty = 1;
-        constraints.anchor = GridBagConstraints.LINE_START;
-        this.add(new JLabel(), constraints);
+        ComponentUtilities.addLabelAndComponent(fluxPanel, ventsMaxLabel, usedVentsAndMax, 0);
+        ComponentUtilities.addLabelAndComponent(fluxPanel, capsMaxLabel, usedCapsAndMax, 1);
+        ComponentUtilities.addLabelAndComponent(fluxPanel, fluxCapLabel, totalFluxCapacity, 2);
+        ComponentUtilities.addLabelAndComponent(fluxPanel, fluxDissLabel, totalFluxDissipation, 3);
+        GridBagConstraints fillFlux = new GridBagConstraints();
+        fillFlux.gridy = 4; fillFlux.weighty = 1;
+        fluxPanel.add(new JLabel(), fillFlux);
+
+        this.setLayout(new GridLayout(1, 2, 10, 0));
+        this.add(opPanel);
+        this.add(fluxPanel);
     }
 
     public void refreshOrdnanceInfo(ViewerLayer selected) {
@@ -146,15 +155,15 @@ public class VariantOrdnancePanel extends JPanel {
             if (opCap > 0) {
                 if (totalUsedOP > opCap) {
                     opStatusLabel.setText("OP EXCEEDED! (Exceeds by " + (totalUsedOP - opCap) + " OP)");
-                    opStatusLabel.setForeground(java.awt.Color.RED);
+                    opStatusLabel.setForeground(Themes.getReddishFontColor());
                     opStatusLabel.setFont(opStatusLabel.getFont().deriveFont(java.awt.Font.BOLD));
                 } else if (totalUsedOP < opCap) {
                     opStatusLabel.setText("WARNING: " + (opCap - totalUsedOP) + " unallocated OP remaining!");
-                    opStatusLabel.setForeground(new java.awt.Color(220, 160, 0)); // Dark Orange / Yellow
+                    opStatusLabel.setForeground(Themes.getWarningColor());
                     opStatusLabel.setFont(opStatusLabel.getFont().deriveFont(java.awt.Font.BOLD));
                 } else {
                     opStatusLabel.setText("All OP Allocated");
-                    opStatusLabel.setForeground(new java.awt.Color(50, 180, 50)); // Green
+                    opStatusLabel.setForeground(Themes.getSuccessColor());
                     opStatusLabel.setFont(opStatusLabel.getFont().deriveFont(java.awt.Font.BOLD));
                 }
             } else {

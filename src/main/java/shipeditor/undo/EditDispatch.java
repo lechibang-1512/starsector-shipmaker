@@ -16,6 +16,7 @@ import shipeditor.components.viewer.entities.engine.EnginePoint;
 import shipeditor.components.viewer.entities.weapon.SlotData;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
+import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
@@ -38,6 +39,7 @@ import shipeditor.undo.edits.features.FeatureEdits.*;
 import shipeditor.undo.edits.points.PointEdits.*;
 import shipeditor.undo.edits.points.engines.EngineEdits.*;
 import shipeditor.undo.edits.points.slots.SlotEdits.*;
+import shipeditor.undo.edits.VariantDataEdits.*;
 import shipeditor.utility.Utility;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.objects.Size2D;
@@ -365,6 +367,20 @@ public final class EditDispatch {
         UndoOverseer.post(wingRemoveEdit);
         index.remove(entryIndex);
         EventBus.publish(new ActiveLayerUpdated(shipLayer));
+    }
+
+    public static <T> void postVariantFieldChanged(ShipVariant variant, ViewerLayer layer, T oldValue, T newValue, java.util.function.Consumer<T> setter, String fieldName) {
+        Edit fieldEdit = new VariantFieldEdit<>(variant, layer, oldValue, newValue, setter, fieldName);
+        UndoOverseer.post(fieldEdit);
+        setter.accept(newValue);
+        EventBus.publish(new ActiveLayerUpdated(layer));
+    }
+
+    public static void postSuppressedModsChanged(ShipVariant variant, ViewerLayer layer, List<String> oldMods, List<String> newMods) {
+        Edit suppressedModsEdit = new SuppressedModsEdit(variant, layer, oldMods, newMods);
+        UndoOverseer.post(suppressedModsEdit);
+        variant.setSuppressedMods(newMods);
+        EventBus.publish(new ActiveLayerUpdated(layer));
     }
 
     public static<T extends InstallableEntry> void postFeatureInstalled(Map<String, T> collection,

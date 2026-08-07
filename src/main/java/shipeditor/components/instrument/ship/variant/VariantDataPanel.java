@@ -21,8 +21,11 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.Map;
 import java.util.function.Consumer;
+import shipeditor.undo.EditDispatch;
 
 public class VariantDataPanel extends JPanel {
     private final JLabel shipHullIDLabel;
@@ -55,19 +58,28 @@ public class VariantDataPanel extends JPanel {
                 "Original variant will be copied with new ID, old entry reloaded");
         variantIDEditor.setToolTipText(editorIDTooltip);
 
-        variantIDEditor.addActionListener(e -> {
+        Runnable applyVariantId = () -> {
             if (selectedLayer == null || cachedVariant == null) return;
+            String currentText = variantIDEditor.getText();
+            if (currentText.equals(cachedVariant.getVariantId())) return;
+            
             Map<String, ShipVariant> loadedVariants = selectedLayer.getLoadedVariants();
             String variantId = cachedVariant.getVariantId();
             ShipVariant renamed = loadedVariants.remove(variantId);
 
-            String currentText = variantIDEditor.getText();
-            variantIDSetter.accept(currentText);
+            EditDispatch.postVariantFieldChanged(cachedVariant, selectedLayer, variantId, currentText, variantIDSetter, "ID");
 
             loadedVariants.put(currentText, renamed);
             renamed.setLoadedFromFile(false);
             ShipPainter shipPainter = selectedLayer.getPainter();
             shipPainter.selectVariant(renamed);
+        };
+        variantIDEditor.addActionListener(e -> applyVariantId.run());
+        variantIDEditor.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                applyVariantId.run();
+            }
         });
         ComponentUtilities.addLabelAndComponent(this, variantIDLabel, variantIDEditor, 1);
 
@@ -76,13 +88,22 @@ public class VariantDataPanel extends JPanel {
         String editorNameTooltip = Utility.getWithLinebreaks(StringValues.TYPE_AND_PRESS_ENTER_TO_EDIT_ID);
         variantDisplayNameEditor.setToolTipText(editorNameTooltip);
 
-        variantDisplayNameEditor.addActionListener(e -> {
+        Runnable applyDisplayName = () -> {
             if (selectedLayer == null || cachedVariant == null) return;
             String currentText = variantDisplayNameEditor.getText();
-            variantDisplayNameSetter.accept(currentText);
+            if (currentText.equals(cachedVariant.getDisplayName())) return;
+
+            EditDispatch.postVariantFieldChanged(cachedVariant, selectedLayer, cachedVariant.getDisplayName(), currentText, variantDisplayNameSetter, "Display Name");
 
             ShipPainter shipPainter = selectedLayer.getPainter();
             shipPainter.selectVariant(cachedVariant);
+        };
+        variantDisplayNameEditor.addActionListener(e -> applyDisplayName.run());
+        variantDisplayNameEditor.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                applyDisplayName.run();
+            }
         });
         ComponentUtilities.addLabelAndComponent(this, variantDisplayNameLabel, variantDisplayNameEditor, 2);
 
@@ -104,9 +125,10 @@ public class VariantDataPanel extends JPanel {
 
         goalVariantCheckbox = new JCheckBox("Goal variant");
         goalVariantCheckbox.addItemListener(e -> {
+            if (selectedLayer == null || cachedVariant == null) return;
             boolean enableGoal = goalVariantCheckbox.isSelected();
-            if (goalVariantSetter != null) {
-                goalVariantSetter.accept(enableGoal);
+            if (enableGoal != cachedVariant.isGoalVariant() && goalVariantSetter != null) {
+                EditDispatch.postVariantFieldChanged(cachedVariant, selectedLayer, cachedVariant.isGoalVariant(), enableGoal, goalVariantSetter, "Goal Variant");
             }
         });
 
@@ -154,9 +176,21 @@ public class VariantDataPanel extends JPanel {
         HullSize hullSize = shipHull.getHullSize();
         int maxFluxRegulators = hullSize.getMaxFluxRegulators();
 
-        ventsSpinner.enableSpinner(layer, variant.getFluxVents(), maxFluxRegulators, val -> variant.setFluxVents(val != null ? val : 0));
-        capacitorsSpinner.enableSpinner(layer, variant.getFluxCapacitors(), maxFluxRegulators, val -> variant.setFluxCapacitors(val != null ? val : 0));
-        qualitySpinner.enableSpinner(layer, variant.getQuality(), 1.0d, val -> variant.setQuality(val != null ? val : 0.0d));
+        ventsSpinner.enableSpinner(layer, variant.getFluxVents(), maxFluxRegulators, val -> {
+            if (!val.equals(variant.getFluxVents())) {
+                EditDispatch.postVariantFieldChanged(variant, layer, variant.getFluxVents(), val, v -> variant.setFluxVents(v != null ? v : 0), "Flux Vents");
+            }
+        });
+        capacitorsSpinner.enableSpinner(layer, variant.getFluxCapacitors(), maxFluxRegulators, val -> {
+            if (!val.equals(variant.getFluxCapacitors())) {
+                EditDispatch.postVariantFieldChanged(variant, layer, variant.getFluxCapacitors(), val, v -> variant.setFluxCapacitors(v != null ? v : 0), "Flux Capacitors");
+            }
+        });
+        qualitySpinner.enableSpinner(layer, variant.getQuality(), 1.0d, val -> {
+            if (!val.equals(variant.getQuality())) {
+                EditDispatch.postVariantFieldChanged(variant, layer, variant.getQuality(), val, v -> variant.setQuality(v != null ? v : 0.0d), "Quality");
+            }
+        });
 
         shipHullIDLabel.setText(variant.getShipHullId());
 
@@ -212,6 +246,9 @@ public class VariantDataPanel extends JPanel {
         };
         spinner.addMouseWheelListener(wheelListener);
 
-        ComponentUtilities.addLabelAndComponent(target, label, spinner, row);
+        JPanel container = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 2, 0));
+        container.add(spinner);
+        container.add(spinnerContainer.getMaxLabel());
+        ComponentUtilities.addLabelAndComponent(target, label, container, row);
     }
 }

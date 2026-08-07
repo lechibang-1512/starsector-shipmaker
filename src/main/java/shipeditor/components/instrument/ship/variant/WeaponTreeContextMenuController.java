@@ -70,6 +70,7 @@ public class WeaponTreeContextMenuController extends MouseAdapter {
 
         if (!feature.isContainedInBuiltIns()) {
             JMenuItem uninstallFeature = new JMenuItem(StringValues.UNINSTALL_FEATURE);
+            uninstallFeature.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DELETE, 0));
             uninstallFeature.addActionListener(e -> {
                 var group = feature.getParentGroup();
                 EditDispatch.postFeatureUninstalled(group.getWeapons(), feature.getSlotID(),
@@ -79,6 +80,7 @@ public class WeaponTreeContextMenuController extends MouseAdapter {
         }
 
         JMenuItem selectEntry = new JMenuItem(StringValues.SELECT_WEAPON_ENTRY);
+        selectEntry.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ENTER, 0));
         selectEntry.addActionListener(event ->  {
             CSVEntry dataEntry = feature.getDataEntry();
             if (dataEntry instanceof WeaponCSVEntry weaponEntry) {
