@@ -85,9 +85,10 @@ public class CollisionPanel extends AbstractCenterPanel {
         JPanel centerContainer = new JPanel(new BorderLayout());
 
         var collisionRadiusWidget = createCollisionRadiusSpinner();
-        Map<JLabel, JComponent> centerWidgets = Map.of(
-                collisionRadiusWidget.getFirst(), collisionRadiusWidget.getSecond()
-        );
+        var viewOffsetWidget = createViewOffsetSpinner();
+        Map<JLabel, JComponent> centerWidgets = new LinkedHashMap<>();
+        centerWidgets.put(collisionRadiusWidget.getFirst(), collisionRadiusWidget.getSecond());
+        centerWidgets.put(viewOffsetWidget.getFirst(), viewOffsetWidget.getSecond());
 
         JPanel centerWidgetsPanel = createWidgetsPanel(centerWidgets);
         centerWidgetsPanel.setBorder(bottomPadding);
@@ -183,6 +184,45 @@ public class CollisionPanel extends AbstractCenterPanel {
         });
 
         return new Pair<>(radiusLabel, radiusSpinner);
+    }
+
+    private Pair<JLabel, JSpinner> createViewOffsetSpinner() {
+        double minimum = -Double.MAX_VALUE;
+        double maximum = Double.MAX_VALUE;
+        double initial = 0.0d;
+        SpinnerNumberModel numberModel = new SpinnerNumberModel(initial, minimum, maximum, 1.0d);
+
+        JSpinner offsetSpinner = Spinners.createWheelable(numberModel, IncrementType.CHUNK);
+        offsetSpinner.setEnabled(false);
+        JLabel offsetLabel = new JLabel("View offset:");
+
+        offsetSpinner.addChangeListener(e -> {
+            if (!isWidgetsReadyForInput()) return;
+
+            Number modelNumber = numberModel.getNumber();
+            double newOffset = modelNumber.doubleValue();
+
+            LayerPainter layerPainter = getCachedLayerPainter();
+            ShipPainter shipPainter = (ShipPainter) layerPainter;
+            CenterPointPainter centerPointPainter = shipPainter.getCenterPointPainter();
+            
+            EditDispatch.postViewOffsetChanged(centerPointPainter, newOffset);
+            processChange();
+        });
+
+        registerWidgetListeners(offsetSpinner, layer -> {
+            numberModel.setValue(0.0d);
+            offsetSpinner.setEnabled(false);
+        }, layerPainter -> {
+            ShipPainter shipPainter = (ShipPainter) layerPainter;
+            CenterPointPainter centerPointPainter = shipPainter.getCenterPointPainter();
+            double currentOffset = centerPointPainter.getViewOffset();
+
+            numberModel.setValue(currentOffset);
+            offsetSpinner.setEnabled(true);
+        });
+
+        return new Pair<>(offsetLabel, offsetSpinner);
     }
 
     private PointLocationWidget createShipCenterLocationWidget() {

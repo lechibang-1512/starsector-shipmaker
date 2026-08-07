@@ -78,6 +78,8 @@ public final class ShipPainterInitialization {
         if (specFileModuleAnchor != null) {
             centerPointPainter.setModuleAnchorOffset(specFileModuleAnchor);
         }
+        
+        centerPointPainter.setViewOffset(hullSpecFile.getViewOffset());
 
         Point2D shieldCenter = hullSpecFile.getShieldCenter();
         Point2D shieldCenterTranslated;

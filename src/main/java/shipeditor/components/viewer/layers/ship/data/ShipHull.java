@@ -40,7 +40,7 @@ public class ShipHull {
 
     private Color coversColor;
 
-    private int viewOffset;
+    private double viewOffset;
 
     private String hullFileName;
 

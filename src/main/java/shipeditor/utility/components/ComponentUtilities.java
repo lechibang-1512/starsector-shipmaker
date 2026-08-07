@@ -454,7 +454,7 @@ public final class ComponentUtilities {
         constraints.gridx = 1;
         constraints.weightx = 1.0;
         constraints.gridy = y;
-        if (component instanceof JLabel) {
+        if (component instanceof JLabel || component instanceof javax.swing.JSpinner || component instanceof javax.swing.JCheckBox) {
             constraints.fill = GridBagConstraints.NONE;
             constraints.insets = new Insets(3, 3, 0, rightPad + labelPad);
             constraints.anchor = GridBagConstraints.LINE_START;

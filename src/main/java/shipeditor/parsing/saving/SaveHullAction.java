@@ -191,6 +191,8 @@ final class SaveHullAction {
         if (moduleAnchor != null) {
             result.setModuleAnchor((Point2D.Double) moduleAnchor);
         }
+        
+        result.setViewOffset(centerPointPainter.getViewOffset());
 
         result.setHeight(shipPainter.getSpriteHeight());
         result.setWidth(shipPainter.getSpriteWidth());

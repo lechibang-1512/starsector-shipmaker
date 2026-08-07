@@ -94,6 +94,40 @@ public final class PointEdits {
         }
     }
 
+    public static class ViewOffsetEdit extends AbstractEdit {
+        private final shipeditor.components.viewer.painters.points.ship.CenterPointPainter parentPainter;
+        private final double oldOffset;
+        private final double newOffset;
+
+        public ViewOffsetEdit(shipeditor.components.viewer.painters.points.ship.CenterPointPainter painter, double oldValue, double newValue) {
+            this.parentPainter = painter;
+            this.oldOffset = oldValue;
+            this.newOffset = newValue;
+            this.setFinished(false);
+        }
+
+        @Override
+        public void undo() {
+            undoSubEdits();
+            parentPainter.setViewOffset(oldOffset);
+            var repainter = StaticController.getScheduler();
+            repainter.queueCenterPanelsRepaint();
+        }
+
+        @Override
+        public void redo() {
+            redoSubEdits();
+            parentPainter.setViewOffset(newOffset);
+            var repainter = StaticController.getScheduler();
+            repainter.queueCenterPanelsRepaint();
+        }
+
+        @Override
+        public String getName() {
+            return "Change View Offset";
+        }
+    }
+
     public static class CollisionRadiusEdit extends AbstractEdit {
         private final ShipCenterPoint parentPoint;
         private final float oldRadius;

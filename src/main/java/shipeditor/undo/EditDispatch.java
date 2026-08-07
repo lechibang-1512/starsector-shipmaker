@@ -253,6 +253,15 @@ public final class EditDispatch {
         PointDragEdit.repaintByPointType(selected);
     }
 
+    public static void postViewOffsetChanged(shipeditor.components.viewer.painters.points.ship.CenterPointPainter painter, double newOffset) {
+        double oldOffset = painter.getViewOffset();
+        Edit offsetEdit = new shipeditor.undo.edits.points.PointEdits.ViewOffsetEdit(painter, oldOffset, newOffset);
+        EditDispatch.postContinuousEdit(offsetEdit);
+        painter.setViewOffset(newOffset);
+        var repainter = StaticController.getScheduler();
+        repainter.queueCenterPanelsRepaint();
+    }
+
     public static void postCollisionRadiusChanged(ShipCenterPoint point, float radius) {
         float oldRadius = point.getCollisionRadius();
         Edit radiusEdit = new CollisionRadiusEdit(point, oldRadius, radius);

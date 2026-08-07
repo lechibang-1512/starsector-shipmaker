@@ -51,6 +51,9 @@ public class CenterPointPainter extends SinglePointPainter {
     @Getter @Setter
     private Point2D moduleAnchorOffset;
 
+    @Getter @Setter
+    private double viewOffset;
+
     private static final int dragCollisionRadiusHotkey = KeyEvent.VK_CONTROL;
     private boolean collisionRadiusHotkeyPressed;
 

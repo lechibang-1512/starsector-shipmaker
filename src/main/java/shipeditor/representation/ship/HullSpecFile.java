@@ -89,9 +89,8 @@ public class HullSpecFile implements ShipSpecFile {
     @JsonSerialize(using = BaseNumberSerializer.class)
     private double shieldRadius;
 
-    // Deemed not significant enough so far; GUI editing implementation postponed.
     @JsonProperty("viewOffset")
-    private int viewOffset;
+    private double viewOffset;
 
     @JsonProperty(StringConstants.BUILT_IN_MODS)
     @JsonInclude(JsonInclude.Include.NON_NULL)
