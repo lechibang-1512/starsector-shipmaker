@@ -387,8 +387,7 @@ public class WeaponsTreePanel extends DataTreePanel {
         @Override
         public void mousePressed(java.awt.event.MouseEvent e) {
             JTree tree = getTree();
-            java.awt.Point eventPoint = e.getPoint();
-            TreePath pathForLocation = tree.getPathForLocation(eventPoint.x, eventPoint.y);
+            TreePath pathForLocation = tree.getSelectionPath();
             if (pathForLocation == null) return;
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) pathForLocation.getLastPathComponent();
             if (node.getUserObject() instanceof IndexedFile checked) {

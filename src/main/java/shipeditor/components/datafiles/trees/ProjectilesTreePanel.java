@@ -518,8 +518,7 @@ public class ProjectilesTreePanel extends DataTreePanel {
         public void mousePressed(MouseEvent e) {
             if (e.getButton() != MouseEvent.BUTTON1 || e.getClickCount() != 2) return;
             JTree tree = getTree();
-            Point eventPoint = e.getPoint();
-            TreePath pathForLocation = tree.getPathForLocation(eventPoint.x, eventPoint.y);
+            TreePath pathForLocation = tree.getSelectionPath();
             if (pathForLocation == null) return;
             
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) pathForLocation.getLastPathComponent();

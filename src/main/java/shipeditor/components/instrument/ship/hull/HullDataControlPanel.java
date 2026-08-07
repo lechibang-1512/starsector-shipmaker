@@ -33,6 +33,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import java.awt.Color;
@@ -54,9 +55,9 @@ public class HullDataControlPanel extends JPanel {
 
     private JLabel coversColorValue;
 
-    private JLabel spritePathValue;
+    private JTextArea spritePathValue;
 
-    private JLabel spriteNameValue;
+    private JTextArea spriteNameValue;
 
     private JLabel spritePathLabel;
 
@@ -188,7 +189,7 @@ public class HullDataControlPanel extends JPanel {
     }
 
     private void addSpriteNameLabel() {
-        spritePathValue = new JLabel();
+        spritePathValue = ComponentUtilities.createWrappingLabel("");
         spritePathLabel = new JLabel("Sprite path:");
         spritePathLabel.setBorder(new EmptyBorder(5, 0, 2, 0));
 
@@ -205,7 +206,7 @@ public class HullDataControlPanel extends JPanel {
         ComponentUtilities.addLabelAndComponent(this, spritePathLabel,
                 spritePathValue, 0, 4, 0, 5);
 
-        spriteNameValue = new JLabel();
+        spriteNameValue = ComponentUtilities.createWrappingLabel("");
         JLabel spriteNameLabel = new JLabel("Sprite name:");
         spriteNameLabel.setBorder(new EmptyBorder(5, 0, 6, 0));
 

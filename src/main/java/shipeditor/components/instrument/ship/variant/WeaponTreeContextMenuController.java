@@ -30,7 +30,7 @@ public class WeaponTreeContextMenuController extends MouseAdapter {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if(e.getButton() == MouseEvent.BUTTON3){
+        if(javax.swing.SwingUtilities.isRightMouseButton(e)){
             Point point = e.getPoint();
             TreePath pathForLocation = tree.getPathForLocation(point.x, point.y);
             if(pathForLocation != null){
