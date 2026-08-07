@@ -563,6 +563,7 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
 
         private static boolean isRelatedEditorModeActive() {
             EditorInstrument editorMode = StaticController.getEditorMode();
+            if (editorMode == null) return false;
             switch (editorMode) {
                 case VARIANT_WEAPONS, VARIANT_MODULES -> {
                     return true;

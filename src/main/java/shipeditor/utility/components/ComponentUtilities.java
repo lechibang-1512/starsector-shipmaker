@@ -452,22 +452,17 @@ public final class ComponentUtilities {
         parent.add(label, constraints);
 
         constraints.gridx = 1;
-        constraints.weightx = 0.0;
+        constraints.weightx = 1.0;
         constraints.gridy = y;
         if (component instanceof JLabel) {
             constraints.fill = GridBagConstraints.NONE;
             constraints.insets = new Insets(3, 3, 0, rightPad + labelPad);
+            constraints.anchor = GridBagConstraints.LINE_START;
         } else {
             constraints.fill = GridBagConstraints.HORIZONTAL;
             constraints.insets = new Insets(3, 3, 0, rightPad);
         }
-        constraints.anchor = GridBagConstraints.LINE_END;
         parent.add(component, constraints);
-        
-        constraints.gridx = 2;
-        constraints.weightx = 1.0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        parent.add(javax.swing.Box.createHorizontalGlue(), constraints);
         return component;
     }
 

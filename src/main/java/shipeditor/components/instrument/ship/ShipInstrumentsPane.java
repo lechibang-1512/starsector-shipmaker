@@ -142,6 +142,7 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
         
         variantsContainer.add(variantsTabs, java.awt.BorderLayout.CENTER);
 
+        panelMode.put(variantsContainer, EditorInstrument.VARIANT_DATA);
         this.addTab("Variants", null, variantsContainer, "Ship Variants");
         this.addInnerTabChangeListener(variantsTabs);
 

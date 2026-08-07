@@ -37,7 +37,6 @@
             "type": "TEXT_BLOCK",
             "text": "Once you have finished editing hull data, right-click the layer tab and choose 'Save hull data'."
         },
-
         {
             "type": "TEXT_BLOCK",
             "text": "Note that the resulting .ship file still requires CSV data to be available - consider using specialized CSV editor for that.",

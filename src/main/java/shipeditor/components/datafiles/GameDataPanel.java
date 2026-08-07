@@ -83,6 +83,7 @@ public class GameDataPanel extends JPanel {
     }
 
     private void handleInstrumentModeChange(EditorInstrument newMode) {
+        if (newMode == null) return;
         switch (newMode) {
             case VARIANT_WEAPONS -> selectWeaponTab();
             case VARIANT_MODULES -> selectShipTab();

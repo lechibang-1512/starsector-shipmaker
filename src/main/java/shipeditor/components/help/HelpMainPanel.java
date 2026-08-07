@@ -35,44 +35,68 @@ public class HelpMainPanel extends JPanel {
         DefaultMutableTreeNode rootNode = articlePanel.getRootNode();
         rootNode.removeAllChildren();
 
-        File articlesRoot = SettingsManager.getApplicationDirectory().resolve("help").toFile();
-
-        if (!articlesRoot.exists() || !articlesRoot.isDirectory()) return;
-        File[] sectionFolders = articlesRoot.listFiles(a -> a.isDirectory());
-
-        if (sectionFolders == null) return;
-        for (File sectionFolder : sectionFolders) {
-            addArticleSection(sectionFolder);
+        try {
+            java.net.URL url = HelpMainPanel.class.getResource("/help");
+            if (url == null) {
+                log.error("Could not find /help resource.");
+                return;
+            }
+            java.net.URI uri = url.toURI();
+            java.nio.file.Path myPath;
+            if (uri.getScheme().equals("jar")) {
+                java.nio.file.FileSystem fileSystem;
+                try {
+                    fileSystem = java.nio.file.FileSystems.getFileSystem(uri);
+                } catch (java.nio.file.FileSystemNotFoundException e) {
+                    fileSystem = java.nio.file.FileSystems.newFileSystem(uri, java.util.Collections.emptyMap());
+                }
+                myPath = fileSystem.getPath("/help");
+            } else {
+                myPath = java.nio.file.Paths.get(uri);
+            }
+            
+            try (java.util.stream.Stream<java.nio.file.Path> stream = java.nio.file.Files.list(myPath)) {
+                stream.filter(java.nio.file.Files::isDirectory).forEach(this::addArticleSection);
+            }
+        } catch (Exception e) {
+            log.error("Failed to load help articles from classpath", e);
         }
     }
 
-    private void addArticleSection(File sectionFolder) {
-        DefaultMutableTreeNode sectionNode = new DefaultMutableTreeNode(sectionFolder.getName());
+    private void addArticleSection(java.nio.file.Path sectionFolder) {
+        String folderName = sectionFolder.getFileName().toString();
+        // ZipFileSystem might have trailing slashes in directory names
+        if (folderName.endsWith("/")) {
+            folderName = folderName.substring(0, folderName.length() - 1);
+        }
+        DefaultMutableTreeNode sectionNode = new DefaultMutableTreeNode(folderName);
         DefaultMutableTreeNode rootNode = articlePanel.getRootNode();
         rootNode.add(sectionNode);
 
-        File[] articleFiles = sectionFolder.listFiles((dir, name) -> name.endsWith(".json"));
-
-        if (articleFiles != null) {
-            for (File articleFile : articleFiles) {
+        try (java.util.stream.Stream<java.nio.file.Path> stream = java.nio.file.Files.list(sectionFolder)) {
+            stream.filter(p -> p.toString().endsWith(".json")).forEach(articleFile -> {
                 HelpArticle article = this.readArticleFromFile(articleFile);
-                sectionNode.add(new DefaultMutableTreeNode(article));
-            }
+                if (article != null) {
+                    sectionNode.add(new DefaultMutableTreeNode(article));
+                }
+            });
+        } catch (Exception e) {
+            log.error("Failed to read section folder: " + sectionFolder, e);
         }
     }
 
     @SuppressWarnings({"CallToPrintStackTrace"})
-    private HelpArticle readArticleFromFile(File file) {
+    private HelpArticle readArticleFromFile(java.nio.file.Path file) {
         ObjectMapper objectMapper = FileUtilities.getConfigured();
-        try {
-            return objectMapper.readValue(file, HelpArticle.class);
-        } catch (IOException e) {
+        try (java.io.InputStream is = java.nio.file.Files.newInputStream(file)) {
+            return objectMapper.readValue(is, HelpArticle.class);
+        } catch (Exception e) {
             log.error("Failed to load help article", e);
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Encountered an error while trying to deserialize file with a help article: " + file.getName(),
+                    "Encountered an error while trying to deserialize file with a help article: " + file.getFileName().toString(),
                     "Failed to load help article!",
                     JOptionPane.ERROR_MESSAGE);
-            return new HelpArticle("Error: " + file.getName(), new java.util.ArrayList<>());
+            return new HelpArticle("Error: " + file.getFileName().toString(), new java.util.ArrayList<>());
         }
     }
 
