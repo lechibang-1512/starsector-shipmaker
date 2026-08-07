@@ -183,6 +183,7 @@ public abstract class DataTreePanel extends JPanel {
         JSplitPane treeSplitter = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         treeSplitter.setOneTouchExpandable(true);
         treeSplitter.setResizeWeight(0.6f);
+        treeSplitter.setDividerLocation(180);
         treeSplitter.setLeftComponent(treeContainer);
         treeSplitter.setRightComponent(leftInfoScroll);
         return treeSplitter;

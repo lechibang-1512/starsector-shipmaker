@@ -136,6 +136,27 @@ public class WeaponsTreePanel extends DataTreePanel {
             }
         });
         getTree().addMouseListener(new DoubleClickLayerLoader());
+        getTree().addTreeSelectionListener(e -> {
+            TreePath selectedNode = e.getNewLeadSelectionPath();
+            if (selectedNode != null) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectedNode.getLastPathComponent();
+                if (node.getUserObject() instanceof IndexedFile checked) {
+                    WeaponCSVEntry entry = SettingsManager.getGameData().getAllWeaponEntries().get(checked.getEntityId());
+                    if (entry != null) {
+                        JPanel infoPanel = getLeftInfoPanel();
+                        infoPanel.removeAll();
+                        infoPanel.add(new JLabel("Loading..."));
+                        infoPanel.revalidate();
+                        infoPanel.repaint();
+
+                        java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                            entry.getWeaponImage();
+                            return entry;
+                        }).thenAccept(loaded -> javax.swing.SwingUtilities.invokeLater(() -> updateEntryPanel(loaded)));
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -375,18 +396,6 @@ public class WeaponsTreePanel extends DataTreePanel {
                 if (entry != null) {
                     if (e.getButton() == java.awt.event.MouseEvent.BUTTON1 && e.getClickCount() == 2) {
                         entry.loadLayerFromEntry();
-                    } else {
-                        // Async info panel: load sprite off EDT, then update UI
-                        JPanel infoPanel = getLeftInfoPanel();
-                        infoPanel.removeAll();
-                        infoPanel.add(new JLabel("Loading..."));
-                        infoPanel.revalidate();
-                        infoPanel.repaint();
-
-                        java.util.concurrent.CompletableFuture.supplyAsync(() -> {
-                            entry.getWeaponImage(); // pre-load sprite off EDT
-                            return entry;
-                        }).thenAccept(loaded -> javax.swing.SwingUtilities.invokeLater(() -> updateEntryPanel(loaded)));
                     }
                 }
             }
