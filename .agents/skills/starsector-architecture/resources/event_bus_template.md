@@ -23,3 +23,14 @@ EventBus.subscribe(this, event -> {
     }
 });
 ```
+
+### 3. Subscribe (Permanent Class-Bound)
+For static singletons that should observe events permanently:
+
+```java
+EventBus.subscribe(MyController.class, event -> {
+    if (event instanceof CustomLayerEvent checked) {
+        handleCustomEvent(checked.layer(), checked.action());
+    }
+});
+```

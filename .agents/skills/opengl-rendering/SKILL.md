@@ -24,8 +24,10 @@ This skill is organized as follows:
 The rendering context is integrated within Swing components:
 - **`PrimaryViewer.java`**: Host container enclosing the `AWTGLCanvas`. Sets up the viewport, projection, and view matrices, then triggers repaints.
 - **`PaintOrderController.java`**: Orchestrates the draw order (background -> grid axes -> layers -> guides -> hotkeys).
+- **`OpenGLPainter.java`**: Core interface for any visual component or layer painter rendered inside the LWJGL/AWTGLCanvas viewer context.
 - **`SpriteRenderer.java`**: Handles textured sprite quads.
 - **`ShapeRenderer.java`**: Handles UI, overlays, grids, lines, rectangles, and circle geometry.
+- **`TextRenderer.java`**: Utility for caching and rendering AWT Font text as OpenGL textures.
 
 ## Coordinate & Transformation Math
 

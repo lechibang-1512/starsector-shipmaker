@@ -20,12 +20,12 @@ This skill is organized as follows:
 
 | Component | Version | Notes |
 |---|---|---|
-| **Java** | Source target 17 (`maven.compiler.release=17`) | Requires JDK 17–21 to compile. Lombok 1.18.36 crashes on JDK 25 with `TypeTag :: UNKNOWN ExceptionInInitializerError`. |
+| **Java** | Source target 17 (`maven.compiler.release=17`) | Requires JDK 17–24 to compile. Java 25+ crashes with Lombok. |
 | **Maven** | 3.x | Build tool. **Fedora quirk**: Fedora's `mvn` wrapper ignores `update-alternatives` and reads `/etc/java/maven.conf`. Set `JAVA_HOME=/usr/lib/jvm/java-21-temurin-jdk` in `~/.mavenrc` to force Java 21. |
 
 ### JVM Flags (Production)
 ```
--Xmx512m -XX:+UseG1GC -XX:+UseStringDeduplication
+-Xmx4g -XX:+UseG1GC -XX:+UseStringDeduplication
 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20
 ```
 Configured via `exec-maven-plugin` for development and the launcher scripts for production.
@@ -48,8 +48,8 @@ Java2D's OpenGL and Direct3D pipelines are explicitly disabled because they conf
 | Component | Version | Purpose |
 |---|---|---|
 | **Swing/AWT** | JDK built-in | Core UI framework |
-| **FlatLaf** | 3.1.1 | Modern look-and-feel with dark mode, scalable DPI, and IntelliJ themes |
-| **Ikonli** | 12.3.1 | Vector icon packs: FontAwesome5, FluentUI, Boxicons |
+| **FlatLaf** | 3.7.2 | Modern look-and-feel with dark mode, scalable DPI, and IntelliJ themes |
+| **Ikonli** | 12.4.0 | Vector icon packs: FontAwesome5, FluentUI, Boxicons |
 
 ### FlatLaf Configuration (Quirks)
 - `JPopupMenu.setDefaultLightWeightPopupEnabled(false)` — Required because lightweight popups render behind the `AWTGLCanvas` heavyweight component.
@@ -64,9 +64,9 @@ Java2D's OpenGL and Direct3D pipelines are explicitly disabled because they conf
 
 | Component | Version | Purpose |
 |---|---|---|
-| **LWJGL 3** (BOM) | 3.3.3 | Core library, OpenGL bindings, GLFW, JAWT |
-| **lwjgl3-awt** | 0.2.3 | `AWTGLCanvas` bridge between Swing and OpenGL |
-| **JOML** | 1.10.8 | `Matrix4f`, `Vector2f`, `Vector3f`, `Vector4f` math |
+| **LWJGL 3** (BOM) | 3.4.2 | Core library, OpenGL bindings, GLFW, JAWT |
+| **lwjgl3-awt** | 0.2.4 | `AWTGLCanvas` bridge between Swing and OpenGL |
+| **JOML** | 1.10.9 | `Matrix4f`, `Vector2f`, `Vector3f`, `Vector4f` math |
 
 ### Native Classifiers
 Both Linux and Windows natives are included in the POM:
@@ -81,11 +81,11 @@ macOS is not supported (no native classifiers declared).
 
 | Component | Version | Purpose |
 |---|---|---|
-| **Jackson Core** | 2.18.7 | JSON parsing with extensive relaxed-mode features |
-| **Jackson Databind** | 2.18.7 | Object mapping with custom coercion rules |
-| **Jackson CSV** | 2.18.7 | CSV parsing/writing with custom serializers |
-| **Jackson Annotations** | 2.18.7 | `@JsonProperty`, `@JsonIgnoreProperties`, etc. |
-| **SQLite JDBC** | 3.45.2.0 | Embedded database for file indexing |
+| **Jackson Core** | 2.18.9 | JSON parsing with extensive relaxed-mode features |
+| **Jackson Databind** | 2.18.9 | Object mapping with custom coercion rules |
+| **Jackson CSV** | 2.18.9 | CSV parsing/writing with custom serializers |
+| **Jackson Annotations** | 2.18.9 | `@JsonProperty`, `@JsonIgnoreProperties`, etc. |
+| **SQLite JDBC** | 3.53.2.1 | Embedded database for file indexing |
 
 ---
 
@@ -93,9 +93,9 @@ macOS is not supported (no native classifiers declared).
 
 | Component | Version | Purpose |
 |---|---|---|
-| **Lombok** | 1.18.36 | `@Getter`, `@Setter`, `@Builder`, `@Log4j2`, `@ToString` |
-| **Log4j2** | 2.25.4 | `log4j-api`, `log4j-core`, `log4j-slf4j-impl` |
-| **Apache Commons Collections 4** | 4.4 | Advanced collection utilities |
+| **Lombok** | 1.18.46 | `@Getter`, `@Setter`, `@Builder`, `@Log4j2`, `@ToString` |
+| **Log4j2** | 2.25.3 | `log4j-api`, `log4j-core`, `log4j-slf4j-impl` |
+| **Apache Commons Collections 4** | 4.5.0 | Advanced collection utilities |
 | **JHLabs Filters** | 2.0.235-1 | Image manipulation filters |
 
 ### Lombok Inheritance Trap (Quirk)
@@ -108,11 +108,11 @@ When extending classes that use Lombok `@Getter` (e.g., `LayerPainter`), be care
 | Plugin | Version | Purpose |
 |---|---|---|
 | `maven-compiler-plugin` | 3.11.0 | Java 17 target, Lombok + Log4j2 annotation processors |
-| `maven-surefire-plugin` | 3.2.5 | Test execution (JUnit Jupiter + jqwik) |
-| `spotbugs-maven-plugin` | 4.8.3.1 | Static analysis: Max effort, Low threshold |
+| `maven-surefire-plugin` | 3.5.6 | Test execution (JUnit Jupiter + jqwik) |
+| `spotbugs-maven-plugin` | 4.10.3.0 | Static analysis: Max effort, Low threshold |
 | `maven-jar-plugin` | 3.4.2 | JAR packaging |
 | `exec-maven-plugin` | 3.1.0 | Launch via `mvn exec:exec` with custom JVM flags |
-| `maven-shade-plugin` | 3.6.0 | Uber-JAR generation |
+| `maven-shade-plugin` | 3.6.2 | Uber-JAR generation |
 
 ### Shade Plugin Configuration (Quirks)
 - **`Log4j2PluginCacheFileTransformer`**: Merges Log4j2 plugin caches from multiple JARs. Without this, Log4j2 fails to discover its appenders at runtime.

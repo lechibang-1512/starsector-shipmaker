@@ -45,6 +45,21 @@ CREATE TABLE IF NOT EXISTS indexed_files (
     file_name TEXT NOT NULL,        -- Just the filename
     file_path TEXT NOT NULL,        -- Absolute path on disk
     last_modified INTEGER NOT NULL, -- File's lastModified epoch ms
+    file_hash TEXT,                 -- File hash string
+    sprite_path TEXT,               -- Extracted sprite path
+    designation TEXT,               -- Extracted designation
+    metadata_json TEXT,             -- Serialized JSON of extra metadata (for CSVs)
+    FOREIGN KEY(mod_id) REFERENCES mods(id) ON DELETE CASCADE
+);
+```
+
+### `csv_cache` Table
+```sql
+CREATE TABLE IF NOT EXISTS csv_cache (
+    csv_path TEXT PRIMARY KEY,
+    mod_id TEXT NOT NULL,
+    last_modified INTEGER NOT NULL,
+    rows_json TEXT NOT NULL,
     FOREIGN KEY(mod_id) REFERENCES mods(id) ON DELETE CASCADE
 );
 ```
@@ -53,6 +68,9 @@ CREATE TABLE IF NOT EXISTS indexed_files (
 ```sql
 CREATE INDEX IF NOT EXISTS idx_entity_id ON indexed_files(entity_id);
 CREATE INDEX IF NOT EXISTS idx_entity_type ON indexed_files(entity_type);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_file_path ON indexed_files(file_path);
+CREATE INDEX IF NOT EXISTS idx_mod_id ON indexed_files(mod_id);
+CREATE INDEX IF NOT EXISTS idx_mod_type ON indexed_files(mod_id, entity_type);
 ```
 
 ### Entity Types
@@ -73,23 +91,18 @@ CREATE INDEX IF NOT EXISTS idx_entity_type ON indexed_files(entity_type);
 
 ---
 
-## 3. Connection Management (Quirk: No Pooling)
+## 3. Connection Management (HikariCP)
 
 ```java
 public static Connection getConnection() throws SQLException {
-    Class.forName("org.sqlite.JDBC");
-    String dbUrl = "jdbc:sqlite:" + path + "?busy_timeout=5000";
-    Connection conn = DriverManager.getConnection(dbUrl);
-    // PRAGMAs applied per-connection
-    stmt.execute("PRAGMA foreign_keys = ON;");
-    stmt.execute("PRAGMA synchronous = NORMAL;");
-    stmt.execute("PRAGMA cache_size = -64000;");   // 64 MB page cache
-    stmt.execute("PRAGMA temp_store = MEMORY;");
-    return conn;
+    if (dataSource == null) {
+        initDataSource();
+    }
+    return dataSource.getConnection();
 }
 ```
 
-There is **no connection pool**. Every `getConnection()` call opens a fresh connection, applies PRAGMAs, and returns it. Connections are closed via try-with-resources at call sites.
+The database now uses a **HikariCP** connection pool for managing concurrent reads and writes effectively, especially for background async tasks. PRAGMAs are applied through `SQLiteConfig` when configuring the HikariDataSource.
 
 ### PRAGMA Rationale
 | PRAGMA | Value | Why |
@@ -100,9 +113,6 @@ There is **no connection pool**. Every `getConnection()` call opens a fresh conn
 | `temp_store` | `MEMORY` | Temp tables/indexes in RAM, not disk |
 | `journal_mode` | `WAL` | Set during `initializeDatabase()` only. Enables concurrent reads during writes |
 | `busy_timeout` | `5000` | 5-second wait on locked database before failing (URL parameter) |
-
-### Quirk: `Class.forName("org.sqlite.JDBC")`
-The JDBC driver is loaded reflectively on every connection. This is technically redundant with JDBC 4.0+ auto-loading, but exists as a safety net because the JPMS module system can interfere with service provider discovery.
 
 ### Quirk: Path Backslash Replacement
 ```java
@@ -138,11 +148,13 @@ This is acceptable because the database is a **derived cache** — all data can 
 ### Differential Update Strategy
 On subsequent runs, the scanner compares the `last_modified` timestamp of each mod folder against the stored `last_scanned` value. Only changed folders are rescanned.
 
-### Within a Folder: File-Level Diffing
+### Within a Folder: File-Level Diffing and Parallel Extraction
 For each mod folder being scanned, the scanner:
-1. Queries `getFilesLastModifiedMap(conn, modId)` to get all known files and their timestamps.
+1. Queries `getFilesDbInfoMap(conn, modId)` to get all known files, their timestamps, and UUIDs.
 2. Walks the filesystem and compares `file.lastModified()` against the database value.
-3. Only files with newer timestamps are re-parsed for entity ID extraction and upserted.
+3. Only files with newer timestamps are added to a list of parse requests.
+4. Uses `parallelStream()` to extract entity IDs, designations, and sprite paths simultaneously across multiple threads.
+5. Upserts the gathered metadata sequentially in JDBC batches.
 
 ### Transaction Strategy (Quirk)
 The entire scan runs in a **single SQLite transaction**:
@@ -178,7 +190,7 @@ On first run or when changes are detected, the scanner prompts the user via `JOp
 [DatabaseQueryService.java](file:///media/lechibang/WORK1/projects/starsector-shipmaker/src/main/java/shipeditor/persistence/database/DatabaseQueryService.java) is a static utility class with no instance state.
 
 ### Synchronous Methods (Background Scanner)
-- `upsertMod()`, `deleteMod()`, `upsertIndexedFile()`, `deleteIndexedFile()`, `deleteOrphanedFiles()`
+- `upsertMod()`, `deleteMod()`, `upsertFiles()`, `deleteIndexedFile()`, `deleteOrphanedFiles()`
 - These open their own connections (except `deleteOrphanedFiles` which takes a shared `Connection` parameter to participate in the scanner's transaction).
 
 ### Synchronous Lookups (Data Loading)
@@ -187,15 +199,20 @@ On first run or when changes are detected, the scanner prompts the user via `JOp
 - `getFileByPath(path)` — Reverse lookup by absolute path.
 - `getFilesByType(type)` — All indexed files of a given type, ordered by `mod_id ASC, entity_id ASC`.
 - `getFilesByTypeGroupedByMod(type)` — Same, but returned as `Map<String, List<IndexedFile>>`.
+- `getAggregatedCSVMetadata(csvType)` — Aggregates and merges JSON metadata parsed from CSVs.
+
+### CSV Cache Operations
+- `getCsvCache(csvPath)` / `upsertCsvCache(...)` / `clearCsvCache()` / `deleteCsvCacheForMod(modId)`
+- Handles fast retrieval of pre-parsed CSV rows (stored as JSON) to bypass expensive disk I/O and Jackson parsing on every application start.
 
 ### Asynchronous Lookups (UI)
-- `getFilesByTypeAsync(type)` — Returns `CompletableFuture<List<IndexedFile>>`. Runs the query on `ForkJoinPool.commonPool()`.
+- `getFilesByTypeAsync(type)` — Returns `CompletableFuture<List<IndexedFile>>`. Runs the query asynchronously.
 - `getFilesByModAndTypeAsync(modId, type)` — Filtered by mod.
 
 These async methods are used by the UI to populate tree views and tables without blocking the Swing EDT.
 
 ### `IndexedFile` Record
-[IndexedFile.java](file:///media/lechibang/WORK1/projects/starsector-shipmaker/src/main/java/shipeditor/persistence/database/IndexedFile.java) is a Lombok `@Builder` POJO. All fields are `final` — it's an immutable value object. The `filePath` is stored as a `java.nio.file.Path` (converted from the stored `TEXT` column via `Path.of()`).
+[IndexedFile.java](file:///media/lechibang/WORK1/projects/starsector-shipmaker/src/main/java/shipeditor/persistence/database/IndexedFile.java) is a Lombok `@Builder` POJO. All fields are `final` — it's an immutable value object. The `filePath` is stored as a `java.nio.file.Path`. It now contains `fileHash`, `spritePath`, `designation`, and `metadataJson`.
 
 ---
 

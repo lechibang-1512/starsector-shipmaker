@@ -25,7 +25,9 @@ This skill is organized as follows:
 1. **Floating Subscribers**: Stored in a `WeakHashMap`-backed `Set`. The listener itself is the weak key. If no strong reference exists elsewhere, the listener is GC'd and silently unsubscribed.
    - **Warning**: Anonymous lambdas passed to `subscribe(listener)` will be immediately eligible for GC unless the caller retains a reference. The Javadoc explicitly warns about this.
 
-2. **Lifecycle Subscribers**: Stored in a `WeakHashMap<Object, CopyOnWriteArrayList<BusEventListener>>`. The parent component is the weak key. All listeners bound to a parent are kept alive as long as the parent is alive.
+2. **Lifecycle Subscribers**: Stored using `WeakListenerWrapper` instances inside a `WeakHashMap<Object, CopyOnWriteArrayList<BusEventListener>>`. The parent component is the weak key. All listeners bound to a parent are kept alive as long as the parent is alive.
+   - For `JComponent` parents, listeners are attached via `putClientProperty` for strong referencing.
+   - For non-`JComponent` parents, a `fallbackStrongReferences` map ensures the listener isn't garbage collected prematurely while the parent is alive.
    - `subscribe(lifecycleParent, listener)` — Binds the listener's lifetime to the parent.
    - `unsubscribeByParent(parent)` — Removes all listeners for a parent in O(1).
 
@@ -44,7 +46,7 @@ Each nesting level of `publish()` gets its own snapshot list, preventing `Concur
 
 **Broadcast, Not Selective**: Every event is broadcast to every listener. There is no type-based filtering at the bus level — each listener must `instanceof`-check the event type. This was a deliberate KISS design decision; an earlier implementation with generics and selective dispatch caused "more issues down the road" (per the source comment).
 
-**Error Isolation**: If a listener throws, the exception is caught, logged with the listener's class name (cleaned of lambda hex suffixes via regex), and dispatch continues to the remaining listeners.
+**Error Isolation**: The `EventBus` provides an `ExceptionHandler` interface. By default, if a listener throws, the exception is caught, logged with the listener's class name (cleaned of lambda hex suffixes), and dispatch continues. You can inject custom error handling via `EventBus.setExceptionHandler()`.
 
 ---
 
@@ -58,7 +60,7 @@ Each nesting level of `publish()` gets its own snapshot list, preventing `Concur
 - **Capacity**: Hardcoded to `MAX_UNDO_CAPACITY = 200`. When exceeded, the oldest edit is silently dropped from the bottom of the undo stack.
 
 ### Edit Flow
-1. **Post**: `UndoOverseer.post(edit)` pushes to undo stack, clears redo stack, marks the active layer as dirty.
+1. **Post**: `UndoOverseer.post(edit)` pushes to undo stack, clears redo stack, and marks the relevant layer as dirty. (Note: Posting is ignored if `UndoOverseer.isPaused()` is true).
 2. **Undo**: Pops from undo, calls `edit.undo()`, pushes to redo.
 3. **Redo**: Pops from redo, calls `edit.redo()`, pushes to undo.
 
@@ -69,7 +71,7 @@ When a layer is removed, `cleanupRemovedLayer(painter)` iterates both stacks and
 `adjustPointEditsOffset(point, offset)` iterates **all** edits (both stacks) and adjusts the stored positions of `PointDragEdit`s. This is needed when a layer's anchor changes — existing undo history must be updated to reflect the new coordinate system.
 
 ### Dirty Marking
-Every edit categorizes itself as `EditCategory.NONE`, `EditCategory.HULL`, or `EditCategory.VARIANT`. Non-NONE edits mark the active layer as unsaved (hull or variant type), which enables the "unsaved changes" indicator in the UI.
+Every edit categorizes itself as `EditCategory.NONE`, `EditCategory.HULL`, or `EditCategory.VARIANT`. Non-NONE edits mark the target layer as unsaved. If the edit implements `LayerEdit`, the target layer is extracted directly from the edit's painter, allowing dirty marking to correctly affect inactive layers (otherwise, it falls back to the currently active layer).
 
 ### Selective Undo Forbidden
 The class comment explicitly states: *"exposing edit stack to the user for selective undo is strictly forbidden."* The system relies on strict LIFO ordering; cherry-picking edits would break state consistency.
@@ -122,9 +124,12 @@ Because `AWTGLCanvas.paintGL()` is called during Swing's repaint cycle, the GL t
 
 ## 5. Static Controller Pattern
 
-`StaticController` is a static singleton that holds references to the active `PrimaryViewer`, `LayerManager`, and active layer. It acts as a global service locator.
+`StaticController` is a static singleton that holds references to the active `PrimaryViewer`, `LayerManager`, and active layer. It acts as a global service locator, and integrates with the `EventScheduler`.
 
 This is a pragmatic trade-off: it avoids threading constructor references through deeply nested component hierarchies, at the cost of testability. The entire application assumes a single-viewer, single-window architecture.
+
+### Permanent Event Subscriptions
+When static managers (like `StaticController`) need to observe events for the entire lifetime of the application, they use their own `.class` object as the lifecycle parent (e.g., `EventBus.subscribe(StaticController.class, listener)`). This guarantees the subscription is never garbage collected.
 
 ---
 

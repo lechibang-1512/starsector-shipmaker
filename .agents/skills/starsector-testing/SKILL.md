@@ -13,6 +13,7 @@ This skill is organized as follows:
   - [spotbugs-exclude-template.xml](file:///media/lechibang/WORK1/projects/starsector-shipmaker/.agents/skills/starsector-testing/resources/spotbugs-exclude-template.xml): Template for SpotBugs bug suppressions.
 - **`examples/`**: Code references.
   - [SampleJqwikTest.java](file:///media/lechibang/WORK1/projects/starsector-shipmaker/.agents/skills/starsector-testing/examples/SampleJqwikTest.java): Reference implementation of jqwik property-based tests.
+  - [SampleJsonProcessorTest.java.txt](file:///media/lechibang/WORK1/projects/starsector-shipmaker/.agents/skills/starsector-testing/examples/SampleJsonProcessorTest.java.txt): Sample jqwik property-based test for JSON parsing pipeline.
 - **`scripts/`**: Automation.
   - [run_checks.sh](file:///media/lechibang/WORK1/projects/starsector-shipmaker/.agents/skills/starsector-testing/scripts/run_checks.sh): Helper script to build, test, and perform static analysis.
 
@@ -29,31 +30,28 @@ Both are executed via `maven-surefire-plugin` (3.2.5).
 
 ## 2. Existing Test Suite
 
-The test suite is focused on **mathematical correctness** of utility functions that underpin coordinate transformations and data display. Two test files exist:
+The test suite has expanded significantly to cover mathematical correctness, parsing pipelines, database operations, and event management. It includes both unit tests and property-based tests across the following domains:
 
-### `UtilityPropertiesTest`
-[UtilityPropertiesTest.java](file:///media/lechibang/WORK1/projects/starsector-shipmaker/src/test/java/shipeditor/utility/UtilityPropertiesTest.java) — Property-based tests for core mathematical utilities.
+### Utility & Graphics Tests
+- **`UtilityPropertiesTest`** & **`CoordinatesFormatterPropertiesTest`**: Property-based tests for core mathematical utilities, coordinate rounding, and angle transformations. They test edge cases like `NaN`, negative zero, and very large values.
+- **`ColorUtilitiesPropertiesTest`**, **`ShapeUtilitiesPropertiesTest`**, **`CollisionHullGeneratorPropertiesTest`**: Validates OpenGL color conversions, geometry processing, and collision hull math.
+- **`SpinnersPropertiesTest`**: Tests UI spinner boundary logic.
 
-| Property | What It Validates |
-|---|---|
-| `testParseIntegerOrDefault` | `Utility.parseIntegerOrDefault()` returns parsed int for valid strings, default for invalid/empty |
-| `testParseDoubleOrDefault` | `Utility.parseDoubleOrDefault()` returns parsed double for valid strings, default for invalid/empty |
-| `testClampAngleWithRounding` | Result is always in `[0, 360)` for any input in `[-1e9, 1e9]` |
-| `testFlipAngle` | Flipping twice returns the normalized original (within 0.0001 delta) |
-| `testRound` | `Utility.round(value, decimalPlaces)` produces a result for all finite values |
-| `testTransformAngle` | `Utility.transformAngle()` output is always in `[-90, 270)` |
+### Parsing & Serialization Tests
+- **`JsonProcessorPropertiesTest`**: Property-based testing for `JsonProcessor.straightenMalformed()` pipeline, ensuring the complex regex and state machine can handle fuzzed and malformed Starsector JSON inputs.
+- **`CsvLoaderPropertiesTest`** & **`CustomSerializersPropertiesTest`**: Validates the custom Jackson serializers and CSV data extraction.
+- **`SpecFileSerializationTest`**: Verifies bidirectional reading and writing of ship and weapon specification files.
+- **`GameDataParsingIntegrationTest`**: End-to-end integration tests for data loading.
 
-**Why jqwik here**: These functions are called thousands of times per frame for coordinate display and point placement. A single edge case (e.g., `NaN`, negative zero, very large values) would corrupt the viewport or produce nonsensical coordinates. Property-based testing with random inputs catches edge cases that handwritten examples miss.
+### Database & Persistence Tests
+- **`DataReferenceQueriesTest`**: Tests SQLite queries, schema operations, and PRAGMAs.
+- **`DatabaseLoadingIntegrationTest`**: Validates the end-to-end database indexing process.
+- **`GameFolderDetectionTest`**: Verifies logic for locating the Starsector installation directory.
 
-### `CoordinatesFormatterPropertiesTest`
-[CoordinatesFormatterPropertiesTest.java](file:///media/lechibang/WORK1/projects/starsector-shipmaker/src/test/java/shipeditor/utility/text/CoordinatesFormatterPropertiesTest.java) — Property-based tests for coordinate rounding.
-
-| Property | What It Validates |
-|---|---|
-| `testRoundMaintainsValue` | `CoordinatesFormatter.round()` produces results within 0.005 of input for normal values, handles `NaN` and `Infinity` correctly, and doesn't overflow for very large values |
-| `testRoundPointMaintainsValue` | `CoordinatesFormatter.roundPoint()` preserves `NaN` propagation for both X and Y |
-
-**Quirk — Overflow Guard**: The test explicitly handles the case where `Math.abs(value) >= Long.MAX_VALUE / 1000.0`, because the rounding implementation internally converts to `long` for fixed-point math. For values exceeding this threshold, the test relaxes the precision requirement to 1% of the input value.
+### Core Architecture Tests
+- **`EventBusTest`**: Ensures events are correctly dispatched and received across the application.
+- **`UndoOverseerPropertiesTest`**: Validates the robustness of the Undo/Redo stack.
+- **`GameDataRepositoryPropertiesTest`**: Tests caching and retrieval of raw data maps.
 
 ---
 
@@ -66,12 +64,6 @@ There are no automated Swing/AWT UI tests. The `PrimaryViewer`, `PaintOrderContr
 - Swing EDT initialization
 
 These are impractical in CI environments. Visual verification is done manually.
-
-### No Jackson Parsing Tests
-The `JsonProcessor.straightenMalformed()` pipeline is not unit-tested. This is a gap — the complex regex and character-by-character state machine are prime candidates for property-based testing with fuzzed Starsector JSON inputs.
-
-### No Database Tests
-`DatabaseManager` and `DatabaseQueryService` are not tested in isolation. The schema, PRAGMAs, and query correctness are validated implicitly by the full-application launch test.
 
 ---
 

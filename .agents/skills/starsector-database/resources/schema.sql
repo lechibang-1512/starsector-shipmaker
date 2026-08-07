@@ -16,9 +16,25 @@ CREATE TABLE IF NOT EXISTS indexed_files (
     file_name TEXT NOT NULL,        -- Just the filename
     file_path TEXT NOT NULL,        -- Absolute path on disk
     last_modified INTEGER NOT NULL, -- File's lastModified epoch ms
+    file_hash TEXT,                 -- File hash string
+    sprite_path TEXT,               -- Extracted sprite path
+    designation TEXT,               -- Extracted designation
+    metadata_json TEXT,             -- Serialized JSON of extra metadata (for CSVs)
+    FOREIGN KEY(mod_id) REFERENCES mods(id) ON DELETE CASCADE
+);
+
+-- csv_cache Table
+CREATE TABLE IF NOT EXISTS csv_cache (
+    csv_path TEXT PRIMARY KEY,
+    mod_id TEXT NOT NULL,
+    last_modified INTEGER NOT NULL,
+    rows_json TEXT NOT NULL,
     FOREIGN KEY(mod_id) REFERENCES mods(id) ON DELETE CASCADE
 );
 
 -- Indexes for fast queries
 CREATE INDEX IF NOT EXISTS idx_entity_id ON indexed_files(entity_id);
 CREATE INDEX IF NOT EXISTS idx_entity_type ON indexed_files(entity_type);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_file_path ON indexed_files(file_path);
+CREATE INDEX IF NOT EXISTS idx_mod_id ON indexed_files(mod_id);
+CREATE INDEX IF NOT EXISTS idx_mod_type ON indexed_files(mod_id, entity_type);

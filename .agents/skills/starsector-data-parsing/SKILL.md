@@ -35,30 +35,19 @@ The parsing subsystem exists to survive all of these.
 
 ## 2. JSON Pre-Processing: `JsonProcessor`
 
-[JsonProcessor.java](file:///run/media/lechibang/cb09d199-3769-4ec8-9af5-954929515428/projects/starsector-shipmaker/src/main/java/shipeditor/parsing/JsonProcessor.java) is the first line of defense. Before Jackson ever sees the JSON, the raw text goes through `straightenMalformed()`:
+[JsonProcessor.java](file:///run/media/lechibang/cb09d199-3769-4ec8-9af5-954929515428/projects/starsector-shipmaker/src/main/java/shipeditor/parsing/JsonProcessor.java) is the first line of defense. Before Jackson ever sees the JSON, the raw text goes through `straightenMalformedText()`:
 
-### Phase 1: `correctCommentsUnquotedValuesAndSeparators()` — Single-Pass O(N) Scanner
-This is the most complex and performance-critical method. It performs three transformations in a single linear sweep:
+### The Unified Single-Pass O(N) State Machine
+The entire preprocessing is now done in a single linear sweep to avoid catastrophic backtracking issues caused by previous regex implementations on deeply nested mod files. It performs the following transformations simultaneously:
 
-1. **`#` Comment Stripping**: When `#` is encountered outside quotes, all characters until the next newline are consumed silently.
-2. **Semicolon → Comma**: `;` outside quotes becomes `,`.
-3. **Unquoted Identifier Quoting**: Any bare word (`[a-zA-Z_][a-zA-Z0-9_]*`) that is not `true`, `false`, or `null`, and is not already adjacent to a quote, is wrapped in double quotes.
+1. **Quoted String Preservation**: Carefully tracks `inQuotes` and `escape` states to preserve string literals.
+2. **`#` Comment Stripping**: Consumes characters silently until a newline when `#` is encountered outside quotes.
+3. **Semicolon → Comma**: `;` outside quotes becomes `,`.
+4. **Number Formatting Correction**: Detects numbers and natively strips Java-style type suffixes (`100f` → `100`, `2.5d` → `2.5`) and trailing periods (`1.` → `1`) inline.
+5. **Unquoted Identifier Quoting**: Any bare word (`[a-zA-Z_][a-zA-Z0-9_]*`) not matching `true`, `false`, or `null` is wrapped in double quotes. Explicitly prevents quoting identifiers preceded by a dot (e.g., `style.MIDLINE`) or adjacent to quotes.
+6. **Trailing Comma Stripping**: Automatically strips trailing commas right before closing brackets `]` or braces `}` to produce strictly valid JSON arrays/objects.
 
-**Quirk — Catastrophic Backtracking Avoidance**: An earlier implementation used regex for this, which caused the regex engine to stall on certain mod files with deeply nested structures. The current implementation is a hand-written character-by-character state machine with explicit `inQuotes` and `escape` tracking.
-
-**Quirk — Dot-Preceded Words**: The scanner explicitly checks `input.charAt(i - 1) != '.'` before quoting an identifier. This prevents `style.MIDLINE` from becoming `style."MIDLINE"` — Starsector uses dot-notation for style references.
-
-### Phase 2: `correctNumberLetterSignums()` — Regex
-```java
-private static final Pattern LETTERS_AFTER_DIGIT = 
-    Pattern.compile("(\\b\\d+(?:\\.\\d*)?|\\.\\d+)[fFdD](?![a-zA-Z_])");
-```
-Strips Java-style type suffixes from numbers: `100f` → `100`, `2.5d` → `2.5`. The negative lookahead `(?![a-zA-Z_])` prevents stripping from hex-like values.
-
-### Phase 3: `correctTrailingPeriods()` — Regex
-Two patterns handle the two contexts where trailing periods appear:
-- `1.` before a comma → `1`
-- `1.` before a closing brace/bracket/newline/EOF → `1,` (Quirk: this adds a comma, not removes the period, because Starsector sometimes uses trailing periods as implicit comma separators)
+**Quirk — Catastrophic Backtracking Avoidance**: The current implementation is a hand-written character-by-character state machine to ensure predictable O(N) execution time, avoiding regex engine stalls.
 
 ---
 
@@ -68,6 +57,10 @@ Two patterns handle the two contexts where trailing periods appear:
 
 ```java
 mapper.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
+mapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+
 mapper.configure(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature(), true);
 mapper.configure(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS.mappedFeature(), true);
 mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
@@ -83,7 +76,10 @@ mapper.coercionConfigFor(LogicalType.Collection)
 ### Why Each Feature Matters
 | Feature | Why Needed |
 |---|---|
-| `ALLOW_YAML_COMMENTS` | Starsector JSON files contain `//` and `/* */` comments (after `#` is stripped by `JsonProcessor`) |
+| `ALLOW_YAML_COMMENTS` | Starsector JSON files contain `#` comments (if they somehow pass the processor) |
+| `ALLOW_COMMENTS` | Starsector JSON files contain `//` and `/* */` comments |
+| `ALLOW_SINGLE_QUOTES` | Sometimes strings are defined with `'` instead of `"` |
+| `ALLOW_UNQUOTED_FIELD_NAMES` | Catch-all for fields the processor might have missed |
 | `ALLOW_TRAILING_COMMA` | Nearly every Starsector array/object ends with a trailing comma |
 | `ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS` | Values like `.5` instead of `0.5` appear in weapon data |
 | `ALLOW_UNESCAPED_CONTROL_CHARS` | Some mod descriptions contain raw tab/newline characters |
