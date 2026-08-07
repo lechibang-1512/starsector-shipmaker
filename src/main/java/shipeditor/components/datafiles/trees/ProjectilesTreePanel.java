@@ -338,6 +338,7 @@ public class ProjectilesTreePanel extends DataTreePanel {
     private static int addStringEditor(JPanel container, String key, String value,
             java.util.function.Consumer<String> setter, int row) {
         javax.swing.JTextField field = new javax.swing.JTextField(value != null ? value : "", 15);
+        field.setCaretPosition(0);
         field.addActionListener(e -> setter.accept(field.getText().isEmpty() ? null : field.getText()));
         field.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override
@@ -353,6 +354,7 @@ public class ProjectilesTreePanel extends DataTreePanel {
             java.util.function.Consumer<java.util.List<String>> setter, int row) {
         String text = value == null ? "" : String.join(", ", value);
         javax.swing.JTextField field = new javax.swing.JTextField(text, 15);
+        field.setCaretPosition(0);
         java.awt.event.ActionListener updater = e -> {
             if (field.getText().isEmpty()) {
                 setter.accept(null);
@@ -381,6 +383,7 @@ public class ProjectilesTreePanel extends DataTreePanel {
                 ? ((Double.compare(value, Math.floor(value)) == 0) ? String.valueOf(value.intValue()) : String.valueOf(value))
                 : "";
         javax.swing.JTextField field = new javax.swing.JTextField(formatted, 15);
+        field.setCaretPosition(0);
         java.awt.event.ActionListener updater = e -> {
             try {
                 if (field.getText().isEmpty())
@@ -415,6 +418,7 @@ public class ProjectilesTreePanel extends DataTreePanel {
         String text = color == null ? ""
                 : String.format("%d, %d, %d, %d", color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
         javax.swing.JTextField field = new javax.swing.JTextField(text, 15);
+        field.setCaretPosition(0);
         SmartColorPaste.install(field, pastedColor -> {
             String starsectorFormat = pastedColor.getRed() + ", " + pastedColor.getGreen() + ", "
                     + pastedColor.getBlue() + ", " + pastedColor.getAlpha();
@@ -449,6 +453,7 @@ public class ProjectilesTreePanel extends DataTreePanel {
             String starsectorFormat = pastedColor.getRed() + ", " + pastedColor.getGreen() + ", "
                     + pastedColor.getBlue() + ", " + pastedColor.getAlpha();
             field.setText(starsectorFormat);
+            field.setCaretPosition(0);
             setter.accept(pastedColor);
         });
         ComponentUtilities.addLabelAndComponent(container, new JLabel(key + ":"), field, row++);
