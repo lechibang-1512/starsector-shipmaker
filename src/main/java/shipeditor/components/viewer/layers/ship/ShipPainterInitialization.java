@@ -39,6 +39,12 @@ public final class ShipPainterInitialization {
     }
 
     static void loadHullData(ShipPainter shipPainter, HullSpecFile hullSpecFile) {
+        int declaredWidth = hullSpecFile.getWidth();
+        int declaredHeight = hullSpecFile.getHeight();
+        if (declaredWidth > 0 && declaredHeight > 0) {
+            shipPainter.setDeclaredSize(declaredWidth, declaredHeight);
+        }
+
         Point2D anchor = shipPainter.getCenterAnchor();
         Point2D hullCenter = hullSpecFile.getCenter();
 

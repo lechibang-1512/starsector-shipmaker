@@ -322,16 +322,30 @@ public abstract class LayerPainter implements OpenGLPainter {
         return transform;
     }
 
+    private Integer declaredWidth = null;
+    private Integer declaredHeight = null;
+
+    public void setDeclaredSize(int width, int height) {
+        this.declaredWidth = width;
+        this.declaredHeight = height;
+    }
+
     public int getSpriteWidth() {
+        if (declaredWidth != null) {
+            return declaredWidth;
+        }
         Sprite spriteContainer = getSprite();
-        var spriteImage = spriteContainer.getImage();
-        return spriteImage.getWidth();
+        if (spriteContainer == null) return 0;
+        return spriteContainer.getImage().getWidth();
     }
 
     public int getSpriteHeight() {
+        if (declaredHeight != null) {
+            return declaredHeight;
+        }
         Sprite spriteContainer = getSprite();
-        var spriteImage = spriteContainer.getImage();
-        return spriteImage.getHeight();
+        if (spriteContainer == null) return 0;
+        return spriteContainer.getImage().getHeight();
     }
 
     /**
@@ -401,8 +415,12 @@ public abstract class LayerPainter implements OpenGLPainter {
         if (spriteContainer == null) {
             return new Point2D.Double(0, 0);
         }
-        var spriteImage = spriteContainer.getImage();
-        return Utility.getSpriteCenterDifferenceToAnchor(spriteImage);
+        
+        Point2D point = shipeditor.utility.overseers.MiscCaching.getNewPoint();
+        float x = this.getSpriteWidth() / 2.0f;
+        float y = this.getSpriteHeight() / 2.0f;
+        point.setLocation(x, y);
+        return point;
     }
 
     protected void paintContent(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
