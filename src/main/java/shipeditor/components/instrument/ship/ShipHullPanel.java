@@ -6,14 +6,14 @@ import shipeditor.components.instrument.ship.hull.ShipLayerInfoPanel;
 import shipeditor.utility.components.CollapsibleSection;
 
 import javax.swing.BoxLayout;
-import javax.swing.JPanel;
+import shipeditor.utility.components.containers.TextScrollPanel;
 
 /**
  * Composite hull panel that embeds the existing Layer, Collision, and Shield panels
  * inside collapsible sections. Each embedded panel retains its own EventBus subscriptions
  * and refresh lifecycle — this wrapper only provides the visual grouping.
  */
-public class ShipHullPanel extends JPanel {
+public class ShipHullPanel extends TextScrollPanel {
 
     public ShipHullPanel() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));

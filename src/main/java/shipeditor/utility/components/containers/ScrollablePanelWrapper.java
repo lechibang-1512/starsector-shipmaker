@@ -1,20 +1,17 @@
 package shipeditor.utility.components.containers;
 
-import javax.swing.Scrollable;
-
 import javax.swing.JPanel;
+import javax.swing.Scrollable;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.LayoutManager;
 import java.awt.Rectangle;
 
-public class TextScrollPanel extends JPanel implements Scrollable {
+public class ScrollablePanelWrapper extends JPanel implements Scrollable {
 
-    public TextScrollPanel() {
-        super();
-    }
-
-    public TextScrollPanel(LayoutManager layout) {
-        super(layout);
+    public ScrollablePanelWrapper(Component view) {
+        super(new BorderLayout());
+        this.add(view, BorderLayout.CENTER);
     }
 
     @Override
@@ -24,12 +21,12 @@ public class TextScrollPanel extends JPanel implements Scrollable {
 
     @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-        return 0;
+        return 16;
     }
 
     @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-        return 0;
+        return 16;
     }
 
     @Override
@@ -41,5 +38,4 @@ public class TextScrollPanel extends JPanel implements Scrollable {
     public boolean getScrollableTracksViewportHeight() {
         return false;
     }
-
 }

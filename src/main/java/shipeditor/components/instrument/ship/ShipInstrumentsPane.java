@@ -84,7 +84,7 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
 
         // Tab 2: Fittings — inner tabs for table-based panels
         JTabbedPane fittingsTabs = new JTabbedPane(SwingConstants.TOP);
-        fittingsTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        fittingsTabs.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
         this.styleSubTabbedPane(fittingsTabs);
         this.createInnerTab(fittingsTabs, new WeaponSlotsPanel(), EditorInstrument.WEAPON_SLOTS, KeyEvent.VK_W);
         this.createInnerTab(fittingsTabs, new LaunchBaysPanel(), EditorInstrument.LAUNCH_BAYS, KeyEvent.VK_L);
@@ -97,7 +97,7 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
 
         // Tab 3: Skins
         JTabbedPane skinsTabs = new JTabbedPane(SwingConstants.TOP);
-        skinsTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        skinsTabs.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
         this.styleSubTabbedPane(skinsTabs);
         this.createInnerTab(skinsTabs, new SkinDataPanel(), EditorInstrument.SKIN_DATA, KeyEvent.VK_K);
         this.createInnerTab(skinsTabs, new SkinSlotOverridesPanel(), EditorInstrument.SKIN_SLOTS, KeyEvent.VK_O);
@@ -112,7 +112,7 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
         variantsContainer.add(opSummaryBar, java.awt.BorderLayout.NORTH);
 
         JTabbedPane variantsTabs = new JTabbedPane(SwingConstants.TOP);
-        variantsTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        variantsTabs.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
         this.styleSubTabbedPane(variantsTabs);
         this.createInnerTab(variantsTabs, new VariantMainPanel(), EditorInstrument.VARIANT_DATA, KeyEvent.VK_V);
         this.createInnerTab(variantsTabs, new VariantWeaponsPanel(), EditorInstrument.VARIANT_WEAPONS, KeyEvent.VK_T);

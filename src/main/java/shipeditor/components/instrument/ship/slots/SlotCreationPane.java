@@ -58,7 +58,7 @@ public class SlotCreationPane extends JPanel {
 
         this.add(SlotCreationPane.createModePanel(), BorderLayout.PAGE_START);
 
-        JPanel selectorsPane = new JPanel();
+        shipeditor.utility.components.containers.TextScrollPanel selectorsPane = new shipeditor.utility.components.containers.TextScrollPanel();
         selectorsPane.setLayout(new BoxLayout(selectorsPane, BoxLayout.PAGE_AXIS));
         selectorsPane.setAlignmentY(0);
         selectorsPane.add(Box.createRigidArea(UIConstants.PADDING_10_4));
