@@ -1,21 +1,16 @@
 package shipeditor.components.datafiles.trees;
 
-import shipeditor.components.viewer.layers.ship.FeaturesOverseer;
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.MouseoverLabelListener;
 
 import javax.swing.AbstractButton;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButton;
 import javax.swing.border.EmptyBorder;
 import java.awt.Component;
-import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureListener;
@@ -28,30 +23,38 @@ public class DataTreeVariantPanelBuilder {
 
     public static JPanel createVariantsPanel(Collection<VariantFile> variantFiles, boolean withSelector) {
         JPanel variantsPanel = new JPanel();
-        variantsPanel.setLayout(new FlowLayout(FlowLayout.LEADING, 0, 0));
+        variantsPanel.setLayout(new java.awt.BorderLayout());
         ComponentUtilities.outfitPanelWithTitle(variantsPanel, new Insets(1, 0, 0, 0), "Variants");
         variantsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel labelContainer = new JPanel();
+        JPanel labelContainer = new JPanel(new java.awt.GridBagLayout());
         labelContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
         labelContainer.setBorder(new EmptyBorder(2, 0, 0, 0));
-        labelContainer.setLayout(new BoxLayout(labelContainer, BoxLayout.PAGE_AXIS));
+
+        java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gbc.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gbc.insets = new Insets(0, 0, 2, 0);
 
         if (variantFiles.isEmpty()) throw new IllegalArgumentException("Empty variants list!");
 
         ButtonGroup group = new ButtonGroup();
         variantFiles.forEach(variant -> {
-            JPanel variantLine = new JPanel();
+            JPanel variantLine = new JPanel(new java.awt.BorderLayout());
             variantLine.setAlignmentX(Component.LEFT_ALIGNMENT);
-            variantLine.setLayout(new BoxLayout(variantLine, BoxLayout.LINE_AXIS));
 
-            JLabel variantFileLabel = createVariantFileLabel(variant);
+            javax.swing.JTextArea variantFileLabel = createVariantFileLabel(variant);
             if (withSelector) {
-                outfitVariantLabelWithSelector(variant, variantLine, group, variantFileLabel);
+                JPanel selectorPanel = new JPanel(new java.awt.BorderLayout());
+                outfitVariantLabelWithSelector(variant, selectorPanel, group, variantFileLabel);
+                variantLine.add(selectorPanel, java.awt.BorderLayout.WEST);
             }
-            variantLine.add(variantFileLabel);
-            labelContainer.add(variantLine);
-            labelContainer.add(Box.createVerticalStrut(2));
+            variantLine.add(variantFileLabel, java.awt.BorderLayout.CENTER);
+            labelContainer.add(variantLine, gbc);
+            gbc.gridy++;
         });
 
         if (withSelector) {
@@ -62,17 +65,17 @@ public class DataTreeVariantPanelBuilder {
             }
         }
 
-        variantsPanel.add(labelContainer);
+        variantsPanel.add(labelContainer, java.awt.BorderLayout.CENTER);
         return variantsPanel;
     }
 
-    private static JLabel createVariantFileLabel(VariantFile variantFile) {
+    private static javax.swing.JTextArea createVariantFileLabel(VariantFile variantFile) {
         Path variantFilePath = variantFile.getVariantFilePath();
         Path fileNamePath = variantFilePath != null ? variantFilePath.getFileName() : null;
         String fileName = fileNamePath != null ? fileNamePath.toString() : "Unknown";
-        JLabel variantLabel = new JLabel("Variant file : " + fileName);
+        javax.swing.JTextArea variantLabel = ComponentUtilities.createWrappingLabel("Variant file: " + fileName);
         variantLabel.setToolTipText(variantFilePath != null ? variantFilePath.toString() : "Unknown");
-        variantLabel.setBorder(ComponentUtilities.createLabelSimpleBorder(ComponentUtilities.createLabelInsets()));
+        variantLabel.setBorder(ComponentUtilities.createLabelSimpleBorder(new Insets(2, 4, 2, 4)));
         if (variantFilePath != null) {
             JPopupMenu pathContextMenu = ComponentUtilities.createPathContextMenu(variantFilePath);
             variantLabel.addMouseListener(new MouseoverLabelListener(pathContextMenu, variantLabel));
@@ -81,10 +84,10 @@ public class DataTreeVariantPanelBuilder {
     }
 
     private static void outfitVariantLabelWithSelector(VariantFile variant, JPanel variantLine,
-                                                       ButtonGroup group, JLabel variantFileLabel) {
+                                                       ButtonGroup group, javax.swing.JTextArea variantFileLabel) {
         JRadioButton selector = new JRadioButton();
         selector.setBorder(new EmptyBorder(0, 0, 2, 4));
-        selector.addActionListener(e -> FeaturesOverseer.setModuleForInstall(variant));
+        selector.addActionListener(e -> shipeditor.communication.EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.ShipEntryPicked(variant)));
         selector.setToolTipText("Select variant or drag label to be installed as module");
         group.add(selector);
         variantLine.add(selector);

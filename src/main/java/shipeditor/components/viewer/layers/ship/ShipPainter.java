@@ -122,12 +122,25 @@ public class ShipPainter extends LayerPainter {
 
             activeVariant.initialize(file);
 
+            // Validate that the variant's fitted weapons actually match the hull's slot restrictions
+            var slotPainter = this.getWeaponSlotPainter();
+            var fittedWeapons = activeVariant.getAllFittedWeapons();
+            fittedWeapons.forEach((slotID, feature) -> {
+                var slotPoint = slotPainter.getSlotByID(slotID);
+                if (slotPoint == null || !shipeditor.representation.weapon.WeaponEnums.WeaponType.isValidForSlot(slotPoint, feature.getDataEntry())) {
+                    log.warn("Variant {} specifies invalid weapon {} for slot {}, removing from group.", variantId, feature.getDataEntry().getID(), slotID);
+                    var parentGroup = feature.getParentGroup();
+                    if (parentGroup != null) {
+                        parentGroup.getWeapons().remove(slotID);
+                    }
+                }
+            });
+
             var parentLayer = getParentLayer();
             if (parentLayer != null) {
                 var loadedVariants = parentLayer.getLoadedVariants();
                 loadedVariants.put(variantId, activeVariant);
             }
-
 
         }
     }
@@ -297,7 +310,7 @@ public class ShipPainter extends LayerPainter {
     }
 
     @Override
-    protected Point2D getRotationAnchor() {
+    public Point2D getRotationAnchor() {
         CenterPointPainter pointPainter = this.getCenterPointPainter();
         if (pointPainter == null) {
             return this.getSpriteCenter();

@@ -20,8 +20,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import shipeditor.communication.events.components.ComponentEvents.SelectWeaponDataEntry;
-import shipeditor.communication.events.components.ComponentEvents.SelectShipDataEntry;
 import shipeditor.communication.events.components.ComponentEvents.InstrumentSplitterResized;
 
 /**
@@ -62,17 +60,8 @@ final class TripleSplitContainer extends JSplitPane {
 
         EventBus.subscribe(this, layerSelectListener);
 
-        BusEventListener entrySelectListener = event -> {
-            if (event instanceof SelectWeaponDataEntry || event instanceof SelectShipDataEntry) {
-                // Ensure Game Data panel on the left is expanded when a data entry is selected
-                int currentWidth = this.getWidth();
-                if (currentWidth > 0 && this.getDividerLocation() < (currentWidth * 0.1)) {
-                    this.setDividerLocation(0.25);
-                }
-            }
-        };
-
-        EventBus.subscribe(this, entrySelectListener);
+        // Removed entrySelectListener to prevent frustrating auto-expansion of the left panel
+        // when selecting entities via the canvas if the user explicitly minimized it.
 
         BusEventListener splitterResizeListener = event -> {
             if (event instanceof InstrumentSplitterResized checked) {
@@ -144,7 +133,7 @@ final class TripleSplitContainer extends JSplitPane {
 
         GameDataPanel gameDataPanel = new GameDataPanel();
         gameDataPanel.setMinimumSize(new Dimension(150, 100));
-        gameDataPanel.setPreferredSize(new Dimension(350, 0));
+        gameDataPanel.setPreferredSize(new Dimension(350, 600));
 
         secondaryLevel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         secondaryLevel.setOneTouchExpandable(true);

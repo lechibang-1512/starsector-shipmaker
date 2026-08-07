@@ -258,7 +258,15 @@ public class LayerManager {
             if (event instanceof HullFileOpened checked) {
                 HullSpecFile hullSpecFile = checked.hullSpecFile();
                 if (activeLayer != null && activeLayer instanceof ShipLayer checkedLayer) {
-                    checkedLayer.initializeHullData(hullSpecFile);
+                    boolean wasPaused = shipeditor.undo.UndoOverseer.isPaused();
+                    shipeditor.undo.UndoOverseer.setPaused(true);
+                    try {
+                        checkedLayer.initializeHullData(hullSpecFile);
+                    } finally {
+                        shipeditor.undo.UndoOverseer.setPaused(wasPaused);
+                        markSaved(checkedLayer, "hull");
+                        markSaved(checkedLayer, "variant");
+                    }
                 } else {
                     throw new IllegalStateException("Hull file loaded onto invalid layer!");
                 }
@@ -267,7 +275,15 @@ public class LayerManager {
                 if (activeLayer != null && activeLayer instanceof ShipLayer checkedLayer) {
                     ShipHull data = checkedLayer.getHull();
                     if (data != null) {
-                        LayerManager.openSkinFile(checkedLayer, data, skinSpecFile, checked.setAsActive());
+                        boolean wasPaused = shipeditor.undo.UndoOverseer.isPaused();
+                        shipeditor.undo.UndoOverseer.setPaused(true);
+                        try {
+                            LayerManager.openSkinFile(checkedLayer, data, skinSpecFile, checked.setAsActive());
+                        } finally {
+                            shipeditor.undo.UndoOverseer.setPaused(wasPaused);
+                            markSaved(checkedLayer, "hull");
+                            markSaved(checkedLayer, "variant");
+                        }
                     } else {
                         throw new IllegalStateException("Skin file loaded onto a null ship data!");
                     }

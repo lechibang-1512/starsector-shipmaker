@@ -17,9 +17,9 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.LineBorder;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.FlowLayout;
 import java.util.List;
+import shipeditor.utility.themes.Themes;
 
 /** * Simple list editor for variant suppressedMods (raw hullmod ID strings).
  * Follows the same visual pattern as {@link VariantHullmodsListPane}.*/
@@ -36,7 +36,7 @@ class SuppressedModsPanel extends JPanel {
         listModel = new DefaultListModel<>();
         modsList = new JList<>(listModel);
         modsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        modsList.setBorder(new LineBorder(Color.LIGHT_GRAY));
+        modsList.setBorder(new LineBorder(Themes.getBorderColor()));
         modsList.setEnabled(false);
         this.add(new JScrollPane(modsList), BorderLayout.CENTER);
 

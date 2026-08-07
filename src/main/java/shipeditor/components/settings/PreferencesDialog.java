@@ -30,7 +30,7 @@ public class PreferencesDialog extends JDialog {
 
     private void initUI() {
         this.setLayout(new BorderLayout());
-        this.setSize(400, 300);
+        this.setSize(600, 450);
         this.setLocationRelativeTo(this.getOwner());
 
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -56,13 +56,26 @@ public class PreferencesDialog extends JDialog {
         Settings settings = SettingsManager.getSettings();
 
         JCheckBox autoLoadData = new JCheckBox("Auto-load data at start");
+        autoLoadData.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        autoLoadData.setToolTipText("Automatically load indexed mod data when the editor starts");
         autoLoadData.setSelected(SettingsManager.isDataAutoloadEnabled());
         autoLoadData.addActionListener(event ->
                 settings.setLoadDataAtStart(autoLoadData.isSelected())
         );
         panel.add(autoLoadData);
 
+        JCheckBox togglePromptMods = new JCheckBox("Always show Mod Selection at startup");
+        togglePromptMods.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        togglePromptMods.setToolTipText("Force the mod selection dialog to appear every time you open the editor");
+        togglePromptMods.setSelected(settings.isPromptForModsAtStart());
+        togglePromptMods.addActionListener(event ->
+                settings.setPromptForModsAtStart(togglePromptMods.isSelected())
+        );
+        panel.add(togglePromptMods);
+
         JCheckBox toggleFileErrorPopups = new JCheckBox("Enable file error pop-ups");
+        toggleFileErrorPopups.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        toggleFileErrorPopups.setToolTipText("Show error dialogs when corrupted files are encountered during loading");
         toggleFileErrorPopups.setSelected(SettingsManager.areFileErrorPopupsEnabled());
         toggleFileErrorPopups.addActionListener(event ->
                 settings.setShowLoadingErrors(toggleFileErrorPopups.isSelected())
@@ -70,6 +83,8 @@ public class PreferencesDialog extends JDialog {
         panel.add(toggleFileErrorPopups);
 
         JCheckBox toggleDeveloperMode = new JCheckBox("Enable developer messages/logs");
+        toggleDeveloperMode.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        toggleDeveloperMode.setToolTipText("Enable extensive diagnostic logging and developer-only warnings");
         toggleDeveloperMode.setSelected(SettingsManager.isDeveloperModeEnabled());
         toggleDeveloperMode.addActionListener(event ->
                 settings.setDeveloperMode(toggleDeveloperMode.isSelected())
@@ -77,6 +92,7 @@ public class PreferencesDialog extends JDialog {
         panel.add(toggleDeveloperMode);
 
         JButton openSettings = new JButton("Open settings file");
+        openSettings.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         openSettings.addActionListener(e -> {
             File settingsPath = SettingsManager.getSettingsPath();
             FileUtilities.openPathInDesktop(settingsPath);
@@ -84,11 +100,44 @@ public class PreferencesDialog extends JDialog {
         panel.add(openSettings);
 
         JButton openEditorFolder = new JButton("Open editor folder");
+        openEditorFolder.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         openEditorFolder.addActionListener(e -> {
-            File editorFolder = SettingsManager.getSettingsPath().getParentFile();
-            FileUtilities.openPathInDesktop(editorFolder);
+            File settingsPath = SettingsManager.getSettingsPath();
+            File editorFolder = settingsPath != null ? settingsPath.getParentFile() : null;
+            if (editorFolder != null) {
+                FileUtilities.openPathInDesktop(editorFolder);
+            }
         });
         panel.add(openEditorFolder);
+
+        panel.add(javax.swing.Box.createVerticalStrut(10));
+
+        JPanel blacklistPanel = new JPanel(new BorderLayout(5, 5));
+        blacklistPanel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        blacklistPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Mod Blacklist"));
+        javax.swing.JTextArea blacklistArea = new javax.swing.JTextArea(4, 20);
+        blacklistArea.setToolTipText("Comma-separated list of mod folder names or prefixes to ignore.");
+        if (settings.getBlacklistedMods() != null) {
+            blacklistArea.setText(String.join(", ", settings.getBlacklistedMods()));
+        }
+        blacklistArea.getDocument().addDocumentListener(new BlacklistDocumentListener(blacklistArea, settings));
+        blacklistPanel.add(new javax.swing.JScrollPane(blacklistArea), BorderLayout.CENTER);
+        panel.add(blacklistPanel);
+        panel.add(javax.swing.Box.createVerticalStrut(10));
+
+        JButton openModSelectionBtn = new JButton("Select Mod Packages...");
+        openModSelectionBtn.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        openModSelectionBtn.setToolTipText("Open the mod selection dialog to change indexed mods");
+        openModSelectionBtn.addActionListener(e -> {
+            shipeditor.components.dialogs.ModSelectionDialog dialog = 
+                new shipeditor.components.dialogs.ModSelectionDialog(
+                    (Frame) javax.swing.SwingUtilities.getWindowAncestor(this)
+                );
+            if (dialog.showDialog()) {
+                shipeditor.parsing.loading.FileLoading.forceReindexAndLoadGameData();
+            }
+        });
+        panel.add(openModSelectionBtn);
 
         return panel;
     }
@@ -98,7 +147,10 @@ public class PreferencesDialog extends JDialog {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
         
-        panel.add(new JLabel("Select application theme (will take effect after restart):"));
+        JLabel themeLabel = new JLabel("Select application theme (will take effect after restart):");
+        themeLabel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        panel.add(themeLabel);
+        panel.add(javax.swing.Box.createVerticalStrut(10));
 
         Settings settings = SettingsManager.getSettings();
         var themes = Theme.values();
@@ -106,6 +158,7 @@ public class PreferencesDialog extends JDialog {
 
         for (Theme theme : themes) {
             JRadioButton setTheme = new JRadioButton(theme.getDisplayedName());
+            setTheme.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
             setTheme.addActionListener(e -> settings.setTheme(theme));
 
             buttonGroup.add(setTheme);
@@ -126,11 +179,41 @@ public class PreferencesDialog extends JDialog {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        panel.add(new JLabel("Authors: thevolkflower"));
-        panel.add(new JLabel("Started: May 2026"));
+        JLabel authorsLabel = new JLabel("Authors: thevolkflower");
+        authorsLabel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        panel.add(authorsLabel);
+        
+        JLabel startedLabel = new JLabel("Started: May 2026");
+        startedLabel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        panel.add(startedLabel);
+        
         String projectVersion = Main.VERSION;
-        panel.add(new JLabel("Current version: " + projectVersion));
+        JLabel versionLabel = new JLabel("Current version: " + projectVersion);
+        versionLabel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        panel.add(versionLabel);
 
         return panel;
+    }
+    private static final class BlacklistDocumentListener implements javax.swing.event.DocumentListener {
+        private final javax.swing.JTextArea blacklistArea;
+        private final Settings settings;
+
+        BlacklistDocumentListener(javax.swing.JTextArea blacklistArea, Settings settings) {
+            this.blacklistArea = blacklistArea;
+            this.settings = settings;
+        }
+
+        private void update() {
+            String text = blacklistArea.getText();
+            java.util.List<String> list = java.util.Arrays.stream(text.split(","))
+                    .map(s -> s.trim())
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+            settings.setBlacklistedMods(list);
+        }
+
+        @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { update(); }
+        @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { update(); }
+        @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
     }
 }

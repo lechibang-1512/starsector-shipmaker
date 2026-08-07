@@ -35,6 +35,24 @@ public class TreeDataGestureListener implements DragGestureListener {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
             Object userObject = node.getUserObject();
 
+            if (userObject instanceof shipeditor.persistence.database.IndexedFile file) {
+                var gameData = shipeditor.persistence.SettingsManager.getGameData();
+                String type = file.getEntityType();
+                if ("SHIP".equals(type)) {
+                    var map = gameData.getAllShipEntries();
+                    if (map != null) userObject = map.get(file.getEntityId());
+                } else if ("WEAPON".equals(type)) {
+                    var map = gameData.getAllWeaponEntries();
+                    if (map != null) userObject = map.get(file.getEntityId());
+                } else if ("HULLMOD".equals(type)) {
+                    var map = gameData.getAllHullmodEntries();
+                    if (map != null) userObject = map.get(file.getEntityId());
+                } else if ("WING".equals(type)) {
+                    var map = gameData.getAllWingEntries();
+                    if (map != null) userObject = map.get(file.getEntityId());
+                }
+            }
+
             Transferable transferable;
             if (userObject instanceof ShipCSVEntry shipEntry) {
                 transferable = new TransferableShip(shipEntry, tree);

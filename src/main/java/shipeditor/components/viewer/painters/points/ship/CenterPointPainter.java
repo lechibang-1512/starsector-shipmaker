@@ -1,7 +1,5 @@
 package shipeditor.components.viewer.painters.points.ship;
 
-import java.awt.KeyEventDispatcher;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -33,7 +31,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
-import java.awt.KeyboardFocusManager;
 import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
 
@@ -53,7 +50,6 @@ public class CenterPointPainter extends SinglePointPainter {
 
     private static final int dragCollisionRadiusHotkey = KeyEvent.VK_CONTROL;
     private boolean collisionRadiusHotkeyPressed;
-    private KeyEventDispatcher hotkeyDispatcher;
 
     public CenterPointPainter(ShipPainter parent) {
         super(parent);
@@ -70,7 +66,6 @@ public class CenterPointPainter extends SinglePointPainter {
     @Override
     public void cleanupListeners() {
         super.cleanupListeners();
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(hotkeyDispatcher);
     }
 
     private void initModeListening() {
@@ -105,31 +100,26 @@ public class CenterPointPainter extends SinglePointPainter {
     }
 
     private void initHotkeys() {
-        hotkeyDispatcher = ke -> {
+        EventBus.subscribe(this, event -> {
             if (!this.getParentLayer().isLayerActive()) {
-                return false;
+                return;
             }
-            int keyCode = ke.getKeyCode();
-            boolean isCollisionHotkey = (keyCode == dragCollisionRadiusHotkey);
-            switch (ke.getID()) {
-                case KeyEvent.KEY_PRESSED:
-                    if (isCollisionHotkey) {
-                        this.collisionRadiusHotkeyPressed = true;
-                        EventBus.publish(new ViewerRepaintQueued());
-                    }
-                    break;
-                case KeyEvent.KEY_RELEASED:
-                    if (isCollisionHotkey) {
-                        this.collisionRadiusHotkeyPressed = false;
-                        EventBus.publish(new ViewerRepaintQueued());
-                    }
-                    break;
-                default:
-                    break;
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
+                int keyCode = pressedEvent.keyEvent().getKeyCode();
+                boolean isCollisionHotkey = (keyCode == dragCollisionRadiusHotkey);
+                if (isCollisionHotkey) {
+                    this.collisionRadiusHotkeyPressed = true;
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
+            } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
+                int keyCode = releasedEvent.keyEvent().getKeyCode();
+                boolean isCollisionHotkey = (keyCode == dragCollisionRadiusHotkey);
+                if (isCollisionHotkey) {
+                    this.collisionRadiusHotkeyPressed = false;
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
             }
-            return false;
-        };
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(hotkeyDispatcher);
+        });
     }
 
     public void initCenterPoint(Point2D translatedCenter, HullSpecFile hullSpecFile) {

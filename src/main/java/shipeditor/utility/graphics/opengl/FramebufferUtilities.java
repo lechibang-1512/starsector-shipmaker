@@ -23,11 +23,11 @@ public final class FramebufferUtilities {
     }
 
     public static void printLayerToImage(ViewerLayer layer, int width, int height, double scale, int padding, File outputFile) {
-        printLayerToImage(layer, width, height, scale, padding, outputFile, false, new java.awt.Color(0,0,0,0), false);
+        printLayerToImage(layer, width, height, scale, padding, outputFile, new java.awt.Color(0,0,0,0), false);
     }
 
-    public static void printLayerToImage(ViewerLayer layer, int width, int height, double scale, int padding, File outputFile, boolean bakeCenterline, java.awt.Color bgColor, boolean renderMountsBounds) {
-        BufferedImage image = renderLayerToImage(layer, width, height, scale, padding, bakeCenterline, bgColor, renderMountsBounds);
+    public static void printLayerToImage(ViewerLayer layer, int width, int height, double scale, int padding, File outputFile, java.awt.Color bgColor, boolean renderMountsBounds) {
+        BufferedImage image = renderLayerToImage(layer, width, height, scale, padding, bgColor, renderMountsBounds);
         if (image == null) return;
         
         try {
@@ -44,7 +44,7 @@ public final class FramebufferUtilities {
         }
     }
     
-    public static BufferedImage renderLayerToImage(ViewerLayer layer, int width, int height, double scale, int padding, boolean bakeCenterline, java.awt.Color bgColor, boolean renderMountsBounds) {
+    public static BufferedImage renderLayerToImage(ViewerLayer layer, int width, int height, double scale, int padding, java.awt.Color bgColor, boolean renderMountsBounds) {
         LayerPainter painter = layer.getPainter();
         if (painter == null || painter.isUninitialized()) {
             log.error("Layer painter is uninitialized, aborting render.");
@@ -143,17 +143,8 @@ public final class FramebufferUtilities {
             }
         }
         image.setRGB(0, 0, finalWidth, finalHeight, pixels, 0, finalWidth);
-
-        if (bakeCenterline) {
-            java.awt.Graphics2D g2d = image.createGraphics();
-            g2d.setColor(new java.awt.Color(0, 255, 255, 128));
-            int centerX = finalWidth / 2;
-            int centerY = finalHeight / 2;
-            g2d.drawLine(centerX, 0, centerX, finalHeight);
-            g2d.drawLine(0, centerY, finalWidth, centerY);
-            g2d.dispose();
-        }
         
+
         return image;
     }
 

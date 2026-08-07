@@ -2,14 +2,14 @@
 <Configuration status="INFO" name="Standard">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{1} - %msg%n" />
+            <PatternLayout pattern="%style{%d{HH:mm:ss.SSS}}{bright,black} %highlight{%-5level} [%style{%15.15t}{magenta}] %style{%-25.25logger{1}}{cyan} - %msg%n" />
         </Console>
         <GUIAppender name="GUIAppender">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %logger{1} - %msg%n" />
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %-25.25logger{1} - %msg%n" />
         </GUIAppender>
         <RollingFile name="RollingFile" fileName="logs/ship_editor.log"
                      filePattern="logs/ship_editor-%d{MM-dd-yyyy}-%i.log">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{1} - %msg%n" />
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%15.15t] %-5level %-25.25logger{1} - %msg%n" />
             <Policies>
                 <SizeBasedTriggeringPolicy size="10 MB" />
             </Policies>

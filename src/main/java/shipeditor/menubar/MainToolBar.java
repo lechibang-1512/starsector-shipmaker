@@ -5,17 +5,19 @@ import org.kordamp.ikonli.swing.FontIcon;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.communication.events.viewer.layers.LayerEvents.ViewerLayerRemovalConfirmed;
+import shipeditor.communication.events.viewer.control.ControlEvents.CursorSnappingToggled;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransformsReset;
+import shipeditor.components.settings.PreferencesDialog;
 
 import shipeditor.components.viewer.layers.LayerManager;
 import shipeditor.parsing.loading.FileLoading;
 import shipeditor.undo.UndoOverseer;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.themes.Themes;
-import shipeditor.components.datafiles.GameDataReferenceWindow;
 
 import javax.swing.JButton;
-import javax.swing.JOptionPane;
 import javax.swing.JToolBar;
+import javax.swing.JToggleButton;
 
 import shipeditor.communication.events.viewer.layers.LayerEvents.ShipLayerCreationQueued;
 import shipeditor.communication.events.viewer.layers.LayerEvents.WeaponLayerCreationQueued;
@@ -30,46 +32,48 @@ public class MainToolBar extends JToolBar {
     }
 
     private void initUI() {
+        // --- FILE ACTIONS ---
+        JButton saveButton = new JButton();
+        this.styleToolbarButton(saveButton, BoxiconsRegular.SAVE);
+        saveButton.setToolTipText("Save Active Layer (Ctrl+S)");
+        saveButton.addActionListener(e -> shipeditor.parsing.saving.SaveCoordinator.saveActiveLayer());
+        this.add(saveButton);
+
+        this.addSeparator();
+
+        // --- HISTORY ---
         JButton undoButton = new JButton();
         undoButton.setAction(UndoOverseer.getUndoAction());
         undoButton.setHideActionText(true);
         this.styleToolbarButton(undoButton, BoxiconsRegular.UNDO);
-        undoButton.setToolTipText("Undo");
+        undoButton.setToolTipText("Undo (Ctrl+Z)");
         this.add(undoButton);
 
         JButton redoButton = new JButton();
         redoButton.setAction(UndoOverseer.getRedoAction());
         redoButton.setHideActionText(true);
         this.styleToolbarButton(redoButton, BoxiconsRegular.REDO);
-        redoButton.setToolTipText("Redo");
+        redoButton.setToolTipText("Redo (Ctrl+Y)");
         this.add(redoButton);
 
         this.addSeparator();
 
-        JButton createLayerButton = new JButton();
-        this.styleToolbarButton(createLayerButton, BoxiconsRegular.PLUS);
-        createLayerButton.setToolTipText("Create new layer");
-        createLayerButton.addActionListener(event -> {
-            Object[] options = { "Ship Layer", "Weapon Layer" };
-            int result = JOptionPane.showOptionDialog(null,
-                    "Select new layer type:",
-                    "Create New Layer",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    options,
-                    options[0]);
-            if (result == 0) {
-                EventBus.publish(new ShipLayerCreationQueued());
-            } else if (result == 1) {
-                EventBus.publish(new WeaponLayerCreationQueued());
-            }
-        });
-        this.add(createLayerButton);
+        // --- LAYER MANAGEMENT ---
+        JButton createShipLayerButton = new JButton();
+        this.styleToolbarButton(createShipLayerButton, BoxiconsRegular.ROCKET);
+        createShipLayerButton.setToolTipText("Create New Ship Layer (Ctrl+N)");
+        createShipLayerButton.addActionListener(event -> EventBus.publish(new ShipLayerCreationQueued()));
+        this.add(createShipLayerButton);
+        
+        JButton createWeaponLayerButton = new JButton();
+        this.styleToolbarButton(createWeaponLayerButton, BoxiconsRegular.CROSSHAIR);
+        createWeaponLayerButton.setToolTipText("Create New Weapon Layer (Ctrl+Shift+N)");
+        createWeaponLayerButton.addActionListener(event -> EventBus.publish(new WeaponLayerCreationQueued()));
+        this.add(createWeaponLayerButton);
 
         JButton removeLayerButton = new JButton();
         this.styleToolbarButton(removeLayerButton, BoxiconsRegular.MINUS);
-        removeLayerButton.setToolTipText("Remove selected layer");
+        removeLayerButton.setToolTipText("Remove Active Layer (Ctrl+Delete)");
         removeLayerButton.addActionListener(event -> EventBus.publish(new ActiveLayerRemovalQueued()));
         removeLayerButton.setEnabled(false);
 
@@ -85,19 +89,56 @@ public class MainToolBar extends JToolBar {
         });
         this.add(removeLayerButton);
 
-        JButton reloadDataButton = new JButton();
-        this.styleToolbarButton(reloadDataButton, BoxiconsRegular.REFRESH);
-        reloadDataButton.setToolTipText("Reload all game data");
-        reloadDataButton.addActionListener(event -> FileLoading.loadGameData());
-        this.add(reloadDataButton);
+        this.addSeparator();
+
+        // --- CANVAS MODES ---
+        JToggleButton snapButton = new JToggleButton();
+        snapButton.setIcon(FontIcon.of(BoxiconsRegular.MAGNET, 16, Themes.getIconColor()));
+        snapButton.setSelectedIcon(FontIcon.of(BoxiconsRegular.MAGNET, 16, Themes.getBrighterSelectionColor()));
+        snapButton.setToolTipText("Toggle Cursor Snapping");
+        snapButton.setSelected(true);
+        snapButton.setFocusPainted(false);
+        snapButton.addActionListener(e -> EventBus.publish(new CursorSnappingToggled(snapButton.isSelected())));
+        EventBus.subscribe(this, event -> {
+            if (event instanceof CursorSnappingToggled checked) {
+                snapButton.setSelected(checked.toggled());
+            }
+        });
+        this.add(snapButton);
+
+        JButton centerViewButton = new JButton();
+        this.styleToolbarButton(centerViewButton, BoxiconsRegular.TARGET_LOCK);
+        centerViewButton.setToolTipText("Reset View / Center (Ctrl+0)");
+        centerViewButton.addActionListener(event -> EventBus.publish(new ViewerTransformsReset()));
+        this.add(centerViewButton);
 
         this.addSeparator();
 
-        JButton dataWindowButton = new JButton();
-        this.styleToolbarButton(dataWindowButton, BoxiconsRegular.BOOK);
-        dataWindowButton.setToolTipText("Show Reference Data");
-        dataWindowButton.addActionListener(event -> GameDataReferenceWindow.toggleWindow());
-        this.add(dataWindowButton);
+        // --- UTILITY ---
+        JButton reloadDataButton = new JButton();
+        this.styleToolbarButton(reloadDataButton, BoxiconsRegular.REFRESH);
+        reloadDataButton.setToolTipText("Reload Game Data (F5)");
+        reloadDataButton.addActionListener(event -> FileLoading.loadGameData());
+        this.add(reloadDataButton);
+        
+        this.addSeparator();
+        
+        JButton combinedFiltersBtn = new JButton();
+        this.styleToolbarButton(combinedFiltersBtn, BoxiconsRegular.FILTER);
+        combinedFiltersBtn.setToolTipText("Data Filters");
+        combinedFiltersBtn.addActionListener(e -> shipeditor.components.datafiles.trees.FilterDialogs.showCombinedFilters(combinedFiltersBtn));
+        this.add(combinedFiltersBtn);
+
+        this.addSeparator();
+
+        JButton prefsButton = new JButton();
+        this.styleToolbarButton(prefsButton, BoxiconsRegular.COG);
+        prefsButton.setToolTipText("Preferences (Ctrl+,)");
+        prefsButton.addActionListener(event -> {
+            PreferencesDialog dialog = new PreferencesDialog(shipeditor.PrimaryWindow.getInstance());
+            dialog.setVisible(true);
+        });
+        this.add(prefsButton);
     }
 
     private void styleToolbarButton(JButton button, org.kordamp.ikonli.Ikon icon) {

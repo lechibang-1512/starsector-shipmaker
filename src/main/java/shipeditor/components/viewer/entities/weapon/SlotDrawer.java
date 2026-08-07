@@ -176,8 +176,8 @@ public class SlotDrawer {
         double effectiveHalfExtentPixels = effectiveHalfExtent * wtsScale;
         
         double minRadiusPixels = 12.0 * paintSizeMultiplier;
-        if (scale == 1.25d) minRadiusPixels = 14.0 * paintSizeMultiplier;
-        if (scale == 1.5d) minRadiusPixels = 16.0 * paintSizeMultiplier;
+        if (Double.compare(scale, 1.25d) == 0) minRadiusPixels = 14.0 * paintSizeMultiplier;
+        if (Double.compare(scale, 1.5d) == 0) minRadiusPixels = 16.0 * paintSizeMultiplier;
         
         double finalHalfExtentPixels = Math.max(effectiveHalfExtentPixels, minRadiusPixels);
         double pixelScale = finalHalfExtentPixels / effectiveHalfExtentPixels;

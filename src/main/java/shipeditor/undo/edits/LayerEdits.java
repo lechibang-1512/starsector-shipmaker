@@ -21,7 +21,7 @@ public final class LayerEdits {
     private LayerEdits() {
     }
 
-    public static class HullCoversColorEdit extends AbstractEdit implements LayerEdit {
+    public static class HullCoversColorEdit extends AbstractEdit {
         @Getter
         private shipeditor.components.viewer.layers.ViewerLayer layer;
         private final java.awt.Color oldColor;
@@ -72,14 +72,13 @@ public final class LayerEdits {
         }
 
         public void assimilate(Edit edit) {
-            if (isSimilar(edit)) {
-                HullCoversColorEdit checked = (HullCoversColorEdit) edit;
+            if (edit instanceof HullCoversColorEdit checked && isSimilar(checked)) {
                 checked.setFinished(true);
             }
         }
     }
 
-    public static class AnchorOffsetEdit extends AbstractEdit implements LayerEdit {
+    public static class AnchorOffsetEdit extends AbstractEdit {
         @Getter
         private LayerPainter layerPainter;
         private final Point2D oldOffset;
@@ -127,7 +126,7 @@ public final class LayerEdits {
         }
     }
 
-    public static class LayerRotationEdit extends AbstractEdit implements LayerEdit {
+    public static class LayerRotationEdit extends AbstractEdit {
         @Getter
         private LayerPainter layerPainter;
         private final double oldRotation;
@@ -175,7 +174,7 @@ public final class LayerEdits {
         }
     }
 
-    public static class ModuleAnchorEdit extends AbstractEdit implements LayerEdit {
+    public static class ModuleAnchorEdit extends AbstractEdit {
         @Getter
         private CenterPointPainter centersPainter;
         private final Point2D oldAnchor;
@@ -230,7 +229,7 @@ public final class LayerEdits {
         }
     }
 
-    public static class SpriteSwapEdit extends AbstractEdit implements LayerEdit {
+    public static class SpriteSwapEdit extends AbstractEdit {
         private LayerPainter layer;
         private final Sprite oldSprite;
         private final Sprite newSprite;

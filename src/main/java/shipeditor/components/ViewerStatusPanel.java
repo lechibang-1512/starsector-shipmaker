@@ -46,7 +46,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -54,7 +53,6 @@ import java.awt.Insets;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.awt.KeyboardFocusManager;
 import javax.swing.JFormattedTextField;
 import shipeditor.communication.events.viewer.control.ControlEvents.PointLinkageToleranceChanged;
 import shipeditor.communication.events.viewer.control.ControlEvents.ViewerZoomChanged;
@@ -146,13 +144,14 @@ final class ViewerStatusPanel extends JPanel {
             EventBus.publish(new MirrorModeChange(mirrorModeOn));
         });
         mirrorModeCheckbox.setSelected(true);
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(ke -> {
-            int keyCode = ke.getKeyCode();
-            PrimaryViewer viewer = StaticController.getViewer();
-            if (viewer != null && viewer.isCursorInViewer() && ke.getID() == KeyEvent.KEY_RELEASED && keyCode == KeyEvent.VK_SPACE) {
-                mirrorModeCheckbox.setSelected(!mirrorModeCheckbox.isSelected());
+        EventBus.subscribe(mirrorModeCheckbox, event -> {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
+                int keyCode = releasedEvent.keyEvent().getKeyCode();
+                PrimaryViewer viewer = StaticController.getViewer();
+                if (viewer != null && viewer.isCursorInViewer() && keyCode == java.awt.event.KeyEvent.VK_SPACE) {
+                    mirrorModeCheckbox.setSelected(!mirrorModeCheckbox.isSelected());
+                }
             }
-            return false;
         });
         mirrorModeCheckbox.setMnemonic(KeyEvent.VK_SPACE);
         mirrorModeCheckbox.setToolTipText("Spacebar to toggle");
@@ -163,7 +162,7 @@ final class ViewerStatusPanel extends JPanel {
         container.add(Box.createRigidArea(new Dimension(margin,0)));
         JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
         separator.setPreferredSize(new Dimension(2, 24));
-        separator.setForeground(Color.GRAY);
+        separator.setForeground(Themes.getBorderColor());
         container.add(separator);
         container.add(Box.createRigidArea(new Dimension(margin,0)));
         container.add(toleranceLabel);
@@ -182,6 +181,8 @@ final class ViewerStatusPanel extends JPanel {
 
     private JPanel createLeftsidePanel() {
         leftsideContainer = new JPanel();
+        leftsideContainer.setLayout(new BoxLayout(leftsideContainer, BoxLayout.LINE_AXIS));
+        leftsideContainer.add(Box.createRigidArea(new Dimension(5, 0)));
 
         dimensions = new JLabel("", SwingConstants.TRAILING);
         dimensions.setToolTipText("Width / height of active layer");
@@ -310,10 +311,13 @@ final class ViewerStatusPanel extends JPanel {
     }
 
     private void addSeparator() {
+        leftsideContainer.add(Box.createRigidArea(new Dimension(8, 0)));
         JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
         separator.setPreferredSize(new Dimension(2, 24));
-        separator.setForeground(Color.GRAY);
+        separator.setMaximumSize(new Dimension(2, 24));
+        separator.setForeground(Themes.getBorderColor());
         leftsideContainer.add(separator);
+        leftsideContainer.add(Box.createRigidArea(new Dimension(8, 0)));
     }
 
     @SuppressWarnings("ChainOfInstanceofChecks")
@@ -327,7 +331,11 @@ final class ViewerStatusPanel extends JPanel {
                 this.cursorNeedsUpdate = true;
             } else if (event instanceof LayerSpriteLoadConfirmed checked) {
                 Sprite sprite = checked.sprite();
-                this.setDimensionsLabel(sprite.getImage());
+                if (sprite != null) {
+                    this.setDimensionsLabel(sprite.getImage());
+                } else {
+                    this.setDimensionsLabel(null);
+                }
             } else if (event instanceof LayerWasSelected checked) {
                 ViewerLayer layer = checked.selected();
                 if (layer == null) return;

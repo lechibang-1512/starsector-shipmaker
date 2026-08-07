@@ -57,7 +57,7 @@ public final class WingEdits {
         }
     }
 
-    public static class WingRemoveEdit extends AbstractEdit implements LayerEdit {
+    public static class WingRemoveEdit extends AbstractEdit {
         private final List<WingCSVEntry> wingIndex;
         private ShipLayer layer;
         private final WingCSVEntry entry;
@@ -107,7 +107,7 @@ public final class WingEdits {
         }
     }
 
-    public static class WingsSortEdit extends AbstractEdit implements LayerEdit {
+    public static class WingsSortEdit extends AbstractEdit {
         private final List<WingCSVEntry> oldList;
         private final List<WingCSVEntry> newList;
         private ShipLayer layer;

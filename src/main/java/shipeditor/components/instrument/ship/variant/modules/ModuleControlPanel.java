@@ -5,7 +5,6 @@ import shipeditor.communication.events.viewer.control.ControlEvents.FeatureInsta
 import shipeditor.components.instrument.LayerPropertiesPanel;
 import shipeditor.components.instrument.ship.centers.ModuleAnchorPanel;
 import shipeditor.components.viewer.layers.LayerPainter;
-import shipeditor.components.viewer.layers.ship.FeaturesOverseer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.components.viewer.ViewerEnums.PainterVisibility;
@@ -219,7 +218,7 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
         variantPicker.addActionListener(e -> {
             VariantFile selected = (VariantFile) variantPicker.getSelectedItem();
             if (selected != null) {
-                FeaturesOverseer.setModuleForInstall(selected);
+                EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.ShipEntryPicked(selected));
             }
         });
 
@@ -228,7 +227,7 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
         installButton.addActionListener(e -> {
             VariantFile selected = (VariantFile) variantPicker.getSelectedItem();
             if (selected != null) {
-                FeaturesOverseer.setModuleForInstall(selected);
+                EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.ShipEntryPicked(selected));
                 EventBus.publish(new FeatureInstallQueued(null));
             }
         });

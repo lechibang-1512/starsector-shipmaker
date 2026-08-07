@@ -12,7 +12,6 @@ import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipHull;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
-import shipeditor.parsing.loading.FileLoading;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
 import shipeditor.undo.EditDispatch;
@@ -25,8 +24,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -47,13 +44,18 @@ class HullmodsTreePanel extends CSVDataTreePanel<HullmodCSVEntry>{
 
     @Override
     protected Action getLoadDataAction() {
-        return FileLoading.loadDataAsync(FileLoading.getLoadHullmods());
+        return new javax.swing.AbstractAction("Reload") { @Override public void actionPerformed(java.awt.event.ActionEvent e) { reload(); } };
     }
 
     @Override
     protected Map<String, HullmodCSVEntry> getRepository() {
         GameDataRepository gameData = SettingsManager.getGameData();
         return gameData.getAllHullmodEntries();
+    }
+
+    @Override
+    protected boolean isDataLoaded() {
+        return SettingsManager.getGameData().isHullmodDataLoaded();
     }
 
     @Override
@@ -85,23 +87,42 @@ class HullmodsTreePanel extends CSVDataTreePanel<HullmodCSVEntry>{
     }
 
     protected void updateEntryPanel(HullmodCSVEntry selected) {
-        JPanel rightPanel = getRightPanel();
-        rightPanel.removeAll();
-        GridBagConstraints constraints = DataTreePanel.getDefaultConstraints();
-        constraints.gridy = 1;
-        constraints.insets = new Insets(0, 5, 0, 5);
+        JPanel infoPanel = getLeftInfoPanel();
+        infoPanel.removeAll();
+        infoPanel.setLayout(new javax.swing.BoxLayout(infoPanel, javax.swing.BoxLayout.Y_AXIS));
+
+        shipeditor.utility.components.ComponentUtilities.InfoPanelBuilder builder = new shipeditor.utility.components.ComponentUtilities.InfoPanelBuilder("Hullmod Info");
+
         String spriteFileName = selected.getSpriteFileName();
         if (spriteFileName != null && !spriteFileName.isEmpty()) {
             JPanel hullmodIconPanel = HullmodsTreePanel.createHullmodIconPanel(selected);
-            rightPanel.add(hullmodIconPanel, constraints);
+            builder.addCustomComponent(hullmodIconPanel);
+            
+            java.io.File spriteFile = shipeditor.parsing.loading.FileLoading.fetchDataFile(java.nio.file.Path.of(spriteFileName), selected.getPackageFolderPath());
+            if (spriteFile != null) {
+                builder.addWrappingPathLabel("Sprite file: ", spriteFile.toPath());
+            } else {
+                builder.addWrappingPathLabel("Sprite path: ", java.nio.file.Path.of(spriteFileName));
+            }
+        }
+        
+        String script = selected.getRowData().get("script");
+        if (script != null && !script.isEmpty()) {
+            builder.addWrappingPathLabel("Script class: ", java.nio.file.Path.of(script));
         }
 
+        infoPanel.add(builder.getPanel());
+        infoPanel.add(javax.swing.Box.createVerticalStrut(20));
+
         createRightPanelDataTable(selected);
+        
+        infoPanel.revalidate();
+        infoPanel.repaint();
     }
 
     private static JPanel createHullmodIconPanel(OrdnancedCSVEntry selected) {
         JLabel imageLabel = selected.getIconLabel();
-        JPanel iconPanel = new JPanel();
+        JPanel iconPanel = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER));
         iconPanel.add(imageLabel);
         return iconPanel;
     }

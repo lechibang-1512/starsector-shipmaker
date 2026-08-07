@@ -72,7 +72,7 @@ public final class EditDispatch {
             edit.setFinished(true);
             previousEdit.add(edit);
         } else {
-            EventBus.subscribe(finishListener);
+            EventBus.subscribe(EditDispatch.class, finishListener);
             UndoOverseer.post(edit);
         }
     }
@@ -89,6 +89,15 @@ public final class EditDispatch {
                                             List<BoundPoint> changed) {
         Edit rearrangeEdit = new BoundsSortEdit(pointPainter, old, changed);
         UndoOverseer.post(rearrangeEdit);
+        pointPainter.setBoundPoints(changed);
+        Events.repaintShipView();
+    }
+
+    public static void postBoundsReplaced(BoundPointsPainter pointPainter,
+                                          List<BoundPoint> old,
+                                          List<BoundPoint> changed) {
+        Edit replaceEdit = new BoundsReplaceEdit(pointPainter, old, changed);
+        UndoOverseer.post(replaceEdit);
         pointPainter.setBoundPoints(changed);
         Events.repaintShipView();
     }

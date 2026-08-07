@@ -4,7 +4,6 @@ import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.files.FileEvents.ShipSystemsLoaded;
 import shipeditor.components.datafiles.entities.ShipSystemCSVEntry;
-import shipeditor.parsing.loading.FileLoading;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
 
@@ -25,7 +24,7 @@ class ShipSystemsTreePanel extends CSVDataTreePanel<ShipSystemCSVEntry>{
 
     @Override
     protected Action getLoadDataAction() {
-        return FileLoading.loadDataAsync(FileLoading.getLoadShipSystems());
+        return new javax.swing.AbstractAction("Reload") { @Override public void actionPerformed(java.awt.event.ActionEvent e) { reload(); } };
     }
 
     @Override
@@ -37,6 +36,11 @@ class ShipSystemsTreePanel extends CSVDataTreePanel<ShipSystemCSVEntry>{
     protected Map<String, ShipSystemCSVEntry> getRepository() {
         GameDataRepository gameData = SettingsManager.getGameData();
         return gameData.getAllShipsystemEntries();
+    }
+
+    @Override
+    protected boolean isDataLoaded() {
+        return SettingsManager.getGameData().isShipsystemDataLoaded();
     }
 
     @Override
@@ -62,8 +66,34 @@ class ShipSystemsTreePanel extends CSVDataTreePanel<ShipSystemCSVEntry>{
 
     @Override
     protected void updateEntryPanel(ShipSystemCSVEntry selected) {
-        JPanel rightPanel = getRightPanel();
-        rightPanel.removeAll();
+        JPanel leftPanel = getLeftInfoPanel();
+        leftPanel.removeAll();
+        leftPanel.setLayout(new javax.swing.BoxLayout(leftPanel, javax.swing.BoxLayout.Y_AXIS));
+
+        shipeditor.utility.components.ComponentUtilities.InfoPanelBuilder builder = new shipeditor.utility.components.ComponentUtilities.InfoPanelBuilder("Shipsystem Info");
+        
+        String iconPath = selected.getRowData().get("icon");
+        if (iconPath != null && !iconPath.isEmpty()) {
+            java.io.File iconFile = shipeditor.parsing.loading.FileLoading.fetchDataFile(Path.of(iconPath), selected.getPackageFolderPath());
+            if (iconFile != null) {
+                try {
+                    java.awt.image.BufferedImage img = shipeditor.parsing.loading.FileLoading.loadSpriteAsImage(iconFile);
+                    javax.swing.JLabel iconLabel = shipeditor.utility.components.ComponentUtilities.createIconFromImage(img, "Icon", 128);
+                    builder.addCustomComponent(iconLabel);
+                } catch (Exception ex) {
+                    log.error("Failed to load icon for ship system", ex);
+                }
+                builder.addWrappingPathLabel("Icon file: ", iconFile.toPath());
+            } else {
+                builder.addWrappingPathLabel("Icon path: ", Path.of(iconPath));
+            }
+        }
+        
+        leftPanel.add(builder.getPanel());
+        leftPanel.add(javax.swing.Box.createVerticalStrut(20));
+
+        leftPanel.revalidate();
+        leftPanel.repaint();
 
         createRightPanelDataTable(selected);
     }

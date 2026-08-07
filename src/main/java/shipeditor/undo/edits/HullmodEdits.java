@@ -19,7 +19,7 @@ public final class HullmodEdits {
     private HullmodEdits() {
     }
 
-    public static class HullmodAddEdit extends AbstractEdit implements LayerEdit {
+    public static class HullmodAddEdit extends AbstractEdit {
         private final List<HullmodCSVEntry> hullmodIndex;
         private ShipLayer layer;
         private final HullmodCSVEntry entry;
@@ -67,7 +67,7 @@ public final class HullmodEdits {
         }
     }
 
-    public static class HullmodRemoveEdit extends AbstractEdit implements LayerEdit {
+    public static class HullmodRemoveEdit extends AbstractEdit {
         private final List<HullmodCSVEntry> hullmodIndex;
         private ShipLayer layer;
         private final HullmodCSVEntry entry;
@@ -117,7 +117,7 @@ public final class HullmodEdits {
         }
     }
 
-    public static class HullmodsSortEdit extends AbstractEdit implements LayerEdit  {
+    public static class HullmodsSortEdit extends AbstractEdit {
         private final List<HullmodCSVEntry> oldList;
         private final List<HullmodCSVEntry> newList;
         private ShipLayer layer;

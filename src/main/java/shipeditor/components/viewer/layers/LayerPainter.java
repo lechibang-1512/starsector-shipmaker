@@ -34,6 +34,44 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * Base abstraction for drawing entities (like Ships or Weapons) in the OpenGL viewer.
+ *
+ * <h2>Coordinate System Contract</h2>
+ * <ul>
+ *   <li><b>World Space:</b> The canvas coordinate system. Y increases <em>downward</em> (matches AWT
+ *       and the OpenGL orthographic projection configured in {@code PrimaryViewer}).</li>
+ *   <li><b>Screen Space:</b> Window pixel coordinates after camera zoom/pan transforms.</li>
+ * </ul>
+ *
+ * <h2>Anchor &amp; Center Definitions</h2>
+ * This class exposes several coordinate queries. Each serves a distinct purpose:
+ * <table>
+ *   <tr><th>Method</th><th>Returns</th><th>Use for</th></tr>
+ *   <tr><td>{@link #getAnchor()}</td>
+ *       <td>Top-left corner of the unrotated sprite rectangle in world space.</td>
+ *       <td>Positioning the sprite quad, bounding-box hit tests.</td></tr>
+ *   <tr><td>{@link #getSpriteCenter()}</td>
+ *       <td>{@code anchor + (width/2, height/2)} — geometric center of the image.</td>
+ *       <td>Camera centering, guide crosshair rendering.</td></tr>
+ *   <tr><td>{@link #getEntityCenter()}</td>
+ *       <td>Logical center defined by the entity data (e.g. ship center point, weapon center offset).</td>
+ *       <td>Mirroring, serialization, entity-specific logic.</td></tr>
+ *   <tr><td>{@link #getRotationAnchor()}</td>
+ *       <td>The world-space pivot point around which the sprite actually rotates.</td>
+ *       <td><b>All rotation math</b> — {@code SpriteRenderer}, {@code AffineTransform},
+ *           selection highlights, hit detection inverse transforms.</td></tr>
+ * </table>
+ *
+ * <h2>Rotation</h2>
+ * Rotation is stored in <b>radians, clockwise-positive</b>, applied around
+ * {@link #getRotationAnchor()}. When the rotation changes, all child
+ * {@link BaseWorldPoint} positions are explicitly rotated by the delta
+ * (see {@link #setRotationRadians(double)}).
+ *
+ * @see #getRotationTransform()
+ * @see #getWithRotation(java.awt.geom.AffineTransform)
+ */
 @Getter
 @SuppressWarnings("ClassWithTooManyMethods")
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
@@ -41,6 +79,15 @@ public abstract class LayerPainter implements OpenGLPainter {
 
     private final List<AbstractPointPainter> allPainters;
 
+    /**
+     * Top-left corner of the unrotated sprite rectangle in world space.
+     * <p>
+     * This is <b>not</b> the center or pivot — it is the position where the sprite quad
+     * begins drawing. For the rotation pivot, use {@link #getRotationAnchor()}.
+     *
+     * @see #getRotationAnchor()
+     * @see #getSpriteCenter()
+     */
     private Point2D anchor = new Point2D.Double(0, 0);
 
     private float spriteOpacity = 1.0f;
@@ -48,7 +95,7 @@ public abstract class LayerPainter implements OpenGLPainter {
     private double rotationRadians;
 
     public void setRotationRadians(double newRotation) {
-        double delta = newRotation - this.rotationRadians;
+        double delta = newRotation - this.getRotationRadians();
 
         if (delta != 0.0 && this.allPainters != null && !this.allPainters.isEmpty()) {
             Point2D rotationAnchor = this.getRotationAnchor();
@@ -106,8 +153,13 @@ public abstract class LayerPainter implements OpenGLPainter {
 
     public Dimension getSpriteSize() {
         Sprite spriteContainer = getSprite();
-        var spriteImage = spriteContainer.getImage();
-        return new Dimension(spriteImage.getWidth(), spriteImage.getHeight());
+        if (spriteContainer != null) {
+            var spriteImage = spriteContainer.getImage();
+            if (spriteImage != null) {
+                return new Dimension(spriteImage.getWidth(), spriteImage.getHeight());
+            }
+        }
+        return new Dimension(0, 0);
     }
 
     public BufferedImage getSpriteImage() {
@@ -147,6 +199,19 @@ public abstract class LayerPainter implements OpenGLPainter {
         EventBus.subscribe(this, rotationListener);
     }
 
+    /**
+     * Returns the logical center of this entity as defined by its data model.
+     * <p>
+     * For ships, this is the ship center point ({@code ShipCenterPoint.getPosition()}).
+     * For weapons, this delegates to the weapon center offset.
+     * <p>
+     * <b>Do not use for rotation math.</b> Use {@link #getRotationAnchor()} instead.
+     * This method is primarily for mirroring operations and serialization.
+     *
+     * @return the entity's logical center in world space.
+     * @see #getRotationAnchor()
+     * @see #getSpriteCenter()
+     */
     public abstract Point2D getEntityCenter();
 
     public void setAnchor(Point2D inputAnchor) {
@@ -234,11 +299,31 @@ public abstract class LayerPainter implements OpenGLPainter {
         this.rotateLayer(result);
     }
 
-    @SuppressWarnings("WeakerAccess")
-    protected Point2D getRotationAnchor() {
+    /**
+     * Returns the world-space pivot point around which this layer rotates.
+     * <p>
+     * This is the <b>single source of truth</b> for all rotation math:
+     * {@link #setRotationRadians(double)}, {@link #getRotationTransform()},
+     * {@link #paintContent}, and selection highlight rendering all use this.
+     * <p>
+     * The base implementation returns {@link #getSpriteCenter()} (image geometric center).
+     * Subclasses override to use entity-specific pivots (e.g. ship center point,
+     * weapon turret center, module anchor offset).
+     *
+     * @return the rotation pivot in world space.
+     * @see #getSpriteCenter()
+     * @see #getEntityCenter()
+     */
+    public Point2D getRotationAnchor() {
         return this.getSpriteCenter();
     }
 
+    /**
+     * @deprecated Use {@link #getRotationAnchor()} and {@link #getAnchor()} directly.
+     *             This convenience method obscures which center concept is being used
+     *             and is only called from one location.
+     */
+    @Deprecated(forRemoval = true)
     public Point2D getCenterAnchorDifference() {
         Point2D layerAnchor = getAnchor();
         Point2D rotationAnchor = this.getRotationAnchor();
@@ -251,6 +336,13 @@ public abstract class LayerPainter implements OpenGLPainter {
         EditDispatch.postLayerRotated(this, this.getRotationRadians(), Math.toRadians(rotationDegrees));
     }
 
+    /**
+     * Applies this layer's rotation on top of a base World-to-Screen transform.
+     * Use this when drawing components (like weapon arcs or bounding boxes) that need to rotate with the sprite.
+     * 
+     * @param worldToScreen The parent camera's affine transform.
+     * @return A new transform combining camera translation and layer rotation.
+     */
     public AffineTransform getWithRotation(AffineTransform worldToScreen) {
         AffineTransform transform = new AffineTransform(worldToScreen);
         transform.concatenate(getRotationTransform());
@@ -263,6 +355,11 @@ public abstract class LayerPainter implements OpenGLPainter {
         return transformCache;
     }
 
+    /**
+     * Creates an AffineTransform that applies the layer's rotation around its visual center anchor.
+     * 
+     * @return The rotation transform instance.
+     */
     public AffineTransform getRotationTransform() {
         double rotation = this.getRotationRadians();
         Point2D center = this.getRotationAnchor();
@@ -271,6 +368,14 @@ public abstract class LayerPainter implements OpenGLPainter {
         return AffineTransform.getRotateInstance(rotation, centerX, centerY);
     }
 
+    /**
+     * Creates an inverse transform (Screen-to-World reversing this layer's rotation).
+     * Useful for hit detection or mouse click coordinate resolution where the cursor's
+     * screen position needs to map back to an unrotated point on the sprite.
+     * 
+     * @param worldToScreen The parent camera's affine transform.
+     * @return The inverted transform matrix.
+     */
     public AffineTransform getWithRotationInverse(AffineTransform worldToScreen) {
         AffineTransform transform;
         AffineTransform worldToScreenCopy = new AffineTransform(worldToScreen);
@@ -309,7 +414,17 @@ public abstract class LayerPainter implements OpenGLPainter {
     }
 
     /**
-     * @return world position of the sprite center. Is dependent on anchor position.
+     * Returns the geometric center of the sprite image in world space:
+     * {@code anchor + (width/2, height/2)}.
+     * <p>
+     * This is a purely geometric calculation based on the image dimensions.
+     * It does <b>not</b> account for entity-specific center offsets (use
+     * {@link #getEntityCenter()} for that) or module anchor adjustments
+     * (use {@link #getRotationAnchor()} for rotation math).
+     *
+     * @return the sprite's geometric center in world space.
+     * @see #getRotationAnchor()
+     * @see #getEntityCenter()
      */
     public Point2D getSpriteCenter() {
         Point2D difference = this.getSpriteCenterDifferenceToAnchor();
@@ -318,6 +433,14 @@ public abstract class LayerPainter implements OpenGLPainter {
                 (currentAnchor.getY() + difference.getY()));
     }
 
+    /**
+     * Determines whether a given cursor coordinate (in World Space) falls inside the bounding box of this Layer's sprite.
+     * This method automatically accounts for the layer's rotation by inverse-transforming the cursor coordinate
+     * against the layer's rotation matrix before testing the standard axis-aligned bounding box.
+     * 
+     * @param worldCursor The mouse cursor coordinate in world space.
+     * @return True if the cursor intersects the sprite visual bounds, false otherwise.
+     */
     public boolean isWorldCursorInsideSprite(Point2D worldCursor) {
         try {
             Point2D currentAnchor = this.getAnchor();
@@ -350,8 +473,20 @@ public abstract class LayerPainter implements OpenGLPainter {
         return cachingTarget;
     }
 
+    /**
+     * Returns the offset vector from the anchor (top-left) to the sprite's geometric center:
+     * {@code (width/2, height/2)}.
+     * <p>
+     * This is a local-space offset, not a world position. Add it to {@link #getAnchor()}
+     * to get the world-space sprite center (which is what {@link #getSpriteCenter()} does).
+     *
+     * @return the offset from anchor to sprite center.
+     */
     public Point2D getSpriteCenterDifferenceToAnchor() {
         Sprite spriteContainer = getSprite();
+        if (spriteContainer == null) {
+            return new Point2D.Double(0, 0);
+        }
         var spriteImage = spriteContainer.getImage();
         return Utility.getSpriteCenterDifferenceToAnchor(spriteImage);
     }
@@ -376,7 +511,7 @@ public abstract class LayerPainter implements OpenGLPainter {
 
     @Override
     public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
-        if (!shouldDrawPainter)
+        if (!this.isShouldDrawPainter())
             return;
         this.paintContent(spriteRenderer, shapeRenderer, projection, view);
     }

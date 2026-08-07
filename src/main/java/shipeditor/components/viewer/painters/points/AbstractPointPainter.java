@@ -308,7 +308,7 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
 
     protected abstract boolean isParentLayerActive();
 
-    Point2D createCounterpartPosition(Point2D toMirror) {
+    public Point2D createCounterpartPosition(Point2D toMirror) {
         throw new UnsupportedOperationException("Point mirroring supported only for specific point painters!");
     }
 

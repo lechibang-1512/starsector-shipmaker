@@ -61,17 +61,8 @@ public class WeaponSprites {
     }
 
     static Point2D getSpriteCenterDifference(RenderedImage sprite, WeaponMount mount) {
-        Point2D result = new Point2D.Double();
         final float centerRatio = 0.5f;
-        switch (mount) {
-            case HARDPOINT -> {
-                float centerY = 0.75f;
-                result = new Point2D.Double(sprite.getWidth() * centerRatio, sprite.getHeight() * centerY);
-            }
-            case TURRET, HIDDEN -> result = new Point2D.Double(sprite.getWidth() * centerRatio,
-                    sprite.getHeight() * centerRatio);
-        }
-        return result;
+        return new Point2D.Double(sprite.getWidth() * centerRatio, sprite.getHeight() * centerRatio);
     }
 
     Point2D getWeaponCenter(WeaponMount mount) {

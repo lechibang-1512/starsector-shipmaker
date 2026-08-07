@@ -6,7 +6,6 @@ import shipeditor.components.datafiles.entities.WeaponCSVEntry;
 import shipeditor.components.ComponentEnums.EditorInstrument;
 
 import shipeditor.components.viewer.layers.ViewerLayer;
-import shipeditor.components.viewer.layers.ship.FeaturesOverseer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipHull;
@@ -99,7 +98,10 @@ public class VariantWeaponsPanel extends AbstractVariantPanel {
             contentPanel.remove(pickedWeaponPanel);
         }
 
-        WeaponCSVEntry pickedForInstall = FeaturesOverseer.getWeaponForInstall();
+        WeaponCSVEntry pickedForInstall = null;
+        if (StaticController.getActiveLayer() instanceof ShipLayer shipLayer) {
+            pickedForInstall = shipLayer.getFeaturesOverseer().getWeaponForInstall();
+        }
         if (pickedForInstall != null) {
             pickedWeaponPanel = pickedForInstall.createPickedWeaponPanel();
         } else {

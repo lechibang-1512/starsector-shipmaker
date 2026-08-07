@@ -12,11 +12,11 @@ import javax.swing.DefaultListModel;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import shipeditor.utility.themes.Themes;
 
 public class SkinWingListPane extends JPanel {
 
@@ -49,7 +49,7 @@ public class SkinWingListPane extends JPanel {
 
         this.wingsList = new WingsList(removeAction, wingsModel, sortAction);
 
-        wingsList.setBorder(new LineBorder(Color.LIGHT_GRAY));
+        wingsList.setBorder(new LineBorder(Themes.getBorderColor()));
         this.add(wingsList, BorderLayout.CENTER);
     }
 

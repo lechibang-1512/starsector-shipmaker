@@ -5,7 +5,11 @@ import org.kordamp.ikonli.swing.FontIcon;
 import shipeditor.communication.EventBus;
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.ViewerEnums.PointSelectionMode;
+import shipeditor.components.viewer.layers.LayerManager;
+import shipeditor.components.viewer.layers.ship.ShipLayer;
+import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.undo.UndoOverseer;
+import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.themes.Themes;
 
 import javax.swing.ButtonGroup;
@@ -23,11 +27,11 @@ import shipeditor.communication.events.viewer.control.ControlEvents.CursorSnappi
 class EditMenu extends JMenu {
 
     private JCheckBoxMenuItem toggleCursorSnap;
-
     private JCheckBoxMenuItem toggleRotationRounding;
 
     EditMenu() {
         super("Edit");
+        this.setMnemonic(KeyEvent.VK_E);
     }
 
     void initialize() {
@@ -47,18 +51,36 @@ class EditMenu extends JMenu {
 
         this.addSeparator();
 
-        JMenuItem pointSelectionMode = EditMenu.createPointSelectionModeOptions();
+        JMenuItem flipShip = new JMenuItem("Flip Active Ship Horizontally");
+        flipShip.setIcon(FontIcon.of(BoxiconsRegular.REFRESH, 16, Themes.getIconColor()));
+        flipShip.addActionListener(e -> {
+            LayerManager layerManager = StaticController.getLayerManager();
+            if (layerManager != null && layerManager.getActiveLayer() instanceof ShipLayer shipLayer) {
+                ShipPainter painter = shipLayer.getPainter();
+                if (painter != null) {
+                    painter.flipShipPointsHorizontally();
+                }
+            }
+        });
+        this.add(flipShip);
+
+        this.addSeparator();
+
+        JMenuItem pointSelectionMode = this.createPointSelectionModeOptions();
         this.add(pointSelectionMode);
 
-        JCheckBoxMenuItem toggleSelectionHold = new JCheckBoxMenuItem("Toggle selection holding");
+        JMenu snappingMenu = new JMenu("Snapping & Rounding");
+        snappingMenu.setIcon(FontIcon.of(BoxiconsRegular.MAGNET, 16, Themes.getIconColor()));
+
+        JCheckBoxMenuItem toggleSelectionHold = new JCheckBoxMenuItem("Enable Selection Holding (Ctrl-Hold)");
         toggleSelectionHold.setSelected(true);
         toggleSelectionHold.setToolTipText("Enables CTRL-hold to prevent mouse motion from changing selection.");
         toggleSelectionHold.addActionListener(event ->
                 ControlPredicates.setSelectionHoldingEnabled(toggleSelectionHold.isSelected())
         );
-        this.add(toggleSelectionHold);
+        snappingMenu.add(toggleSelectionHold);
 
-        toggleCursorSnap = new JCheckBoxMenuItem("Toggle cursor snapping");
+        toggleCursorSnap = new JCheckBoxMenuItem("Enable Cursor Snapping");
         toggleCursorSnap.setSelected(true);
         toggleCursorSnap.addActionListener(event ->
                 EventBus.publish(new CursorSnappingToggled(toggleCursorSnap.isSelected()))
@@ -68,9 +90,9 @@ class EditMenu extends JMenu {
                 toggleCursorSnap.setSelected(checked.toggled());
             }
         });
-        this.add(toggleCursorSnap);
+        snappingMenu.add(toggleCursorSnap);
 
-        toggleRotationRounding = new JCheckBoxMenuItem("Toggle rotation rounding");
+        toggleRotationRounding = new JCheckBoxMenuItem("Enable Rotation Rounding (15°)");
         toggleRotationRounding.setSelected(true);
         toggleRotationRounding.addActionListener(event ->
                 EventBus.publish(new RotationRoundingToggled(toggleRotationRounding.isSelected()))
@@ -80,20 +102,21 @@ class EditMenu extends JMenu {
                 toggleRotationRounding.setSelected(checked.toggled());
             }
         });
-        this.add(toggleRotationRounding);
+        snappingMenu.add(toggleRotationRounding);
 
-
+        this.add(snappingMenu);
     }
 
-    private static JMenu createPointSelectionModeOptions() {
-        JMenu newSubmenu = new JMenu("Point selection mode");
+    private JMenu createPointSelectionModeOptions() {
+        JMenu newSubmenu = new JMenu("Point Selection Mode");
+        newSubmenu.setIcon(FontIcon.of(BoxiconsRegular.POINTER, 16, Themes.getIconColor()));
 
-        JMenuItem selectHovered = new JRadioButtonMenuItem("Select clicked");
+        JMenuItem selectHovered = new JRadioButtonMenuItem("Select Clicked Point");
         selectHovered.addActionListener(e ->
                 EventBus.publish(new PointSelectionModeChange(PointSelectionMode.STRICT)));
         newSubmenu.add(selectHovered);
 
-        JMenuItem selectClosest = new JRadioButtonMenuItem("Select closest");
+        JMenuItem selectClosest = new JRadioButtonMenuItem("Select Closest Point");
         selectClosest.addActionListener(e ->
                 EventBus.publish(new PointSelectionModeChange(PointSelectionMode.CLOSEST)));
         newSubmenu.add(selectClosest);
@@ -103,7 +126,7 @@ class EditMenu extends JMenu {
         buttonGroup.add(selectHovered);
         buttonGroup.add(selectClosest);
 
-        EventBus.subscribe(EditMenu.class, event -> {
+        EventBus.subscribe(this, event -> {
             if (event instanceof PointSelectionModeChange checked) {
                 if (checked.newMode() == PointSelectionMode.STRICT && !selectHovered.isSelected()) {
                     selectHovered.setSelected(true);

@@ -32,20 +32,29 @@ public class WeaponSlotList extends PointList<WeaponSlotPoint> {
     }
 
     private void initCopyPasteKeyBindings() {
-        javax.swing.InputMap inputMap = this.getInputMap(javax.swing.JComponent.WHEN_FOCUSED);
-        javax.swing.ActionMap actionMap = this.getActionMap();
-
-        inputMap.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_DOWN_MASK), "copySlots");
-        actionMap.put("copySlots", new javax.swing.AbstractAction() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                java.util.List<WeaponSlotPoint> selected = getSelectedValuesList();
-                WeaponSlotClipboard.copy(selected);
+        EventBus.subscribe(this, event -> {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
+                int keyCode = pressedEvent.keyEvent().getKeyCode();
+                boolean isCtrlDown = pressedEvent.keyEvent().isControlDown();
+                
+                java.awt.Component focusOwner = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                boolean isFocused = this.hasFocus() || (focusOwner != null && javax.swing.SwingUtilities.isDescendingFrom(focusOwner, this));
+                // Only handle these if we actually have focus (to allow LayerViewerControls to handle it if viewer is focused)
+                if (isFocused) {
+                    if (keyCode == java.awt.event.KeyEvent.VK_C && isCtrlDown) {
+                        java.util.List<WeaponSlotPoint> selected = getSelectedValuesList();
+                        if (!selected.isEmpty()) {
+                            WeaponSlotClipboard.copy(selected);
+                        }
+                    } else if (keyCode == java.awt.event.KeyEvent.VK_V && isCtrlDown) {
+                        WeaponSlotPainter painter = shipeditor.utility.overseers.StaticController.getSelectedSlotPainter();
+                        if (painter != null && WeaponSlotClipboard.hasData()) {
+                            painter.pasteSlots(WeaponSlotClipboard.getClipboard(), null);
+                        }
+                    }
+                }
             }
         });
-
-        inputMap.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.CTRL_DOWN_MASK), "pasteSlots");
-        actionMap.put("pasteSlots", new PasteAction());
     }
 
     @Override
@@ -111,7 +120,7 @@ public class WeaponSlotList extends PointList<WeaponSlotPoint> {
 
     @Override
     protected void handlePointSelection(WeaponSlotPoint point) {
-        WeaponFilterPanel.setLastSelectedSlot(point);
+        WeaponFilterPanel.updateSelectedSlot(point);
         this.selectAction.accept(point);
     }
 
@@ -151,13 +160,5 @@ public class WeaponSlotList extends PointList<WeaponSlotPoint> {
         return transferable.isDataFlavorSupported(slotFlavor);
     }
 
-    private static class PasteAction extends javax.swing.AbstractAction {
-        @Override
-        public void actionPerformed(java.awt.event.ActionEvent e) {
-            WeaponSlotPainter painter = shipeditor.utility.overseers.StaticController.getSelectedSlotPainter();
-            if (painter != null) {
-                painter.pasteSlots(WeaponSlotClipboard.getClipboard(), null);
-            }
-        }
-    }
+
 }

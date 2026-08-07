@@ -12,6 +12,9 @@ import com.fasterxml.jackson.databind.cfg.CoercionAction;
 import com.fasterxml.jackson.databind.cfg.CoercionInputShape;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.LogicalType;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.deser.std.StringDeserializer;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
@@ -68,6 +71,10 @@ public final class FileUtilities {
     static {
         mapper = new ObjectMapper();
         mapper.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
+        mapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+        mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+        
         mapper.configure(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature(), true);
         mapper.configure(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS.mappedFeature(), true);
         mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
@@ -85,6 +92,13 @@ public final class FileUtilities {
 
         SimpleModule module = new SimpleModule();
         module.addSerializer(Color.class, new ColorArrayRGBASerializer());
+        module.addDeserializer(String.class, new JsonDeserializer<String>() {
+            @Override
+            public String deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+                String text = StringDeserializer.instance.deserialize(p, ctxt);
+                return text != null ? text.intern() : null;
+            }
+        });
         mapper.registerModule(module);
     }
 
@@ -159,6 +173,10 @@ public final class FileUtilities {
 
         try (Stream<Path> modDirectories = allModFolders.stream()) {
             modDirectories.forEach(modDir -> {
+                Path fileNamePath = modDir.getFileName();
+                if (fileNamePath == null || !SettingsManager.isModActive(fileNamePath.toString())) {
+                    return;
+                }
                 Path targetFilePath = modDir.resolve(targetFile);
                 if (Files.exists(targetFilePath)) {
                     matchingFiles.put(modDir, targetFilePath.toFile());

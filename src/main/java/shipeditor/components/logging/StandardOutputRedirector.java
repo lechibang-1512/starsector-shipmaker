@@ -32,9 +32,17 @@ public final class StandardOutputRedirector {
 
     private static PrintStream createLoggingProxy(final PrintStream realPrintStream) {
         return new PrintStream(realPrintStream, true, java.nio.charset.StandardCharsets.UTF_8) {
+            @Override
             public void print(final String s) {
                 realPrintStream.print(s);
                 LogsPanel.append(s + System.lineSeparator());
+            }
+
+            @Override
+            public void write(byte[] buf, int off, int len) {
+                realPrintStream.write(buf, off, len);
+                String s = new String(buf, off, len, java.nio.charset.StandardCharsets.UTF_8);
+                LogsPanel.append(s); // BREAKPOINT: Caught stacktrace output here
             }
         };
     }

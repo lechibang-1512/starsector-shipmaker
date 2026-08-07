@@ -22,7 +22,6 @@ import shipeditor.components.viewer.painters.points.ship.BoundPointsPainter;
 import shipeditor.components.viewer.painters.points.ship.LaunchBayPainter;
 import shipeditor.undo.AbstractEdit;
 import shipeditor.undo.Edit;
-import shipeditor.undo.edits.LayerEdit;
 import shipeditor.utility.Utility;
 import shipeditor.utility.overseers.StaticController;
 
@@ -62,6 +61,35 @@ public final class PointEdits {
         @Override
         public String getName() {
             return "Sort Bounds";
+        }
+    }
+
+    public static class BoundsReplaceEdit extends AbstractEdit {
+        private final BoundPointsPainter pointPainter;
+        private final List<BoundPoint> oldList;
+        private final List<BoundPoint> newList;
+
+        public BoundsReplaceEdit(BoundPointsPainter painter, List<BoundPoint> old, List<BoundPoint> changed) {
+            this.pointPainter = painter;
+            this.oldList = old;
+            this.newList = changed;
+        }
+
+        @Override
+        public void undo() {
+            pointPainter.setBoundPoints(oldList);
+            Events.repaintShipView();
+        }
+
+        @Override
+        public void redo() {
+            pointPainter.setBoundPoints(newList);
+            Events.repaintShipView();
+        }
+
+        @Override
+        public String getName() {
+            return "Auto-Generate Bounds";
         }
     }
 
@@ -344,7 +372,7 @@ public final class PointEdits {
     }
 
     @AllArgsConstructor
-    public static class PointsFlippedEdit extends AbstractEdit implements LayerEdit {
+    public static class PointsFlippedEdit extends AbstractEdit {
         private List<BaseWorldPoint> points;
         private BaseWorldPoint anchor;
 

@@ -1,0 +1,5 @@
+[submodule "modules/starsector-shipmaker-docs"]
+	path = modules/starsector-shipmaker-docs
+	url = https://github.com/starsector-shipmaker/starsector-shipmaker-docs.git
+	ignore = all
+	

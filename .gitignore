@@ -5,7 +5,7 @@ target/
 .m2/
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 .idea/modules.xml
 .idea/jarRepositories.xml
 .idea/compiler.xml
@@ -13,15 +13,16 @@ target/
 *.iws
 *.iml
 *.ipr
+out/
 
 ### Eclipse ###
-.apt_generated
+.apt_generated/
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
-.sts4-cache
+.sts4-cache/
 
 ### NetBeans ###
 /nbproject/private/
@@ -33,19 +34,30 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+### VS Code & Editors ###
 .vscode/
+.cursor/
+.claude/
 
 ### Mac OS ###
 .DS_Store
 !/src/main/resources/legion_xiv.png
 
-### Runtime / Settings ###
+### Runtime / Settings / Logs ###
 ship_editor_settings.json
 *.jar
 *.sqlite
+*.sqlite-wal
+*.sqlite-shm
+logs/
 *.log
 *.log.*
+*.pid
+.ship_editor.pid
+help/
+
+### Testing ###
+.jqwik-database
 
 ### Tools / Agents ###
 .agents/maven/
@@ -57,18 +69,25 @@ ship_editor_settings.json
 *.bak
 *.tmp
 *~
+
 ### CodeQL ###
 /codeql/
 codeql-database/
 codeql-runner/
 
 ### SpotBugs ###
-.spotbugs
 .spotbugs/
 spotbugs/
 
-### Archives ###
+### Archives & Releases ###
 *.zip
+releases/
+
+### JRE Distributions ###
+jre/
+jre_linux/
+jre_mac/
+jre_windows/
 
 ### Python ###
 __pycache__/

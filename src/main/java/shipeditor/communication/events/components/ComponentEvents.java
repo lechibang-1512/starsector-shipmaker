@@ -60,7 +60,7 @@ public class ComponentEvents {
 
     }
 
-    public static record ShipEntryPicked() implements ComponentEvent {
+    public static record ShipEntryPicked(shipeditor.representation.ship.VariantFile variant) implements ComponentEvent {
 
     }
 
@@ -72,7 +72,7 @@ public class ComponentEvents {
     public static record GameDataPanelResized(Dimension newMinimum) implements ComponentEvent {
     }
 
-    public static record WeaponEntryPicked() implements ComponentEvent {
+    public static record WeaponEntryPicked(WeaponCSVEntry weapon) implements ComponentEvent {
 
     }
 
@@ -88,9 +88,6 @@ public class ComponentEvents {
 
     }
 
-    public static record SelectReferenceDataTab() implements ComponentEvent {
-
-    }
 
     public static record SelectWingsDataTab() implements ComponentEvent {
 

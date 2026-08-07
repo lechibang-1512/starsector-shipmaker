@@ -6,12 +6,21 @@ import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 
 import java.io.Serializable;
 import java.util.Comparator;
-import java.util.Objects;
 
 public class InstalledFeatureComparator implements Comparator<InstalledFeature>, Serializable {
 
     @Override
     public int compare(InstalledFeature first, InstalledFeature second) {
+        if (first == second) {
+            return 0;
+        }
+        if (first == null) {
+            return -1;
+        }
+        if (second == null) {
+            return 1;
+        }
+
         int typeComparison = InstalledFeatureComparator.compareByType(first, second);
         if (typeComparison != 0) {
             return typeComparison;
@@ -31,8 +40,11 @@ public class InstalledFeatureComparator implements Comparator<InstalledFeature>,
     }
 
     private static int getTypeOrder(InstalledFeature feature) {
-        WeaponType type = ((WeaponCSVEntry) feature.getDataEntry()).getType();
-        if (Objects.requireNonNull(type) == WeaponType.BUILT_IN) {
+        if (feature == null || !(feature.getDataEntry() instanceof WeaponCSVEntry weaponEntry)) {
+            return 2;
+        }
+        WeaponType type = weaponEntry.getType();
+        if (type == WeaponType.BUILT_IN) {
             return 0;
         }
         return 1;
@@ -44,13 +56,17 @@ public class InstalledFeatureComparator implements Comparator<InstalledFeature>,
     }
 
     private static int getSizeOrder(InstalledFeature feature) {
-        WeaponSize size = ((WeaponCSVEntry) feature.getDataEntry()).getSize();
-        return size.getNumericSize();
+        if (feature == null || !(feature.getDataEntry() instanceof WeaponCSVEntry weaponEntry)) {
+            return 0;
+        }
+        WeaponSize size = weaponEntry.getSize();
+        return size != null ? size.getNumericSize() : 0;
     }
 
     private static int compareAlphabetically(InstalledFeature first, InstalledFeature second) {
-        String firstName = first.getName();
-        return firstName.compareToIgnoreCase(second.getName());
+        String firstName = first != null && first.getName() != null ? first.getName() : "";
+        String secondName = second != null && second.getName() != null ? second.getName() : "";
+        return firstName.compareToIgnoreCase(secondName);
     }
 
 }

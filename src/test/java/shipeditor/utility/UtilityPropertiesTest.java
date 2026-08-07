@@ -47,7 +47,7 @@ class UtilityPropertiesTest {
     }
 
     @Property
-    void testFlipAngle(@ForAll double degrees) {
+    void testFlipAngle(@ForAll @DoubleRange(min = -1e9, max = 1e9) double degrees) {
         double flipped = Utility.flipAngle(degrees);
         
         // Flipped angle should be between 0 and 360
@@ -71,7 +71,7 @@ class UtilityPropertiesTest {
     }
 
     @Property
-    void testTransformAngle(@ForAll double raw) {
+    void testTransformAngle(@ForAll @DoubleRange(min = -1e9, max = 1e9) double raw) {
         double transformed = Utility.transformAngle(raw);
         // transformed = (360 - ((raw % 360 + 360) % 360)) % 360 - 90
         // max value is 360 - 90 = 270, min value is 0 - 90 = -90

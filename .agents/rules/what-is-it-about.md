@@ -43,6 +43,7 @@ architecture_and_coding_conventions:
     rules:
       - "Since the app is built on Swing, all UI modifications must occur on the Event Dispatch Thread (EDT). Use SwingUtilities.invokeLater() when needed."
       - "Graphic repaints are heavily optimized (using a timed repaint technique). Do not indiscriminately call .repaint() on large panels unnecessarily to prevent performance drops."
+      - "Swing Silent NPEs: Uncaught exceptions (like NullPointerExceptions) that occur within Swing painting or rendering methods (e.g. `DefaultTreeCellRenderer` calling `toString()`) will be caught by the EDT, causing Swing to silently abort rendering that specific component. This results in completely blank/empty UI panels without crashing the application. Always register a global `Thread.setDefaultUncaughtExceptionHandler` to log these effectively."
 
 common_operations:
   adding_new_data_types:

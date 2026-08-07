@@ -35,8 +35,6 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import shipeditor.communication.events.components.ComponentEvents.DeleteButtonPressed;
-import shipeditor.communication.events.components.ComponentEvents.ShipEntryPicked;
-import shipeditor.communication.events.components.ComponentEvents.WeaponEntryPicked;
 
 /** * Responsible for all non-rendering interactions with installed features of layer,
  * be it base hull or skin built-in, or variant fits.*/
@@ -44,36 +42,17 @@ import shipeditor.communication.events.components.ComponentEvents.WeaponEntryPic
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class FeaturesOverseer {
 
-    @SuppressWarnings("StaticNonFinalField")
     @Getter
-    private static WeaponCSVEntry weaponForInstall;
+    private WeaponCSVEntry weaponForInstall;
 
-    @SuppressWarnings("StaticNonFinalField")
     @Getter
-    private static VariantFile moduleVariantForInstall;
+    private VariantFile moduleVariantForInstall;
     private final ShipLayer parent;
 
     FeaturesOverseer(ShipLayer layer) {
         this.parent = layer;
         this.initInstallListeners();
     }
-
-    @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
-    public static void setWeaponForInstall(WeaponCSVEntry entry) {
-        FeaturesOverseer.weaponForInstall = entry;
-        FeaturesOverseer.moduleVariantForInstall = null;
-        EventBus.publish(new WeaponEntryPicked());
-    }
-
-    @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
-    public static void setModuleForInstall(VariantFile variant) {
-        FeaturesOverseer.weaponForInstall = null;
-        FeaturesOverseer.moduleVariantForInstall = variant;
-        EventBus.publish(new ShipEntryPicked());
-    }
-
-    
-    // However, given the constraints, best to let it be and move on to finish the project.
 
     public Map<String, InstalledFeature> getBuiltInsFromBaseHull() {
         var painter = parent.getPainter();
@@ -250,6 +229,21 @@ public class FeaturesOverseer {
     }
 
     private void initInstallListeners() {
+        BusEventListener selectionListener = event -> {
+            if (event instanceof shipeditor.communication.events.components.ComponentEvents.ShipEntryPicked checked) {
+                if (StaticController.getActiveLayer() == parent) {
+                    this.moduleVariantForInstall = checked.variant();
+                    this.weaponForInstall = null;
+                }
+            } else if (event instanceof shipeditor.communication.events.components.ComponentEvents.WeaponEntryPicked checked) {
+                if (StaticController.getActiveLayer() == parent) {
+                    this.weaponForInstall = checked.weapon();
+                    this.moduleVariantForInstall = null;
+                }
+            }
+        };
+        EventBus.subscribe(this, selectionListener);
+
         BusEventListener installListener = event -> {
             if (event instanceof FeatureInstallQueued) {
                 if (StaticController.getActiveLayer() != parent) return;

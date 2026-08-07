@@ -1,7 +1,5 @@
 package shipeditor.components.viewer.painters.points.ship;
 
-import java.awt.KeyEventDispatcher;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -31,7 +29,6 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
-import java.awt.KeyboardFocusManager;
 import shipeditor.utility.graphics.GraphicConstants;
 import shipeditor.communication.events.viewer.points.PointEvents.BoundInsertedConfirmed;
 import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
@@ -63,7 +60,6 @@ public final class BoundPointsPainter extends MirrorablePointPainter {
     private static final int appendBoundHotkey = KeyEvent.VK_SHIFT;
     private static final int insertBoundHotkey = KeyEvent.VK_CONTROL;
 
-    private KeyEventDispatcher hotkeyDispatcher;
 
     public BoundPointsPainter(ShipPainter parent) {
         super(parent);
@@ -85,7 +81,6 @@ public final class BoundPointsPainter extends MirrorablePointPainter {
     @Override
     public void cleanupListeners() {
         super.cleanupListeners();
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(hotkeyDispatcher);
     }
 
     @Override
@@ -127,34 +122,28 @@ public final class BoundPointsPainter extends MirrorablePointPainter {
     }
 
     private void initHotkeys() {
-        hotkeyDispatcher = ke -> {
+        EventBus.subscribe(this, event -> {
             if (!this.getParentLayer().isLayerActive()) {
-                return false;
+                return;
             }
-            int keyCode = ke.getKeyCode();
-            // Remember, single equals is assignments, while double is boolean evaluation.
-            // First we evaluate whether the passed keycode is one of our hotkeys, then assign the result to field.
-            boolean isAppendHotkey = (keyCode == appendBoundHotkey);
-            boolean isInsertHotkey = (keyCode == insertBoundHotkey);
-            switch (ke.getID()) {
-                case KeyEvent.KEY_PRESSED:
-                    if (isAppendHotkey || isInsertHotkey) {
-                        BoundPointsPainter.setHotkeyState(isAppendHotkey, true);
-                        EventBus.publish(new ViewerRepaintQueued());
-                    }
-                    break;
-                case KeyEvent.KEY_RELEASED:
-                    if (isAppendHotkey || isInsertHotkey) {
-                        BoundPointsPainter.setHotkeyState(isAppendHotkey, false);
-                        EventBus.publish(new ViewerRepaintQueued());
-                    }
-                    break;
-                default:
-                    break;
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
+                int keyCode = pressedEvent.keyEvent().getKeyCode();
+                boolean isAppendHotkey = (keyCode == appendBoundHotkey);
+                boolean isInsertHotkey = (keyCode == insertBoundHotkey);
+                if (isAppendHotkey || isInsertHotkey) {
+                    BoundPointsPainter.setHotkeyState(isAppendHotkey, true);
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
+            } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
+                int keyCode = releasedEvent.keyEvent().getKeyCode();
+                boolean isAppendHotkey = (keyCode == appendBoundHotkey);
+                boolean isInsertHotkey = (keyCode == insertBoundHotkey);
+                if (isAppendHotkey || isInsertHotkey) {
+                    BoundPointsPainter.setHotkeyState(isAppendHotkey, false);
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
             }
-            return false;
-        };
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(hotkeyDispatcher);
+        });
     }
 
     private void initPointListening() {

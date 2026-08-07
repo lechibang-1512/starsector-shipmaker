@@ -4,6 +4,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.extern.log4j.Log4j2;
 
+import org.kordamp.ikonli.boxicons.BoxiconsRegular;
+import org.kordamp.ikonli.swing.FontIcon;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.files.FileEvents.HullFileOpened;
 import shipeditor.communication.events.files.FileEvents.HullSaveQueued;
@@ -14,6 +17,8 @@ import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelecte
 import shipeditor.communication.events.viewer.layers.LayerEvents.ViewerLayerRemovalConfirmed;
 import shipeditor.communication.events.viewer.layers.LayerEvents.ShipLayerCreated;
 import shipeditor.communication.events.viewer.layers.LayerEvents.WeaponLayerCreated;
+import shipeditor.communication.events.viewer.layers.LayerEvents.ShipLayerCreationQueued;
+import shipeditor.communication.events.viewer.layers.LayerEvents.WeaponLayerCreationQueued;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
 import shipeditor.components.viewer.PrimaryViewer;
 import shipeditor.components.viewer.layers.LayerManager;
@@ -27,7 +32,6 @@ import shipeditor.components.viewer.layers.weapon.ProjectileLayer;
 import shipeditor.components.viewer.layers.weapon.WeaponLayer;
 import shipeditor.components.viewer.layers.weapon.WeaponPainter;
 import shipeditor.components.viewer.layers.weapon.WeaponSprites;
-import shipeditor.parsing.FileUtilities;
 import shipeditor.parsing.loading.OpenSpriteAction;
 import shipeditor.representation.GameDataRepository;
 import shipeditor.representation.ship.HullSpecFile;
@@ -35,13 +39,11 @@ import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.representation.weapon.WeaponSpecFile;
 import shipeditor.utility.components.containers.SortableTabbedPane;
 import shipeditor.utility.graphics.Sprite;
-import shipeditor.utility.graphics.opengl.FramebufferUtilities;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 
 import javax.swing.BorderFactory;
-import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -50,7 +52,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.plaf.TabbedPaneUI;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.List;
 import java.util.*;
 import java.util.function.IntConsumer;
@@ -330,7 +331,26 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
                 int targetTab = paneUI.tabForCoordinate(ViewerLayersPanel.this, e.getX(), e.getY());
                 if (targetTab < 0) {
                     JPopupMenu menu = new JPopupMenu();
-                    menu.add(shipeditor.menubar.WindowMenu.createAddLayerOption());
+                    
+                    JMenuItem createLayer = new JMenuItem("Create new layer");
+                    createLayer.addActionListener(event -> {
+                        Object[] options = {"Ship Layer", "Weapon Layer"};
+                        int result = JOptionPane.showOptionDialog(null,
+                                "Select new layer type:",
+                                "Create New Layer",
+                                JOptionPane.YES_NO_CANCEL_OPTION,
+                                JOptionPane.QUESTION_MESSAGE,
+                                null,
+                                options,
+                                options[0]);
+                        if (result == 0) {
+                            EventBus.publish(new ShipLayerCreationQueued());
+                        } else if (result == 1) {
+                            EventBus.publish(new WeaponLayerCreationQueued());
+                        }
+                    });
+                    menu.add(createLayer);
+
                     menu.show(ViewerLayersPanel.this, e.getPoint().x, e.getPoint().y);
                     return;
                 }
@@ -401,7 +421,6 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
             menu.addSeparator();
 
             JMenuItem saveHullData = new JMenuItem("Save hull data");
-
             saveHullData.addActionListener(event -> EventBus.publish(new HullSaveQueued(shipLayer)));
             menu.add(saveHullData);
 
@@ -416,7 +435,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
 
             menu.addSeparator();
 
-            JMenuItem flipPoints = new JMenuItem("Flip ship points");
+            JMenuItem flipPoints = new JMenuItem("Flip active ship points horizontally");
             flipPoints.addActionListener(event -> shipPainter.flipShipPointsHorizontally());
             menu.add(flipPoints);
 
@@ -456,56 +475,11 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
         }
 
         private static JMenuItem createPrintLayerOption(ViewerLayer layer) {
-            JMenuItem printLayer = new JMenuItem("Print layer to image");
+            JMenuItem printLayer = new JMenuItem("High-Resolution Sprite Print...");
+            printLayer.setIcon(FontIcon.of(BoxiconsRegular.PRINTER, 16, Themes.getIconColor()));
             printLayer.addActionListener(event -> {
-                javax.swing.JPanel panel = new javax.swing.JPanel();
-                panel.setLayout(new javax.swing.BoxLayout(panel, javax.swing.BoxLayout.Y_AXIS));
-
-                javax.swing.JComboBox<String> scaleCombo = new javax.swing.JComboBox<>(new String[]{"1x", "2x", "3x", "4x", "8x"});
-                javax.swing.JSpinner paddingSpinner = new javax.swing.JSpinner(new javax.swing.SpinnerNumberModel(0, 0, 2000, 10));
-
-                panel.add(new javax.swing.JLabel("Output Scale:"));
-                panel.add(scaleCombo);
-                panel.add(javax.swing.Box.createVerticalStrut(10));
-                panel.add(new javax.swing.JLabel("Padding (pixels around the base sprite):"));
-                panel.add(paddingSpinner);
-
-                int result = JOptionPane.showConfirmDialog(shipeditor.PrimaryWindow.getInstance(), panel, 
-                        "Print Image Options", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-                if (result != JOptionPane.OK_OPTION) {
-                    return;
-                }
-
-                double tempScale = scaleCombo.getSelectedIndex() + 1.0;
-                if (scaleCombo.getSelectedIndex() == 4) {
-                    tempScale = 8.0;
-                }
-                final double finalScale = tempScale;
-                final int finalPadding = (Integer) paddingSpinner.getValue();
-
-                JFileChooser chooser = FileUtilities.getImageChooser();
-                int returnVal = chooser.showSaveDialog(shipeditor.PrimaryWindow.getInstance());
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    File file = FileUtilities.ensureFileExtension(chooser, "png");
-                    
-                    int width = 0;
-                    int height = 0;
-                    LayerPainter layerPainter = layer.getPainter();
-                    if (layerPainter != null && !layerPainter.isUninitialized()) {
-                        java.awt.geom.Rectangle2D bounds = layerPainter.getVisualBounds();
-                        width = (int) Math.ceil(bounds.getWidth());
-                        height = (int) Math.ceil(bounds.getHeight());
-                    }
-                    if (width <= 0 || height <= 0) {
-                        JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(), "Layer is empty or invalid size.", "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-
-                    final int finalWidth = width;
-                    final int finalHeight = height;
-                    StaticController.getViewer().queueGLTask(() -> FramebufferUtilities.printLayerToImage(layer, finalWidth, finalHeight, finalScale, finalPadding, file));
-                }
+                shipeditor.components.dialogs.ExportDialog dialog = new shipeditor.components.dialogs.ExportDialog(1);
+                dialog.setVisible(true);
             });
             return printLayer;
         }

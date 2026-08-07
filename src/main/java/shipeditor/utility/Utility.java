@@ -312,14 +312,15 @@ public final class Utility {
         return null;
     }
 
-    private static final ThreadLocal<DecimalFormat> DOUBLE_FORMATTER = ThreadLocal.withInitial(() -> new DecimalFormat("0.###"));
+    private static final ThreadLocal<DecimalFormat> DOUBLE_FORMATTER = ThreadLocal.withInitial(() -> 
+            new DecimalFormat("0.###", java.text.DecimalFormatSymbols.getInstance(java.util.Locale.US)));
 
     public static String formatDouble(double value) {
         if (value % 1 == 0) {
-            return String.format("%8d", (int) value);
+            return String.format(java.util.Locale.US, "%8d", (int) value);
         } else {
             String formattedValue = DOUBLE_FORMATTER.get().format(value);
-            return String.format("%8s", formattedValue);
+            return String.format(java.util.Locale.US, "%8s", formattedValue);
         }
     }
 

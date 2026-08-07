@@ -25,6 +25,8 @@ public class ProgressBarPanel extends JPanel {
         this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
         progressBar = new JProgressBar(SwingConstants.HORIZONTAL);
         progressBar.setIndeterminate(true);
+        progressBar.setPreferredSize(new Dimension(150, 16));
+        progressBar.setMaximumSize(new Dimension(150, 16));
         statusLabel = new JLabel("");
         
         EventBus.subscribe(this, event -> {

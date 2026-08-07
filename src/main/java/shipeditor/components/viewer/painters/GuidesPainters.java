@@ -39,13 +39,10 @@ public final class GuidesPainters {
     private final OpenGLPainter bordersPaint;
     @Getter
     private final OpenGLPainter centerPaint;
-    @Getter
-    private final OpenGLPainter axesPaint;
 
     private boolean drawGuides;
     private boolean drawBorders;
     private boolean drawCenter;
-    private boolean drawAxes;
 
     private final PrimaryViewer parent;
 
@@ -54,7 +51,6 @@ public final class GuidesPainters {
     private final org.joml.Vector4f guideLineColor = new org.joml.Vector4f(0.14f, 0.14f, 0.14f, 0.5f);
     private final org.joml.Vector4f blackColor = new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
     private final org.joml.Vector4f whiteColor = new org.joml.Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
-    private final org.joml.Vector4f axesColor = new org.joml.Vector4f(0.25f, 0.25f, 0.25f, 1.0f);
 
     private final org.joml.Vector2f v1 = new org.joml.Vector2f();
     private final org.joml.Vector2f v2 = new org.joml.Vector2f();
@@ -66,7 +62,6 @@ public final class GuidesPainters {
         this.guidesPaint = createGuidesPainter();
         this.bordersPaint = createBordersPainter();
         this.centerPaint = createSpriteCenterPainter();
-        this.axesPaint = createAxesPainter();
     }
 
     private void listenForToggling() {
@@ -75,7 +70,6 @@ public final class GuidesPainters {
                 this.drawGuides = checked.guidesEnabled();
                 this.drawBorders = checked.bordersEnabled();
                 this.drawCenter = checked.centerEnabled();
-                this.drawAxes = checked.axesEnabled();
                 EventBus.publish(new ViewerRepaintQueued());
             }
         });
@@ -149,19 +143,6 @@ public final class GuidesPainters {
 
     private OpenGLPainter createSpriteCenterPainter() {
         return new SpriteCenterPainter();
-    }
-
-    private OpenGLPainter createAxesPainter() {
-        return (spriteRenderer, shapeRenderer, projection, view) -> {
-            if (!drawAxes) return;
-
-            float extent = 100000.0f;
-
-            shapeRenderer.begin(projection, view);
-            shapeRenderer.drawLine(v1.set(-extent, 0), v2.set(extent, 0), axesColor);
-            shapeRenderer.drawLine(v1.set(0, -extent), v2.set(0, extent), axesColor);
-            shapeRenderer.end();
-        };
     }
 
     private static void drawPointPositionHint(SpriteRenderer spriteRenderer, Matrix4f projection, Point2D position, LayerPainter painter) {

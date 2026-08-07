@@ -5,7 +5,8 @@ import java.text.DecimalFormat;
 
 public final class CoordinatesFormatter {
 
-    private static final DecimalFormat DISPLAY_FORMAT = new DecimalFormat("0.000");
+    private static final ThreadLocal<DecimalFormat> DISPLAY_FORMAT =
+            ThreadLocal.withInitial(() -> new DecimalFormat("0.000", java.text.DecimalFormatSymbols.getInstance(java.util.Locale.US)));
 
     private CoordinatesFormatter() {
     }
@@ -23,7 +24,8 @@ public final class CoordinatesFormatter {
 
     public static String formatDisplay(double x, double y) {
         if (Double.isNaN(x) || Double.isNaN(y)) return "NaN";
-        return DISPLAY_FORMAT.format(x) + ", " + DISPLAY_FORMAT.format(y);
+        DecimalFormat format = DISPLAY_FORMAT.get();
+        return format.format(x) + ", " + format.format(y);
     }
 
     public static String formatDisplay(Point2D point) {

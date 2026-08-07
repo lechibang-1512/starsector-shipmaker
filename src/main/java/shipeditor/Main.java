@@ -6,6 +6,7 @@ import shipeditor.parsing.loading.FileLoading;
 import shipeditor.persistence.Initializations;
 import shipeditor.persistence.Settings;
 import shipeditor.persistence.SettingsManager;
+import shipeditor.persistence.database.DatabaseManager;
 import shipeditor.utility.Errors;
 import shipeditor.utility.text.StringConstants;
 import shipeditor.utility.UtilityEnums.Theme;
@@ -17,12 +18,18 @@ import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-
 import java.util.Locale;
 import java.util.List;
-
 import java.util.function.Function;
 
 @Log4j2
@@ -30,18 +37,47 @@ public final class Main {
 
     public static final String VERSION = "0.0.1f";
 
+    private static FileLock applicationLock;
+    private static FileChannel lockChannel;
+
     private Main() {}
 
+    /**
+     * Checks if the currently running JVM heap size meets the minimum 4GB requirement.
+     * If the allocated heap is below 4GB, this method forks a new Java process with {@code -Xmx4g}
+     * and essential JVM flags (such as disabling D3D/OpenGL hardware acceleration for Swing-LWJGL compatibility),
+     * then terminates the current process.
+     * 
+     * @param args Command line arguments to forward to the child JVM.
+     */
     private static void checkAndRelaunch(String[] args) {
         if (Boolean.getBoolean("shipeditor.relaunched")) {
             return;
         }
 
+        boolean needsRelaunch = false;
         long maxMemory = Runtime.getRuntime().maxMemory();
         long threshold = 3900L * 1024L * 1024L;
 
         if (maxMemory < threshold) {
-            log.info("Max memory available is {} MB, which is less than the 4 GB required. Relaunching JVM with -Xmx4g...", maxMemory / (1024 * 1024));
+            needsRelaunch = true;
+            log.info("Max memory available is {} MB, which is less than the 4 GB required.", maxMemory / (1024 * 1024));
+        }
+
+        boolean isLinux = System.getProperty("os.name").toLowerCase(java.util.Locale.ROOT).contains("linux") || System.getProperty("os.name").toLowerCase(java.util.Locale.ROOT).contains("nix");
+        if (isLinux) {
+            if (!Boolean.getBoolean("sun.awt.noerasebackground") || !Boolean.getBoolean("sun.java2d.noddraw")) {
+                needsRelaunch = true;
+                log.info("Missing essential Linux UI properties for AWT/Swing compatibility.");
+            }
+            if (System.getenv("DISPLAY") == null) {
+                needsRelaunch = true;
+                log.info("DISPLAY environment variable is missing, forcing relaunch to set default display.");
+            }
+        }
+
+        if (needsRelaunch) {
+            log.info("Relaunching JVM with updated arguments...");
             try {
                 String javaHome = System.getProperty("java.home");
                 String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
@@ -60,6 +96,7 @@ public final class Main {
                 command.add("-Dsun.java2d.d3d=false");
                 command.add("-Dsun.java2d.noddraw=true");
                 command.add("-Dsun.awt.noerasebackground=true");
+                command.add("-Dorg.lwjgl.opengl.contextAPI=native");
                 command.add("-Dshipeditor.relaunched=true");
 
                 var codeSource = Main.class.getProtectionDomain().getCodeSource();
@@ -83,45 +120,173 @@ public final class Main {
                 log.info("Starting child JVM with command: {}", String.join(" ", command));
 
                 ProcessBuilder builder = new ProcessBuilder(command);
+                if (isLinux && System.getenv("DISPLAY") == null) {
+                    builder.environment().put("DISPLAY", ":0");
+                    log.info("Injected DISPLAY=:0 into child JVM environment.");
+                }
                 builder.inheritIO();
                 Process process = builder.start();
+
+                // Clean up child process if parent process is killed/terminated unexpectedly
+                Thread parentShutdownHook = new Thread(() -> {
+                    if (process.isAlive()) {
+                        process.destroyForcibly();
+                    }
+                });
+                Runtime.getRuntime().addShutdownHook(parentShutdownHook);
+
                 try {
                     process.waitFor();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    if (process.isAlive()) {
+                        process.destroyForcibly();
+                    }
+                } finally {
+                    try {
+                        Runtime.getRuntime().removeShutdownHook(parentShutdownHook);
+                    } catch (IllegalStateException ignored) {
+                        // VM already shutting down
+                    }
                 }
 
                 System.exit(process.exitValue());
             } catch (java.io.IOException | java.net.URISyntaxException | SecurityException e) {
-                log.error("Failed to relaunch JVM with -Xmx4g", e);
+                log.error("Failed to relaunch JVM with required arguments", e);
             }
         }
     }
 
+    /**
+     * Tries to acquire an exclusive OS file lock on {@code .ship_editor.lock} to enforce single-instance execution
+     * and prevent database corruption or dual 4GB heap allocation.
+     *
+     * @return {@code true} if lock acquired or bypassed via {@code -Dshipeditor.force=true}, {@code false} if another instance is running.
+     */
+    private static boolean acquireApplicationLock() {
+        if (Boolean.getBoolean("shipeditor.force")) {
+            log.info("Bypassing single-instance lock due to -Dshipeditor.force=true");
+            return true;
+        }
+
+        try {
+            Path workingDirectory = Paths.get("").toAbsolutePath();
+            Path lockPath = workingDirectory.resolve(".ship_editor.lock");
+
+            lockChannel = FileChannel.open(lockPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.READ);
+
+            applicationLock = lockChannel.tryLock();
+            if (applicationLock == null) {
+                log.error("Another instance of Starsector Ship Editor is already running (file lock held at: {})", lockPath);
+                return false;
+            }
+
+            long pid = ProcessHandle.current().pid();
+            lockChannel.truncate(0);
+            lockChannel.write(ByteBuffer.wrap(String.valueOf(pid).getBytes(StandardCharsets.UTF_8)));
+            lockChannel.force(true);
+
+            return true;
+        } catch (Exception e) {
+            log.warn("Could not acquire application file lock, proceeding without lock: {}", e.getMessage());
+            return true;
+        }
+    }
+
+    private static void releaseApplicationLock() {
+        try {
+            if (applicationLock != null && applicationLock.isValid()) {
+                applicationLock.release();
+                applicationLock = null;
+            }
+            if (lockChannel != null && lockChannel.isOpen()) {
+                lockChannel.close();
+                lockChannel = null;
+            }
+            Path lockPath = Paths.get("").toAbsolutePath().resolve(".ship_editor.lock");
+            Files.deleteIfExists(lockPath);
+        } catch (Exception e) {
+            log.warn("Error releasing application lock: {}", e.getMessage());
+        }
+    }
+
     public static void main(String[] args) {
+        System.setProperty("org.lwjgl.opengl.contextAPI", "native");
+        try {
+            org.lwjgl.system.Configuration.OPENGL_CONTEXT_API.set("native");
+        } catch (Throwable ignored) {
+            // In case LWJGL Configuration class is not yet on classloader
+        }
+
         checkAndRelaunch(args);
+
+        // Enforce single-instance lock in Java layer
+        if (!acquireApplicationLock()) {
+            System.err.println("[ERROR] Starsector Ship Editor is already running!");
+            System.err.println("Only one instance may run simultaneously to avoid SQLite database corruption and excessive memory consumption.");
+            System.err.println("To force launch a new instance, pass -Dshipeditor.force=true or use './ship_editor.sh -f'");
+
+            if (!java.awt.GraphicsEnvironment.isHeadless()) {
+                try {
+                    javax.swing.JOptionPane.showMessageDialog(
+                            null,
+                            "Starsector Ship Editor is already running!\n\n"
+                                    + "Only one instance may run at a time to prevent SQLite database corruption and high memory usage.\n\n"
+                                    + "Please close the existing instance or pass '-f' to force start.",
+                            "Already Running",
+                            javax.swing.JOptionPane.WARNING_MESSAGE
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to display 'Already Running' dialog: {}", e.getMessage());
+                }
+            }
+            System.exit(1);
+        }
+
+        // Register global shutdown hook for resources (HikariCP pool, database flush, lock release)
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("JVM shutdown initiated. Releasing database and file locks...");
+            DatabaseManager.closeDataSource();
+            releaseApplicationLock();
+        }, "ShipEditor-Shutdown-Hook"));
         
         System.setProperty("sun.java2d.opengl", "false");
         System.setProperty("sun.java2d.d3d", "false");
         System.setProperty("sun.java2d.noddraw", "true");
         System.setProperty("sun.awt.noerasebackground", "true");
+        System.setProperty("org.lwjgl.opengl.contextAPI", "native");
+        try {
+            org.lwjgl.system.Configuration.OPENGL_CONTEXT_API.set("native");
+        } catch (Throwable ignored) {
+        }
         
         Locale.setDefault(Locale.US);
         SwingUtilities.invokeLater(() -> {
             // These method calls are initialization block; the order of calls is important.
             Initializations.initializeSettingsFile();
             configureLaf();
+
+            Initializations.selectGameFolder();
+            Settings settings = SettingsManager.getSettings();
+
+            boolean shouldLoadData = settings.isLoadDataAtStart();
+            if (settings.isPromptForModsAtStart()) {
+                shipeditor.components.dialogs.ModSelectionDialog modDialog = new shipeditor.components.dialogs.ModSelectionDialog(null);
+                if (modDialog.showDialog()) {
+                    shouldLoadData = true;
+                }
+            }
+
             PrimaryWindow window = PrimaryWindow.create();
             Initializations.updateStateFromSettings(window);
 
-            Settings settings = SettingsManager.getSettings();
+            window.showGUI();
 
-            if (settings.isLoadDataAtStart()) {
-                window.showGUI();
-                FileLoading.loadGameData();
-            } else {
-                // No data preload — show window immediately.
-                window.showGUI();
+            if (shouldLoadData) {
+                SwingUtilities.invokeLater(FileLoading::forceReindexAndLoadGameData);
             }
 
             // Bind the error streams AFTER the UI is fully initialized and visible

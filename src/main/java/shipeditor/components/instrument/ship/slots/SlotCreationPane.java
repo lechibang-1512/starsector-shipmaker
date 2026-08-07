@@ -23,7 +23,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -31,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import shipeditor.utility.components.UIConstants;
+import shipeditor.utility.themes.Themes;
 
 public class SlotCreationPane extends JPanel {
 
@@ -83,7 +83,7 @@ public class SlotCreationPane extends JPanel {
         container.setAlignmentY(0);
 
         MatteBorder matteLine = new MatteBorder(new Insets(1, 0, 0, 0),
-                Color.LIGHT_GRAY);
+                Themes.getBorderColor());
         Border titledBorder = new TitledBorder(matteLine, "New slot values",
                 TitledBorder.LEADING, TitledBorder.DEFAULT_POSITION);
         container.setBorder(titledBorder);

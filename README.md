@@ -23,43 +23,38 @@ Clean repository based on ontheheaven's original repo: https://github.com/Ontheh
 
 ## Installation & Running (For Modders)
 
-To run the Ship Editor, you need a **Java Runtime Environment (JRE) version 21**.
+To run the Ship Editor, choose the setup option that best fits your workflow:
 
-### Step 1: Install Java 21 (Recommended)
-You need to install Java 21 using a standard setup wizard. Any of the following trusted, open-source distributions will work:
+### 🌟 Option 1: Zero-Config Setup (No Java Installation Required — Recommended)
+If you place the Ship Editor inside your **Starsector installation directory** (for example, in the main `Starsector` folder or inside `Starsector/mods/`), the launcher scripts will **automatically detect and use Starsector's built-in Java JRE**.
 
-*   **Option A: Eclipse Temurin (Adoptium)** — Highly recommended and lightweight:
-    1. Go to the **[Eclipse Temurin Java 21 Releases](https://adoptium.net/temurin/releases/?version=21)** page.
-    2. Select your Operating System (Windows, macOS, or Linux).
-    3. Set the **Package Type** filter to **JRE** (this contains just what is needed to run the app, keeping the download small).
-    4. Download the installer package: `.msi` for Windows, or `.pkg` for macOS.
-*   **Option B: Microsoft Build of OpenJDK** — Extremely stable, great for Windows & macOS:
-    1. Go to the **[Microsoft Build of OpenJDK 21](https://learn.microsoft.com/en-us/java/openjdk/download#openjdk-21)** page.
-    2. Locate the download section for **OpenJDK 21**.
-    3. Download the installer package: `.msi` for Windows, or `.pkg` for macOS.
+**Zero configuration or installation needed!**
+1. Extract the Ship Editor release files into your Starsector installation directory or `mods` folder.
+2. Launch using the startup script for your operating system:
+   *   **Windows**: Double-click **`ship_editor.bat`**.
+   *   **Linux / macOS**: Run **`./ship_editor.sh`** or **`ship_editor.command`**.
 
-*Note: During installation, make sure the option to **"Add to PATH"** or **"Set JAVA_HOME"** is checked (these are usually checked by default). This registers Java with your operating system.*
-
-### Step 2: Run the Editor
-Once Java is installed, download the release files and run the appropriate startup script:
-*   **Windows**: Double-click **`ship_editor.bat`**.
-*   **Linux / macOS**: Run **`ship_editor.sh`** or **`ship_editor.command`**.
-
-### Alternative: Starsector's Built-in JRE (No Installation Required)
-If you place the Ship Editor inside your Starsector installation directory (for example, in the `mods` folder or the main `Starsector` folder), the launcher scripts will **automatically detect and use Starsector's built-in Java**.
-
-You don't need to install anything! Just double-click `ship_editor.bat` (Windows) or run `ship_editor.sh` (Mac/Linux), and it will automatically look for the `jre` folder that came with your game.
+*The launcher script automatically finds Starsector's bundled Java (`jre`, `jre_linux`, or `jre_mac`) and launches immediately.*
 
 ---
 
-### Alternative: Local JRE (Portable Setup)
-If you prefer not to install Java system-wide and are running the editor outside of the Starsector directory, you can run the editor using a local folder:
-1. Go to the **[Eclipse Temurin Java 21 Releases](https://adoptium.net/temurin/releases/?version=21)** page.
-2. Select your Operating System and download the `.zip` archive (Windows) or `.tar.gz` archive (Linux/macOS). Make sure the package type is set to **JRE**.
-3. Extract the downloaded archive.
-4. Rename the extracted folder (e.g., `jdk-21.0.x+xx-jre` or `jre-21.x.x`) to exactly **`jre`**.
-5. Place this **`jre`** folder directly in the root directory of the application (alongside `ship_editor.jar`).
-6. Launch using the startup scripts (`ship_editor.bat` or `ship_editor.sh`), which will automatically detect and run from the local folder.
+### Option 2: System Java 21 (For Standalone Setup Outside Game Directory)
+If you prefer running the editor in a custom folder outside the Starsector installation, install a **Java Runtime Environment (JRE) version 21**:
+
+1. **Download JRE 21**:
+   * **[Eclipse Temurin (Adoptium) Java 21 Releases](https://adoptium.net/temurin/releases/?version=21)** — Select **JRE** package type (`.msi` for Windows, `.pkg` for macOS).
+   * **[Microsoft Build of OpenJDK 21](https://learn.microsoft.com/en-us/java/openjdk/download#openjdk-21)**.
+2. During installation, make sure **"Add to PATH"** or **"Set JAVA_HOME"** is checked.
+3. Run **`ship_editor.bat`** (Windows) or **`./ship_editor.sh`** (Linux/macOS).
+
+---
+
+### Option 3: Portable Local JRE Setup
+If you want to run the editor outside the Starsector directory without installing Java system-wide:
+1. Download a Java 21 JRE `.zip` (Windows) or `.tar.gz` (Linux/macOS) archive from [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=21).
+2. Extract the archive directly into the application folder alongside `ship_editor.jar`.
+3. Rename the extracted folder to **`jre`**.
+4. Launch via **`ship_editor.bat`** or **`./ship_editor.sh`**, which will automatically detect and run from the local `jre` folder.
 
 ---
 

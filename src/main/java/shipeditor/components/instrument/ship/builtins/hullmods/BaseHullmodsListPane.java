@@ -12,11 +12,11 @@ import javax.swing.DefaultListModel;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import shipeditor.utility.themes.Themes;
 
 public class BaseHullmodsListPane extends JPanel {
 
@@ -46,7 +46,7 @@ public class BaseHullmodsListPane extends JPanel {
 
         this.modsList = new HullmodsList(removeAction, modsModel, sortAction);
 
-        modsList.setBorder(new LineBorder(Color.LIGHT_GRAY));
+        modsList.setBorder(new LineBorder(Themes.getBorderColor()));
         this.setLayout(new BorderLayout());
         this.add(modsList, BorderLayout.CENTER);
     }

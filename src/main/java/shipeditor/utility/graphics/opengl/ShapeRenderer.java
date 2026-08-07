@@ -32,6 +32,7 @@ public class ShapeRenderer {
     }
 
     private final java.nio.FloatBuffer circleBuffer = org.lwjgl.system.MemoryUtil.memAllocFloat(CIRCLE_SEGMENTS * 3 * 2);
+    private java.nio.FloatBuffer polyBuffer = org.lwjgl.system.MemoryUtil.memAllocFloat(1024 * 2);
 
     private final float[] lineVertices = new float[4];
     private final float[] rectFilledVertices = new float[12];
@@ -281,10 +282,44 @@ public class ShapeRenderer {
         GL11.glDrawArrays(filled ? GL11.GL_TRIANGLES : GL11.GL_LINE_STRIP, 0, count);
     }
 
+    public void drawLineLoop(java.util.List<java.awt.geom.Point2D> points, Vector2f offset, Vector4f color) {
+        if (points == null || points.size() < 2) return;
+        int count = points.size();
+        int capacityFloats = count * 2;
+
+        if (polyBuffer.capacity() < capacityFloats) {
+            org.lwjgl.system.MemoryUtil.memFree(polyBuffer);
+            polyBuffer = org.lwjgl.system.MemoryUtil.memAllocFloat(Math.max(capacityFloats, polyBuffer.capacity() * 2));
+        }
+
+        polyBuffer.clear();
+        float ox = offset != null ? offset.x : 0.0f;
+        float oy = offset != null ? offset.y : 0.0f;
+        for (java.awt.geom.Point2D p : points) {
+            polyBuffer.put((float) p.getX() + ox);
+            polyBuffer.put((float) p.getY() + oy);
+        }
+        polyBuffer.flip();
+
+        shader.setUniform("shapeColor", color);
+
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
+        if (capacityFloats * Float.BYTES > 1024 * Float.BYTES) {
+            GL15.glBufferData(GL15.GL_ARRAY_BUFFER, polyBuffer, GL15.GL_DYNAMIC_DRAW);
+        } else {
+            GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, polyBuffer);
+        }
+
+        GL11.glDrawArrays(GL11.GL_LINE_LOOP, 0, count);
+    }
+
     public void cleanup() {
         shader.cleanup();
         if (circleBuffer != null) {
             org.lwjgl.system.MemoryUtil.memFree(circleBuffer);
+        }
+        if (polyBuffer != null) {
+            org.lwjgl.system.MemoryUtil.memFree(polyBuffer);
         }
     }
 }

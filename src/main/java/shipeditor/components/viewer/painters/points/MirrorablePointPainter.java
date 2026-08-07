@@ -65,7 +65,7 @@ public abstract class MirrorablePointPainter extends AbstractPointPainter {
     }
 
     @Override
-    protected Point2D createCounterpartPosition(Point2D toMirror) {
+    public Point2D createCounterpartPosition(Point2D toMirror) {
         Point2D entityCenter = parentLayer.getEntityCenter();
         double counterpartX = 2 * entityCenter.getX() - toMirror.getX();
         double counterpartY = toMirror.getY(); // Y-coordinate remains the same.

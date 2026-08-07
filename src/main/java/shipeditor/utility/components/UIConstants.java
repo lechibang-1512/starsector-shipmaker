@@ -26,4 +26,9 @@ public final class UIConstants {
      */
     public static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
 
+    public static final Insets INSETS_NONE = new Insets(0, 0, 0, 0);
+    public static final Insets INSETS_TOP_1 = new Insets(1, 0, 0, 0);
+    public static final Insets INSETS_SMALL = new Insets(2, 2, 2, 2);
+    public static final Insets INSETS_MEDIUM = new Insets(4, 4, 4, 4);
+
 }

@@ -30,9 +30,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 @Log4j2
 public final class Initializations {
@@ -62,73 +60,78 @@ public final class Initializations {
         String iconName = "gamefolder_icon64.png";
 
         File iconFile;
-        BufferedImage iconImage;
-        URL iconPath = Objects.requireNonNull(classLoader.getResource(iconName));
-        URI checked = iconPath.toURI();
-        if (checked.isOpaque()) {
-            try ( InputStream inputStream = Initializations.class.getResourceAsStream("/" + iconName)) {
-                if (inputStream != null) {
-                    iconImage = ImageIO.read(inputStream);
-                } else {
-                    throw new RuntimeException("Game folder icon not found!");
+        BufferedImage iconImage = null;
+        URL iconPath = classLoader != null ? classLoader.getResource(iconName) : Initializations.class.getResource("/" + iconName);
+        if (iconPath != null) {
+            URI checked = iconPath.toURI();
+            if (checked.isOpaque()) {
+                try (InputStream inputStream = Initializations.class.getResourceAsStream("/" + iconName)) {
+                    if (inputStream != null) {
+                        iconImage = ImageIO.read(inputStream);
+                    }
                 }
+            } else {
+                iconFile = new File(checked);
+                log.info("Loading game folder icon...");
+                iconImage = ImageIO.read(iconFile);
             }
-        } else {
-            iconFile = new File(checked);
-            log.info("Loading game folder icon...");
-            iconImage = ImageIO.read(iconFile);
         }
 
         Settings settings = SettingsManager.getSettings();
-        String folderPath = settings.getGameFolderPath();
-
-        UIManager.put(FILE_CHOOSER_SHORTCUTS_FILES_FUNCTION, (Function<File[], File[]>) files -> {
-            ArrayList<File> list = new ArrayList<>( Arrays.asList( files ) );
-            list.removeIf(next -> SHELL_FOLDER_0_X_12.equals(next.getPath()));
-            list.add( 0, new File(folderPath));
-            return list.toArray(new File[0]);
-        } );
-        UIManager.put( "FileChooser.shortcuts.displayNameFunction", (Function<File, String>) file -> {
-            String absolutePath = file.getAbsolutePath();
-            if (absolutePath.equals(folderPath)) {
-                return "Game folder";
-            }
-            return null;
-        } );
-        UIManager.put( "FileChooser.shortcuts.iconFunction", (Function<File, Icon>) file -> {
-            String absolutePath = file.getAbsolutePath();
-            if (absolutePath.equals(folderPath)) {
-                return new GameFolderIcon(iconImage);
-            }
-            return null;
-        } );
+        String folderPath = settings != null ? settings.getGameFolderPath() : null;
+        if (folderPath != null && !folderPath.isEmpty() && iconImage != null) {
+            BufferedImage finalIconImage = iconImage;
+            UIManager.put(FILE_CHOOSER_SHORTCUTS_FILES_FUNCTION, (Function<File[], File[]>) files -> {
+                ArrayList<File> list = new ArrayList<>(Arrays.asList(files != null ? files : new File[0]));
+                list.removeIf(next -> next != null && SHELL_FOLDER_0_X_12.equals(next.getPath()));
+                list.add(0, new File(folderPath));
+                return list.toArray(new File[0]);
+            });
+            UIManager.put("FileChooser.shortcuts.displayNameFunction", (Function<File, String>) file -> {
+                if (file != null && file.getAbsolutePath().equals(folderPath)) {
+                    return "Game folder";
+                }
+                return null;
+            });
+            UIManager.put("FileChooser.shortcuts.iconFunction", (Function<File, Icon>) file -> {
+                if (file != null && file.getAbsolutePath().equals(folderPath)) {
+                    return new GameFolderIcon(finalIconImage);
+                }
+                return null;
+            });
+        }
     }
 
     private static void installWindowIcon(PrimaryWindow window) throws URISyntaxException, IOException {
+        if (window == null) {
+            return;
+        }
         Class<? extends PrimaryWindow> windowClass = window.getClass();
         ClassLoader classLoader = windowClass.getClassLoader();
         String iconName = "icon.png";
 
         File iconFile;
-        BufferedImage iconImage;
-        URL iconPath = Objects.requireNonNull(classLoader.getResource(iconName));
-        URI checked = iconPath.toURI();
-        if (checked.isOpaque()) {
-            try ( InputStream inputStream = Initializations.class.getResourceAsStream("/" + iconName)) {
-                if (inputStream != null) {
-                    iconImage = ImageIO.read(inputStream);
-                } else {
-                    throw new RuntimeException("Window icon not found!");
+        BufferedImage iconImage = null;
+        URL iconPath = classLoader != null ? classLoader.getResource(iconName) : Initializations.class.getResource("/" + iconName);
+        if (iconPath != null) {
+            URI checked = iconPath.toURI();
+            if (checked.isOpaque()) {
+                try (InputStream inputStream = Initializations.class.getResourceAsStream("/" + iconName)) {
+                    if (inputStream != null) {
+                        iconImage = ImageIO.read(inputStream);
+                    }
                 }
+            } else {
+                iconFile = new File(checked);
+                log.info("Loading window icon...");
+                iconImage = ImageIO.read(iconFile);
             }
-        } else {
-            iconFile = new File(checked);
-            log.info("Loading window icon...");
-            iconImage = ImageIO.read(iconFile);
         }
 
-        ImageIcon icon = new ImageIcon(iconImage);
-        window.setIconImage(icon.getImage());
+        if (iconImage != null) {
+            ImageIcon icon = new ImageIcon(iconImage);
+            window.setIconImage(icon.getImage());
+        }
     }
 
     private static class GameFolderIcon extends FlatAbstractIcon {
@@ -177,6 +180,9 @@ public final class Initializations {
             log.error("Failed to resolve settings file, writing default one.", e);
             loaded = SettingsManager.createDefault();
             SettingsManager.writeSettingsToFile(mapper, settingsFile, loaded);
+        }
+        if (loaded != null) {
+            loaded.deduplicateDataPackages();
         }
         SettingsManager.setSettings(loaded);
         SettingsManager.getCorePackage();
@@ -290,14 +296,20 @@ public final class Initializations {
         }
 
         List<Path> potentialPaths = Initializations.getPotentialGameFolders();
-
+        List<String> candidatePaths = new ArrayList<>();
         String detectedPath = null;
+
         for (Path potentialFolderPath : potentialPaths) {
             if (Files.exists(potentialFolderPath) && Files.isDirectory(potentialFolderPath)) {
+                String absPath = potentialFolderPath.toAbsolutePath().toString();
                 if (Initializations.checkGameFolderEligibility(potentialFolderPath, settings)) {
-                    log.info("Auto-detected valid path: {}", potentialFolderPath);
-                    detectedPath = potentialFolderPath.toAbsolutePath().toString();
-                    break;
+                    if (detectedPath == null) {
+                        log.info("Auto-detected valid path: {}", potentialFolderPath);
+                        detectedPath = absPath;
+                    }
+                }
+                if (!candidatePaths.contains(absPath)) {
+                    candidatePaths.add(absPath);
                 }
             }
         }
@@ -312,61 +324,65 @@ public final class Initializations {
             throw new RuntimeException("Game folder selection failed! No predefined path found and cannot open setup dialog in headless mode.");
         }
 
-        String confirmedPath = shipeditor.components.dialogs.FirstTimeSetupDialog.promptForGameFolder(detectedPath, settings);
+        String confirmedPath = shipeditor.components.dialogs.FirstTimeSetupDialog.promptForGameFolder(detectedPath, candidatePaths, settings);
         log.info("Saving game folder path: {}", confirmedPath);
         settings.setGameFolderPath(confirmedPath);
     }
 
     public static boolean checkGameFolderEligibility(Path filePath, Settings settings) {
-        boolean folderHasCore = false;
-        boolean folderHasMods = false;
-        try (Stream<Path> pathStream = Files.walk(filePath, 5)) {
-            Stream<Path> filtered = pathStream.filter(Files::isDirectory);
-            for (Path path : filtered.toArray(Path[]::new)) {
-                Path fileNamePath = path.getFileName();
-                if (fileNamePath == null) continue;
-                String folderName = fileNamePath.toString();
-                String coreFolderPath = path.toString();
-
-                if (Initializations.isCoreFolder(path)) {
-                    settings.setCoreFolderPath(coreFolderPath);
-                    SettingsManager.setCoreFolderName(FileUtilities.extractFolderName(coreFolderPath));
-                    folderHasCore = true;
-                }
-
-                if ("mods".equals(folderName)) {
-                    settings.setModFolderPath(coreFolderPath);
-                    folderHasMods = true;
-                }
-            }
-        } catch (IOException e) {
-            Errors.printToStream(e);
+        if (!Files.isDirectory(filePath)) {
             return false;
         }
-        return folderHasCore && folderHasMods;
+
+        Path modsPath = filePath.resolve("mods");
+        if (!Files.isDirectory(modsPath)) {
+            modsPath = filePath.resolve("Contents").resolve("Resources").resolve("mods");
+        }
+        boolean folderHasMods = Files.isDirectory(modsPath);
+
+        Path corePath = null;
+        Path defaultCore = filePath.resolve("starsector-core");
+        Path macCore = filePath.resolve("Contents").resolve("Resources").resolve("Java");
+        
+        if (Files.isDirectory(defaultCore) && isCoreFolder(defaultCore)) {
+            corePath = defaultCore;
+        } else if (Files.isDirectory(macCore) && isCoreFolder(macCore)) {
+            corePath = macCore;
+        } else if (isCoreFolder(filePath)) {
+            corePath = filePath;
+        }
+
+        if (corePath != null && folderHasMods) {
+            settings.setCoreFolderPath(corePath.toAbsolutePath().toString());
+            SettingsManager.setCoreFolderName(FileUtilities.extractFolderName(corePath.toString()));
+            settings.setModFolderPath(modsPath.toAbsolutePath().toString());
+            return true;
+        }
+
+        return false;
     }
 
     private static boolean isCoreFolder(Path folderPath) {
         if (!Files.isDirectory(folderPath)) {
             return false;
         }
-        
+
         Path fileNamePath = folderPath.getFileName();
         if (fileNamePath == null) return false;
 
-        // A mod folder will also contain data and graphics, so we must exclude it.
-        // We do this by checking for the absence of 'mod_info.json', which uniquely identifies mods.
-        if (Files.exists(folderPath.resolve("mod_info.json"))) {
+        Path shipDataCsv = folderPath.resolve("data").resolve("hulls").resolve("ship_data.csv");
+        if (!Files.exists(shipDataCsv)) {
             return false;
         }
 
-        String[] childFolderNames = {"data", "graphics"};
+        Path starfarerApiJar = folderPath.resolve("starfarer.api.jar");
+        if (!Files.exists(starfarerApiJar)) {
+            return false;
+        }
 
-        for (String childFolderName : childFolderNames) {
-            Path childFolderPath = folderPath.resolve(childFolderName);
-            if (!Files.isDirectory(childFolderPath)) {
-                return false;
-            }
+        Path modInfo = folderPath.resolve("mod_info.json");
+        if (Files.exists(modInfo)) {
+            return false;
         }
 
         return true;

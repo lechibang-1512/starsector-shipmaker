@@ -31,6 +31,7 @@ public abstract class AbstractFilterPanel extends JPanel {
 
         headerPanel.add(this.createLogicToggle(isMatchAny(), matchAny -> {
             setMatchAny(matchAny);
+            applyFilters();
         }));
 
         JPanel selectionButtons = this.getSelectionButtonsPanel();
@@ -38,24 +39,19 @@ public abstract class AbstractFilterPanel extends JPanel {
 
         this.add(headerPanel, BorderLayout.NORTH);
 
-        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane = new JTabbedPane();
         initTabs(tabbedPane);
         this.add(tabbedPane, BorderLayout.CENTER);
+    }
 
-        JButton applyButton = new JButton("Apply filters");
-        applyButton.addActionListener(e -> {
-            if (this.logicGroup != null && this.logicGroup.getSelection() == null) {
-                JOptionPane.showMessageDialog(this, 
-                        "Please select 'Match ALL (AND)' or 'Match ANY (OR)' before applying filters.", 
-                        "Validation Error", 
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            applyFilters();
-        });
-        JPanel applyPanel = new JPanel();
-        applyPanel.add(applyButton);
-        this.add(applyPanel, BorderLayout.PAGE_END);
+    protected JTabbedPane tabbedPane;
+
+    protected void rebuildTabs() {
+        tabbedPane.removeAll();
+        allFilterBoxes.clear();
+        initTabs(tabbedPane);
+        tabbedPane.revalidate();
+        tabbedPane.repaint();
     }
 
     protected abstract void applyFilters();
@@ -81,15 +77,24 @@ public abstract class AbstractFilterPanel extends JPanel {
     protected JPanel getSelectionButtonsPanel() {
         JButton selectAll = new JButton();
         selectAll.setText("Select all");
-        selectAll.addActionListener(e -> this.toggleAll(true));
+        selectAll.addActionListener(e -> {
+            this.toggleAll(true);
+            applyFilters();
+        });
 
         JButton deselectAll = new JButton();
         deselectAll.setText("Deselect all");
-        deselectAll.addActionListener(e -> this.toggleAll(false));
+        deselectAll.addActionListener(e -> {
+            this.toggleAll(false);
+            applyFilters();
+        });
 
         JButton invert = new JButton();
         invert.setText("Invert");
-        invert.addActionListener(e -> this.invertAll());
+        invert.addActionListener(e -> {
+            this.invertAll();
+            applyFilters();
+        });
 
         JPanel buttonContainer = new JPanel();
         buttonContainer.setLayout(new BoxLayout(buttonContainer, BoxLayout.LINE_AXIS));
@@ -179,6 +184,7 @@ public abstract class AbstractFilterPanel extends JPanel {
             checkBox.setSelected(selected != null ? selected : true);
             checkBox.addActionListener(e -> {
                 filtersMap.put(item, checkBox.isSelected());
+                applyFilters();
             });
 
             if (iconFunction != null) {

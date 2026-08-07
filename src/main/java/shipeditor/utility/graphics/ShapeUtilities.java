@@ -11,10 +11,6 @@ import java.awt.geom.*;
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public final class ShapeUtilities {
 
-    private static final AffineTransform CACHED_WTS = new AffineTransform();
-
-    private static final AffineTransform CACHED_SCALE = new AffineTransform();
-
     private ShapeUtilities() {
     }
 
@@ -49,12 +45,10 @@ public final class ShapeUtilities {
      * @return new AffineTransform that represents the scaled version of the original world-to-screen transformation.
      */
     public static AffineTransform getScaledWtS(Point2D center, AffineTransform worldToScreen, float scale) {
-        CACHED_SCALE.setToIdentity();
-        AffineTransform scaleTX = ShapeUtilities.getScaled(center, CACHED_SCALE, scale, scale);
-        CACHED_WTS.setToIdentity();
-        CACHED_WTS.setTransform(worldToScreen);
-        CACHED_WTS.concatenate(scaleTX);
-        return CACHED_WTS;
+        AffineTransform scaleTX = ShapeUtilities.getScaled(center, new AffineTransform(), scale, scale);
+        AffineTransform result = new AffineTransform(worldToScreen);
+        result.concatenate(scaleTX);
+        return result;
     }
 
     public static AffineTransform getScaled(Point2D center, AffineTransform scaleTransform,

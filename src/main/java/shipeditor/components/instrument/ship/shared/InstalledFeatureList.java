@@ -179,8 +179,10 @@ public class InstalledFeatureList extends SortableList<InstalledFeature> {
         JMenuItem selectEntry = getSelectEntryOption(selected);
         menu.add(selectEntry);
 
-        shipeditor.components.datafiles.entities.WeaponCSVEntry pickedForInstall = 
-                shipeditor.components.viewer.layers.ship.FeaturesOverseer.getWeaponForInstall();
+        shipeditor.components.datafiles.entities.WeaponCSVEntry pickedForInstall = null;
+        if (shipeditor.utility.overseers.StaticController.getActiveLayer() instanceof shipeditor.components.viewer.layers.ship.ShipLayer layer) {
+            pickedForInstall = layer.getFeaturesOverseer().getWeaponForInstall();
+        }
         if (pickedForInstall != null) {
             JMenuItem replacePoint = new JMenuItem("Replace with Picked Weapon");
             replacePoint.addActionListener(event -> actOnSelectedEntry(feature -> {

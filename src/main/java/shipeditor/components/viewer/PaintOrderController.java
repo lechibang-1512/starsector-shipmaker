@@ -42,6 +42,9 @@ public class PaintOrderController implements OpenGLPainter {
     @Getter @Setter
     private static boolean showBackgroundImage = true;
 
+    @Getter @Setter
+    private static boolean hideNonBuiltInWeapons = false;
+
     @SuppressWarnings("TypeMayBeWeakened")
     private final DraggedObjectsPainter draggedObjectsPainter = new DraggedObjectsPainter();
 
@@ -87,8 +90,6 @@ public class PaintOrderController implements OpenGLPainter {
         if (showBackgroundImage) {
             paintBackgroundImage(shapeRenderer, projection, view, w, h);
         }
-
-        PaintOrderController.paintIfPresent(spriteRenderer, shapeRenderer, projection, view, guidesPainters.getAxesPaint());
 
         LayerManager layerManager = parent.getLayerManager();
         List<ViewerLayer> layers = layerManager.getLayers();

@@ -30,22 +30,15 @@ import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.communication.events.viewer.ViewerRepaintQueued;
 
-import javax.swing.AbstractAction;
-import javax.swing.JComponent;
-import javax.swing.KeyStroke;
 import javax.swing.Timer;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import javax.swing.InputMap;
-import javax.swing.ActionMap;
-import java.awt.KeyboardFocusManager;
 import shipeditor.communication.events.components.ComponentEvents.DeleteButtonPressed;
 import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
 import shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued;
@@ -65,8 +58,6 @@ import shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransf
  * publishing it on event bus;
  * Interested classes like painters and viewer entities should listen for that
  * input.
- * However, given the constraints and the fact that current implementation works
- * fine, best to leave things be.
  */
 
 @SuppressWarnings({ "OverlyCoupledClass", "OverlyComplexClass" })
@@ -132,23 +123,11 @@ public final class LayerViewerControls implements ViewerControl {
         this.parentViewer = parent;
         this.rotationEnabled = true;
         this.initListeners();
-        this.initLayerCursorListener();
-        this.initKeyBinding();
+        this.initListeners();
+        this.initKeystrokeListener();
     }
 
-    private void initKeyBinding() {
-        InputMap inputMap = parentViewer.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        String deleteKey = "Backspace";
-        inputMap.put(KeyStroke.getKeyStroke((char) KeyEvent.VK_BACK_SPACE), deleteKey);
-        ActionMap actionMap = parentViewer.getActionMap();
-        actionMap.put(deleteKey, new DeleteAction());
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_DOWN_MASK), "copyCommand");
-        actionMap.put("copyCommand", new CopyAction());
-
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, java.awt.event.InputEvent.CTRL_DOWN_MASK), "pasteCommand");
-        actionMap.put("pasteCommand", new PasteAction());
-    }
 
     /**
      * @param parent Viewer which is manipulated via this instance of controls
@@ -180,26 +159,48 @@ public final class LayerViewerControls implements ViewerControl {
         });
     }
 
-    private void initLayerCursorListener() {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(ke -> {
-            int keyCode = ke.getKeyCode();
-            boolean isLayerDragHotkey = keyCode == layerDragHotkey;
-            switch (ke.getID()) {
-                case KeyEvent.KEY_PRESSED:
-                    if (isLayerDragHotkey) {
-                        this.parentViewer.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+    private void initKeystrokeListener() {
+        EventBus.subscribe(this, event -> {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
+                int keyCode = pressedEvent.keyEvent().getKeyCode();
+                boolean isCtrlDown = pressedEvent.keyEvent().isControlDown();
+                java.awt.Component focusOwner = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                boolean isTextFieldFocused = focusOwner instanceof javax.swing.text.JTextComponent;
+
+                if (keyCode == layerDragHotkey) {
+                    this.parentViewer.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+                    this.parentViewer.setRepaintQueued();
+                } else if (!isTextFieldFocused) {
+                    if (keyCode == KeyEvent.VK_BACK_SPACE) {
+                        EventBus.publish(new PointRemoveQueued(null, false));
+                        EventBus.publish(new DeleteButtonPressed());
+                    } else if (keyCode == KeyEvent.VK_C && isCtrlDown) {
+                        if (StaticController.getEditorMode() == EditorInstrument.WEAPON_SLOTS) {
+                            WeaponSlotPainter painter = StaticController.getSelectedSlotPainter();
+                            if (painter != null) {
+                                WeaponSlotPoint selected = painter.getSelected();
+                                if (selected != null) {
+                                    WeaponSlotClipboard.copy(java.util.List.of(selected));
+                                }
+                            }
+                        }
+                    } else if (keyCode == KeyEvent.VK_V && isCtrlDown) {
+                        if (StaticController.getEditorMode() == EditorInstrument.WEAPON_SLOTS) {
+                            WeaponSlotPainter painter = StaticController.getSelectedSlotPainter();
+                            if (painter != null && WeaponSlotClipboard.hasData()) {
+                                Point2D target = StaticController.getFinalWorldCursor();
+                                painter.pasteSlots(WeaponSlotClipboard.getClipboard(), target);
+                            }
+                        }
                     }
-                    break;
-                case KeyEvent.KEY_RELEASED:
-                    if (isLayerDragHotkey) {
-                        this.parentViewer.setCursor(Cursor.getDefaultCursor());
-                    }
-                    break;
-                default:
-                    break;
+                }
+            } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
+                int keyCode = releasedEvent.keyEvent().getKeyCode();
+                if (keyCode == layerDragHotkey) {
+                    this.parentViewer.setCursor(Cursor.getDefaultCursor());
+                    this.parentViewer.setRepaintQueued();
+                }
             }
-            this.parentViewer.setRepaintQueued();
-            return false;
         });
     }
 
@@ -252,6 +253,9 @@ public final class LayerViewerControls implements ViewerControl {
                         clickedPainter.removePointFromSelection(clickedPoint);
                     } else if (clickedPainter != null) {
                         clickedPainter.addPointToSelection(clickedPoint);
+                        if (e.isControlDown()) {
+                            clickedPainter.setSelected(clickedPoint);
+                        }
                     }
                     this.pointDragActive = false; // toggle selection, don't drag
                     EventBus.publish(new ViewerRepaintQueued());
@@ -268,8 +272,18 @@ public final class LayerViewerControls implements ViewerControl {
         }
 
         // Only publish creation event if not left clicking on a point
-        if (e.getButton() == MouseEvent.BUTTON1 && clickedPoint == null) {
-            this.publishMousePressWithPosition(e, point);
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            if (clickedPoint == null) {
+                this.publishMousePressWithPosition(e, point);
+            } else if (e.isControlDown()) {
+                AffineTransform screenToWorld = StaticController.getScreenToWorld();
+                Point2D position = screenToWorld.transform(point, null);
+                if (ControlPredicates.isCursorSnappingEnabled()) {
+                    Point2D screenPoint = this.getAdjustedCursor();
+                    position = Utility.correctAdjustedCursor(screenPoint, screenToWorld);
+                }
+                EventBus.publish(new FeatureInstallQueued(position));
+            }
         }
         if (ControlPredicates.removePointPredicate.test(e)) {
             EventBus.publish(new PointRemoveQueued(null, false));
@@ -642,50 +656,6 @@ public final class LayerViewerControls implements ViewerControl {
         }
     }
 
-    private static class DeleteAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            EventBus.publish(new PointRemoveQueued(null, false));
-            EventBus.publish(new DeleteButtonPressed());
-        }
-    }
 
-    private static class CopyAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            java.awt.Component focusOwner = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                    .getFocusOwner();
-            if (focusOwner instanceof javax.swing.text.JTextComponent) {
-                return;
-            }
-            if (StaticController.getEditorMode() == EditorInstrument.WEAPON_SLOTS) {
-                WeaponSlotPainter painter = StaticController.getSelectedSlotPainter();
-                if (painter != null) {
-                    WeaponSlotPoint selected = painter.getSelected();
-                    if (selected != null) {
-                        WeaponSlotClipboard.copy(java.util.List.of(selected));
-                    }
-                }
-            }
-        }
-    }
-
-    private static class PasteAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            java.awt.Component focusOwner = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                    .getFocusOwner();
-            if (focusOwner instanceof javax.swing.text.JTextComponent) {
-                return;
-            }
-            if (StaticController.getEditorMode() == EditorInstrument.WEAPON_SLOTS) {
-                WeaponSlotPainter painter = StaticController.getSelectedSlotPainter();
-                if (painter != null && WeaponSlotClipboard.hasData()) {
-                    Point2D target = StaticController.getFinalWorldCursor();
-                    painter.pasteSlots(WeaponSlotClipboard.getClipboard(), target);
-                }
-            }
-        }
-    }
 
 }

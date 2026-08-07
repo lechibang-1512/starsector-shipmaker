@@ -5,6 +5,8 @@ import shipeditor.components.viewer.ViewerEnums.FeatureOverrideState;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
+import org.joml.Vector4f;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -201,7 +203,7 @@ public final class InstalledFeature implements InstallableEntry {
         return result;
     }
 
-    void refreshPaintCircumstance(WeaponSlotPoint slotPoint) {
+    public void refreshPaintCircumstance(WeaponSlotPoint slotPoint) {
         LayerPainter painter = this.getFeaturePainter();
         painter.setShouldDrawPainter(false);
         if (slotPoint == null) {
@@ -213,13 +215,18 @@ public final class InstalledFeature implements InstallableEntry {
     }
 
     private static void configurePainterBySlot(WeaponSlotPoint slotPoint, LayerPainter painter) {
-        Point2D position = slotPoint.getPosition();
-        Point2D entityCenter = painter.getCenterAnchorDifference();
         if (painter instanceof WeaponPainter weaponPainter) {
             weaponPainter.setMount(slotPoint.getWeaponMount());
         }
-        double x = position.getX() - entityCenter.getX();
-        double y = position.getY() - entityCenter.getY();
+        Point2D position = slotPoint.getPosition();
+        // Offset from anchor (top-left) to rotation pivot — positions the anchor such that
+        // the rotation pivot lands exactly on the slot point.
+        Point2D rotationAnchor = painter.getRotationAnchor();
+        Point2D layerAnchor = painter.getAnchor();
+        double offsetX = rotationAnchor.getX() - layerAnchor.getX();
+        double offsetY = rotationAnchor.getY() - layerAnchor.getY();
+        double x = position.getX() - offsetX;
+        double y = position.getY() - offsetY;
         Point2D newAnchor = new Point2D.Double(x, y);
         Point2D painterAnchor = painter.getAnchor();
         if (!painterAnchor.equals(newAnchor)) {
@@ -291,25 +298,46 @@ public final class InstalledFeature implements InstallableEntry {
         }
     }
 
+    private List<java.awt.geom.Point2D> moduleOutlineCache = null;
+
     private void drawSelectionBounds(ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view, LayerPainter layerPainter) {
         Point2D anchor = layerPainter.getAnchor();
         int width = layerPainter.getSpriteWidth();
         int height = layerPainter.getSpriteHeight();
         double rotationRadians = layerPainter.getRotationRadians();
-        Point2D center = layerPainter.getSpriteCenter();
+        Point2D rotAnchor = layerPainter.getRotationAnchor();
 
         Matrix4f rotatedView = new Matrix4f(view)
+            .translate((float) rotAnchor.getX(), (float) rotAnchor.getY(), 0.0f)
             .rotate((float) rotationRadians, 0.0f, 0.0f, 1.0f)
-            .translate((float) -center.getX(), (float) -center.getY(), 0.0f);
+            .translate((float) -rotAnchor.getX(), (float) -rotAnchor.getY(), 0.0f);
 
         shapeRenderer.begin(projection, rotatedView);
 
-        org.joml.Vector2f pos = new org.joml.Vector2f((float) anchor.getX(), (float) anchor.getY());
-        org.joml.Vector2f size = new org.joml.Vector2f((float) width, (float) height);
+        Vector4f outlineColor = new Vector4f(1.0f, 0.0f, 0.0f, 1.0f);
 
-        org.joml.Vector4f outlineColor = new org.joml.Vector4f(1.0f, 0.0f, 0.0f, 1.0f);
-        
-        shapeRenderer.drawRect(pos, size, outlineColor, false);
+        if (moduleOutlineCache == null) {
+            java.awt.image.BufferedImage img = null;
+            if (layerPainter instanceof shipeditor.components.viewer.layers.ship.ShipPainter sp) {
+                img = sp.getSprite().getImage();
+            }
+            if (img != null) {
+                moduleOutlineCache = shipeditor.utility.graphics.SpriteOutlineTracer.generateExactContour(img);
+            }
+        }
+
+        if (moduleOutlineCache != null && moduleOutlineCache.size() >= 3) {
+            org.lwjgl.opengl.GL11.glLineWidth(shipeditor.utility.graphics.GraphicConstants.LINE_WIDTH_THICK);
+            Vector2f offset = new Vector2f((float) anchor.getX(), (float) anchor.getY());
+            shapeRenderer.drawLineLoop(moduleOutlineCache, offset, outlineColor);
+            org.lwjgl.opengl.GL11.glLineWidth(shipeditor.utility.graphics.GraphicConstants.LINE_WIDTH_DEFAULT);
+        } else {
+            // Fallback to bounding box if bounds generation fails
+            Vector2f pos = new Vector2f((float) anchor.getX(), (float) anchor.getY());
+            Vector2f size = new Vector2f((float) width, (float) height);
+            shapeRenderer.drawRect(pos, size, outlineColor, false);
+        }
+
         shapeRenderer.end();
     }
 

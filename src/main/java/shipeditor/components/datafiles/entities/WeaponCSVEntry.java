@@ -3,6 +3,7 @@ package shipeditor.components.datafiles.entities;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
 import shipeditor.components.viewer.entities.weapon.OffsetPoint;
@@ -28,7 +29,6 @@ import shipeditor.utility.text.StringValues;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import java.awt.Graphics2D;
@@ -48,6 +48,7 @@ import org.joml.Matrix4f;
 
 @SuppressWarnings("OverlyCoupledClass")
 @Getter
+@Log4j2
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
 
@@ -86,6 +87,18 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
         this.specFile = weaponSpecFile;
     }
 
+    public WeaponSpecFile getSpecFile() {
+        if (specFile == null) {
+            Path filePath = shipeditor.persistence.database.DatabaseQueryService.getFilePathForEntity(weaponID, StringConstants.WEAPON_TYPE);
+            if (filePath != null) {
+                specFile = FileLoading.loadWeaponFile(filePath.toFile());
+            } else {
+                log.error("Failed to locate weapon file path for ID: {}", weaponID);
+            }
+        }
+        return specFile;
+    }
+
     @Override
     public String getMultilineTooltip() {
         return getMultilineTooltip(null);
@@ -103,13 +116,29 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
         return Utility.getWithLinebreaks(entryID, type, size);
     }
 
-    public WeaponType getType() {
-        WeaponType mountTypeOverride = specFile.getMountTypeOverride();
-        if (mountTypeOverride != null) {
-            return mountTypeOverride;
-        } else {
-            return specFile.getType();
+    public WeaponType getLazyType() {
+        String typeString = this.rowData.get("type");
+        if (typeString != null) {
+            WeaponType val = WeaponType.value(typeString);
+            if (val != null) {
+                return val;
+            }
         }
+        return WeaponType.BALLISTIC; // Fallback
+    }
+
+    public WeaponType getType() {
+        WeaponSpecFile loadedSpec = getSpecFile();
+        if (loadedSpec != null) {
+            WeaponType mountTypeOverride = loadedSpec.getMountTypeOverride();
+            if (mountTypeOverride != null) {
+                return mountTypeOverride;
+            } else {
+                WeaponType val = loadedSpec.getType();
+                if (val != null) return val;
+            }
+        }
+        return getLazyType();
     }
 
     public int getOPCost() {
@@ -124,7 +153,17 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
     }
 
     public WeaponSize getSize() {
-        return specFile.getSize();
+        WeaponSpecFile loadedSpec = getSpecFile();
+        if (loadedSpec != null) {
+            WeaponSize val = loadedSpec.getSize();
+            if (val != null) return val;
+        }
+        String sizeString = this.rowData.get("size");
+        if (sizeString != null) {
+            WeaponSize val = WeaponSize.value(sizeString);
+            if (val != null) return val;
+        }
+        return WeaponSize.SMALL; // Fallback
     }
 
     public WeaponSprites getSprites() {
@@ -175,7 +214,8 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
             Graphics2D g2d = combinedImage.createGraphics();
 
             boolean barrelsBelow = false;
-            var renderHints = specFile.getRenderHints();
+            WeaponSpecFile loadedSpec = getSpecFile();
+            var renderHints = loadedSpec != null ? loadedSpec.getRenderHints() : null;
             if (renderHints != null && renderHints.contains(StringConstants.RENDER_BARREL_BELOW)) {
                 barrelsBelow = true;
             }
@@ -218,25 +258,15 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
 
     @Override
     public WeaponLayer loadLayerFromEntry() {
-        String turretSprite = this.specFile.getTurretSprite();
+        WeaponSpecFile loadedSpec = getSpecFile();
+        String turretSprite = loadedSpec != null ? loadedSpec.getTurretSprite() : null;
 
         Sprite sprite = null;
 
-        if (turretSprite == null || turretSprite.isEmpty()) {
-            JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Layer initialization warning, sprite file not defined for: " + this.getWeaponID() + ".\nIt will be loaded with missing graphics.",
-                    StringValues.FILE_LOADING_ERROR,
-                    JOptionPane.WARNING_MESSAGE);
-        } else {
+        if (turretSprite != null && !turretSprite.isEmpty()) {
             Path spriteFilePath = Path.of(turretSprite);
             File spriteFile = FileLoading.fetchDataFile(spriteFilePath, this.packageFolderPath);
-
-            if (spriteFile == null) {
-                JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                        "Layer initialization warning, sprite file not found for: " + this.getWeaponID() + ".\nIt will be loaded with missing graphics.",
-                        StringValues.FILE_LOADING_ERROR,
-                        JOptionPane.WARNING_MESSAGE);
-            } else {
+            if (spriteFile != null) {
                 sprite = FileLoading.loadSprite(spriteFile);
             }
         }
@@ -246,9 +276,9 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
             throw new IllegalStateException("Layer manager is not found during runtime!");
         }
         WeaponLayer newLayer = manager.createWeaponLayer();
-        newLayer.setSpecFile(specFile);
+        newLayer.setSpecFile(loadedSpec);
 
-        WeaponPainter weaponPainter = createPainterFromEntry(newLayer, specFile);
+        WeaponPainter weaponPainter = createPainterFromEntry(newLayer, loadedSpec);
         newLayer.setPainter(weaponPainter);
 
         manager.setActiveLayer(newLayer);
@@ -293,7 +323,8 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
         WeaponCSVEntry.initializeOffsets(weaponPainter, WeaponMount.HIDDEN,
                 hiddenOffsets, hiddenAngles);
 
-        var renderHints = specFile.getRenderHints();
+        WeaponSpecFile loadedSpec = getSpecFile();
+        var renderHints = loadedSpec != null ? loadedSpec.getRenderHints() : null;
         if (renderHints != null && !renderHints.isEmpty()) {
             List<WeaponRenderHints> hintEnums = new ArrayList<>();
             renderHints.forEach(hintText -> {
@@ -306,20 +337,25 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
             weaponPainter.setRenderHints(hintEnums);
         }
 
-        ProjectileSpecFile projectileSpec = GameDataRepository.getProjectileByID(specFile.getProjectileSpecId());
+        ProjectileSpecFile projectileSpec = null;
+        if (loadedSpec != null && loadedSpec.getProjectileSpecId() != null) {
+            projectileSpec = GameDataRepository.getProjectileByID(loadedSpec.getProjectileSpecId());
+        }
         if (projectileSpec != null) {
             String sprite = projectileSpec.getSprite();
             if (sprite != null && !sprite.isEmpty()) {
                 Path projectileSpecSpritePath = Path.of(sprite);
                 Path containingPackage = projectileSpec.getContainingPackage();
                 File file = FileLoading.fetchDataFile(projectileSpecSpritePath, containingPackage);
-                Sprite projectileSprite = FileLoading.loadSprite(file);
+                if (file != null) {
+                    Sprite projectileSprite = FileLoading.loadSprite(file);
 
-                double spriteWidth = projectileSpec.getSize()[0];
-                double spriteHeight = projectileSpec.getSize()[1];
-                ProjectilePainter projectilePainter = new ProjectilePainter(projectileSprite,
-                        projectileSpec.getCenter(), new Size2D(spriteWidth, spriteHeight));
-                weaponPainter.setProjectilePainter(projectilePainter);
+                    double spriteWidth = projectileSpec.getSize()[0];
+                    double spriteHeight = projectileSpec.getSize()[1];
+                    ProjectilePainter projectilePainter = new ProjectilePainter(projectileSprite,
+                            projectileSpec.getCenter(), new Size2D(spriteWidth, spriteHeight));
+                    weaponPainter.setProjectilePainter(projectilePainter);
+                }
             }
         }
 

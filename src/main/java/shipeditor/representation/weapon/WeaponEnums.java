@@ -31,7 +31,13 @@ public class WeaponEnums {
     RENDER_LOADED_MISSILES,
     RENDER_LOADED_MISSILES_UNLESS_HIDDEN,
     SUSPEND_RECOIL,
-    NEVER_RENDER_IN_CAMPAIGN
+    NEVER_RENDER_IN_CAMPAIGN;
+
+    public static boolean shouldRenderMissiles(java.util.List<WeaponRenderHints> hints, WeaponMount mount) {
+        if (hints == null || hints.isEmpty()) return false;
+        return hints.contains(RENDER_LOADED_MISSILES) || 
+               (mount != WeaponMount.HIDDEN && hints.contains(RENDER_LOADED_MISSILES_UNLESS_HIDDEN));
+    }
 }
 
 
@@ -172,41 +178,40 @@ public class WeaponEnums {
         WeaponType weaponType = weaponEntry.getType();
 
         int sizeDifference = WeaponSize.getSizeDifference(slotPoint.getWeaponSize(), weaponEntry.getSize());
-        boolean isSameOrSmaller = 1 >= sizeDifference && sizeDifference >= 0;
-        boolean isSameSize = sizeDifference == 0;
+        boolean isSameOrSmaller = sizeDifference >= 0;
 
         boolean result;
 
         switch (slotType) {
             case BALLISTIC -> {
                 result = (weaponType == WeaponType.BALLISTIC && isSameOrSmaller)
-                        || (weaponType == WeaponType.HYBRID && isSameSize)
-                        || (weaponType == WeaponType.COMPOSITE && isSameSize);
+                        || (weaponType == WeaponType.HYBRID && isSameOrSmaller)
+                        || (weaponType == WeaponType.COMPOSITE && isSameOrSmaller);
             }
             case ENERGY -> {
                 result = (weaponType == WeaponType.ENERGY && isSameOrSmaller)
-                        || (weaponType == WeaponType.HYBRID && isSameSize)
-                        || (weaponType == WeaponType.SYNERGY && isSameSize);
+                        || (weaponType == WeaponType.HYBRID && isSameOrSmaller)
+                        || (weaponType == WeaponType.SYNERGY && isSameOrSmaller);
             }
             case MISSILE -> {
                 result = (weaponType == WeaponType.MISSILE && isSameOrSmaller)
-                        || (weaponType == WeaponType.COMPOSITE && isSameSize)
-                        || (weaponType == WeaponType.SYNERGY && isSameSize);
+                        || (weaponType == WeaponType.COMPOSITE && isSameOrSmaller)
+                        || (weaponType == WeaponType.SYNERGY && isSameOrSmaller);
             }
             case HYBRID -> {
                 result = (weaponType == WeaponType.HYBRID && isSameOrSmaller)
-                        || (weaponType == WeaponType.BALLISTIC && isSameSize)
-                        || (weaponType == WeaponType.ENERGY && isSameSize);
+                        || (weaponType == WeaponType.BALLISTIC && isSameOrSmaller)
+                        || (weaponType == WeaponType.ENERGY && isSameOrSmaller);
             }
             case COMPOSITE -> {
                 result = (weaponType == WeaponType.COMPOSITE && isSameOrSmaller)
-                        || (weaponType == WeaponType.BALLISTIC && isSameSize)
-                        || (weaponType == WeaponType.MISSILE && isSameSize);
+                        || (weaponType == WeaponType.BALLISTIC && isSameOrSmaller)
+                        || (weaponType == WeaponType.MISSILE && isSameOrSmaller);
             }
             case SYNERGY -> {
                 result = (weaponType == WeaponType.SYNERGY && isSameOrSmaller)
-                        || (weaponType == WeaponType.ENERGY && isSameSize)
-                        || (weaponType == WeaponType.MISSILE && isSameSize);
+                        || (weaponType == WeaponType.ENERGY && isSameOrSmaller)
+                        || (weaponType == WeaponType.MISSILE && isSameOrSmaller);
             }
             case UNIVERSAL -> {
                 result = (weaponType == WeaponType.UNIVERSAL && isSameOrSmaller)
@@ -215,10 +220,11 @@ public class WeaponEnums {
                         && weaponType != WeaponType.DECORATIVE
                         && weaponType != WeaponType.SYSTEM
                         && weaponType != WeaponType.STATION_MODULE
-                        && isSameSize);
+                        && isSameOrSmaller);
             }
             case BUILT_IN -> result = (weaponType != WeaponType.DECORATIVE && isSameOrSmaller);
             case DECORATIVE -> result = (weaponType == WeaponType.DECORATIVE);
+            case SYSTEM -> result = (weaponType == WeaponType.SYSTEM && isSameOrSmaller);
             default -> {
                 result = false;
             }

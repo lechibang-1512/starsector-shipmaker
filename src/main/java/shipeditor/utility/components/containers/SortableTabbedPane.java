@@ -53,7 +53,7 @@ public abstract class SortableTabbedPane extends JTabbedPane {
     }
 
     @Getter @Setter
-    private int dragTabIndex = -1;
+    private volatile int dragTabIndex = -1;
 
     private Rectangle backwardScroller = new Rectangle();
     private Rectangle forwardScroller = new Rectangle();

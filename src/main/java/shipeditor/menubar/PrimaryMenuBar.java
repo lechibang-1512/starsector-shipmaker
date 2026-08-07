@@ -9,34 +9,19 @@ import javax.swing.JDialog;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.KeyStroke;
+import java.awt.event.KeyEvent;
 
 @Log4j2
 public final class PrimaryMenuBar extends JMenuBar {
 
     public PrimaryMenuBar() {
-        JMenu fileMenu = PrimaryMenuBar.createFileMenu();
-        fileMenu.setIcon(FontIcon.of(BoxiconsRegular.FILE, 16, Themes.getIconColor()));
-        this.add(fileMenu);
-
-        JMenu editMenu = PrimaryMenuBar.createEditMenu();
-        editMenu.setIcon(FontIcon.of(BoxiconsRegular.EDIT, 16, Themes.getIconColor()));
-        this.add(editMenu);
-
-        JMenu viewMenu = PrimaryMenuBar.createViewMenu();
-        viewMenu.setIcon(FontIcon.of(BoxiconsRegular.SHOW, 16, Themes.getIconColor()));
-        this.add(viewMenu);
-
-        JMenu dataMenu = PrimaryMenuBar.createDataMenu();
-        dataMenu.setIcon(FontIcon.of(BoxiconsRegular.DATA, 16, Themes.getIconColor()));
-        this.add(dataMenu);
-
-        JMenu windowMenu = PrimaryMenuBar.createWindowMenu();
-        windowMenu.setIcon(FontIcon.of(BoxiconsRegular.WINDOWS, 16, Themes.getIconColor()));
-        this.add(windowMenu);
-
-        JMenu helpMenu = PrimaryMenuBar.createHelpMenu();
-        helpMenu.setIcon(FontIcon.of(BoxiconsRegular.HELP_CIRCLE, 16, Themes.getIconColor()));
-        this.add(helpMenu);
+        this.add(PrimaryMenuBar.createFileMenu());
+        this.add(PrimaryMenuBar.createEditMenu());
+        this.add(PrimaryMenuBar.createViewMenu());
+        this.add(PrimaryMenuBar.createLayerMenu());
+        this.add(PrimaryMenuBar.createDataMenu());
+        this.add(PrimaryMenuBar.createHelpMenu());
     }
 
     private static JMenu createFileMenu() {
@@ -57,22 +42,24 @@ public final class PrimaryMenuBar extends JMenuBar {
         return editMenu;
     }
 
+    private static JMenu createLayerMenu() {
+        LayerMenu layerMenu = new LayerMenu();
+        layerMenu.initialize();
+        return layerMenu;
+    }
+
     private static JMenu createDataMenu() {
         DataMenu dataMenu = new DataMenu();
         dataMenu.initialize();
         return dataMenu;
     }
 
-    private static JMenu createWindowMenu() {
-        WindowMenu windowMenu = new WindowMenu();
-        windowMenu.initialize();
-        return windowMenu;
-    }
-
     private static JMenu createHelpMenu() {
         JMenu helpMenu = new JMenu("Help");
         
         JMenuItem helpItem = new JMenuItem("Help");
+        helpItem.setIcon(FontIcon.of(BoxiconsRegular.HELP_CIRCLE, 16, Themes.getIconColor()));
+        helpItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
         helpItem.addActionListener(e -> {
             JDialog dialog = new JDialog();
             dialog.setTitle("Help");
@@ -85,6 +72,7 @@ public final class PrimaryMenuBar extends JMenuBar {
         helpMenu.add(helpItem);
         
         JMenuItem logsItem = new JMenuItem("Logs");
+        logsItem.setIcon(FontIcon.of(BoxiconsRegular.FILE_BLANK, 16, Themes.getIconColor()));
         logsItem.addActionListener(e -> {
             JDialog dialog = new JDialog();
             dialog.setTitle("Logs");

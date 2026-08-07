@@ -3,7 +3,6 @@ package shipeditor.persistence.database;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import java.nio.file.Path;
 import java.util.UUID;
@@ -17,7 +16,6 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
-@ToString
 public class IndexedFile {
 
     private final UUID uuid;
@@ -36,8 +34,16 @@ public class IndexedFile {
 
     private final long lastModified;
 
-    private final String parsedData;
-
     private final String fileHash;
 
+    private final String spritePath;
+
+    private final String designation;
+
+    private final String metadataJson;
+
+    @Override
+    public String toString() {
+        return entityName != null ? entityName : entityId;
+    }
 }

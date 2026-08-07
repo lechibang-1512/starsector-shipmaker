@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 0.0.1f)'
+        required: true
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set Release Version
+        id: set_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          fi
+
+      - name: Build with Maven
+        run: mvn -B clean package -DskipTests
+
+      - name: Extract Release Notes
+        run: |
+          mkdir -p releases
+          awk '/^## \['"${VERSION}"'\]/{flag=1; next} /^## \[/{if(flag) exit} flag' CHANGELOG.md > releases/release_notes.md
+          
+          if [ ! -s releases/release_notes.md ]; then
+            echo "Release notes for version ${VERSION} not found in CHANGELOG.md" > releases/release_notes.md
+          fi
+
+      - name: Package Release
+        run: |
+          set -euo pipefail
+          
+          FOLDER_NAME="ship-editor-${VERSION}"
+          mkdir -p "releases/${FOLDER_NAME}"
+          
+          # Copy jar
+          if [ -f "ship_editor.jar" ]; then
+            cp ship_editor.jar "releases/${FOLDER_NAME}/"
+          elif [ -f "target/ship_editor-${VERSION}.jar" ]; then
+            cp "target/ship_editor-${VERSION}.jar" "releases/${FOLDER_NAME}/ship_editor.jar"
+          else
+            echo "::error::JAR file not found! Build may have failed."
+            exit 1
+          fi
+          
+          # Copy mandatory files
+          cp ship_editor.bat "releases/${FOLDER_NAME}/"
+          cp ship_editor.sh "releases/${FOLDER_NAME}/"
+          cp ship_editor.command "releases/${FOLDER_NAME}/"
+          cp CHANGELOG.md "releases/${FOLDER_NAME}/"
+          cp LICENSE "releases/${FOLDER_NAME}/"
+          cp README.md "releases/${FOLDER_NAME}/"
+          
+          # Guarantee execution permissions for Linux/macOS users
+          chmod +x "releases/${FOLDER_NAME}/ship_editor.sh" "releases/${FOLDER_NAME}/ship_editor.command"
+          
+          # Create zip
+          cd releases
+          zip -r "ship-editor-${VERSION}.zip" "${FOLDER_NAME}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
+          body_path: releases/release_notes.md
+          files: releases/ship-editor-${{ env.VERSION }}.zip

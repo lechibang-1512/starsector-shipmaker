@@ -8,12 +8,10 @@ import shipeditor.persistence.GameDataPackage;
 import shipeditor.persistence.Settings;
 import shipeditor.persistence.SettingsManager;
 
-import javax.swing.Action;
 import javax.swing.JPanel;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.Component;
 import java.nio.file.Path;
@@ -26,8 +24,6 @@ public abstract class CSVDataTreePanel<T extends CSVEntry> extends DataTreePanel
     CSVDataTreePanel(String rootName) {
         super(rootName);
     }
-
-    protected abstract Action getLoadDataAction();
 
     protected abstract String getEntryTypeName();
 
@@ -45,7 +41,13 @@ public abstract class CSVDataTreePanel<T extends CSVEntry> extends DataTreePanel
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
                                                       boolean expanded, boolean leaf, int row, boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-            Object object = ((DefaultMutableTreeNode) value).getUserObject();
+            if (!(value instanceof DefaultMutableTreeNode treeNode)) {
+                return this;
+            }
+            Object object = treeNode.getUserObject();
+            if (object == null) {
+                return this;
+            }
             DataTreePanel.configureCellRendererColors(object, this);
             return this;
         }
@@ -65,21 +67,7 @@ public abstract class CSVDataTreePanel<T extends CSVEntry> extends DataTreePanel
 
     @Override
     protected JPanel createTopPanel() {
-        return null;
-    }
-
-    @Override
-    public void reload() {
-        Map<Path, List<T>> packages = getPackageList();
-        populateEntries(packages);
-    }
-
-    void populateEntries(Map<Path, List<T>> entriesByPackage) {
-        DefaultMutableTreeNode rootNode = getRootNode();
-        rootNode.removeAllChildren();
-        loadAllEntries(entriesByPackage);
-        sortAndExpandTree();
-        repaint();
+        return new JPanel();
     }
 
     protected abstract Map<String, T> getRepository();
@@ -88,27 +76,46 @@ public abstract class CSVDataTreePanel<T extends CSVEntry> extends DataTreePanel
 
     protected abstract void setLoadedStatus();
 
-    protected void loadAllEntries(Map<Path, List<T>> entries) {
+    @Override
+    protected java.util.List<DefaultMutableTreeNode> buildTreeNodesBackground() {
+        Map<Path, List<T>> entriesByPackage = getPackageList();
+        
+        log.info("buildTreeNodesBackground called in {} with {} packages", this.getClass().getSimpleName(),
+                entriesByPackage == null ? "null" : entriesByPackage.size());
+        
+        if (entriesByPackage == null || entriesByPackage.isEmpty()) {
+            DataTreePanel.debuggerHook();
+            return java.util.Collections.emptyList();
+        }
+
+        int totalEntries = entriesByPackage.values().stream().mapToInt(list -> list.size()).sum();
+        log.info("Total entries to load: {}", totalEntries);
+
         Map<String, T> entriesRepository = getRepository();
-        for (Map.Entry<Path, List<T>> entry : entries.entrySet()) {
-            Settings settings = SettingsManager.getSettings();
+        java.util.List<DefaultMutableTreeNode> packageRoots = new java.util.ArrayList<>();
+
+        for (Map.Entry<Path, List<T>> entry : entriesByPackage.entrySet()) {
             Path path = entry.getKey();
             String folderName = FileUtilities.extractFolderName(path.toString());
-            GameDataPackage dataPackage = settings.getPackage(folderName);
-            if (dataPackage == null || dataPackage.isDisabled()) {
+            if (!SettingsManager.isModActive(folderName)) {
                 continue;
             }
 
-            DefaultMutableTreeNode packageRoot = createPackageNode(entry, entriesRepository);
-            DefaultMutableTreeNode rootNode = getRootNode();
-            rootNode.add(packageRoot);
+            for (T item : entry.getValue()) {
+                if (item.getID() != null) {
+                    entriesRepository.putIfAbsent(item.getID(), item);
+                }
+            }
+            packageRoots.add(createPackageNode(entry));
         }
-        log.info("Total {} {} entries registered.", entriesRepository.size(), getEntryTypeName());
+
         setLoadedStatus();
+        log.info("Total {} {} entries registered.", entriesRepository.size(), getEntryTypeName());
+        
+        return packageRoots;
     }
 
-    private DefaultMutableTreeNode createPackageNode(Map.Entry<Path, List<T>> entryFolder,
-                                                     Map<String, T> entriesRepository) {
+    private DefaultMutableTreeNode createPackageNode(Map.Entry<Path, List<T>> entryFolder) {
         Path path = entryFolder.getKey();
         String packagePath = path.toString();
         String folderName = FileUtilities.extractFolderName(packagePath);
@@ -118,19 +125,18 @@ public abstract class CSVDataTreePanel<T extends CSVEntry> extends DataTreePanel
         if (SettingsManager.isCoreFolder(folderName)) {
             GameDataPackage corePackage = SettingsManager.getCorePackage();
             result = new DefaultMutableTreeNode(corePackage);
-            for (T entry : entryFolder.getValue()) {
-                MutableTreeNode entryNode = new DefaultMutableTreeNode(entry);
-                entriesRepository.putIfAbsent(entry.getID(), entry);
-                result.add(entryNode);
-            }
         } else {
             GameDataPackage dataPackage = settings.getPackage(folderName);
+            if (dataPackage == null) {
+                dataPackage = new GameDataPackage(folderName, false, false);
+            }
             result = new DefaultMutableTreeNode(dataPackage);
+        }
 
-            for (T entry : entryFolder.getValue()) {
-                MutableTreeNode entryNode = new DefaultMutableTreeNode(entry);
-                entriesRepository.putIfAbsent(entry.getID(), entry);
-                result.add(entryNode);
+        List<T> entries = entryFolder.getValue();
+        if (entries != null && !entries.isEmpty()) {
+            for (T csvEntry : entries) {
+                result.add(new DefaultMutableTreeNode(csvEntry));
             }
         }
 
@@ -155,6 +161,8 @@ public abstract class CSVDataTreePanel<T extends CSVEntry> extends DataTreePanel
             T entryObject = getObjectFromNode(node);
             if (entryObject != null) {
                 updateEntryPanel(entryObject);
+            } else {
+                resetInfoPanel();
             }
         });
     }

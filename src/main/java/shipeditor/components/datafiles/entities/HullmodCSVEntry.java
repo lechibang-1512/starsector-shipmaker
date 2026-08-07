@@ -55,7 +55,7 @@ public class HullmodCSVEntry implements OrdnancedCSVEntry {
     @Override
     public String toString() {
         String displayedName = rowData.get(StringConstants.NAME);
-        if (displayedName.isEmpty()) {
+        if (displayedName == null || displayedName.isEmpty()) {
             displayedName = StringValues.UNTITLED;
         }
         return displayedName;
@@ -111,14 +111,20 @@ public class HullmodCSVEntry implements OrdnancedCSVEntry {
                     File imageFile = this.fetchHullmodSpriteFile();
                     BufferedImage iconImage = FileLoading.loadSpriteAsImage(imageFile);
                     javax.swing.SwingUtilities.invokeLater(() -> {
-                        cachedIconLabel = ComponentUtilities.createIconFromImage(iconImage, name, maxSize);
+                        JLabel newLabel = ComponentUtilities.createIconFromImage(iconImage, name, maxSize);
+                        cachedIconLabel.setIcon(newLabel.getIcon());
+                        cachedIconLabel.setText(newLabel.getText());
+                        cachedIconLabel.setToolTipText(newLabel.getToolTipText());
+                        cachedIconLabel.setBorder(newLabel.getBorder());
+                        cachedIconLabel.setOpaque(newLabel.isOpaque());
+                        cachedIconLabel.setBackground(newLabel.getBackground());
                         isIconLoading = false;
                         shipeditor.communication.EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.WindowRepaintQueued());
                     });
                 } catch (Exception ex) {
                     log.error("Failed to load hullmod icon: " + name, ex);
                     javax.swing.SwingUtilities.invokeLater(() -> {
-                        cachedIconLabel = new JLabel("?");
+                        cachedIconLabel.setText("?");
                         if (name != null && !name.isEmpty()) {
                             cachedIconLabel.setToolTipText(name);
                         }

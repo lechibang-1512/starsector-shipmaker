@@ -5,15 +5,11 @@ import lombok.extern.log4j.Log4j2;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Log4j2
 public final class JsonProcessor {
 
-    private static final Pattern LETTERS_AFTER_DIGIT = Pattern.compile("(\\b\\d+(?:\\.\\d*)?|\\.\\d+)[fFdD](?![a-zA-Z_])");
-    private static final Pattern PERIOD_BEFORE_COMMA = Pattern.compile("(?<=\\d)\\.(?=\\s*,)");
-    private static final Pattern PERIOD_BEFORE_SEPARATOR = Pattern.compile("(?<=\\d)\\.(?=\\s*[\r\n}\\]\\$])");
+
 
     private JsonProcessor() {
     }
@@ -23,37 +19,7 @@ public final class JsonProcessor {
         return straightenMalformedText(text);
     }
 
-    public static String straightenMalformedText(String text) {
-        String preprocessed = JsonProcessor.correctCommentsUnquotedValuesAndSeparators(text);
-        preprocessed = JsonProcessor.correctNumberLetterSignums(preprocessed);
-        preprocessed = JsonProcessor.correctTrailingPeriods(preprocessed);
-        return preprocessed;
-    }
-
-    private static String readFile(File input) {
-        if (input == null || !input.exists()) {
-            log.error("Failed to read file: file does not exist: {}", input != null ? input.getPath() : "null");
-            return "";
-        }
-        try {
-            byte[] bytes = java.nio.file.Files.readAllBytes(input.toPath());
-            return new String(bytes, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            log.error("Failed to read file: {}", input.getName(), e);
-            return "";
-        }
-    }
-
-    private static boolean isWordChar(char c) {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
-    }
-
-    /**
-     * Replaces comments starting with '#', translates spurious semicolons outside quotes to commas,
-     * and wraps unquoted alphanumeric keys/values in double quotes—all in a single fast, linear O(N) sweep.
-     * This avoids the catastrophic backtracking lookup regex engine stalls.
-     */
-    private static String correctCommentsUnquotedValuesAndSeparators(String input) {
+    public static String straightenMalformedText(String input) {
         if (input == null || input.isEmpty()) return "";
         
         StringBuilder sb = new StringBuilder(input.length() + 128);
@@ -102,6 +68,53 @@ public final class JsonProcessor {
                 continue;
             }
 
+            // Process Numbers (strip trailing f/d suffixes and trailing periods)
+            if ((c >= '0' && c <= '9') || c == '-' || c == '+' || c == '.') {
+                int start = i;
+                int curr = i;
+                boolean hasDigit = false;
+
+                while (curr < len) {
+                    char nc = input.charAt(curr);
+                    if (nc >= '0' && nc <= '9') {
+                        hasDigit = true;
+                        curr++;
+                    } else if (nc == '.') {
+                        curr++;
+                    } else if (nc == 'e' || nc == 'E') {
+                        curr++;
+                        if (curr < len && (input.charAt(curr) == '+' || input.charAt(curr) == '-')) {
+                            curr++;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+
+                if (hasDigit) {
+                    int numEnd = curr;
+
+                    // Strip suffix if present (f/F/d/D)
+                    if (curr < len) {
+                        char nc = input.charAt(curr);
+                        if (nc == 'f' || nc == 'F' || nc == 'd' || nc == 'D') {
+                            if (curr + 1 == len || !isWordChar(input.charAt(curr + 1))) {
+                                curr++; // consume the suffix
+                            }
+                        }
+                    }
+
+                    // Strip trailing period if present
+                    if (numEnd > start && input.charAt(numEnd - 1) == '.') {
+                        numEnd--;
+                    }
+
+                    sb.append(input, start, numEnd);
+                    i = curr;
+                    continue;
+                }
+            }
+
             // Check if it's the start of an identifier: [a-zA-Z_] at a word boundary, and not preceded by a dot
             if (((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_') &&
                 (i == 0 || (input.charAt(i - 1) != '.' && !isWordChar(input.charAt(i - 1))))) {
@@ -132,21 +145,46 @@ public final class JsonProcessor {
                 continue;
             }
 
+            // Strip trailing commas before closing brackets/braces
+            if (c == ']' || c == '}') {
+                int lastIdx = sb.length() - 1;
+                while (lastIdx >= 0) {
+                    char prev = sb.charAt(lastIdx);
+                    if (prev == ' ' || prev == '\t' || prev == '\n' || prev == '\r') {
+                        lastIdx--;
+                    } else {
+                        break;
+                    }
+                }
+                if (lastIdx >= 0 && sb.charAt(lastIdx) == ',') {
+                    sb.deleteCharAt(lastIdx);
+                }
+            }
+
             sb.append(c);
             i++;
         }
         return sb.toString();
     }
 
-    private static String correctNumberLetterSignums(CharSequence inputJSON) {
-        Matcher matcher = LETTERS_AFTER_DIGIT.matcher(inputJSON);
-        return matcher.replaceAll("$1");
+    private static String readFile(File input) {
+        if (input == null || !input.exists()) {
+            log.error("Failed to read file: file does not exist: {}", input != null ? input.getPath() : "null");
+            return "";
+        }
+        try {
+            byte[] bytes = java.nio.file.Files.readAllBytes(input.toPath());
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            log.error("Failed to read file: {}", input.getName(), e);
+            return "";
+        }
     }
 
-    private static String correctTrailingPeriods(String inputJSON) {
-        String result = PERIOD_BEFORE_COMMA.matcher(inputJSON).replaceAll("");
-        result = PERIOD_BEFORE_SEPARATOR.matcher(result).replaceAll(",");
-        return result;
+    private static boolean isWordChar(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
     }
+
+
 
 }

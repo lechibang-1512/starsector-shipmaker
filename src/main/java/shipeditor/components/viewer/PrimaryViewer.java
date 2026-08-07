@@ -93,6 +93,12 @@ public final class PrimaryViewer extends JPanel implements LayerViewer {
 
     @SuppressWarnings("OverlyComplexAnonymousInnerClass")
     public PrimaryViewer commenceInitialization() {
+        System.setProperty("org.lwjgl.opengl.contextAPI", "native");
+        try {
+            org.lwjgl.system.Configuration.OPENGL_CONTEXT_API.set("native");
+        } catch (Throwable ignored) {
+        }
+
         GLData data = new GLData();
         data.majorVersion = 3;
         data.minorVersion = 3;
@@ -149,7 +155,7 @@ public final class PrimaryViewer extends JPanel implements LayerViewer {
         this.paintOrderController = new PaintOrderController(this);
 
         EventBus.publish(new ViewerGuidesToggled(true, true,
-                true, true));
+                true));
 
         glCanvas.addMouseListener(new MouseAdapter() {
             @Override

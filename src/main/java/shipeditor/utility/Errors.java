@@ -101,8 +101,8 @@ public final class Errors {
     }
 
     private static class Handler implements Thread.UncaughtExceptionHandler {
-
         public void uncaughtException(Thread t, Throwable e) {
+            // BREAKPOINT: Place debugger breakpoint here to catch silent Swing NPEs
             try {
                 log.error(StringValues.EXCEPTION_GLOBAL_HANDLER, e);
                 Errors.printToStream(e);

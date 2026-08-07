@@ -62,6 +62,10 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
 
     private final SlotDrawer counterpartMockDrawer = new SlotDrawer(null);
 
+    private transient shipeditor.components.viewer.painters.points.ship.features.InstalledFeature weaponPreviewFeature = null;
+    
+    private transient shipeditor.components.datafiles.entities.WeaponCSVEntry lastPreviewedEntry = null;
+
     public WeaponSlotPainter(ShipPainter parent) {
         super(parent);
         this.slotPoints = new ArrayList<>();
@@ -157,43 +161,7 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
     }
 
     private javax.swing.JPopupMenu createModuleContextMenu(WeaponSlotPoint slotPoint) {
-        javax.swing.JPopupMenu menu = new javax.swing.JPopupMenu();
-        
-        shipeditor.components.viewer.layers.ship.data.ShipVariant activeVariant = this.getParentLayer().getActiveVariant();
-        java.util.Map<String, shipeditor.components.viewer.painters.points.ship.features.InstalledFeature> fittedModules = 
-                activeVariant != null ? activeVariant.getFittedModules() : null;
-        
-        shipeditor.components.viewer.painters.points.ship.features.InstalledFeature installed = null;
-        if (fittedModules != null) {
-            installed = fittedModules.get(slotPoint.getId());
-        }
-        
-        if (installed != null) {
-            javax.swing.JMenuItem infoItem = new javax.swing.JMenuItem("Installed: " + installed.getName());
-            infoItem.setEnabled(false);
-            menu.add(infoItem);
-            
-            javax.swing.JMenuItem clearItem = new javax.swing.JMenuItem("Clear module");
-            shipeditor.components.viewer.painters.points.ship.features.InstalledFeature toRemove = installed;
-            clearItem.addActionListener(e -> {
-                EditDispatch.postFeatureUninstalled(fittedModules, slotPoint.getId(), toRemove, null);
-            });
-            menu.add(clearItem);
-        } else {
-            javax.swing.JMenuItem emptyItem = new javax.swing.JMenuItem("Slot: " + slotPoint.getId() + " (Empty)");
-            emptyItem.setEnabled(false);
-            menu.add(emptyItem);
-        }
-        
-        menu.addSeparator();
-        
-        javax.swing.JMenuItem selectItem = new javax.swing.JMenuItem("Select slot for install");
-        selectItem.addActionListener(e -> {
-            EventBus.publish(new shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued(slotPoint));
-        });
-        menu.add(selectItem);
-        
-        return menu;
+        return WeaponSlotContextMenu.createModuleContextMenu(slotPoint, this.getParentLayer().getActiveVariant());
     }
 
     @Override
@@ -204,112 +172,11 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
     @Override
     protected void handleCreation(PointCreationQueued event) {
         if (!isCreationHotkeyPressed()) return;
-
-        ShipPainter parentLayer = this.getParentLayer();
-        Point2D position = event.position();
-        boolean mirrorMode = ControlPredicates.isMirrorModeEnabled();
-
-        WeaponSlotPoint created = null;
-        WeaponSlotPoint counterpart = null;
-
-        String uniqueID = this.generateUniqueSlotID();
-
-        switch (SlotCreationPane.getMode()) {
-            case BY_CLOSEST -> {
-                WeaponSlotPoint closest = (WeaponSlotPoint) findClosestPoint(position);
-                if (closest != null) {
-                    created = new WeaponSlotPoint(position, parentLayer, closest);
-                } else {
-                    created = new WeaponSlotPoint(position, parentLayer);
-                    created.setWeaponType(SlotCreationPane.getDefaultType());
-                    created.setWeaponMount(SlotCreationPane.getDefaultMount());
-                    created.setWeaponSize(SlotCreationPane.getDefaultSize());
-                    created.setAngle(SlotCreationPane.getDefaultAngle());
-                    created.setArc(SlotCreationPane.getDefaultArc());
-                }
-                created.setId(uniqueID);
-            }
-            case BY_DEFAULT -> {
-                created = new WeaponSlotPoint(position, parentLayer);
-                created.setId(uniqueID);
-                created.setWeaponType(SlotCreationPane.getDefaultType());
-                created.setWeaponMount(SlotCreationPane.getDefaultMount());
-                created.setWeaponSize(SlotCreationPane.getDefaultSize());
-                created.setAngle(SlotCreationPane.getDefaultAngle());
-                created.setArc(SlotCreationPane.getDefaultArc());
-            }
-        }
-
-        if (mirrorMode) {
-            if (getMirroredCounterpart(created) == null) {
-                Point2D counterpartPosition = createCounterpartPosition(position);
-                counterpart = new WeaponSlotPoint(counterpartPosition, parentLayer, created);
-                String incrementedID = parentLayer.incrementUniqueSlotID(uniqueID);
-                counterpart.setId(incrementedID);
-                double flipAngle = Utility.flipAngle(counterpart.getAngle());
-                counterpart.setAngle(flipAngle);
-            }
-        }
-
-        EditDispatch.postPointAdded(this, created);
-        if (counterpart != null) {
-            EditDispatch.postPointAdded(this, counterpart);
-        }
+        WeaponSlotCreationController.handleCreation(this, event.position());
     }
 
     public void pasteSlots(List<WeaponSlotClipboard.CopiedSlotData> copiedSlots, Point2D targetPosition) {
-        if (copiedSlots == null || copiedSlots.isEmpty()) return;
-
-        ShipPainter parentLayer = this.getParentLayer();
-        boolean mirrorMode = ControlPredicates.isMirrorModeEnabled();
-
-        double sumX = 0;
-        double sumY = 0;
-        for (WeaponSlotClipboard.CopiedSlotData data : copiedSlots) {
-            sumX += data.x;
-            sumY += data.y;
-        }
-        double avgX = sumX / copiedSlots.size();
-        double avgY = sumY / copiedSlots.size();
-
-        for (WeaponSlotClipboard.CopiedSlotData data : copiedSlots) {
-            double offsetX = data.x - avgX;
-            double offsetY = data.y - avgY;
-
-            Point2D position;
-            if (targetPosition != null) {
-                position = new Point2D.Double(targetPosition.getX() + offsetX, targetPosition.getY() + offsetY);
-            } else {
-                position = new Point2D.Double(data.x + 10.0, data.y + 10.0);
-            }
-
-            String uniqueID = this.generateUniqueSlotID();
-            WeaponSlotPoint created = new WeaponSlotPoint(position, parentLayer);
-            created.setId(uniqueID);
-            created.setWeaponType(data.type);
-            created.setWeaponMount(data.mount);
-            created.setWeaponSize(data.size);
-            created.setAngle(data.angle);
-            created.setArc(data.arc);
-            created.setRenderOrderMod(data.renderOrderMod);
-
-            WeaponSlotPoint counterpart = null;
-            if (mirrorMode) {
-                if (getMirroredCounterpart(created) == null) {
-                    Point2D counterpartPosition = createCounterpartPosition(position);
-                    counterpart = new WeaponSlotPoint(counterpartPosition, parentLayer, created);
-                    String incrementedID = parentLayer.incrementUniqueSlotID(uniqueID);
-                    counterpart.setId(incrementedID);
-                    double flipAngle = Utility.flipAngle(counterpart.getAngle());
-                    counterpart.setAngle(flipAngle);
-                }
-            }
-
-            EditDispatch.postPointAdded(this, created);
-            if (counterpart != null) {
-                EditDispatch.postPointAdded(this, counterpart);
-            }
-        }
+        WeaponSlotCreationController.pasteSlots(this, copiedSlots, targetPosition);
     }
 
     @Override
@@ -594,6 +461,36 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
             }
         }
     }
+    private void paintWeaponPreview(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
+        if (StaticController.getEditorMode() != EditorInstrument.VARIANT_WEAPONS) return;
+        
+        shipeditor.components.datafiles.entities.WeaponCSVEntry pickedWeapon = null;
+        if (StaticController.getActiveLayer() instanceof shipeditor.components.viewer.layers.ship.ShipLayer layer) {
+            pickedWeapon = layer.getFeaturesOverseer().getWeaponForInstall();
+        }
+        if (pickedWeapon == null) return;
+        
+        Point2D cursor = StaticController.getCorrectedCursor();
+        WeaponSlotPoint hoveredSlot = (WeaponSlotPoint) findClosestPoint(cursor);
+        if (hoveredSlot == null) return;
+        
+        if (!WeaponType.isWeaponFitting(hoveredSlot, pickedWeapon)) return;
+        
+        if (lastPreviewedEntry != pickedWeapon || weaponPreviewFeature == null) {
+            shipeditor.components.viewer.layers.weapon.WeaponPainter painter = pickedWeapon.createPainterFromEntry(null, pickedWeapon.getSpecFile());
+            weaponPreviewFeature = shipeditor.components.viewer.painters.points.ship.features.InstalledFeature.of(hoveredSlot.getId(), pickedWeapon.getWeaponID(), painter, pickedWeapon);
+            lastPreviewedEntry = pickedWeapon;
+        }
+        
+        weaponPreviewFeature.refreshPaintCircumstance(hoveredSlot);
+        
+        shipeditor.components.viewer.layers.LayerPainter featurePainter = weaponPreviewFeature.getFeaturePainter();
+        if (featurePainter != null) {
+            featurePainter.setSpriteOpacity(0.5f);
+        }
+        
+        weaponPreviewFeature.paint(spriteRenderer, shapeRenderer, projection, view);
+    }
 
     private void setSlotPaintSize(WorldPoint point, double value) {
         if (point instanceof WeaponSlotPoint checked) {
@@ -639,12 +536,14 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
             this.handleSelectionHighlight();
             this.paintDelegates(spriteRenderer, shapeRenderer, projection, view);
             shapeRenderer.end();
+            this.paintWeaponPreview(spriteRenderer, shapeRenderer, projection, view);
         } else if (visibleForRelatedMode) {
             shapeRenderer.begin(projection, IDENTITY_MATRIX);
             this.handleSelectionHighlight();
             List<WeaponSlotPoint> activePoints = this.getEligibleForSelection();
             this.paintSlots(spriteRenderer, shapeRenderer, projection, view, activePoints);
             shapeRenderer.end();
+            this.paintWeaponPreview(spriteRenderer, shapeRenderer, projection, view);
         }
     }
 

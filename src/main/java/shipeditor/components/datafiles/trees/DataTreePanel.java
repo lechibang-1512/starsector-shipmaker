@@ -30,7 +30,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureListener;
@@ -57,10 +56,8 @@ public abstract class DataTreePanel extends JPanel {
     @Getter
     private JTree tree;
 
-    @Getter
-    private JPanel rightPanel;
-
-    private boolean reloadQueued;
+    private boolean reloadQueued = true;
+    private int batchGeneration;
 
     protected DataTreePanel(String rootName) {
         this.setLayout(new BorderLayout());
@@ -69,26 +66,60 @@ public abstract class DataTreePanel extends JPanel {
             topContainer.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Themes.getBorderColor()));
             this.add(topContainer, BorderLayout.PAGE_START);
         }
-        JPanel treePanel = createTreePanel(rootName);
-        JSplitPane splitPane = createContentSplitter(treePanel);
-        this.add(splitPane, BorderLayout.CENTER);
+        javax.swing.JComponent contentSplitter = createContentSplitter(rootName);
+        this.add(contentSplitter, BorderLayout.CENTER);
 
         this.addHierarchyListener(e -> {
             if ((e.getChangeFlags() & java.awt.event.HierarchyEvent.SHOWING_CHANGED) != 0) {
-                if (this.isShowing() && this.reloadQueued) {
-                    this.reload();
-                    this.reloadQueued = false;
+                if (this.isShowing()) {
+                    if (!this.isDataLoaded() && !shipeditor.parsing.loading.FileLoading.isLoadingInProgress()) {
+                        javax.swing.Action loadAction = this.getLoadDataAction();
+                        if (loadAction != null) {
+                            loadAction.actionPerformed(null);
+                        }
+                    } else if (this.reloadQueued) {
+                        this.reload();
+                        this.reloadQueued = false;
+                    }
+                }
+            }
+        });
+        
+        shipeditor.communication.EventBus.subscribe(this, event -> {
+            if (event instanceof shipeditor.communication.events.components.ComponentEvents.LoadingActionFired checked) {
+                if (!checked.started()) {
+                    javax.swing.SwingUtilities.invokeLater(() -> this.queueReload());
                 }
             }
         });
     }
 
+    protected abstract boolean isDataLoaded();
+
+    protected abstract javax.swing.Action getLoadDataAction();
+
     public void queueReload() {
-        if (this.isShowing()) {
-            this.reload();
+        if (this.isDataLoaded()) {
+            if (!this.isShowing()) {
+                this.reloadQueued = true;
+                return;
+            }
+            try {
+                this.reload();
+            } catch (RuntimeException ex) {
+                log.error("Silent exception intercepted during tree reload!", ex);
+                debuggerHook();
+                throw ex;
+            }
             this.reloadQueued = false;
         } else {
             this.reloadQueued = true;
+        }
+    }
+
+    public static void debuggerHook() {
+        if (SettingsManager.isDeveloperModeEnabled()) {
+            java.lang.System.nanoTime();
         }
     }
 
@@ -116,26 +147,43 @@ public abstract class DataTreePanel extends JPanel {
         }
     }
 
+    @Getter
+    private JPanel leftInfoPanel;
+
     void resetInfoPanel() {
-        rightPanel.removeAll();
-        rightPanel.add(new JLabel(StringValues.NO_ENTRY_SELECTED));
-        rightPanel.revalidate();
-        rightPanel.repaint();
+        if (leftInfoPanel != null) {
+            leftInfoPanel.removeAll();
+            leftInfoPanel.add(new JLabel(StringValues.NO_ENTRY_SELECTED));
+            leftInfoPanel.revalidate();
+            leftInfoPanel.repaint();
+        }
+        JPanel consolePanel = getConsolePanel();
+        consolePanel.removeAll();
+        consolePanel.add(new JLabel(StringValues.NO_ENTRY_SELECTED));
+        consolePanel.revalidate();
+        consolePanel.repaint();
     }
 
-    private JSplitPane createContentSplitter(JPanel treeContainer) {
-        rightPanel = new JPanel(new GridBagLayout());
-        rightPanel.add(new JLabel(StringValues.NO_ENTRY_SELECTED));
+    public JPanel getConsolePanel() {
+        return shipeditor.components.datafiles.trees.InfoConsolePanel.getInstance().getContentPanel();
+    }
 
+    public javax.swing.JComponent createContentSplitter(String rootName) {
+        JPanel treeContainer = this.createTreePanel(rootName);
         treeContainer.setMinimumSize(new Dimension(120, 100));
-        rightPanel.setMinimumSize(new Dimension(120, 100));
+
+        leftInfoPanel = new shipeditor.utility.components.containers.TextScrollPanel(new BorderLayout());
+        leftInfoPanel.add(new JLabel(StringValues.NO_ENTRY_SELECTED), BorderLayout.NORTH);
+        
+        JScrollPane leftInfoScroll = new JScrollPane(leftInfoPanel);
+        leftInfoScroll.setBorder(null);
+        leftInfoScroll.setMinimumSize(new Dimension(120, 100));
 
         JSplitPane treeSplitter = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         treeSplitter.setOneTouchExpandable(true);
-        float resizeWeight = getSplitterResizeWeight();
-        treeSplitter.setResizeWeight(resizeWeight);
+        treeSplitter.setResizeWeight(0.6f);
         treeSplitter.setLeftComponent(treeContainer);
-        treeSplitter.setRightComponent(rightPanel);
+        treeSplitter.setRightComponent(leftInfoScroll);
         return treeSplitter;
     }
 
@@ -208,17 +256,50 @@ public abstract class DataTreePanel extends JPanel {
                 Object entry = node.getUserObject();
                 return getTooltipForEntry(entry);
             }
+
+            @Override
+            protected boolean removeDescendantSelectedPaths(TreePath path, boolean includePath) {
+                return false;
+            }
         };
-        DragSource dragSource = DragSource.getDefaultDragSource();
-        DragGestureListener gestureListener = new TreeDataGestureListener(customTree);
-        dragSource.createDefaultDragGestureRecognizer(customTree, DnDConstants.ACTION_COPY,
-                gestureListener);
+        customTree.setToggleClickCount(1);
+        if (!java.awt.GraphicsEnvironment.isHeadless()) {
+            DragSource dragSource = DragSource.getDefaultDragSource();
+            DragGestureListener gestureListener = new TreeDataGestureListener(customTree);
+            dragSource.createDefaultDragGestureRecognizer(customTree, DnDConstants.ACTION_COPY,
+                    gestureListener);
+        }
         return customTree;
     }
 
-    @SuppressWarnings("UnnecessaryLocalVariable")
+    public void reload() {
+        batchGeneration++;
+        DefaultMutableTreeNode root = getRootNode();
+        root.removeAllChildren();
+        root.add(new DefaultMutableTreeNode("Loading..."));
+        if (getTree().getModel() instanceof javax.swing.tree.DefaultTreeModel model) {
+            model.nodeStructureChanged(root);
+        }
 
-    public abstract void reload();
+        final int currentGeneration = batchGeneration;
+        java.util.concurrent.CompletableFuture.supplyAsync(this::buildTreeNodesBackground)
+                .thenAccept(packageRoots -> javax.swing.SwingUtilities.invokeLater(() -> {
+                    if (currentGeneration != batchGeneration) return;
+                    root.removeAllChildren();
+                    if (packageRoots != null) {
+                        for (DefaultMutableTreeNode node : packageRoots) {
+                            root.add(node);
+                        }
+                    }
+                    sortAndExpandTree();
+                    onTreePopulated();
+                    getTree().repaint();
+                }));
+    }
+
+    protected abstract List<DefaultMutableTreeNode> buildTreeNodesBackground();
+
+    protected void onTreePopulated() {}
 
     void sortAndExpandTree() {
         Enumeration<TreeNode> children = rootNode.children();
@@ -233,8 +314,11 @@ public abstract class DataTreePanel extends JPanel {
 
         nodeList.sort((firstNode, secondNode) -> {
             Object firstNodeUserObject = firstNode.getUserObject();
-            GameDataPackage firstDataPackage = (GameDataPackage) firstNodeUserObject;
             Object secondNodeUserObject = secondNode.getUserObject();
+            if (!(firstNodeUserObject instanceof GameDataPackage) || !(secondNodeUserObject instanceof GameDataPackage)) {
+                return 0;
+            }
+            GameDataPackage firstDataPackage = (GameDataPackage) firstNodeUserObject;
             GameDataPackage secondDataPackage = (GameDataPackage) secondNodeUserObject;
 
             if (SettingsManager.isCoreFolder(firstDataPackage)) {
@@ -318,16 +402,9 @@ public abstract class DataTreePanel extends JPanel {
     }
 
     private void addContentToRightPanel(JComponent component, CSVEntry entry) {
-        GridBagConstraints otherConstraints = new GridBagConstraints();
-        otherConstraints.gridx = 0;
-        otherConstraints.gridy = 2;
-        otherConstraints.fill = GridBagConstraints.BOTH;
-        otherConstraints.weightx = 1.0;
-        otherConstraints.weighty = 1.0;
-        otherConstraints.insets = new Insets(0, 0, 0, 0);
-
         JPanel tableContainer = new JPanel();
         tableContainer.setLayout(new BorderLayout());
+        tableContainer.setAlignmentY(java.awt.Component.TOP_ALIGNMENT);
 
         JPanel buttonsContainer = DataTreeTableBuilder.createTableButtons(entry);
 
@@ -337,9 +414,10 @@ public abstract class DataTreePanel extends JPanel {
         tableContainer.add(component, BorderLayout.CENTER);
         tableContainer.add(buttonsContainer, BorderLayout.PAGE_START);
 
-        rightPanel.add(tableContainer, otherConstraints);
-        rightPanel.revalidate();
-        rightPanel.repaint();
+        JPanel consolePanel = getConsolePanel();
+        consolePanel.add(tableContainer);
+        consolePanel.revalidate();
+        consolePanel.repaint();
     }
 
     static void configureCellRendererColors(Object userObject, JLabel stamp) {
