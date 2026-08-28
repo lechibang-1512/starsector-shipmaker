@@ -97,10 +97,10 @@ public final class ColorSpaceTransform {
 
         float h = 0.0f;
         if (delta > 0.0f) {
-            if (max == r) {
+            if (Float.compare(max, r) == 0) {
                 h = ((g - b) / delta) % 6.0f;
                 if (h < 0.0f) h += 6.0f;
-            } else if (max == g) {
+            } else if (Float.compare(max, g) == 0) {
                 h = ((b - r) / delta) + 2.0f;
             } else {
                 h = ((r - g) / delta) + 4.0f;

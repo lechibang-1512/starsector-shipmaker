@@ -346,7 +346,7 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
         }
         String slotID = weaponSlotPoint.getId();
         Map<String, WeaponSlotOverride> weaponSlotChanges = skin.getWeaponSlotChanges();
-        WeaponSlotOverride matchingOverride = weaponSlotChanges.get(slotID);
+        WeaponSlotOverride matchingOverride = weaponSlotChanges != null ? weaponSlotChanges.get(slotID) : null;
         weaponSlotPoint.setSkinOverride(matchingOverride);
     }
 

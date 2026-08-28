@@ -363,6 +363,7 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
         if (loadedTurretSprite != null) {
             weaponPainter.setSprite(loadedTurretSprite);
         }
+        weaponPainter.setMount(WeaponMount.TURRET);
         return weaponPainter;
     }
 
@@ -421,11 +422,11 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
 
     @Override
     public String toString() {
-        String displayedName = rowData.get(StringConstants.NAME);
-        if (displayedName.isEmpty()) {
+        String displayedName = rowData != null ? rowData.get(StringConstants.NAME) : null;
+        if (displayedName == null || displayedName.isBlank()) {
             displayedName = this.getWeaponID();
         }
-        return displayedName;
+        return displayedName != null ? displayedName : "Unknown Weapon";
     }
 
 }

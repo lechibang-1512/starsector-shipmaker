@@ -78,10 +78,12 @@ final class SaveWeaponAction {
 
         shipeditor.components.viewer.painters.points.weapon.WeaponOffsetPainter turretPainter = null;
         shipeditor.components.viewer.painters.points.weapon.WeaponOffsetPainter hardpointPainter = null;
+        shipeditor.components.viewer.painters.points.weapon.WeaponOffsetPainter hiddenPainter = null;
         for (shipeditor.components.viewer.painters.points.AbstractPointPainter pointPainter : painter.getAllPainters()) {
             if (pointPainter instanceof shipeditor.components.viewer.painters.points.weapon.WeaponOffsetPainter wop) {
                 if (wop.getDesignatedType() == shipeditor.representation.weapon.WeaponEnums.WeaponMount.TURRET) turretPainter = wop;
                 if (wop.getDesignatedType() == shipeditor.representation.weapon.WeaponEnums.WeaponMount.HARDPOINT) hardpointPainter = wop;
+                if (wop.getDesignatedType() == shipeditor.representation.weapon.WeaponEnums.WeaponMount.HIDDEN) hiddenPainter = wop;
             }
         }
 
@@ -111,6 +113,20 @@ final class SaveWeaponAction {
             }
             specFile.setHardpointOffsets(offsets);
             specFile.setHardpointAngleOffsets(angles);
+        }
+
+        if (hiddenPainter != null) {
+            java.util.List<shipeditor.components.viewer.entities.weapon.OffsetPoint> points = hiddenPainter.getOffsetPoints();
+            java.awt.geom.Point2D.Double[] offsets = new java.awt.geom.Point2D.Double[points.size()];
+            double[] angles = new double[points.size()];
+            for (int i = 0; i < points.size(); i++) {
+                shipeditor.components.viewer.entities.weapon.OffsetPoint p = points.get(i);
+                java.awt.geom.Point2D derotated = shipeditor.components.viewer.layers.ship.ShipPainterInitialization.derotatePointByCenter(p.getPosition(), painter.getSpecificRotationAnchor(shipeditor.representation.weapon.WeaponEnums.WeaponMount.HIDDEN));
+                offsets[i] = new java.awt.geom.Point2D.Double(derotated.getX(), derotated.getY());
+                angles[i] = p.getAngle();
+            }
+            specFile.setHiddenOffsets(offsets);
+            specFile.setHiddenAngleOffsets(angles);
         }
     }
 }

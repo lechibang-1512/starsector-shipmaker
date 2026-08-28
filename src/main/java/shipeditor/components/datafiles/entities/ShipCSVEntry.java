@@ -204,9 +204,19 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
 
     public String getShipName() {
         if (activeSkinSpecFile != null && !activeSkinSpecFile.isBase()) {
-            return activeSkinSpecFile.getHullName();
+            String skinName = activeSkinSpecFile.getHullName();
+            if (skinName != null && !skinName.isBlank()) {
+                return skinName;
+            }
         }
         String name = rowData.get(StringConstants.NAME);
+        if (name != null && !name.isBlank()) {
+            return name;
+        }
+        HullSpecFile spec = this.getHullSpecFile();
+        if (spec != null && spec.getHullName() != null && !spec.getHullName().isBlank()) {
+            return spec.getHullName();
+        }
         return name != null ? name : "";
     }
 
@@ -327,9 +337,9 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
 
     @Override
     public String toString() {
-        String displayedName = rowData.get(StringConstants.NAME);
+        String displayedName = getShipName();
         if (displayedName == null || displayedName.isBlank()) {
-            displayedName = rowData.get(StringConstants.DESIGNATION);
+            displayedName = getShipDesignation();
         }
         if (displayedName == null || displayedName.isBlank()) {
             displayedName = this.hullID;

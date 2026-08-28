@@ -120,6 +120,12 @@ public class DataTreeTableBuilder {
             }
             case "type" -> {
                 if (csvEntry instanceof shipeditor.components.datafiles.entities.WeaponCSVEntry) {
+                    yield new DefaultCellEditor(new JComboBox<>(new String[]{"BALLISTIC", "ENERGY", "MISSILE", "COMPOSITE", "SYNERGY", "HYBRID", "UNIVERSAL", "DECORATIVE", "SYSTEM", "BUILT_IN", "LAUNCH_BAY"}));
+                }
+                yield null;
+            }
+            case "damage type" -> {
+                if (csvEntry instanceof shipeditor.components.datafiles.entities.WeaponCSVEntry) {
                     yield new DefaultCellEditor(new JComboBox<>(new String[]{"KINETIC", "HIGH_EXPLOSIVE", "FRAGMENTATION", "ENERGY", "OTHER"}));
                 }
                 yield null;

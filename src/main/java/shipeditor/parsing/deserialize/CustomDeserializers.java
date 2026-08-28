@@ -53,11 +53,10 @@ public class CustomDeserializers {
 
         if (node.isArray()) {
             for (JsonNode entry : node) {
-                if (entry.isObject() && entry.size() == 1) {
-                    Iterator<String> stringIterator = entry.fieldNames();
-                    String key = stringIterator.next();
-                    String value = entry.get(key).asText();
-                    moduleMap.put(key, value);
+                if (entry.isObject()) {
+                    entry.fields().forEachRemaining(field -> {
+                        moduleMap.put(field.getKey(), field.getValue().asText());
+                    });
                 }
             }
         } else if (node.isObject()) {

@@ -163,6 +163,10 @@ public class ShipFilterPanel extends JPanel {
 
         ShipCSVEntry csvEntry = shipEntries.get(entry.getEntityId());
         if (csvEntry != null) {
+            HullSize size = csvEntry.getSize();
+            if (size != null && size != HullSize.DEFAULT) {
+                return size == selectedSize;
+            }
             Map<String, String> row = csvEntry.getRowData();
             String sizeStr = row.get("hull size");
             if (sizeStr != null) {

@@ -83,13 +83,24 @@ public class WeaponsTreePanel extends DataTreePanel {
             }
             DataTreePanel.configureCellRendererColors(object, this);
             if (object instanceof IndexedFile file && leaf) {
-                WeaponCSVEntry entry = SettingsManager.getGameData().getAllWeaponEntries().get(file.getEntityId());
+                var gameData = SettingsManager.getGameData();
+                WeaponCSVEntry entry = gameData != null ? gameData.getOrCreateWeaponEntry(file) : null;
                 if (entry != null) {
                     WeaponType weaponType = entry.getLazyType();
-                    setIcon(ComponentUtilities.createIconFromColor(weaponType.getColor(), 10, 10));
-                    setText(entry.toString());
+                    if (weaponType != null && weaponType.getColor() != null) {
+                        setIcon(ComponentUtilities.createIconFromColor(weaponType.getColor(), 10, 10));
+                    } else {
+                        setIcon(null);
+                    }
+                    String title = entry.toString();
+                    var size = entry.getSize();
+                    if (size != null) {
+                        title = "[" + size.getDisplayedName() + "] " + title;
+                    }
+                    setText(title);
                 } else {
-                    setText(file.getEntityName());
+                    setIcon(null);
+                    setText(file.getEntityName() != null ? file.getEntityName() : file.getEntityId());
                 }
             }
             return this;
@@ -127,7 +138,34 @@ public class WeaponsTreePanel extends DataTreePanel {
                 }
             }
         });
-        getTree().addMouseListener(new DoubleClickLayerLoader());
+        JTree tree = getTree();
+        tree.addTreeSelectionListener(e -> {
+            TreePath selectedNode = e.getNewLeadSelectionPath();
+            if (selectedNode == null)
+                return;
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectedNode.getLastPathComponent();
+            if (node.getUserObject() instanceof IndexedFile file) {
+                var gameData = SettingsManager.getGameData();
+                WeaponCSVEntry entry = gameData != null ? gameData.getOrCreateWeaponEntry(file) : null;
+                if (entry != null) {
+                    JPanel infoPanel = getLeftInfoPanel();
+                    infoPanel.removeAll();
+                    infoPanel.add(new JLabel("Loading..."));
+                    infoPanel.revalidate();
+                    infoPanel.repaint();
+
+                    java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                        entry.getWeaponImage(); // pre-load sprite off EDT
+                        return entry;
+                    }).thenAccept(loaded -> javax.swing.SwingUtilities.invokeLater(() -> updateEntryPanel(loaded)));
+                } else {
+                    resetInfoPanel();
+                }
+            } else {
+                resetInfoPanel();
+            }
+        });
+        tree.addMouseListener(new DoubleClickLayerLoader());
     }
 
     @Override
@@ -218,11 +256,13 @@ public class WeaponsTreePanel extends DataTreePanel {
         return topPanel;
     }
 
+
     @Override
     protected String getTooltipForEntry(Object entry) {
         if (entry instanceof IndexedFile file) {
             String dragHint = "(Double-click or drag to load weapon sprite)";
-            WeaponCSVEntry weaponEntry = SettingsManager.getGameData().getAllWeaponEntries().get(file.getEntityId());
+            var gameData = SettingsManager.getGameData();
+            WeaponCSVEntry weaponEntry = gameData != null ? gameData.getOrCreateWeaponEntry(file) : null;
             String displayName = weaponEntry != null ? weaponEntry.toString() : "Weapon ID: " + file.getEntityId();
             return displayName + "\n" + dragHint;
         } else if (entry instanceof GameDataPackage dataPackage) {
@@ -332,9 +372,10 @@ public class WeaponsTreePanel extends DataTreePanel {
         public void actionPerformed(ActionEvent e) {
             DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
             if (cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof IndexedFile checked) {
-                WeaponCSVEntry entry = SettingsManager.getGameData().getAllWeaponEntries().get(checked.getEntityId());
+                var gameData = SettingsManager.getGameData();
+                WeaponCSVEntry entry = gameData != null ? gameData.getOrCreateWeaponEntry(checked) : null;
                 if (entry != null) {
-                    log.debug("DOUBLE CLICK DETECTED ON WEAPON!"); entry.loadLayerFromEntry();
+                    entry.loadLayerFromEntry();
                 }
             }
         }
@@ -357,6 +398,7 @@ public class WeaponsTreePanel extends DataTreePanel {
     private class DoubleClickLayerLoader extends java.awt.event.MouseAdapter {
         @Override
         public void mousePressed(java.awt.event.MouseEvent e) {
+            if (e.getButton() != java.awt.event.MouseEvent.BUTTON1 || e.getClickCount() != 2) return;
             JTree tree = getTree();
             java.awt.Point eventPoint = e.getPoint();
             TreePath pathForLocation = tree.getPathForLocation(eventPoint.x, eventPoint.y);
@@ -365,23 +407,10 @@ public class WeaponsTreePanel extends DataTreePanel {
             if (targetPath == null) return;
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) targetPath.getLastPathComponent();
             if (node.getUserObject() instanceof IndexedFile checked) {
-                WeaponCSVEntry entry = SettingsManager.getGameData().getAllWeaponEntries().get(checked.getEntityId());
+                var gameData = SettingsManager.getGameData();
+                WeaponCSVEntry entry = gameData != null ? gameData.getOrCreateWeaponEntry(checked) : null;
                 if (entry != null) {
-                    if (e.getButton() == java.awt.event.MouseEvent.BUTTON1 && e.getClickCount() == 2) {
-                        log.debug("DOUBLE CLICK DETECTED ON WEAPON!"); entry.loadLayerFromEntry();
-                    } else {
-                        // Async info panel: load sprite off EDT, then update UI
-                        JPanel infoPanel = getLeftInfoPanel();
-                        infoPanel.removeAll();
-                        infoPanel.add(new JLabel("Loading..."));
-                        infoPanel.revalidate();
-                        infoPanel.repaint();
-
-                        java.util.concurrent.CompletableFuture.supplyAsync(() -> {
-                            entry.getWeaponImage(); // pre-load sprite off EDT
-                            return entry;
-                        }).thenAccept(loaded -> javax.swing.SwingUtilities.invokeLater(() -> updateEntryPanel(loaded)));
-                    }
+                    entry.loadLayerFromEntry();
                 }
             }
         }

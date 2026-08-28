@@ -222,25 +222,11 @@ public final class Main {
     }
 
     public static void configurePlatformProperties() {
-        if (Utility.isWindows()) {
-            System.setProperty("sun.java2d.opengl", "false");
-            System.setProperty("sun.java2d.d3d", "false");
-            System.setProperty("sun.java2d.noddraw", "true");
-            System.setProperty("sun.awt.noerasebackground", "true");
-            System.setProperty("org.lwjgl.opengl.contextAPI", "native");
-        } else if (Utility.isLinux()) {
-            System.setProperty("sun.java2d.opengl", "false");
-            System.setProperty("sun.java2d.d3d", "false");
-            System.setProperty("sun.java2d.noddraw", "true");
-            System.setProperty("sun.awt.noerasebackground", "true");
-            System.setProperty("org.lwjgl.opengl.contextAPI", "native");
-        } else {
-            System.setProperty("sun.java2d.opengl", "false");
-            System.setProperty("sun.java2d.d3d", "false");
-            System.setProperty("sun.java2d.noddraw", "true");
-            System.setProperty("sun.awt.noerasebackground", "true");
-            System.setProperty("org.lwjgl.opengl.contextAPI", "native");
-        }
+        System.setProperty("sun.java2d.opengl", "false");
+        System.setProperty("sun.java2d.d3d", "false");
+        System.setProperty("sun.java2d.noddraw", "true");
+        System.setProperty("sun.awt.noerasebackground", "true");
+        System.setProperty("org.lwjgl.opengl.contextAPI", "native");
 
         try {
             org.lwjgl.system.Configuration.OPENGL_CONTEXT_API.set("native");

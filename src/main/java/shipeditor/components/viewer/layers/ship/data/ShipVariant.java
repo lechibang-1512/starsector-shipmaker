@@ -155,7 +155,7 @@ public class ShipVariant implements Variant {
                 var groupWeapons = groupWithFit.getWeapons();
                 int index = groupWeapons.indexOf(slotID);
                 feature.setParentGroup(groupWithFit);
-                groupWeapons.put(index, slotID, feature);
+                groupWeapons.setValue(index, feature);
             } else {
                 if (weaponGroups.isEmpty() || weaponGroups.get(0) == null) {
                     FittedWeaponGroup newGroup = new FittedWeaponGroup(this,
@@ -333,8 +333,12 @@ public class ShipVariant implements Variant {
             fittedModules = new ListOrderedMap<>();
             installedModules.forEach((slotID, variantID) -> {
                 VariantFile variant = GameDataRepository.getVariantByID(variantID);
-                InstalledFeature moduleFeature = shipeditor.components.viewer.layers.LayerFactory.createModuleFromVariant(slotID, variant);
-                fittedModules.put(slotID, moduleFeature);
+                if (variant != null) {
+                    InstalledFeature moduleFeature = shipeditor.components.viewer.layers.LayerFactory.createModuleFromVariant(slotID, variant);
+                    if (moduleFeature != null) {
+                        fittedModules.put(slotID, moduleFeature);
+                    }
+                }
             });
         }
 

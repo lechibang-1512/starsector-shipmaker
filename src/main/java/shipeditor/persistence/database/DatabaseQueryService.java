@@ -290,6 +290,42 @@ public final class DatabaseQueryService {
         return "";
     }
 
+    public static IndexedFile getFileByEntityId(String entityId, String type) {
+        if (entityId == null || type == null) {
+            return null;
+        }
+        IndexedFile coreFile = CoreIndexManager.getFileByEntityId(entityId, type);
+        if (coreFile != null) return coreFile;
+
+        List<String> activeMods = getActiveModIds();
+        if (activeMods.isEmpty()) return null;
+
+        StringBuilder sql = new StringBuilder("SELECT * FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
+        for (int i = 0; i < activeMods.size(); i++) {
+            sql.append(i == 0 ? "?" : ",?");
+        }
+        sql.append(") LIMIT 1;");
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+            pstmt.setString(1, entityId);
+            pstmt.setString(2, type);
+            for (int i = 0; i < activeMods.size(); i++) {
+                pstmt.setString(3 + i, activeMods.get(i));
+            }
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToIndexedFile(rs);
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Failed to lookup file by entity: {} ({})", entityId, type, e);
+        }
+        return null;
+    }
+
     public static Path getFilePathForEntity(String entityId, String type) {
         if (entityId == null || type == null) {
             return null;

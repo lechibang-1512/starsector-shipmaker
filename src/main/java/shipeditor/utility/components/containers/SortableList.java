@@ -215,7 +215,7 @@ public abstract class SortableList<E> extends JList<E> implements DragGestureLis
                 Transferable transferable = dtde.getTransferable();
                 DataFlavor[] dataFlavors = transferable.getTransferDataFlavors();
 
-                String hashCodeContainer = dataFlavors[1].getHumanPresentableName();
+                String hashCodeContainer = (dataFlavors != null && dataFlavors.length > 1) ? dataFlavors[1].getHumanPresentableName() : "";
                 int hash = SortableList.this.hashCode();
                 String hashCodeText = String.valueOf(hash);
                 boolean fromOutside = !hashCodeContainer.equals(hashCodeText);
@@ -230,7 +230,6 @@ public abstract class SortableList<E> extends JList<E> implements DragGestureLis
             } else {
                 dtde.dropComplete(false);
             }
-            dtde.dropComplete(false);
             targetIndex = -1;
             draggedIndex = -1;
             repaint();
