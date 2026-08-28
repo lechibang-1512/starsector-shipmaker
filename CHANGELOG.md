@@ -1,8 +1,22 @@
 # Changelog
 
-## [0.0.1f-hf] (Pre-release) - 2026-08-19
+## [0.0.1f-hf] (Pre-release) - 2026-08-20
+
+### Bug Fixes (Critical)
+- **Fix fighters spawning from ship center**: Starsector interprets the first coordinate pair in a LAUNCH_BAY's `locations` array as the bay's logical center, subsequent pairs as spawn ports. Single-port bays wrote `[x, y]` which gave the engine 0 spawn ports, causing center-spawn fallback. Fix: duplicate the coordinate for single-port bays (`[x, y, x, y]`).
+- **Fix Launch Bay ID prefix**: Changed default bay ID generation from `LB` prefix to standard `WS` prefix. The engine requires `WS` for all weapon slots including launch bays.
+- **Fix default Launch Bay arc**: Changed default arc from `0.0` to `360.0` degrees, matching vanilla carrier standards.
+- **Fix engine style serialization crash**: `SaveHullAction` now falls back to raw `styleID` strings when the resolved engine style object is unavailable.
+
+### UI/UX Improvements
+- **Launch Bay tree stability**: Tree no longer collapses during port drag (use `repaint()` instead of `reloadModel()`).
+- **Port label cleanup**: Removed redundant `#` from port labels.
+- **Weapon UI polish**: Added missing tooltips, fixed duplicate headers, resized awkward dialogs, added Clear Filters button.
 
 ### Features
+- **Hull QA Report Dialog**: New validation tool checking for degenerate arcs (<=0), orphaned bays without ports, duplicate slot IDs, and ports positioned at ship center (0,0). Accessible from Data menu.
+- **Launch Bay canvas visualization**: Draw connection lines between ports of the same bay. Arc cone and direction arrow rendering via SlotDrawer.
+- **Slot Creation Dialog**: Refactored weapon slot creation defaults into a dedicated modal popup.
 - **Showcase Generator**: Add export showcase image generation tool with mod filtering, responsive font scaling, label truncation, and optimized grid layout.
 - **Weapon Offset QA**: Add a weapon offset QA report dialog to detect mismatched or asymmetrical barrel placements.
 - **Sprite Outline Tracer**: Implement a sprite outline tracer for accurate UI highlighting along with comprehensive regression tests.
@@ -66,6 +80,9 @@
   - Optimize projectile rendering using instance-based painting, standardize missile render logic, and encapsulate `LayerPainter` fields.
 
 ### Bug Fixes & Null Safety
+- **Serialization Robustness**: Fix critical hull serialization crash (`Engine misconfiguration at hull serialization`) caused by strict engine style lookups. Ensure `SaveHullAction` safely writes raw `styleID` strings back to `.ship` files even when custom styles are unindexed or missing from memory.
+- **Weapon UI Polish**: Enhance weapon instrument panels with refined dimensions, improved button disabling states, descriptive tooltips, and a "Clear Filters" button in the tree view.
+- **Slot Creation Workflow**: Refactor the slot creation tab into a standalone pop-up modal (`SlotCreationDialog`) for configuring default weapon slot values, accessible via the slot panel and the `Edit` menu.
 - **Double-Click & Drag-and-Drop Loading**: Fix broken double-click layer loading by switching from `mouseClicked` to `mousePressed` in `JTree` listeners. Fix drag-and-drop by unwrapping `IndexedFile` in `TreeDataGestureListener`. (`474fbc8f`)
 - **Weapon Spec Null Safety**: Add null-safety guards in `WeaponCSVEntry.getSpecFile()` and `getLazyType()` to prevent NPEs when weapon spec files are missing or unparseable. (`ced1d1c8`)
 - **Automated Tree Reloading**: Add `ComponentListener` to `DataTreePanel` that triggers `queueReload()` when the panel first becomes visible, ensuring trees populate without manual user action. (`ced1d1c8`)
