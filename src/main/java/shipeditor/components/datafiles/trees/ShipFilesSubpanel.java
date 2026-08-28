@@ -216,9 +216,8 @@ class ShipFilesSubpanel extends JPanel {
 
         if (hullmodIDs.isEmpty()) return;
 
-        Map<String, HullmodCSVEntry> allHullmods = gameData.getAllHullmodEntries();
         for (String id : hullmodIDs) {
-            HullmodCSVEntry entry = allHullmods.get(id);
+            HullmodCSVEntry entry = GameDataRepository.retrieveHullmodCSVEntryByID(id);
             if (entry != null) {
                 JLabel imageLabel = entry.getIconLabel();
                 hullmodsPanel.add(imageLabel);

@@ -8,6 +8,7 @@ import shipeditor.parsing.loading.CsvLoader;
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -59,6 +60,42 @@ class GameDataRepositoryPropertiesTest {
         java.util.List<Map<String, String>> retrieved = repository.getRawCSVDataForPath(testPath);
         Assertions.assertNotNull(retrieved);
         Assertions.assertEquals("test_id", retrieved.get(0).get("id"));
+    }
+
+    @Test
+    void testResetClearsAndAllowsRepopulation() {
+        Map<Path, java.util.List<shipeditor.components.datafiles.entities.HullmodCSVEntry>> mockMap = new HashMap<>();
+        Map<String, String> row = new HashMap<>();
+        row.put("id", "test_hullmod");
+        row.put("name", "Test Hullmod");
+        mockMap.put(Path.of("test/path"), List.of(new shipeditor.components.datafiles.entities.HullmodCSVEntry(row, Path.of("test"), Path.of("test/path"))));
+        
+        repository.setHullmodEntriesByPackage(mockMap);
+        Assertions.assertEquals(1, repository.getAllHullmodEntries().size());
+        Assertions.assertNotNull(repository.getAllHullmodEntries().get("test_hullmod"));
+
+        repository.reset();
+
+        // After reset, calling setHullmodEntriesByPackage again should properly populate getAllHullmodEntries()
+        repository.setHullmodEntriesByPackage(mockMap);
+        Assertions.assertEquals(1, repository.getAllHullmodEntries().size());
+        Assertions.assertNotNull(repository.getAllHullmodEntries().get("test_hullmod"));
+    }
+
+    @Test
+    void testSyntheticFallbacksForUnknownEntries() {
+        shipeditor.components.datafiles.entities.HullmodCSVEntry syntheticHullmod = repository.getOrCreateHullmodEntry("unknown_mod");
+        Assertions.assertNotNull(syntheticHullmod);
+        Assertions.assertEquals("unknown_mod", syntheticHullmod.getID());
+        Assertions.assertEquals("unknown_mod", syntheticHullmod.toString());
+
+        shipeditor.components.datafiles.entities.WingCSVEntry syntheticWing = repository.getOrCreateWingEntry("unknown_wing");
+        Assertions.assertNotNull(syntheticWing);
+        Assertions.assertEquals("unknown_wing", syntheticWing.getID());
+
+        shipeditor.components.datafiles.entities.ShipSystemCSVEntry syntheticSystem = repository.getOrCreateShipsystemEntry("unknown_system");
+        Assertions.assertNotNull(syntheticSystem);
+        Assertions.assertEquals("unknown_system", syntheticSystem.getID());
     }
 
     @Provide

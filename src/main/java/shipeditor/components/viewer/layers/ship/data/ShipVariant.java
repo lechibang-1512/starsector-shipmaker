@@ -365,10 +365,8 @@ public class ShipVariant implements Variant {
         var fileWings = file.getWings();
         if (fileWings != null) {
             this.wings = new ArrayList<>();
-            GameDataRepository gameData = SettingsManager.getGameData();
-            Map<String, WingCSVEntry> allWingEntries = gameData.getAllWingEntries();
             fileWings.forEach(wingID -> {
-                WingCSVEntry entry = allWingEntries.get(wingID);
+                WingCSVEntry entry = GameDataRepository.retrieveWingCSVEntryByID(wingID);
                 if (entry != null) {
                     wings.add(entry);
                 } else {

@@ -522,4 +522,33 @@ class GameDataParsingIntegrationTest {
         assertEquals(1, skin.getBuiltInMods().size());
         assertEquals("degraded_engines", skin.getBuiltInMods().get(0));
     }
+
+    @Test
+    @EnabledIf("gameDataExists")
+    @DisplayName("Validate hullmod loading via GameDataRepository")
+    void testValidateHullmodLoading() {
+        shipeditor.persistence.Initializations.initializeSettingsFile();
+        var repo = shipeditor.persistence.SettingsManager.getGameData();
+        var allHullmods = repo.getAllHullmodEntries();
+        assertNotNull(allHullmods);
+        assertTrue(allHullmods.size() > 0);
+
+        String[] testIds = {"armoredweapons", "missleracks", "advancedshieldemitter", "SKR_plagueBearer", "automated", "missile_reload", "reduced_explosion", "always_detaches", "safetyoverrides", "hardened_subsystems"};
+        for (String id : testIds) {
+            var entry = repo.retrieveHullmodCSVEntryByID(id);
+            assertNotNull(entry, "Hullmod ID should resolve: " + id);
+            assertEquals(id, entry.getID());
+        }
+
+        // Test reset and reload cycle
+        repo.reset();
+        var reloadedHullmods = repo.getAllHullmodEntries();
+        assertNotNull(reloadedHullmods);
+        assertEquals(allHullmods.size(), reloadedHullmods.size());
+        for (String id : testIds) {
+            var entry = repo.retrieveHullmodCSVEntryByID(id);
+            assertNotNull(entry, "Hullmod ID should resolve after reset: " + id);
+            assertEquals(id, entry.getID());
+        }
+    }
 }

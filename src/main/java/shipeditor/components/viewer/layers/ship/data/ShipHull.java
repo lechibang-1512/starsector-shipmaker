@@ -103,18 +103,16 @@ public class ShipHull {
     }
 
     public void loadBuiltInMods(HullSpecFile specFile) {
-        if (builtInMods != null) return;
+        if (builtInMods != null && !builtInMods.isEmpty()) return;
         String[] specFileBuiltInMods = specFile.getBuiltInMods();
         if (specFileBuiltInMods == null) {
             this.builtInMods = new ArrayList<>();
             return;
         }
-        var gameData = SettingsManager.getGameData();
-        var allHullmodEntries = gameData.getAllHullmodEntries();
         List<HullmodCSVEntry> builtInList = new ArrayList<>(specFileBuiltInMods.length);
         Stream<String> stream = Arrays.stream(specFileBuiltInMods);
         stream.forEach(hullmodID -> {
-            HullmodCSVEntry hullmodEntry = allHullmodEntries.get(hullmodID);
+            HullmodCSVEntry hullmodEntry = GameDataRepository.retrieveHullmodCSVEntryByID(hullmodID);
             if (hullmodEntry != null) {
                 builtInList.add(hullmodEntry);
             } else {
@@ -125,18 +123,16 @@ public class ShipHull {
     }
 
     public void loadBuiltInWings(HullSpecFile specFile) {
-        if (builtInWings != null) return;
+        if (builtInWings != null && !builtInWings.isEmpty()) return;
         String[] specFileBuiltInWings = specFile.getBuiltInWings();
         if (specFileBuiltInWings == null) {
             this.builtInWings = new ArrayList<>();
             return;
         }
-        var gameData = SettingsManager.getGameData();
-        var allWingEntries = gameData.getAllWingEntries();
         List<WingCSVEntry> builtInList = new ArrayList<>(specFileBuiltInWings.length);
         Stream<String> stream = Arrays.stream(specFileBuiltInWings);
         stream.forEach(wingID -> {
-            WingCSVEntry wingCSVEntry = allWingEntries.get(wingID);
+            WingCSVEntry wingCSVEntry = GameDataRepository.retrieveWingCSVEntryByID(wingID);
             if (wingCSVEntry != null) {
                 builtInList.add(wingCSVEntry);
             } else {

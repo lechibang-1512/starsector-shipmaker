@@ -258,9 +258,7 @@ public final class ShipSkin {
                 skin.shipSystem = null;
                 return this;
             }
-            GameDataRepository gameData = SettingsManager.getGameData();
-            Map<String, ShipSystemCSVEntry> allShipsystemEntries = gameData.getAllShipsystemEntries();
-            skin.shipSystem = allShipsystemEntries.get(systemId);
+            skin.shipSystem = GameDataRepository.retrieveShipsystemCSVEntryByID(systemId);
             return this;
         }
 
@@ -352,11 +350,11 @@ public final class ShipSkin {
                 return this;
             }
             List<WingCSVEntry> wingEntries = new ArrayList<>(builtInWings.size());
-            GameDataRepository gameData = SettingsManager.getGameData();
-            Map<String, WingCSVEntry> allWingEntries = gameData.getAllWingEntries();
             builtInWings.forEach(wingID -> {
-                WingCSVEntry entry = allWingEntries.get(wingID);
-                wingEntries.add(entry);
+                WingCSVEntry entry = GameDataRepository.retrieveWingCSVEntryByID(wingID);
+                if (entry != null) {
+                    wingEntries.add(entry);
+                }
             });
             skin.builtInWings = wingEntries;
             return this;
@@ -409,12 +407,12 @@ public final class ShipSkin {
                 skin.removeBuiltInMods = new ArrayList<>();
                 return this;
             }
-            GameDataRepository gameData = SettingsManager.getGameData();
-            Map<String, HullmodCSVEntry> allHullmodEntries = gameData.getAllHullmodEntries();
             List<HullmodCSVEntry> removeList = new ArrayList<>(removeBuiltInMods.size());
             removeBuiltInMods.forEach(hullmodID -> {
-                HullmodCSVEntry hullmodEntry = allHullmodEntries.get(hullmodID);
-                removeList.add(hullmodEntry);
+                HullmodCSVEntry hullmodEntry = GameDataRepository.retrieveHullmodCSVEntryByID(hullmodID);
+                if (hullmodEntry != null) {
+                    removeList.add(hullmodEntry);
+                }
             });
             skin.removeBuiltInMods = removeList;
             return this;
@@ -425,12 +423,12 @@ public final class ShipSkin {
                 skin.removeBuiltInWings = new ArrayList<>();
                 return this;
             }
-            GameDataRepository gameData = SettingsManager.getGameData();
-            Map<String, WingCSVEntry> allWingEntries = gameData.getAllWingEntries();
             List<WingCSVEntry> removeList = new ArrayList<>(removeBuiltInWings.size());
             removeBuiltInWings.forEach(wingID -> {
-                WingCSVEntry wingEntry = allWingEntries.get(wingID);
-                removeList.add(wingEntry);
+                WingCSVEntry wingEntry = GameDataRepository.retrieveWingCSVEntryByID(wingID);
+                if (wingEntry != null) {
+                    removeList.add(wingEntry);
+                }
             });
             skin.removeBuiltInWings = removeList;
             return this;
@@ -447,12 +445,12 @@ public final class ShipSkin {
                 skin.builtInMods = new ArrayList<>();
                 return this;
             }
-            GameDataRepository gameData = SettingsManager.getGameData();
-            Map<String, HullmodCSVEntry> allHullmodEntries = gameData.getAllHullmodEntries();
             List<HullmodCSVEntry> builtInList = new ArrayList<>(builtInMods.size());
             builtInMods.forEach(hullmodID -> {
-                HullmodCSVEntry hullmodEntry = allHullmodEntries.get(hullmodID);
-                builtInList.add(hullmodEntry);
+                HullmodCSVEntry hullmodEntry = GameDataRepository.retrieveHullmodCSVEntryByID(hullmodID);
+                if (hullmodEntry != null) {
+                    builtInList.add(hullmodEntry);
+                }
             });
             skin.builtInMods = builtInList;
             return this;
