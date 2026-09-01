@@ -1,13 +1,13 @@
 package shipeditor.components.instrument.ship.variant;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.data.ShipHull;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
@@ -34,43 +34,43 @@ public class VariantOrdnancePanel extends JPanel {
 
         Border emptyBorder = new EmptyBorder(2, 0, 8, 0);
 
-        JLabel shipOPCapLabel = new JLabel(StringValues.TOTAL_OP_CAPACITY);
+        JLabel shipOPCapLabel = new JLabel(StringManager.getString("TOTAL_OP_CAPACITY"));
         shipOPCapLabel.setBorder(emptyBorder);
         shipOPCap = new JLabel();
 
-        JLabel usedOPTotalLabel = new JLabel("Used OP for ship:");
+        JLabel usedOPTotalLabel = new JLabel(StringManager.getString("USED_OP_FOR_SHIP"));
         usedOPTotalLabel.setBorder(emptyBorder);
         usedOPTotal = new JLabel();
 
-        JLabel usedOPInWeaponsLabel = new JLabel("Used OP in weapons:");
+        JLabel usedOPInWeaponsLabel = new JLabel(StringManager.getString("USED_OP_IN_WEAPONS"));
         usedOPInWeaponsLabel.setBorder(emptyBorder);
         usedOPInWeapons = new JLabel();
 
-        JLabel usedOPInModsLabel = new JLabel(StringValues.USED_OP_IN_HULLMODS);
+        JLabel usedOPInModsLabel = new JLabel(StringManager.getString("USED_OP_IN_HULLMODS"));
         usedOPInModsLabel.setBorder(emptyBorder);
         usedOPInHullmods = new JLabel();
 
-        JLabel usedOPInWingsLabel = new JLabel(StringValues.USED_OP_IN_WINGS);
+        JLabel usedOPInWingsLabel = new JLabel(StringManager.getString("USED_OP_IN_WINGS"));
         usedOPInWingsLabel.setBorder(emptyBorder);
         usedOPInWings = new JLabel();
 
-        JLabel ventsMaxLabel = new JLabel("Flux Vents (Allocated/Max):");
+        JLabel ventsMaxLabel = new JLabel(StringManager.getString("FLUX_VENTS_ALLOCATED_MAX"));
         ventsMaxLabel.setBorder(emptyBorder);
         usedVentsAndMax = new JLabel();
 
-        JLabel capsMaxLabel = new JLabel("Flux Capacitors (Allocated/Max):");
+        JLabel capsMaxLabel = new JLabel(StringManager.getString("FLUX_CAPACITORS_ALLOCATED_MAX"));
         capsMaxLabel.setBorder(emptyBorder);
         usedCapsAndMax = new JLabel();
 
-        JLabel fluxCapLabel = new JLabel("Total Flux Capacity:");
+        JLabel fluxCapLabel = new JLabel(StringManager.getString("TOTAL_FLUX_CAPACITY"));
         fluxCapLabel.setBorder(emptyBorder);
         totalFluxCapacity = new JLabel();
 
-        JLabel fluxDissLabel = new JLabel("Total Flux Dissipation:");
+        JLabel fluxDissLabel = new JLabel(StringManager.getString("TOTAL_FLUX_DISSIPATION"));
         fluxDissLabel.setBorder(emptyBorder);
         totalFluxDissipation = new JLabel();
 
-        JLabel opStatusTitle = new JLabel("OP Status:");
+        JLabel opStatusTitle = new JLabel(StringManager.getString("OP_STATUS"));
         opStatusTitle.setBorder(emptyBorder);
         opStatusLabel = new JLabel();
 
@@ -97,7 +97,7 @@ public class VariantOrdnancePanel extends JPanel {
     }
 
     public void refreshOrdnanceInfo(ViewerLayer selected) {
-        String notInitialized = StringValues.NOT_INITIALIZED;
+        String notInitialized = StringManager.getString("NOT_INITIALIZED");
 
         if (selected instanceof ShipLayer shipLayer) {
             String totalOPStr = Utility.translateIntegerValue(shipLayer::getTotalOP);
@@ -145,20 +145,20 @@ public class VariantOrdnancePanel extends JPanel {
             int opCap = shipLayer.getTotalOP();
             if (opCap > 0) {
                 if (totalUsedOP > opCap) {
-                    opStatusLabel.setText("OP EXCEEDED! (Exceeds by " + (totalUsedOP - opCap) + " OP)");
+                    opStatusLabel.setText(StringManager.getString("OP_EXCEEDED_EXCEEDS_BY") + (totalUsedOP - opCap) + " OP)");
                     opStatusLabel.setForeground(java.awt.Color.RED);
                     opStatusLabel.setFont(opStatusLabel.getFont().deriveFont(java.awt.Font.BOLD));
                 } else if (totalUsedOP < opCap) {
-                    opStatusLabel.setText("WARNING: " + (opCap - totalUsedOP) + " unallocated OP remaining!");
+                    opStatusLabel.setText(StringManager.getString("WARNING") + (opCap - totalUsedOP) + " unallocated OP remaining!");
                     opStatusLabel.setForeground(new java.awt.Color(220, 160, 0)); // Dark Orange / Yellow
                     opStatusLabel.setFont(opStatusLabel.getFont().deriveFont(java.awt.Font.BOLD));
                 } else {
-                    opStatusLabel.setText("All OP Allocated");
+                    opStatusLabel.setText(StringManager.getString("ALL_OP_ALLOCATED"));
                     opStatusLabel.setForeground(new java.awt.Color(50, 180, 50)); // Green
                     opStatusLabel.setFont(opStatusLabel.getFont().deriveFont(java.awt.Font.BOLD));
                 }
             } else {
-                opStatusLabel.setText("N/A");
+                opStatusLabel.setText(StringManager.getString("N_A"));
                 opStatusLabel.setForeground(null);
             }
         } else {

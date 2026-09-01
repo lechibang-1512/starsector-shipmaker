@@ -1,5 +1,7 @@
 package shipeditor.parsing.saving;
 
+import shipeditor.utility.text.StringManager;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.map.ListOrderedMap;
@@ -15,8 +17,6 @@ import shipeditor.representation.ship.SpecWeaponGroup;
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.utility.Errors;
 import shipeditor.utility.text.StringConstants;
-import shipeditor.utility.text.StringValues;
-
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.LayerManager;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
@@ -87,7 +87,7 @@ final class SaveVariantAction {
                 log.error("Variant file saving failed: {}", result.getName());
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                         "Variant file saving failed, exception thrown at: " + result,
-                        StringValues.FILE_SAVING_ERROR,
+                        StringManager.getString("FILE_SAVING_ERROR"),
                         JOptionPane.ERROR_MESSAGE);
                 Errors.printToStream(e);
             }

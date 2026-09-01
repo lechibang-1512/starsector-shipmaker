@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.MouseoverLabelListener;
@@ -88,7 +90,7 @@ public class DataTreeVariantPanelBuilder {
         JRadioButton selector = new JRadioButton();
         selector.setBorder(new EmptyBorder(0, 0, 2, 4));
         selector.addActionListener(e -> shipeditor.communication.EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.ShipEntryPicked(variant)));
-        selector.setToolTipText("Select variant or drag label to be installed as module");
+        selector.setToolTipText(StringManager.getString("SELECT_VARIANT_OR_DRAG_LABEL_TO_BE_INSTALLED_AS_MODULE"));
         group.add(selector);
         variantLine.add(selector);
 

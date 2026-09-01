@@ -1,5 +1,7 @@
 package shipeditor.components.viewer.painters;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.utility.graphics.opengl.OpenGLPainter;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
@@ -16,7 +18,6 @@ import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.representation.weapon.WeaponEnums.WeaponMount;
 import shipeditor.utility.Utility;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.graphics.opengl.TextRenderer;
 
 import java.awt.Color;
@@ -103,11 +104,11 @@ public class DraggedObjectsPainter implements OpenGLPainter {
                                  WeaponSlotPoint selectedWeaponSlot, Font font,
                                  CSVEntry entry, Point2D cursor) {
         if (selectedWeaponSlot == null) {
-            TextRenderer.drawTextGL(spriteRenderer, projection, StringValues.SLOT_NOT_SELECTED, font, Color.GRAY, cursor);
+            TextRenderer.drawTextGL(spriteRenderer, projection, StringManager.getString("SLOT_NOT_SELECTED"), font, Color.GRAY, cursor);
         } else if (!selectedWeaponSlot.canFit(entry)) {
-            TextRenderer.drawTextGL(spriteRenderer, projection, StringValues.UNFIT_FOR_SLOT, font, Color.RED, cursor);
+            TextRenderer.drawTextGL(spriteRenderer, projection, StringManager.getString("UNFIT_FOR_SLOT"), font, Color.RED, cursor);
         } else {
-            TextRenderer.drawTextGL(spriteRenderer, projection, StringValues.CAN_INSTALL, font, Color.GREEN, cursor);
+            TextRenderer.drawTextGL(spriteRenderer, projection, StringManager.getString("CAN_INSTALL"), font, Color.GREEN, cursor);
         }
     }
 

@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.variant.modules;
 
+import shipeditor.utility.text.StringManager;
+
 import javax.swing.ListModel;
 
 import shipeditor.communication.EventBus;
@@ -7,8 +9,6 @@ import shipeditor.components.datafiles.entities.CSVEntry;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
 import shipeditor.components.instrument.ship.shared.InstalledFeatureList;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import java.awt.datatransfer.DataFlavor;
@@ -49,7 +49,7 @@ public final class ModuleList extends InstalledFeatureList {
         InstalledFeature selected = getSelectedValue();
 
         if (menu != null && selected != null) {
-            JMenuItem loadAsLayer = new JMenuItem("Load as separate layer");
+            JMenuItem loadAsLayer = new JMenuItem(StringManager.getString("LOAD_AS_SEPARATE_LAYER"));
 
             loadAsLayer.addActionListener(event -> actOnSelectedEntry(a -> a.loadAsSeparateLayer()));
             if (!(selected.getDataEntry() instanceof ShipCSVEntry)) {
@@ -62,7 +62,7 @@ public final class ModuleList extends InstalledFeatureList {
 
     @Override
     protected JMenuItem getSelectEntryOption(InstalledFeature selected) {
-        JMenuItem selectEntry = new JMenuItem(StringValues.SELECT_SHIP_ENTRY);
+        JMenuItem selectEntry = new JMenuItem(StringManager.getString("SELECT_SHIP_ENTRY"));
         selectEntry.addActionListener(event -> actOnSelectedEntry(feature -> {
             CSVEntry dataEntry = feature.getDataEntry();
             if (dataEntry instanceof ShipCSVEntry shipEntry) {

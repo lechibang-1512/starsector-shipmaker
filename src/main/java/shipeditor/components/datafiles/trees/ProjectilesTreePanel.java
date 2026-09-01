@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.components.ComponentEnums.OpenDataTarget;
@@ -157,7 +159,7 @@ public class ProjectilesTreePanel extends DataTreePanel {
         DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
         if (cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof shipeditor.persistence.database.IndexedFile) {
             menu.addSeparator();
-            JMenuItem loadAsLayer = new JMenuItem("Load as projectile layer");
+            JMenuItem loadAsLayer = new JMenuItem(StringManager.getString("LOAD_AS_PROJECTILE_LAYER"));
             loadAsLayer.addActionListener(new LoadLayerFromTree());
             menu.add(loadAsLayer);
         }

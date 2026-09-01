@@ -1,10 +1,11 @@
 package shipeditor.representation;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.Getter;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.boxicons.BoxiconsRegular;
 import org.kordamp.ikonli.swing.FontIcon;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 
 public class RepresentationEnums {
@@ -41,7 +42,7 @@ public class RepresentationEnums {
 
     @Getter public static enum HullSize implements SizeEnum {
 
-    DEFAULT(BoxiconsRegular.DICE_1, 0, StringValues.DEFAULT),
+    DEFAULT(BoxiconsRegular.DICE_1, 0, StringManager.getString("DEFAULT")),
     FIGHTER(BoxiconsRegular.DICE_1, 0, "Fighter"),
     FRIGATE(BoxiconsRegular.DICE_2, 10, "Frigate"),
     DESTROYER(BoxiconsRegular.DICE_3, 20, "Destroyer"),

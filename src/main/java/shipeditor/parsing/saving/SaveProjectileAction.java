@@ -1,13 +1,13 @@
 package shipeditor.parsing.saving;
 
+import shipeditor.utility.text.StringManager;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.components.viewer.layers.weapon.ProjectileLayer;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.representation.weapon.ProjectileSpecFile;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import java.io.File;
@@ -62,7 +62,7 @@ final class SaveProjectileAction {
                 log.error(errorMessage, result.getName(), e);
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                         "Projectile file saving failed, exception thrown at: " + result,
-                        StringValues.FILE_SAVING_ERROR,
+                        StringManager.getString("FILE_SAVING_ERROR"),
                         JOptionPane.ERROR_MESSAGE);
             }
         }

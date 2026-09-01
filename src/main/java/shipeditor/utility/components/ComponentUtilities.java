@@ -1,5 +1,7 @@
 package shipeditor.utility.components;
 
+import shipeditor.utility.text.StringManager;
+
 import com.formdev.flatlaf.ui.FlatLineBorder;
 import com.formdev.flatlaf.ui.FlatRoundBorder;
 
@@ -13,7 +15,6 @@ import shipeditor.utility.components.containers.SortableList;
 import shipeditor.utility.components.containers.TextScrollPanel;
 import shipeditor.utility.graphics.ColorUtilities;
 import shipeditor.utility.objects.Pair;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 
 import javax.swing.Action;
@@ -216,13 +217,13 @@ public final class ComponentUtilities {
         clearerListener.accept(opacitySlider, layer -> {
             opacitySlider.setValue(100);
             opacitySlider.setEnabled(false);
-            opacityLabel.setToolTipText(StringValues.NOT_INITIALIZED);
+            opacityLabel.setToolTipText(StringManager.getString("NOT_INITIALIZED"));
         });
 
         refresherListener.accept(opacitySlider, layerPainter -> {
             // Refresh code is expected to make sure this block never gets called if layer does not have a painter.
             int value = (int) (opacityGetter.apply(layerPainter) * 100.0f);
-            opacityLabel.setToolTipText(StringValues.CURRENT_VALUE + value + "%");
+            opacityLabel.setToolTipText(StringManager.getString("CURRENT_VALUE") + value + "%");
             opacitySlider.setValue(value);
             opacitySlider.setEnabled(true);
         });
@@ -253,10 +254,10 @@ public final class ComponentUtilities {
 
     public static JPopupMenu createPathContextMenu(Path filePath) {
         JPopupMenu openFileMenu = new JPopupMenu();
-        JMenuItem openSourceFile = new JMenuItem(StringValues.OPEN_SOURCE_FILE);
+        JMenuItem openSourceFile = new JMenuItem(StringManager.getString("OPEN_SOURCE_FILE"));
         openSourceFile.addActionListener(e -> FileUtilities.openPathInDesktop(filePath));
         openFileMenu.add(openSourceFile);
-        JMenuItem openContainingFolder = new JMenuItem(StringValues.OPEN_CONTAINING_FOLDER);
+        JMenuItem openContainingFolder = new JMenuItem(StringManager.getString("OPEN_CONTAINING_FOLDER"));
         openContainingFolder.addActionListener(e -> FileUtilities.openPathInDesktop(filePath.getParent()));
         openFileMenu.add(openContainingFolder);
 
@@ -290,7 +291,7 @@ public final class ComponentUtilities {
             JPopupMenu contextMenu = ComponentUtilities.createPathContextMenu(filePath);
 
             if (packagePath != null) {
-                JMenuItem openContainingPackage = new JMenuItem(StringValues.OPEN_DATA_PACKAGE);
+                JMenuItem openContainingPackage = new JMenuItem(StringManager.getString("OPEN_DATA_PACKAGE"));
                 openContainingPackage.addActionListener(e -> FileUtilities.openPathInDesktop(packagePath));
                 contextMenu.add(openContainingPackage);
             }
@@ -298,7 +299,7 @@ public final class ComponentUtilities {
             label.addMouseListener(new MouseoverLabelListener(contextMenu, label, Themes.getPanelHighlightColor()));
             label.setToolTipText(filePath.toString());
         } else {
-            label.setToolTipText("No file path associated");
+            label.setToolTipText(StringManager.getString("NO_FILE_PATH_ASSOCIATED"));
         }
 
         JPanel titleContainer = UIFactory.createPanel();
@@ -342,7 +343,7 @@ public final class ComponentUtilities {
 
         ComponentUtilities.setPanelTopLineBorder(container, 6);
 
-        JCheckBox reorderCheckbox = new JCheckBox("Reorder by drag");
+        JCheckBox reorderCheckbox = new JCheckBox(StringManager.getString("REORDER_BY_DRAG"));
         reorderCheckbox.setBorder(new EmptyBorder(4, 0, 0, 0));
         reorderCheckbox.addItemListener(e -> {
             boolean reorderOn = reorderCheckbox.isSelected();
@@ -466,7 +467,7 @@ public final class ComponentUtilities {
     }
 
     public static JLabel getNoSelected() {
-        JLabel label = UIFactory.createLabel(StringValues.NO_SELECTED);
+        JLabel label = UIFactory.createLabel(StringManager.getString("NO_SELECTED"));
         label.setBorder(new EmptyBorder(5, 0, 5, 0));
         return label;
     }
@@ -517,7 +518,7 @@ public final class ComponentUtilities {
         JButton removeButton = UIFactory.createButton("Remove");
 
         removeButton.addActionListener(removeAction);
-        removeButton.setToolTipText("Remove from list");
+        removeButton.setToolTipText(StringManager.getString("REMOVE_FROM_LIST"));
 
         container.add(removeButton, constraints);
 

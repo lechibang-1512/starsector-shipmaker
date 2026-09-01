@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.utility.components.UIConstants;
 
 import javax.swing.*;
@@ -76,21 +78,21 @@ public abstract class AbstractFilterPanel extends JPanel {
 
     protected JPanel getSelectionButtonsPanel() {
         JButton selectAll = new JButton();
-        selectAll.setText("Select all");
+        selectAll.setText(StringManager.getString("SELECT_ALL"));
         selectAll.addActionListener(e -> {
             this.toggleAll(true);
             applyFilters();
         });
 
         JButton deselectAll = new JButton();
-        deselectAll.setText("Deselect all");
+        deselectAll.setText(StringManager.getString("DESELECT_ALL"));
         deselectAll.addActionListener(e -> {
             this.toggleAll(false);
             applyFilters();
         });
 
         JButton invert = new JButton();
-        invert.setText("Invert");
+        invert.setText(StringManager.getString("INVERT"));
         invert.addActionListener(e -> {
             this.invertAll();
             applyFilters();
@@ -124,8 +126,8 @@ public abstract class AbstractFilterPanel extends JPanel {
         togglePanel.setLayout(new BoxLayout(togglePanel, BoxLayout.LINE_AXIS));
         togglePanel.setBorder(new EmptyBorder(4, 6, 4, 0));
 
-        JRadioButton matchAll = new JRadioButton("Match ALL (AND)");
-        JRadioButton matchAny = new JRadioButton("Match ANY (OR)");
+        JRadioButton matchAll = new JRadioButton(StringManager.getString("MATCH_ALL_AND"));
+        JRadioButton matchAny = new JRadioButton(StringManager.getString("MATCH_ANY_OR"));
 
         this.logicGroup = new ButtonGroup();
         this.logicGroup.add(matchAll);

@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.builtins.wings;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.components.ComponentEnums.EditorInstrument;
@@ -8,8 +10,6 @@ import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -35,11 +35,11 @@ public class BuiltInWingsPanel extends JPanel {
         this.setLayout(new BorderLayout());
 
         this.baseBuiltInWingsList = new BaseWingListPane(a -> a.getBuiltInWings(), (a, b) -> a.setBuiltInWings(b));
-        ComponentUtilities.outfitPanelWithTitle(baseBuiltInWingsList, StringValues.BASE_BUILT_INS);
+        ComponentUtilities.outfitPanelWithTitle(baseBuiltInWingsList, StringManager.getString("BASE_BUILT_INS"));
         this.addedBySkinList = new SkinWingListPane(a -> a.getBuiltInWings(), (a, b) -> a.setBuiltInWings(b));
-        ComponentUtilities.outfitPanelWithTitle(addedBySkinList, StringValues.ADDED_BY_SKIN);
+        ComponentUtilities.outfitPanelWithTitle(addedBySkinList, StringManager.getString("ADDED_BY_SKIN"));
         this.removedBySkinList = new SkinWingListPane(a -> a.getRemoveBuiltInWings(), (a, b) -> a.setRemoveBuiltInWings(b));
-        ComponentUtilities.outfitPanelWithTitle(removedBySkinList, StringValues.REMOVED_BY_SKIN);
+        ComponentUtilities.outfitPanelWithTitle(removedBySkinList, StringManager.getString("REMOVED_BY_SKIN"));
 
         JPanel container = new JPanel(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
@@ -77,12 +77,12 @@ public class BuiltInWingsPanel extends JPanel {
         ComponentUtilities.outfitPanelWithTitle(infoPanel, "Built-in wings");
         infoPanel.setLayout(new GridBagLayout());
 
-        JLabel totalBaysLabel = new JLabel(StringValues.TOTAL_SHIP_BAYS);
+        JLabel totalBaysLabel = new JLabel(StringManager.getString("TOTAL_SHIP_BAYS"));
         totalBayCount = new JLabel();
 
         ComponentUtilities.addLabelAndComponent(infoPanel, totalBaysLabel, totalBayCount, 0);
 
-        JLabel totalBuiltInsLabel = new JLabel(StringValues.TOTAL_BUILT_IN_WINGS);
+        JLabel totalBuiltInsLabel = new JLabel(StringManager.getString("TOTAL_BUILT_IN_WINGS"));
         builtInWingsCount = new JLabel();
 
         ComponentUtilities.addLabelAndComponent(infoPanel, totalBuiltInsLabel, builtInWingsCount, 1);
@@ -114,7 +114,7 @@ public class BuiltInWingsPanel extends JPanel {
     }
 
     private void refreshLayerInfo(ViewerLayer selected) {
-        String notInitialized = StringValues.NOT_INITIALIZED;
+        String notInitialized = StringManager.getString("NOT_INITIALIZED");
 
         if (selected instanceof ShipLayer shipLayer) {
             String totalBays = Utility.translateIntegerValue(shipLayer::getBayCount);

@@ -1,5 +1,7 @@
 package shipeditor.parsing.loading;
 
+import shipeditor.utility.text.StringManager;
+
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvParser;
@@ -8,8 +10,6 @@ import lombok.extern.log4j.Log4j2;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.utility.Errors;
 import shipeditor.utility.text.StringConstants;
-import shipeditor.utility.text.StringValues;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -45,7 +45,7 @@ public final class CsvLoader {
         }
 
         if (csvFile.length() == 0) {
-            log.warn(StringValues.CSV_FILE_EMPTY, csvFile.getName());
+            log.warn(StringManager.getString("CSV_FILE_EMPTY"), csvFile.getName());
             return null;
         }
 
@@ -55,21 +55,21 @@ public final class CsvLoader {
             csvData = readCSVWithCharset(csvFile, csvMapper, csvSchema, effectivePredicate, StandardCharsets.ISO_8859_1);
         } catch (Throwable exception) {
             if (SettingsManager.isDeveloperModeEnabled()) {
-                log.warn(StringValues.CSV_ISO_LOAD_FAILED, csvFile.getAbsolutePath(), exception);
+                log.warn(StringManager.getString("CSV_ISO_LOAD_FAILED"), csvFile.getAbsolutePath(), exception);
             } else {
-                log.warn(StringValues.CSV_ISO_LOAD_FAILED, csvFile.getAbsolutePath());
+                log.warn(StringManager.getString("CSV_ISO_LOAD_FAILED"), csvFile.getAbsolutePath());
             }
             try {
                 csvData = readCSVWithCharset(csvFile, csvMapper, csvSchema, effectivePredicate, StandardCharsets.UTF_8);
             } catch (Throwable fallbackException) {
                 if (SettingsManager.isDeveloperModeEnabled()) {
-                    log.error(StringValues.CSV_FALLBACK_LOAD_FAILED, csvFile.getAbsolutePath(), fallbackException);
+                    log.error(StringManager.getString("CSV_FALLBACK_LOAD_FAILED"), csvFile.getAbsolutePath(), fallbackException);
                     Errors.printToStream(fallbackException);
                 } else {
-                    log.error(StringValues.CSV_FALLBACK_LOAD_FAILED, csvFile.getAbsolutePath());
+                    log.error(StringManager.getString("CSV_FALLBACK_LOAD_FAILED"), csvFile.getAbsolutePath());
                 }
                 if (SettingsManager.areFileErrorPopupsEnabled()) {
-                    Errors.showFileError(StringValues.CSV_PARSE_FAILED + csvFile, fallbackException);
+                    Errors.showFileError(StringManager.getString("CSV_PARSE_FAILED") + csvFile, fallbackException);
                 }
                 return csvData;
             }
@@ -143,7 +143,7 @@ public final class CsvLoader {
             return null;
         }
         if (SettingsManager.isDeveloperModeEnabled()) {
-            log.trace(StringValues.REPARSING_CSV_DISK, path);
+            log.trace(StringManager.getString("REPARSING_CSV_DISK"), path);
         }
         CsvMapper csvMapper = new CsvMapper();
         csvMapper.configure(CsvParser.Feature.IGNORE_TRAILING_UNMAPPABLE, true);
@@ -160,9 +160,9 @@ public final class CsvLoader {
                 return readCSVWithCharset(csvFile, csvMapper, csvSchema, acceptAll, StandardCharsets.UTF_8);
             } catch (Throwable fallback) {
                 if (SettingsManager.isDeveloperModeEnabled()) {
-                    log.error(StringValues.CSV_REPARSE_FALLBACK_FAILED, path, fallback);
+                    log.error(StringManager.getString("CSV_REPARSE_FALLBACK_FAILED"), path, fallback);
                 } else {
-                    log.error(StringValues.CSV_REPARSE_FALLBACK_FAILED, path);
+                    log.error(StringManager.getString("CSV_REPARSE_FALLBACK_FAILED"), path);
                 }
                 return null;
             }

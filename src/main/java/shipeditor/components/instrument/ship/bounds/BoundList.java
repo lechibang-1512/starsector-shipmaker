@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.bounds;
 
+import shipeditor.utility.text.StringManager;
+
 import javax.swing.ListModel;
 
 import lombok.extern.log4j.Log4j2;
@@ -7,8 +9,6 @@ import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.points.PointEvents.BoundPointsSorted;
 import shipeditor.components.viewer.entities.BoundPoint;
 import shipeditor.utility.components.containers.PointList;
-import shipeditor.utility.text.StringValues;
-
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
 @Log4j2
 final class BoundList extends PointList<BoundPoint> {
 
-    private static final DataFlavor boundFlavor = new DataFlavor(BoundPoint.class, StringValues.BOUND);
+    private static final DataFlavor boundFlavor = new DataFlavor(BoundPoint.class, StringManager.getString("BOUND"));
 
     private final Runnable selectionRefresher;
 

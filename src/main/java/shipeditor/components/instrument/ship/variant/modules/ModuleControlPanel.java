@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.variant.modules;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.control.ControlEvents.FeatureInstallQueued;
 import shipeditor.components.instrument.LayerPropertiesPanel;
@@ -16,8 +18,6 @@ import shipeditor.representation.ship.VariantFile;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.Utility;
 import shipeditor.utility.objects.Pair;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -114,7 +114,7 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
         var opacityWidget = createVisibilityWidget(painterGetter, additionalAction);
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText(StringValues.COLLISION_VIEW);
+        opacityLabel.setText(StringManager.getString("COLLISION_VIEW"));
 
         return opacityWidget;
     }
@@ -134,7 +134,7 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
         var opacityWidget = createVisibilityWidget(painterGetter, additionalAction);
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText(StringValues.BOUNDS_VIEW);
+        opacityLabel.setText(StringManager.getString("BOUNDS_VIEW"));
 
         return opacityWidget;
     }
@@ -154,7 +154,7 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
         var opacityWidget = createVisibilityWidget(painterGetter, additionalAction);
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText(StringValues.SLOTS_VIEW);
+        opacityLabel.setText(StringManager.getString("SLOTS_VIEW"));
 
         return opacityWidget;
     }
@@ -176,7 +176,7 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
         Pair<JLabel, JSlider> opacityWidget = super.createOpacityWidget(opacityGetter, opacitySetter);
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText("Module opacity");
+        opacityLabel.setText(StringManager.getString("MODULE_OPACITY"));
 
         return opacityWidget;
     }
@@ -195,7 +195,7 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(new EmptyBorder(4, 0, 4, 0));
 
-        JLabel pickerLabel = new JLabel("Module variant:");
+        JLabel pickerLabel = new JLabel(StringManager.getString("MODULE_VARIANT"));
         panel.add(pickerLabel, BorderLayout.PAGE_START);
 
         JPanel controlsRow = new JPanel(new BorderLayout(4, 0));
@@ -222,8 +222,8 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
             }
         });
 
-        JButton installButton = new JButton("Install");
-        installButton.setToolTipText("Install selected variant as module to the selected slot");
+        JButton installButton = new JButton(StringManager.getString("INSTALL_1"));
+        installButton.setToolTipText(StringManager.getString("INSTALL_SELECTED_VARIANT_AS_MODULE_TO_THE_SELECTED_SLOT"));
         installButton.addActionListener(e -> {
             VariantFile selected = (VariantFile) variantPicker.getSelectedItem();
             if (selected != null) {
@@ -232,8 +232,8 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
             }
         });
 
-        JButton clearButton = new JButton("Clear");
-        clearButton.setToolTipText("Remove selected module from variant");
+        JButton clearButton = new JButton(StringManager.getString("CLEAR"));
+        clearButton.setToolTipText(StringManager.getString("REMOVE_SELECTED_MODULE_FROM_VARIANT"));
         clearButton.addActionListener(e -> {
             if (moduleList == null) return;
             InstalledFeature selectedFeature = moduleList.getSelectedValue();

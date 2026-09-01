@@ -1,5 +1,7 @@
 package shipeditor.utility.components.widgets;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -10,8 +12,6 @@ import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -50,7 +50,7 @@ public abstract class PointLocationWidget extends LayerPropertiesPanel {
     protected TwinSpinnerPanel createSpinnerPanel(Point2D initialPoint, Consumer<Point2D> pointSetter) {
         TwinSpinnerPanel spinnerPanel = Spinners.createLocationSpinners(initialPoint,
                 retrieveGetter(), pointSetter);
-        spinnerPanel.setToolTipText(StringValues.POINT_LOCATION_IN_WORLD_COORDINATES);
+        spinnerPanel.setToolTipText(StringManager.getString("POINT_LOCATION_IN_WORLD_COORDINATES"));
         return spinnerPanel;
     }
 
@@ -115,10 +115,10 @@ public abstract class PointLocationWidget extends LayerPropertiesPanel {
         String currentMode = "Current system: " + coordsMode.getShortName();
         coordsNameLabel.setToolTipText(Utility.getWithLinebreaks(coordinatesHint, currentMode));
 
-        JLabel coordsDisplayLabel = new JLabel(StringValues.NOT_INITIALIZED);
+        JLabel coordsDisplayLabel = new JLabel(StringManager.getString("NOT_INITIALIZED"));
 
         registerWidgetListeners(coordsDisplayLabel,
-                layer -> coordsDisplayLabel.setText(StringValues.NOT_INITIALIZED),
+                layer -> coordsDisplayLabel.setText(StringManager.getString("NOT_INITIALIZED")),
                 layer -> {
                     Supplier<Point2D> getter = retrieveGetter();
                     Point2D existing = getter.get();
@@ -126,7 +126,7 @@ public abstract class PointLocationWidget extends LayerPropertiesPanel {
                         Point2D translated = Utility.getPointCoordinatesForDisplay(existing);
                         coordsDisplayLabel.setText(Utility.getPointPositionText(translated));
                     } else {
-                        coordsDisplayLabel.setText(StringValues.NOT_INITIALIZED);
+                        coordsDisplayLabel.setText(StringManager.getString("NOT_INITIALIZED"));
                     }
                 });
 

@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.files.FileEvents.WingDataLoaded;
 import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
@@ -153,7 +155,7 @@ public class WingsTreePanel extends CSVDataTreePanel<WingCSVEntry>{
     private static void populateVariantOptions(JPopupMenu menu, WingCSVEntry entry) {
         EditorInstrument targetMode = EditorInstrument.VARIANT_DATA;
 
-        JMenuItem addToVariantWings = new JMenuItem("Add to variant wings");
+        JMenuItem addToVariantWings = new JMenuItem(StringManager.getString("ADD_TO_VARIANT_WINGS"));
         ViewerLayer activeLayer = StaticController.getActiveLayer();
         addToVariantWings.addActionListener(e -> {
             if (activeLayer instanceof ShipLayer checkedLayer) {
@@ -174,7 +176,7 @@ public class WingsTreePanel extends CSVDataTreePanel<WingCSVEntry>{
     private static void populateBuiltInOptions(JPopupMenu menu, WingCSVEntry entry) {
         EditorInstrument targetMode = EditorInstrument.BUILT_IN_WINGS;
 
-        JMenuItem addToHullBuiltIns = new JMenuItem("Add to hull built-in wings");
+        JMenuItem addToHullBuiltIns = new JMenuItem(StringManager.getString("ADD_TO_HULL_BUILT_IN_WINGS"));
         ViewerLayer activeLayer = StaticController.getActiveLayer();
         addToHullBuiltIns.addActionListener(e -> {
             if (activeLayer instanceof ShipLayer checkedLayer) {
@@ -198,7 +200,7 @@ public class WingsTreePanel extends CSVDataTreePanel<WingCSVEntry>{
 
     private static JMenuItem getAddToSkinAdded(WingCSVEntry checked, ViewerLayer activeLayer) {
         EditorInstrument targetMode = EditorInstrument.BUILT_IN_WINGS;
-        JMenuItem addToSkinAdded = new JMenuItem("Add to skin built-in wings");
+        JMenuItem addToSkinAdded = new JMenuItem(StringManager.getString("ADD_TO_SKIN_BUILT_IN_WINGS"));
         addToSkinAdded.addActionListener(e -> {
             if (activeLayer instanceof ShipLayer checkedLayer) {
                 var skin = checkedLayer.getActiveSkin();

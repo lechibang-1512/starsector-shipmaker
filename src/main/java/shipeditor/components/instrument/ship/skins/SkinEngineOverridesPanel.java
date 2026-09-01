@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.skins;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
 import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
@@ -118,13 +120,13 @@ public class SkinEngineOverridesPanel extends JPanel {
         editorPanel.setVisible(false);
 
         if (cachedPainter == null || cachedPainter.isUninitialized()) {
-            statusLabel.setText("No ship layer selected");
+            statusLabel.setText(StringManager.getString("NO_SHIP_LAYER_SELECTED"));
             return;
         }
 
         ShipSkin activeSkin = cachedPainter.getActiveSkin();
         if (activeSkin == null || activeSkin.isBase()) {
-            statusLabel.setText("No skin active — select a skin in the Skin Data tab");
+            statusLabel.setText(StringManager.getString("NO_SKIN_ACTIVE_SELECT_A_SKIN_IN_THE_SKIN_DATA_TAB"));
             return;
         }
 
@@ -132,13 +134,13 @@ public class SkinEngineOverridesPanel extends JPanel {
         List<EnginePoint> slots = slotPainter.getPointsIndex();
 
         if (slots.isEmpty()) {
-            statusLabel.setText("No engine slots defined on this hull");
+            statusLabel.setText(StringManager.getString("NO_ENGINE_SLOTS_DEFINED_ON_THIS_HULL"));
             return;
         }
 
         Map<Integer, EngineDataOverride> overrides = activeSkin.getEngineSlotChanges();
         int overrideCount = (overrides != null) ? overrides.size() : 0;
-        statusLabel.setText("Skin: " + activeSkin + "  —  " + overrideCount + " engine override(s)");
+        statusLabel.setText(StringManager.getString("SKIN") + activeSkin + "  —  " + overrideCount + " engine override(s)");
 
         tableModel.populate(slots, overrides);
         editorPanel.setVisible(true);

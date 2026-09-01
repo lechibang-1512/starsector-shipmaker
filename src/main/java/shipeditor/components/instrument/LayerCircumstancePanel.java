@@ -1,5 +1,7 @@
 package shipeditor.components.instrument;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.viewer.control.ControlPredicates;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.utility.Utility;
@@ -8,8 +10,6 @@ import shipeditor.utility.components.widgets.PointLocationWidget;
 import shipeditor.utility.components.widgets.Spinners;
 import shipeditor.utility.components.widgets.TwinSpinnerPanel;
 import shipeditor.utility.objects.Pair;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -80,7 +80,7 @@ public class LayerCircumstancePanel extends LayerPropertiesPanel {
 
         JSpinner rotationSpinner = Spinners.createWheelable(rotationModel, IncrementType.CHUNK);
         rotationSpinner.setEnabled(false);
-        JLabel rotationLabel = new JLabel("Layer rotation");
+        JLabel rotationLabel = new JLabel(StringManager.getString("LAYER_ROTATION"));
 
         rotationSpinner.addChangeListener(e -> {
             if (isWidgetsReadyForInput()) {
@@ -122,8 +122,8 @@ public class LayerCircumstancePanel extends LayerPropertiesPanel {
         @Override
         protected TwinSpinnerPanel createSpinnerPanel(Point2D initialPoint, Consumer<Point2D> pointSetter) {
             TwinSpinnerPanel spinnerPanel = Spinners.createLocationSpinners(initialPoint, retrieveGetter(), pointSetter,
-                    StringValues.X_COORDINATE, StringValues.Y_COORDINATE, 1.0d);
-            spinnerPanel.setToolTipText(StringValues.POINT_LOCATION_IN_WORLD_COORDINATES);
+                    StringManager.getString("X_COORDINATE"), StringManager.getString("Y_COORDINATE"), 1.0d);
+            spinnerPanel.setToolTipText(StringManager.getString("POINT_LOCATION_IN_WORLD_COORDINATES"));
             return spinnerPanel;
         }
 

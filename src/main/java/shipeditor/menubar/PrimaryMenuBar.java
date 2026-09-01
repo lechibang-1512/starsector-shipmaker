@@ -1,5 +1,7 @@
 package shipeditor.menubar;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import org.kordamp.ikonli.boxicons.BoxiconsRegular;
 import org.kordamp.ikonli.swing.FontIcon;
@@ -55,14 +57,14 @@ public final class PrimaryMenuBar extends JMenuBar {
     }
 
     private static JMenu createHelpMenu() {
-        JMenu helpMenu = new JMenu("Help");
+        JMenu helpMenu = new JMenu(StringManager.getString("HELP"));
         
-        JMenuItem helpItem = new JMenuItem("Help");
+        JMenuItem helpItem = new JMenuItem(StringManager.getString("HELP"));
         helpItem.setIcon(FontIcon.of(BoxiconsRegular.HELP_CIRCLE, 16, Themes.getIconColor()));
         helpItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
         helpItem.addActionListener(e -> {
             JDialog dialog = new JDialog();
-            dialog.setTitle("Help");
+            dialog.setTitle(StringManager.getString("HELP"));
             dialog.setModal(false);
             dialog.setSize(600, 400);
             dialog.setLocationRelativeTo(null);
@@ -71,11 +73,11 @@ public final class PrimaryMenuBar extends JMenuBar {
         });
         helpMenu.add(helpItem);
         
-        JMenuItem logsItem = new JMenuItem("Logs");
+        JMenuItem logsItem = new JMenuItem(StringManager.getString("LOGS"));
         logsItem.setIcon(FontIcon.of(BoxiconsRegular.FILE_BLANK, 16, Themes.getIconColor()));
         logsItem.addActionListener(e -> {
             JDialog dialog = new JDialog();
-            dialog.setTitle("Logs");
+            dialog.setTitle(StringManager.getString("LOGS"));
             dialog.setModal(false);
             dialog.setSize(800, 300);
             dialog.setLocationRelativeTo(null);

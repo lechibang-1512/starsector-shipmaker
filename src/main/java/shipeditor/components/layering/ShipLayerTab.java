@@ -1,13 +1,13 @@
 package shipeditor.components.layering;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.utility.Utility;
 import shipeditor.utility.graphics.Sprite;
-import shipeditor.utility.text.StringValues;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -38,7 +38,7 @@ final class ShipLayerTab extends LayerTab {
             Sprite sprite = shipPainter.getSprite();
             this.spriteFileName = sprite.getFilename();
         } else {
-            this.spriteFileName = StringValues.NOT_LOADED;
+            this.spriteFileName = StringManager.getString("NOT_LOADED");
         }
 
         this.hullFileName = layer.getHullFileName();
@@ -49,12 +49,12 @@ final class ShipLayerTab extends LayerTab {
      * @return HTML-formatted string that enables multi-line tooltip setup.
      */
     public String getTabTooltip() {
-        String notLoaded = StringValues.NOT_LOADED;
+        String notLoaded = StringManager.getString("NOT_LOADED");
         String sprite = spriteFileName;
         if (Objects.equals(sprite, "")) {
             sprite = notLoaded;
         }
-        String spriteNameLine = StringValues.SPRITE_FILE + sprite;
+        String spriteNameLine = StringManager.getString("SPRITE_FILE") + sprite;
 
         String hull = hullFileName;
         if (Objects.equals(hull, "")) {
@@ -66,7 +66,7 @@ final class ShipLayerTab extends LayerTab {
         skinFileNames.forEach(s -> {
             String skin = s;
             if (Objects.equals(skin, "")) {
-                skin = StringValues.NOT_LOADED;
+                skin = StringManager.getString("NOT_LOADED");
             }
             else if (skin.equals(activeSkinFileName)) {
                 skin = "<font color=blue>" + skin + "</font>";

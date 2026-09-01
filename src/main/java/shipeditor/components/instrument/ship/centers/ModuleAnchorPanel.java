@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.centers;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.AccessLevel;
@@ -11,8 +13,6 @@ import shipeditor.components.viewer.painters.points.ship.CenterPointPainter;
 import shipeditor.utility.components.widgets.PointLocationWidget;
 import shipeditor.utility.components.widgets.Spinners;
 import shipeditor.utility.components.widgets.TwinSpinnerPanel;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JButton;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -45,7 +45,7 @@ public class ModuleAnchorPanel extends PointLocationWidget {
 
         String clearAnchor = "Clear anchor";
         registerWidgetListeners(createDeleteButton, layer -> {
-            createDeleteButton.setText(StringValues.DEFINE_ANCHOR);
+            createDeleteButton.setText(StringManager.getString("DEFINE_ANCHOR"));
             createDeleteButton.setEnabled(false);
         }, layer -> {
             Supplier<Point2D> getter = retrieveGetter();
@@ -54,7 +54,7 @@ public class ModuleAnchorPanel extends PointLocationWidget {
                 createDeleteButton.setText(clearAnchor);
             }
             else {
-                createDeleteButton.setText(StringValues.DEFINE_ANCHOR);
+                createDeleteButton.setText(StringManager.getString("DEFINE_ANCHOR"));
             }
             createDeleteButton.setEnabled(true);
         });
@@ -65,7 +65,7 @@ public class ModuleAnchorPanel extends PointLocationWidget {
     }
 
     private JButton getCreateDeleteButton() {
-        JButton createDeleteButton = new JButton(StringValues.DEFINE_ANCHOR);
+        JButton createDeleteButton = new JButton(StringManager.getString("DEFINE_ANCHOR"));
         createDeleteButton.addActionListener(e -> {
             if (isWidgetsReadyForInput()) {
                 Supplier<Point2D> getter = retrieveGetter();
@@ -111,8 +111,8 @@ public class ModuleAnchorPanel extends PointLocationWidget {
     @Override
     protected TwinSpinnerPanel createSpinnerPanel(Point2D initialPoint, Consumer<Point2D> pointSetter) {
         TwinSpinnerPanel spinnerPanel = Spinners.createLocationSpinners(initialPoint, retrieveGetter(), pointSetter,
-                StringValues.Y_COORDINATE, StringValues.X_COORDINATE);
-        spinnerPanel.setToolTipText("Position offset for ship center");
+                StringManager.getString("Y_COORDINATE"), StringManager.getString("X_COORDINATE"));
+        spinnerPanel.setToolTipText(StringManager.getString("POSITION_OFFSET_FOR_SHIP_CENTER"));
         return spinnerPanel;
     }
 
@@ -123,7 +123,7 @@ public class ModuleAnchorPanel extends PointLocationWidget {
 
     @Override
     protected String getPanelTitleText() {
-        return StringValues.MODULE_ANCHOR;
+        return StringManager.getString("MODULE_ANCHOR");
     }
 
     @Override

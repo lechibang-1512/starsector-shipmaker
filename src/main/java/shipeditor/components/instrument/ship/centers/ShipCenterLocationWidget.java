@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.centers;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.viewer.entities.ShipCenterPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
@@ -7,8 +9,6 @@ import shipeditor.components.viewer.painters.points.ship.CenterPointPainter;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.widgets.PointLocationWidget;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -46,7 +46,7 @@ class ShipCenterLocationWidget extends PointLocationWidget {
 
     @Override
     protected String getPanelTitleText() {
-        return StringValues.SHIP_CENTER;
+        return StringManager.getString("SHIP_CENTER");
     }
 
     @Override

@@ -1,5 +1,7 @@
 package shipeditor.menubar;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import org.kordamp.ikonli.boxicons.BoxiconsRegular;
 import org.kordamp.ikonli.swing.FontIcon;
@@ -31,24 +33,24 @@ class FileMenu extends JMenu {
         this.add(openSubmenu);
 
         JMenuItem loadHullAsLayer = new JMenuItem(FileLoading.getLoadHullAsLayer());
-        loadHullAsLayer.setText("New Ship Layer from File (.ship)...");
+        loadHullAsLayer.setText(StringManager.getString("NEW_SHIP_LAYER_FROM_FILE_SHIP"));
         loadHullAsLayer.setIcon(FontIcon.of(BoxiconsRegular.FILE, 16, Themes.getIconColor()));
         this.add(loadHullAsLayer);
 
         JMenuItem loadSpriteAsHull = new JMenuItem(FileLoading.getLoadSpriteAsHull());
-        loadSpriteAsHull.setText("New Ship Layer from Sprite...");
+        loadSpriteAsHull.setText(StringManager.getString("NEW_SHIP_LAYER_FROM_SPRITE"));
         loadSpriteAsHull.setIcon(FontIcon.of(BoxiconsRegular.IMAGE, 16, Themes.getIconColor()));
         this.add(loadSpriteAsHull);
 
         this.addSeparator();
 
-        JMenuItem saveActiveLayer = new JMenuItem("Save Active Layer");
+        JMenuItem saveActiveLayer = new JMenuItem(StringManager.getString("SAVE_ACTIVE_LAYER"));
         saveActiveLayer.setIcon(FontIcon.of(BoxiconsRegular.SAVE, 16, Themes.getIconColor()));
         saveActiveLayer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
         saveActiveLayer.addActionListener(e -> SaveCoordinator.saveActiveLayer());
         this.add(saveActiveLayer);
 
-        JMenuItem saveAll = new JMenuItem("Save All Layers");
+        JMenuItem saveAll = new JMenuItem(StringManager.getString("SAVE_ALL_LAYERS"));
         saveAll.setIcon(FontIcon.of(BoxiconsRegular.SAVE, 16, Themes.getIconColor()));
         saveAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         saveAll.addActionListener(e -> SaveCoordinator.saveAllLayers());
@@ -56,7 +58,7 @@ class FileMenu extends JMenu {
 
         this.addSeparator();
 
-        JMenuItem exportAction = new JMenuItem("Export...");
+        JMenuItem exportAction = new JMenuItem(StringManager.getString("EXPORT"));
         exportAction.setIcon(FontIcon.of(BoxiconsRegular.EXPORT, 16, Themes.getIconColor()));
         exportAction.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         exportAction.addActionListener(e -> {
@@ -67,7 +69,7 @@ class FileMenu extends JMenu {
 
         this.addSeparator();
 
-        JMenuItem preferences = new JMenuItem("Preferences...");
+        JMenuItem preferences = new JMenuItem(StringManager.getString("PREFERENCES"));
         preferences.setIcon(FontIcon.of(BoxiconsRegular.COG, 16, Themes.getIconColor()));
         preferences.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_COMMA, InputEvent.CTRL_DOWN_MASK));
         preferences.addActionListener(e -> {
@@ -78,7 +80,7 @@ class FileMenu extends JMenu {
 
         this.addSeparator();
 
-        JMenuItem clearData = new JMenuItem("Clear Data & Reinitialize...");
+        JMenuItem clearData = new JMenuItem(StringManager.getString("CLEAR_DATA_REINITIALIZE"));
         clearData.setIcon(FontIcon.of(BoxiconsRegular.DATA, 16, Themes.getIconColor()));
         clearData.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
@@ -103,7 +105,7 @@ class FileMenu extends JMenu {
 
         this.addSeparator();
 
-        JMenuItem exitAction = new JMenuItem("Exit");
+        JMenuItem exitAction = new JMenuItem(StringManager.getString("EXIT"));
         exitAction.setIcon(FontIcon.of(BoxiconsRegular.EXIT, 16, Themes.getIconColor()));
         exitAction.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.ALT_DOWN_MASK));
         exitAction.addActionListener(e -> shipeditor.PrimaryWindow.getInstance().dispatchEvent(new java.awt.event.WindowEvent(shipeditor.PrimaryWindow.getInstance(), java.awt.event.WindowEvent.WINDOW_CLOSING)));
@@ -111,16 +113,16 @@ class FileMenu extends JMenu {
     }
 
     private static JMenu createOpenSubmenu() {
-        JMenu newSubmenu = new JMenu("Open into Active Layer");
+        JMenu newSubmenu = new JMenu(StringManager.getString("OPEN_INTO_ACTIVE_LAYER"));
         newSubmenu.setIcon(FontIcon.of(BoxiconsRegular.FOLDER_OPEN, 16, Themes.getIconColor()));
 
         JMenuItem openSprite = new JMenuItem(FileLoading.getOpenSprite());
-        openSprite.setText("Open Sprite onto Active Layer...");
+        openSprite.setText(StringManager.getString("OPEN_SPRITE_ONTO_ACTIVE_LAYER"));
         openSprite.setIcon(FontIcon.of(BoxiconsRegular.IMAGE_ADD, 16, Themes.getIconColor()));
         newSubmenu.add(openSprite);
 
         JMenuItem openShipData = new JMenuItem(FileLoading.getOpenShip());
-        openShipData.setText("Open Ship File (.ship) onto Active Layer...");
+        openShipData.setText(StringManager.getString("OPEN_SHIP_FILE_SHIP_ONTO_ACTIVE_LAYER"));
         openShipData.setIcon(FontIcon.of(BoxiconsRegular.FILE_BLANK, 16, Themes.getIconColor()));
         newSubmenu.add(openShipData);
 

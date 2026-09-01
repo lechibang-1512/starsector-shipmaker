@@ -1,5 +1,7 @@
 package shipeditor.utility.components.containers;
 
+import shipeditor.utility.text.StringManager;
+
 import javax.swing.ListModel;
 
 import shipeditor.components.datafiles.entities.OrdnancedCSVEntry;
@@ -44,7 +46,7 @@ public abstract class OrdnancedEntryList<T extends OrdnancedCSVEntry> extends So
         if (selected == null) return null;
 
         JPopupMenu menu = new JPopupMenu();
-        JMenuItem remove = new JMenuItem("Remove entry");
+        JMenuItem remove = new JMenuItem(StringManager.getString("REMOVE_ENTRY"));
         remove.addActionListener(event -> actOnSelectedEntry(getRemoveAction()));
         menu.add(remove);
 

@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.bays;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -237,11 +239,11 @@ public class LaunchBaysTree extends DynamicWidthTree {
             if (object instanceof LaunchBay checked) {
                 WeaponSize baySize = checked.getWeaponSize();
 
-                iconLabel.setText("[Bay]");
-                sizeLabel.setText("[" + baySize.getDisplayedName() + "]");
+                iconLabel.setText(StringManager.getString("BAY"));
+                sizeLabel.setText(StringManager.getString("EMPTY_STRING_2") + baySize.getDisplayedName() + "]");
                 textLabel.setText(checked.getId());
             } else if (object instanceof LaunchPortPoint checked && leaf) {
-                iconLabel.setText("[Port]");
+                iconLabel.setText(StringManager.getString("PORT"));
 
                 String index = checked.getIndexToDisplay() + ":";
                 String position = checked.getPositionText();

@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.centers;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.viewer.entities.ShieldCenterPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
@@ -7,8 +9,6 @@ import shipeditor.components.viewer.painters.points.ship.ShieldPointPainter;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.widgets.PointLocationWidget;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -28,7 +28,7 @@ class ShieldCenterLocationWidget extends PointLocationWidget {
     @Override
     protected void populateContent() {
         super.populateContent();
-        String name = StringValues.SHIELD_POSITION;
+        String name = StringManager.getString("SHIELD_POSITION");
         var dependentCoordsPanel = createDependentCoordinatesLabel(name);
         this.add(dependentCoordsPanel, BorderLayout.PAGE_START);
     }
@@ -46,7 +46,7 @@ class ShieldCenterLocationWidget extends PointLocationWidget {
 
     @Override
     protected String getPanelTitleText() {
-        return StringValues.SHIELD_CENTER;
+        return StringManager.getString("SHIELD_CENTER");
     }
 
     @Override

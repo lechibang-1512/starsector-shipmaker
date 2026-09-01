@@ -1,11 +1,11 @@
 package shipeditor.parsing.loading;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.utility.graphics.Sprite;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -34,10 +34,10 @@ public class OpenSpriteAction extends AbstractAction {
             Sprite sprite = FileLoading.loadSprite(file);
             action.accept(sprite);
         } else {
-            log.error(StringValues.OUTSIDE_GAME_PACKAGES_LOG);
+            log.error(StringManager.getString("OUTSIDE_GAME_PACKAGES_LOG"));
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    StringValues.OUTSIDE_GAME_PACKAGES_ERROR + file,
-                    StringValues.FILE_LOADING_ERROR,
+                    StringManager.getString("OUTSIDE_GAME_PACKAGES_ERROR") + file,
+                    StringManager.getString("FILE_LOADING_ERROR"),
                     JOptionPane.ERROR_MESSAGE);
         }
     }

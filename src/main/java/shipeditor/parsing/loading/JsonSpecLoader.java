@@ -1,5 +1,7 @@
 package shipeditor.parsing.loading;
 
+import shipeditor.utility.text.StringManager;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,8 +18,6 @@ import shipeditor.representation.weapon.ProjectileSpecFile;
 import shipeditor.representation.weapon.WeaponSpecFile;
 import shipeditor.utility.Errors;
 import shipeditor.utility.text.StringConstants;
-import shipeditor.utility.text.StringValues;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -48,7 +48,7 @@ public final class JsonSpecLoader {
             weaponSpecFile.setWeaponSpecFilePath(file.toPath());
 
             if (weaponSpecFile.getType() == null) {
-                log.error(StringValues.WEAPON_TYPE_NULL, file.getName());
+                log.error(StringManager.getString("WEAPON_TYPE_NULL"), file.getName());
             }
 
         }
@@ -94,28 +94,28 @@ public final class JsonSpecLoader {
 
     public static <T> T loadDataFile(File file, String extension, Class<T> dataClass) {
         if (file == null || !file.exists()) {
-            log.error(StringValues.DATA_FILE_NOT_EXIST, file != null ? file.getPath() : "null");
+            log.error(StringManager.getString("DATA_FILE_NOT_EXIST"), file != null ? file.getPath() : "null");
             return null;
         }
         String toString = file.getPath();
         if (extension == null || !toString.endsWith(extension)) {
-            throw new IllegalArgumentException(StringValues.INVALID_FILE_EXTENSION);
+            throw new IllegalArgumentException(StringManager.getString("INVALID_FILE_EXTENSION"));
         }
 
         if (file.length() == 0) {
-            log.warn(StringValues.DATA_FILE_EMPTY, file.getName());
+            log.warn(StringManager.getString("DATA_FILE_EMPTY"), file.getName());
             return null;
         }
 
         if (SettingsManager.isDeveloperModeEnabled()) {
-            log.trace(StringValues.OPENING_DATA_FILE, file.getName());
+            log.trace(StringManager.getString("OPENING_DATA_FILE"), file.getName());
         }
 
         T dataFile = parseCorrectableJSON(file, dataClass);
         if (dataFile == null) {
-            log.error(StringValues.DATA_FILE_PARSE_FAILED, file.getName());
+            log.error(StringManager.getString("DATA_FILE_PARSE_FAILED"), file.getName());
             if (SettingsManager.areFileErrorPopupsEnabled()) {
-                Errors.showFileError(StringValues.DATA_FILE_PARSE_EXCEPTION + file, new Exception("Failed to parse correctable JSON"));
+                Errors.showFileError(StringManager.getString("DATA_FILE_PARSE_EXCEPTION") + file, new Exception("Failed to parse correctable JSON"));
             }
         }
         return dataFile;
@@ -148,10 +148,10 @@ public final class JsonSpecLoader {
             result = objectMapper.readValue(parser, targetType);
         } catch (IOException e) {
             if (SettingsManager.isDeveloperModeEnabled()) {
-                log.error(StringValues.CORRECTED_JSON_PARSE_FAILED, file.getName(), e);
+                log.error(StringManager.getString("CORRECTED_JSON_PARSE_FAILED"), file.getName(), e);
                 Errors.printToStream(e);
             } else {
-                log.error(StringValues.CORRECTED_JSON_PARSE_FAILED, file.getName());
+                log.error(StringManager.getString("CORRECTED_JSON_PARSE_FAILED"), file.getName());
             }
             result = null;
         }

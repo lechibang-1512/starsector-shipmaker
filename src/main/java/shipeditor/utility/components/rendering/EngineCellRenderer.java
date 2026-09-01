@@ -1,5 +1,7 @@
 package shipeditor.utility.components.rendering;
 
+import shipeditor.utility.text.StringManager;
+
 import com.formdev.flatlaf.ui.FlatLineBorder;
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.engine.EnginePoint;
@@ -57,7 +59,7 @@ public class EngineCellRenderer extends PointCellRenderer {
             }
             else if (checked.getCustomStyleSpec() != null) {
                 styleOrID = StringConstants.CUSTOM;
-                this.setToolTipText("Custom style spec detected: inline style editing not supported");
+                this.setToolTipText(StringManager.getString("CUSTOM_STYLE_SPEC_DETECTED_INLINE_STYLE_EDITING_NOT_SUPPORTED"));
             }
             String displayText = styleOrID + " #" + index + ":";
 

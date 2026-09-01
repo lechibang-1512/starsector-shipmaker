@@ -1,5 +1,7 @@
 package shipeditor.components.viewer.layers.ship;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -37,8 +39,6 @@ import shipeditor.representation.RepresentationEnums.ShipTypeHints;
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.graphics.Sprite;
-import shipeditor.utility.text.StringValues;
-
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -175,7 +175,7 @@ public class ShipPainter extends LayerPainter {
             this.setSprite(baseHullSprite);
 
             if (parentLayer != null) {
-                parentLayer.setActiveSkinFileName(StringValues.NOT_LOADED);
+                parentLayer.setActiveSkinFileName(StringManager.getString("NOT_LOADED"));
             }
 
             this.weaponSlotPainter.resetSkinSlotOverride();

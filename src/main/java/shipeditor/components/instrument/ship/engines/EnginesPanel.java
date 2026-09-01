@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.engines;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -213,7 +215,7 @@ public class EnginesPanel extends AbstractShipPropertiesPanel {
         );
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText("Engines view");
+        opacityLabel.setText(StringManager.getString("ENGINES_VIEW"));
 
         return opacityWidget;
     }

@@ -1,5 +1,7 @@
 package shipeditor.components;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 
 import javax.swing.Box;
@@ -56,7 +58,7 @@ public class ProgressBarPanel extends JPanel {
         if (activeTasks.isEmpty()) {
             statusLabel.setText("");
         } else {
-            statusLabel.setText("Loading: " + String.join(", ", activeTasks));
+            statusLabel.setText(StringManager.getString("LOADING") + String.join(", ", activeTasks));
         }
     }
 

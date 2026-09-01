@@ -1,5 +1,7 @@
 package shipeditor.components.dialogs;
 
+import shipeditor.utility.text.StringManager;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -135,9 +137,9 @@ public class ModSelectionDialog extends JDialog {
         headerPanel.setBorder(new EmptyBorder(12, 16, 8, 16));
         headerPanel.setBackground(UIManager.getColor("Panel.background"));
 
-        JLabel titleLabel = new JLabel("Select Mods to Index");
+        JLabel titleLabel = new JLabel(StringManager.getString("SELECT_MODS_TO_INDEX"));
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 16f));
-        JLabel subtitleLabel = new JLabel("Choose which mod packages to parse into the editor database.");
+        JLabel subtitleLabel = new JLabel(StringManager.getString("CHOOSE_WHICH_MOD_PACKAGES_TO_PARSE_INTO_THE_EDITOR_DATABASE"));
         subtitleLabel.setFont(subtitleLabel.getFont().deriveFont(11f));
         subtitleLabel.setForeground(UIManager.getColor("Label.disabledForeground"));
 
@@ -176,14 +178,14 @@ public class ModSelectionDialog extends JDialog {
 
         // Quick Tools Bar (Select All / Deselect All / Sync)
         JPanel toolsBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        JButton selectAllBtn = new JButton("Select All");
+        JButton selectAllBtn = new JButton(StringManager.getString("SELECT_ALL_1"));
         selectAllBtn.addActionListener(e -> {
             modCheckboxes.values().forEach(cb -> cb.setSelected(true));
             updateStatusLabel();
         });
         toolsBar.add(selectAllBtn);
 
-        JButton deselectAllBtn = new JButton("Deselect All");
+        JButton deselectAllBtn = new JButton(StringManager.getString("DESELECT_ALL_1"));
         deselectAllBtn.addActionListener(e -> {
             modCheckboxes.values().forEach(cb -> cb.setSelected(false));
             updateStatusLabel();
@@ -193,13 +195,13 @@ public class ModSelectionDialog extends JDialog {
         // Action Buttons Bar
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
 
-        JButton saveButton = new JButton("Index Selected Mods");
+        JButton saveButton = new JButton(StringManager.getString("INDEX_SELECTED_MODS"));
         saveButton.setFont(saveButton.getFont().deriveFont(Font.BOLD, 13f));
         saveButton.setForeground(new Color(0, 120, 215));
         saveButton.addActionListener(e -> {
             applySelection();
             saveButton.setEnabled(false);
-            saveButton.setText("Scanning...");
+            saveButton.setText(StringManager.getString("SCANNING"));
             
             // The actual scanning is delegated to FileLoading.loadGameData() 
             // which is triggered by the caller when this dialog returns true.
@@ -207,13 +209,13 @@ public class ModSelectionDialog extends JDialog {
             dispose();
         });
 
-        JButton syncGameBtn = new JButton("Sync from Game");
-        syncGameBtn.setToolTipText("Import enabled mods from Starsector's enabled_mods.json");
+        JButton syncGameBtn = new JButton(StringManager.getString("SYNC_FROM_GAME"));
+        syncGameBtn.setToolTipText(StringManager.getString("IMPORT_ENABLED_MODS_FROM_STARSECTOR_S_ENABLED_MODS_JSON"));
         syncGameBtn.addActionListener(e -> fetchFromEnabledMods(saveButton));
         toolsBar.add(syncGameBtn);
 
-        JButton refreshDiskBtn = new JButton("Refresh Disk");
-        refreshDiskBtn.setToolTipText("Rescan the mods folder for newly added or deleted mods");
+        JButton refreshDiskBtn = new JButton(StringManager.getString("REFRESH_DISK"));
+        refreshDiskBtn.setToolTipText(StringManager.getString("RESCAN_THE_MODS_FOLDER_FOR_NEWLY_ADDED_OR_DELETED_MODS"));
         refreshDiskBtn.addActionListener(e -> {
             SettingsManager.invalidateModCache();
             rebuildModList();
@@ -223,7 +225,7 @@ public class ModSelectionDialog extends JDialog {
 
         buttonPanel.add(saveButton);
 
-        JButton closeButton = new JButton("Cancel");
+        JButton closeButton = new JButton(StringManager.getString("CANCEL"));
         closeButton.addActionListener(e -> {
             resultIsLoad = false;
             dispose();
@@ -379,7 +381,7 @@ public class ModSelectionDialog extends JDialog {
         }
 
         saveBtn.setEnabled(false);
-        saveBtn.setText("Syncing...");
+        saveBtn.setText(StringManager.getString("SYNCING"));
 
         fetchWorker = new SwingWorker<>() {
             @Override
@@ -432,7 +434,7 @@ public class ModSelectionDialog extends JDialog {
                     log.error("Error updating mod checkboxes", e);
                 } finally {
                     saveBtn.setEnabled(true);
-                    saveBtn.setText("Index Selected Mods");
+                    saveBtn.setText(StringManager.getString("INDEX_SELECTED_MODS"));
                 }
             }
         };

@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.entities;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -15,8 +17,6 @@ import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.text.StringConstants;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JLabel;
 import java.io.File;
 import java.nio.file.Path;
@@ -64,7 +64,7 @@ public class WingCSVEntry implements OrdnancedCSVEntry {
     public String toString() {
         String name = rowData.get(StringConstants.ID);
         if (name.isEmpty()) {
-            name = StringValues.UNTITLED;
+            name = StringManager.getString("UNTITLED");
         }
         return name;
     }
@@ -177,7 +177,7 @@ public class WingCSVEntry implements OrdnancedCSVEntry {
             return cachedIconLabel;
         }
         if (cachedIconLabel == null) {
-            cachedIconLabel = new JLabel("...");
+            cachedIconLabel = new JLabel(StringManager.getString("EMPTY_STRING"));
         }
         if (!isIconLoading) {
             if (!SettingsManager.getGameData().isShipDataLoaded()) {
@@ -192,7 +192,7 @@ public class WingCSVEntry implements OrdnancedCSVEntry {
                             String tooltip = Utility.getTooltipForSprite(sprite);
                             cachedIconLabel = ComponentUtilities.createIconFromImage(sprite.getImage(), tooltip, maxSize);
                         } else {
-                            cachedIconLabel = new JLabel("?");
+                            cachedIconLabel = new JLabel(StringManager.getString("EMPTY_STRING_1"));
                         }
                         isIconLoading = false;
                         shipeditor.communication.EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.WindowRepaintQueued());
@@ -200,7 +200,7 @@ public class WingCSVEntry implements OrdnancedCSVEntry {
                 } catch (Exception ex) {
                     log.error("Failed to load wing icon for: " + this.wingID, ex);
                     javax.swing.SwingUtilities.invokeLater(() -> {
-                        cachedIconLabel = new JLabel("?");
+                        cachedIconLabel = new JLabel(StringManager.getString("EMPTY_STRING_1"));
                         isIconLoading = false;
                         shipeditor.communication.EventBus.publish(new shipeditor.communication.events.components.ComponentEvents.WindowRepaintQueued());
                     });

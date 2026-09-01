@@ -1,10 +1,10 @@
 package shipeditor.parsing.loading;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.utility.Errors;
-import shipeditor.utility.text.StringValues;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
@@ -49,9 +49,9 @@ public final class FileSystemUtils {
             });
         } catch (IOException e) {
             if (SettingsManager.isDeveloperModeEnabled()) {
-                log.error(StringValues.FAILED_TO_INDEX_FOLDER, folderPath, e);
+                log.error(StringManager.getString("FAILED_TO_INDEX_FOLDER"), folderPath, e);
             } else {
-                log.error(StringValues.FAILED_TO_INDEX_FOLDER, folderPath);
+                log.error(StringManager.getString("FAILED_TO_INDEX_FOLDER"), folderPath);
             }
         }
         directoryIndices.put(folderPath, new SoftReference<>(index));
@@ -94,7 +94,7 @@ public final class FileSystemUtils {
 
     public static File fetchDataFile(Path filePath, Path packageFolderPath) {
         if (filePath == null) {
-            log.error(StringValues.FETCH_DATA_FILE_NULL);
+            log.error(StringManager.getString("FETCH_DATA_FILE_NULL"));
             return null;
         }
         Path coreDataFolder = SettingsManager.getCoreFolderPath();
@@ -123,7 +123,7 @@ public final class FileSystemUtils {
             return result.toFile();
         } else {
             Path filePathName = filePath.getFileName();
-            log.error(StringValues.FETCH_DATA_FILE_FAILED, filePathName != null ? filePathName.toString() : filePath.toString());
+            log.error(StringManager.getString("FETCH_DATA_FILE_FAILED"), filePathName != null ? filePathName.toString() : filePath.toString());
         }
         return null;
     }

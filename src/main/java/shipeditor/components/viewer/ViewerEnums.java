@@ -1,5 +1,7 @@
 package shipeditor.components.viewer;
 
+import shipeditor.utility.text.StringManager;
+
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
@@ -24,8 +26,6 @@ import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.objects.Pair;
-import shipeditor.utility.text.StringValues;
-
 public class ViewerEnums {
 
 
@@ -106,11 +106,11 @@ public class ViewerEnums {
         visibilityList.setMaximumSize(visibilityList.getPreferredSize());
 
         if (widgetLabel.isEmpty()) {
-            widgetLabel = StringValues.PAINTER_VIEW;
+            widgetLabel = StringManager.getString("PAINTER_VIEW");
         }
 
         JLabel visibilityWidgetLabel = new JLabel(widgetLabel);
-        visibilityWidgetLabel.setToolTipText(StringValues.TOGGLED_ON_PER_LAYER_BASIS);
+        visibilityWidgetLabel.setToolTipText(StringManager.getString("TOGGLED_ON_PER_LAYER_BASIS"));
 
         ComponentUtilities.addLabelAndComponent(widgetPanel, visibilityWidgetLabel, visibilityList, 0);
         widgetPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 29));
@@ -126,7 +126,7 @@ public class ViewerEnums {
 
         JComboBox<PainterVisibility> visibilityList = new JComboBox<>(PainterVisibility.values());
         visibilityList.setRenderer(PainterVisibility.createCellRenderer());
-        JLabel visibilityLabel = new JLabel("Visibility:");
+        JLabel visibilityLabel = new JLabel(StringManager.getString("VISIBILITY"));
 
         visibilityList.setSelectedItem(PainterVisibility.SHOWN_WHEN_EDITED);
         visibilityList.setEnabled(false);

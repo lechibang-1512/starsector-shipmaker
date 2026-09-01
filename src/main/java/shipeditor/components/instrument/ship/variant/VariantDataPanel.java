@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.variant;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipHull;
@@ -7,8 +9,6 @@ import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -44,14 +44,14 @@ public class VariantDataPanel extends JPanel {
         this.setLayout(new GridBagLayout());
         ComponentUtilities.outfitPanelWithTitle(this, "Variant data");
 
-        JLabel shipHullIDConstLabel = new JLabel("Ship hull ID:");
+        JLabel shipHullIDConstLabel = new JLabel(StringManager.getString("SHIP_HULL_ID"));
         shipHullIDConstLabel.setBorder(new EmptyBorder(2, 0, 5, 0));
-        shipHullIDLabel = new JLabel(StringValues.NOT_INITIALIZED);
+        shipHullIDLabel = new JLabel(StringManager.getString("NOT_INITIALIZED"));
         ComponentUtilities.addLabelAndComponent(this, shipHullIDConstLabel, shipHullIDLabel, 0);
 
-        JLabel variantIDLabel = new JLabel("Variant ID:");
+        JLabel variantIDLabel = new JLabel(StringManager.getString("VARIANT_ID"));
         variantIDEditor = new JTextField();
-        String editorIDTooltip = Utility.getWithLinebreaks(StringValues.TYPE_AND_PRESS_ENTER_TO_EDIT_ID,
+        String editorIDTooltip = Utility.getWithLinebreaks(StringManager.getString("TYPE_AND_PRESS_ENTER_TO_EDIT_ID"),
                 "Original variant will be copied with new ID, old entry reloaded");
         variantIDEditor.setToolTipText(editorIDTooltip);
 
@@ -71,9 +71,9 @@ public class VariantDataPanel extends JPanel {
         });
         ComponentUtilities.addLabelAndComponent(this, variantIDLabel, variantIDEditor, 1);
 
-        JLabel variantDisplayNameLabel = new JLabel("Display name:");
+        JLabel variantDisplayNameLabel = new JLabel(StringManager.getString("DISPLAY_NAME"));
         variantDisplayNameEditor = new JTextField();
-        String editorNameTooltip = Utility.getWithLinebreaks(StringValues.TYPE_AND_PRESS_ENTER_TO_EDIT_ID);
+        String editorNameTooltip = Utility.getWithLinebreaks(StringManager.getString("TYPE_AND_PRESS_ENTER_TO_EDIT_ID"));
         variantDisplayNameEditor.setToolTipText(editorNameTooltip);
 
         variantDisplayNameEditor.addActionListener(e -> {
@@ -98,11 +98,11 @@ public class VariantDataPanel extends JPanel {
 
         SpinnerNumberModel qualityModel = new SpinnerNumberModel(0.0d, -1.0d, 0.0d, 0.05d);
         JSpinner qualitySpinnerComponent = new JSpinner(qualityModel);
-        qualitySpinnerComponent.setToolTipText("Values less than 0 indicate the field is omitted from variant file.");
+        qualitySpinnerComponent.setToolTipText(StringManager.getString("VALUES_LESS_THAN_0_INDICATE_THE_FIELD_IS_OMITTED_FROM_VARIANT_FILE"));
         qualitySpinner = new DataSpinnerContainer<>(qualityModel, qualitySpinnerComponent);
         this.addDataSpinner(this, "Variant quality:", true, qualitySpinner, 5, onRefreshOrdnance);
 
-        goalVariantCheckbox = new JCheckBox("Goal variant");
+        goalVariantCheckbox = new JCheckBox(StringManager.getString("GOAL_VARIANT"));
         goalVariantCheckbox.addItemListener(e -> {
             boolean enableGoal = goalVariantCheckbox.isSelected();
             if (goalVariantSetter != null) {
@@ -127,7 +127,7 @@ public class VariantDataPanel extends JPanel {
 
     public void installPlaceholders() {
         disableDataSpinners();
-        shipHullIDLabel.setText(StringValues.NOT_INITIALIZED);
+        shipHullIDLabel.setText(StringManager.getString("NOT_INITIALIZED"));
         variantIDEditor.setEnabled(false);
         variantIDEditor.setText("");
         variantDisplayNameEditor.setEnabled(false);

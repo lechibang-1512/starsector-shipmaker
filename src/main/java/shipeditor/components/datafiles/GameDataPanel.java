@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.components.datafiles.trees.*;
@@ -16,8 +18,6 @@ import shipeditor.communication.events.components.ComponentEvents.SelectShipData
 import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
 import shipeditor.components.datafiles.styles.EngineStylesPanel;
 import shipeditor.components.datafiles.styles.HullStylesPanel;
-import shipeditor.utility.text.StringValues;
-
 @Log4j2
 public class GameDataPanel extends JPanel {
 
@@ -46,7 +46,7 @@ public class GameDataPanel extends JPanel {
         dataTabsContainer.addTab("Wings", null, wingsTreePanel, "Fighter wings");
 
         hullmodsTreePanel = new HullmodsTreePanel();
-        dataTabsContainer.addTab(StringValues.HULLMODS, hullmodsTreePanel);
+        dataTabsContainer.addTab(StringManager.getString("HULLMODS"), hullmodsTreePanel);
 
         systemsTreePanel = new ShipSystemsTreePanel();
         dataTabsContainer.addTab("Shipsystems", systemsTreePanel);

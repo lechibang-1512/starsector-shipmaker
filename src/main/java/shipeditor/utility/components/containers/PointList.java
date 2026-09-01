@@ -1,5 +1,7 @@
 package shipeditor.utility.components.containers;
 
+import shipeditor.utility.text.StringManager;
+
 import javax.swing.ListModel;
 
 import shipeditor.communication.EventBus;
@@ -8,8 +10,6 @@ import shipeditor.communication.events.viewer.points.PointEvents.PointSelectedCo
 import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.utility.components.dialog.DialogUtilities;
 import shipeditor.utility.components.rendering.PointCellRenderer;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.DefaultListModel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -99,12 +99,12 @@ public abstract class PointList<T extends BaseWorldPoint> extends SortableList<T
 
         private JPopupMenu getContextMenu() {
             JPopupMenu menu = new JPopupMenu();
-            JMenuItem removePoint = new JMenuItem("Remove point");
+            JMenuItem removePoint = new JMenuItem(StringManager.getString("REMOVE_POINT"));
             removePoint.addActionListener(event -> actOnSelectedPoint(point ->
                     EventBus.publish(new PointRemoveQueued(point, true))));
             menu.add(removePoint);
             menu.addSeparator();
-            JMenuItem adjustPosition = new JMenuItem(StringValues.ADJUST_POSITION);
+            JMenuItem adjustPosition = new JMenuItem(StringManager.getString("ADJUST_POSITION"));
             adjustPosition.addActionListener(event ->
                     actOnSelectedPoint(DialogUtilities::showAdjustPointDialog));
             menu.add(adjustPosition);

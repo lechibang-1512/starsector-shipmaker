@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import javax.swing.*;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -14,7 +16,7 @@ public class FilterDialogs {
     public static void showCombinedFilters(Component parent) {
         if (combinedFiltersDialog == null) {
             combinedFiltersDialog = new JDialog();
-            combinedFiltersDialog.setTitle("Data Filters");
+            combinedFiltersDialog.setTitle(StringManager.getString("DATA_FILTERS"));
             combinedFiltersDialog.setModal(false);
             combinedFiltersDialog.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
             combinedFiltersDialog.setAlwaysOnTop(true);

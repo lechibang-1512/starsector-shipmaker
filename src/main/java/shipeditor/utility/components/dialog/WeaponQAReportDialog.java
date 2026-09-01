@@ -1,5 +1,7 @@
 package shipeditor.utility.components.dialog;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.parsing.loading.FileLoading;
 import shipeditor.persistence.database.DatabaseQueryService;
 import shipeditor.persistence.database.IndexedFile;
@@ -47,12 +49,12 @@ public class WeaponQAReportDialog extends JDialog {
         this.add(scrollPane, BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel(new BorderLayout());
-        statusLabel = new JLabel(" Scanning weapons...");
+        statusLabel = new JLabel(StringManager.getString("SCANNING_WEAPONS"));
         statusLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 4, 4, 4));
         bottomPanel.add(statusLabel, BorderLayout.WEST);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton closeButton = new JButton("Close");
+        JButton closeButton = new JButton(StringManager.getString("CLOSE"));
         closeButton.addActionListener(e -> this.dispose());
         buttonPanel.add(closeButton);
         bottomPanel.add(buttonPanel, BorderLayout.EAST);
@@ -111,12 +113,12 @@ public class WeaponQAReportDialog extends JDialog {
                     List<QAIssue> issues = get();
                     model.setIssues(issues);
                     if (issues.isEmpty()) {
-                        statusLabel.setText(" ✅ All weapons passed offset QA!");
+                        statusLabel.setText(StringManager.getString("ALL_WEAPONS_PASSED_OFFSET_QA"));
                     } else {
-                        statusLabel.setText(" ⚠️ Found " + issues.size() + " potential offset issues.");
+                        statusLabel.setText(StringManager.getString("FOUND") + issues.size() + " potential offset issues.");
                     }
                 } catch (Exception e) {
-                    statusLabel.setText(" ❌ Error during QA analysis.");
+                    statusLabel.setText(StringManager.getString("ERROR_DURING_QA_ANALYSIS"));
                 }
             }
         };

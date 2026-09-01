@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -16,7 +18,7 @@ public class InfoConsolePanel extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(UIManager.getColor("Panel.background").darker());
         headerPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
-        JLabel titleLabel = new JLabel("Entry Information");
+        JLabel titleLabel = new JLabel(StringManager.getString("ENTRY_INFORMATION"));
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
         headerPanel.add(titleLabel, BorderLayout.WEST);
         this.add(headerPanel, BorderLayout.NORTH);

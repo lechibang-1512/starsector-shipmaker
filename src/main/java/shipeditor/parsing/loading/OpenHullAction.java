@@ -1,12 +1,12 @@
 package shipeditor.parsing.loading;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.files.FileEvents.HullFileOpened;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.representation.ship.HullSpecFile;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -40,10 +40,10 @@ public class OpenHullAction extends AbstractAction {
                 EventBus.publish(new HullFileOpened(hullSpecFile, file.getName()));
             }
             else {
-                log.error(StringValues.FAILURE_TO_LOAD_HULL_CANCELLING_ACTION, file);
+                log.error(StringManager.getString("FAILURE_TO_LOAD_HULL_CANCELLING_ACTION"), file);
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                        StringValues.FAILURE_TO_LOAD_HULL_CANCELLING_ACTION_ALT + file,
-                        StringValues.FILE_LOADING_ERROR,
+                        StringManager.getString("FAILURE_TO_LOAD_HULL_CANCELLING_ACTION_ALT") + file,
+                        StringManager.getString("FILE_LOADING_ERROR"),
                         JOptionPane.ERROR_MESSAGE);
             }
         });

@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.shared;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.instrument.LayerPropertiesPanel;
 import shipeditor.components.viewer.entities.weapon.SlotData;
 import shipeditor.components.viewer.entities.weapon.SlotPoint;
@@ -15,8 +17,6 @@ import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.widgets.Spinners;
 import shipeditor.utility.objects.Pair;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -129,7 +129,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
         JPanel suffixesPanel = new JPanel();
         suffixesPanel.setLayout(new BoxLayout(suffixesPanel, BoxLayout.LINE_AXIS));
 
-        JCheckBox numericSuffixesWidget = new JCheckBox("Append numeric suffixes to IDs");
+        JCheckBox numericSuffixesWidget = new JCheckBox(StringManager.getString("APPEND_NUMERIC_SUFFIXES_TO_IDS"));
         numericSuffixesWidget.setSelected(SettingsManager.isNumericSuffixesForSlotsEnabled());
         Settings settings = SettingsManager.getSettings();
         numericSuffixesWidget.addActionListener(
@@ -149,7 +149,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
         JLabel label = new JLabel(getEntityName() + " ID:");
 
         if (multiSelectionAllowed) {
-            label.setToolTipText(StringValues.CHANGE_APPLIES_TO_ALL_SELECTED_SLOTS);
+            label.setToolTipText(StringManager.getString("CHANGE_APPLIES_TO_ALL_SELECTED_SLOTS"));
         }
 
         JTextField editor = new JTextField();
@@ -163,8 +163,8 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
         });
 
         JPopupMenu contextMenu = getIDMenu(editor);
-        String confirmHint = StringValues.ENTER_TO_SAVE_CHANGES;
-        String menuHint = StringValues.RIGHT_CLICK_TO_GENERATE;
+        String confirmHint = StringManager.getString("ENTER_TO_SAVE_CHANGES");
+        String menuHint = StringManager.getString("RIGHT_CLICK_TO_GENERATE");
         editor.setToolTipText(Utility.getWithLinebreaks(confirmHint, menuHint));
         editor.addMouseListener(new EditorMouseListener(contextMenu));
 
@@ -187,7 +187,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
 
     private JPopupMenu getIDMenu(JTextField editor) {
         JPopupMenu contextMenu = new JPopupMenu();
-        JMenuItem createNextUniqueId = new JMenuItem(StringValues.CREATE_NEXT_UNIQUE_ID);
+        JMenuItem createNextUniqueId = new JMenuItem(StringManager.getString("CREATE_NEXT_UNIQUE_ID"));
         createNextUniqueId.addActionListener(e -> {
             String nextUniqueID = getNextUniqueID();
             if (nextUniqueID != null) {
@@ -201,7 +201,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
     private Pair<JLabel, JComponent> createTypeSelector() {
         JLabel selectorLabel = new JLabel(getEntityName() + " type:");
         if (multiSelectionAllowed) {
-            selectorLabel.setToolTipText(StringValues.CHANGE_APPLIES_TO_ALL_SELECTED_SLOTS);
+            selectorLabel.setToolTipText(StringManager.getString("CHANGE_APPLIES_TO_ALL_SELECTED_SLOTS"));
         }
 
         JComboBox<WeaponType> typeSelector = new JComboBox<>(WeaponType.values());
@@ -229,7 +229,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
                 }
 
                 if (skinOverride != null && skinOverride.getWeaponType() != null) {
-                    typeSelector.setToolTipText("Locked: type overridden by skin");
+                    typeSelector.setToolTipText(StringManager.getString("LOCKED_TYPE_OVERRIDDEN_BY_SKIN"));
                     typeSelector.setEnabled(false);
                 } else {
                     typeSelector.setSelectedItem(selectedSlot.getWeaponType());
@@ -248,7 +248,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
     private Pair<JLabel, JComponent> createMountSelector() {
         JLabel selectorLabel = new JLabel(getEntityName() + " mount:");
         if (multiSelectionAllowed) {
-            selectorLabel.setToolTipText(StringValues.CHANGE_APPLIES_TO_ALL_SELECTED_SLOTS);
+            selectorLabel.setToolTipText(StringManager.getString("CHANGE_APPLIES_TO_ALL_SELECTED_SLOTS"));
         }
 
         JComboBox<WeaponMount> mountSelector = new JComboBox<>(WeaponMount.values());
@@ -275,7 +275,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
                 }
 
                 if (skinOverride != null && skinOverride.getWeaponMount() != null) {
-                    mountSelector.setToolTipText("Locked: mount overridden by skin");
+                    mountSelector.setToolTipText(StringManager.getString("LOCKED_MOUNT_OVERRIDDEN_BY_SKIN"));
                     mountSelector.setEnabled(false);
                 } else {
                     mountSelector.setSelectedItem(selectedSlot.getWeaponMount());
@@ -294,7 +294,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
     private Pair<JLabel, JComponent> createSizeSelector() {
         JLabel selectorLabel = new JLabel(getEntityName() + " size:");
         if (multiSelectionAllowed) {
-            selectorLabel.setToolTipText(StringValues.CHANGE_APPLIES_TO_ALL_SELECTED_SLOTS);
+            selectorLabel.setToolTipText(StringManager.getString("CHANGE_APPLIES_TO_ALL_SELECTED_SLOTS"));
         }
 
         JComboBox<WeaponSize> sizeSelector = new JComboBox<>(WeaponSize.values());
@@ -321,7 +321,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
                 }
 
                 if (skinOverride != null && skinOverride.getWeaponSize() != null) {
-                    sizeSelector.setToolTipText("Locked: size overridden by skin");
+                    sizeSelector.setToolTipText(StringManager.getString("LOCKED_SIZE_OVERRIDDEN_BY_SKIN"));
                     sizeSelector.setEnabled(false);
                 } else {
                     sizeSelector.setSelectedItem(selectedSlot.getWeaponSize());
@@ -342,9 +342,9 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
 
         String tooltip;
         if (multiSelectionAllowed) {
-            tooltip = Utility.getWithLinebreaks(StringValues.CHANGE_APPLIES_TO_FIRST_SELECTED_SLOT, StringValues.MOUSEWHEEL_TO_CHANGE);
+            tooltip = Utility.getWithLinebreaks(StringManager.getString("CHANGE_APPLIES_TO_FIRST_SELECTED_SLOT"), StringManager.getString("MOUSEWHEEL_TO_CHANGE"));
         } else {
-            tooltip = StringValues.MOUSEWHEEL_TO_CHANGE;
+            tooltip = StringManager.getString("MOUSEWHEEL_TO_CHANGE");
         }
         selectorLabel.setToolTipText(tooltip);
 
@@ -379,7 +379,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
                 }
 
                 if (skinOverride != null && skinOverride.getBoxedAngle() != null) {
-                    spinner.setToolTipText("Locked: angle overridden by skin");
+                    spinner.setToolTipText(StringManager.getString("LOCKED_ANGLE_OVERRIDDEN_BY_SKIN"));
                     spinner.setEnabled(false);
                 } else {
                     spinner.setValue(selectedSlot.getAngle());
@@ -400,9 +400,9 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
 
         String tooltip;
         if (multiSelectionAllowed) {
-            tooltip = Utility.getWithLinebreaks(StringValues.CHANGE_APPLIES_TO_FIRST_SELECTED_SLOT, StringValues.MOUSEWHEEL_TO_CHANGE);
+            tooltip = Utility.getWithLinebreaks(StringManager.getString("CHANGE_APPLIES_TO_FIRST_SELECTED_SLOT"), StringManager.getString("MOUSEWHEEL_TO_CHANGE"));
         } else {
-            tooltip = StringValues.MOUSEWHEEL_TO_CHANGE;
+            tooltip = StringManager.getString("MOUSEWHEEL_TO_CHANGE");
         }
         selectorLabel.setToolTipText(tooltip);
 
@@ -437,7 +437,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
                 }
 
                 if (skinOverride != null && skinOverride.getBoxedArc() != null) {
-                    spinner.setToolTipText("Locked: arc overridden by skin");
+                    spinner.setToolTipText(StringManager.getString("LOCKED_ARC_OVERRIDDEN_BY_SKIN"));
                     spinner.setEnabled(false);
                 } else {
                     spinner.setValue(selectedSlot.getArc());
@@ -454,13 +454,13 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
     }
 
     private Pair<JLabel, JComponent> createRenderOrderController() {
-        JLabel selectorLabel = new JLabel("Render order:");
+        JLabel selectorLabel = new JLabel(StringManager.getString("RENDER_ORDER"));
 
         String tooltip;
         if (multiSelectionAllowed) {
-            tooltip = Utility.getWithLinebreaks(StringValues.CHANGE_APPLIES_TO_FIRST_SELECTED_SLOT, StringValues.MOUSEWHEEL_TO_CHANGE);
+            tooltip = Utility.getWithLinebreaks(StringManager.getString("CHANGE_APPLIES_TO_FIRST_SELECTED_SLOT"), StringManager.getString("MOUSEWHEEL_TO_CHANGE"));
         } else {
-            tooltip = StringValues.MOUSEWHEEL_TO_CHANGE;
+            tooltip = StringManager.getString("MOUSEWHEEL_TO_CHANGE");
         }
         selectorLabel.setToolTipText(tooltip);
 
@@ -495,7 +495,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
                 }
 
                 if (skinOverride != null && skinOverride.getRenderOrderModBoxed() != null) {
-                    spinner.setToolTipText("Locked: render order overridden by skin");
+                    spinner.setToolTipText(StringManager.getString("LOCKED_RENDER_ORDER_OVERRIDDEN_BY_SKIN"));
                     spinner.setEnabled(false);
                 } else {
                     spinner.setValue((double) selectedSlot.getRenderOrderMod());

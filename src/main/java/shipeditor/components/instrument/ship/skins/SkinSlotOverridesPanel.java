@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.skins;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
 import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
@@ -65,7 +67,7 @@ public class SkinSlotOverridesPanel extends JPanel {
     public SkinSlotOverridesPanel() {
         this.setLayout(new BorderLayout());
 
-        statusLabel = new JLabel("No skin active");
+        statusLabel = new JLabel(StringManager.getString("NO_SKIN_ACTIVE"));
         statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
         statusLabel.setBorder(new EmptyBorder(8, 8, 8, 8));
 
@@ -141,13 +143,13 @@ public class SkinSlotOverridesPanel extends JPanel {
         editorPanel.setVisible(false);
 
         if (cachedPainter == null || cachedPainter.isUninitialized()) {
-            statusLabel.setText("No ship layer selected");
+            statusLabel.setText(StringManager.getString("NO_SHIP_LAYER_SELECTED"));
             return;
         }
 
         ShipSkin activeSkin = cachedPainter.getActiveSkin();
         if (activeSkin == null || activeSkin.isBase()) {
-            statusLabel.setText("No skin active — select a skin in the Skin Data tab");
+            statusLabel.setText(StringManager.getString("NO_SKIN_ACTIVE_SELECT_A_SKIN_IN_THE_SKIN_DATA_TAB"));
             return;
         }
 
@@ -155,13 +157,13 @@ public class SkinSlotOverridesPanel extends JPanel {
         List<WeaponSlotPoint> slots = slotPainter.getPointsIndex();
 
         if (slots.isEmpty()) {
-            statusLabel.setText("No weapon slots defined on this hull");
+            statusLabel.setText(StringManager.getString("NO_WEAPON_SLOTS_DEFINED_ON_THIS_HULL"));
             return;
         }
 
         Map<String, WeaponSlotOverride> overrides = activeSkin.getWeaponSlotChanges();
         int overrideCount = (overrides != null) ? overrides.size() : 0;
-        statusLabel.setText("Skin: " + activeSkin + "  —  " + overrideCount + " slot override(s)");
+        statusLabel.setText(StringManager.getString("SKIN") + activeSkin + "  —  " + overrideCount + " slot override(s)");
 
         tableModel.populate(slots, overrides);
         editorPanel.setVisible(true);
@@ -180,7 +182,7 @@ public class SkinSlotOverridesPanel extends JPanel {
 
         int selectedRow = overridesTable.getSelectedRow();
         if (selectedRow < 0 || selectedRow >= tableModel.getRowCount()) {
-            JLabel hint = new JLabel("Select a slot from the table to view its override");
+            JLabel hint = new JLabel(StringManager.getString("SELECT_A_SLOT_FROM_THE_TABLE_TO_VIEW_ITS_OVERRIDE"));
             hint.setHorizontalAlignment(SwingConstants.CENTER);
             hint.setForeground(UIManager.getColor("Label.disabledForeground"));
             GridBagConstraints gbc = new GridBagConstraints();
@@ -259,7 +261,7 @@ public class SkinSlotOverridesPanel extends JPanel {
         addField(panel, "Render Order Mod:", renderOrderSpinner, labelGbc, fieldGbc, gridRow++);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton applyButton = new JButton("Apply Override");
+        JButton applyButton = new JButton(StringManager.getString("APPLY_OVERRIDE"));
         applyButton.addActionListener(e -> {
             WeaponSlotOverride.WeaponSlotOverrideBuilder builder = WeaponSlotOverride.builder();
             builder.slotID(row.slotId);
@@ -280,7 +282,7 @@ public class SkinSlotOverridesPanel extends JPanel {
             commitOverride(row.slotId, builder.build());
         });
 
-        JButton clearButton = new JButton("Clear Override");
+        JButton clearButton = new JButton(StringManager.getString("CLEAR_OVERRIDE"));
         clearButton.setEnabled(row.hasOverride);
         clearButton.addActionListener(e -> {
             commitOverride(row.slotId, null);

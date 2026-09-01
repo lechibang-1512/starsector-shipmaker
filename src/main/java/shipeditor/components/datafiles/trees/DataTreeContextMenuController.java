@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.components.ComponentEvents.DataTreesReloadQueued;
 import shipeditor.persistence.GameDataPackage;
@@ -52,7 +54,7 @@ public class DataTreeContextMenuController extends MouseAdapter {
             JPopupMenu menu = new JPopupMenu();
 
             if (dataPackage.isPinned()) {
-                JMenuItem unpinPackage = new JMenuItem("Unpin package");
+                JMenuItem unpinPackage = new JMenuItem(StringManager.getString("UNPIN_PACKAGE"));
                 unpinPackage.addActionListener(event -> {
                     dataPackage.setPinned(false);
                     SettingsManager.updateFileFromRuntime();
@@ -60,7 +62,7 @@ public class DataTreeContextMenuController extends MouseAdapter {
                 });
                 menu.add(unpinPackage);
             } else {
-                JMenuItem pinPackage = new JMenuItem("Pin package");
+                JMenuItem pinPackage = new JMenuItem(StringManager.getString("PIN_PACKAGE"));
                 pinPackage.addActionListener(event -> {
                     dataPackage.setPinned(true);
                     SettingsManager.updateFileFromRuntime();
@@ -69,7 +71,7 @@ public class DataTreeContextMenuController extends MouseAdapter {
                 menu.add(pinPackage);
             }
 
-            JMenuItem disablePackage = new JMenuItem("Disable package");
+            JMenuItem disablePackage = new JMenuItem(StringManager.getString("DISABLE_PACKAGE"));
             disablePackage.addActionListener(event -> {
                 dataPackage.setDisabled(true);
                 SettingsManager.updateFileFromRuntime();

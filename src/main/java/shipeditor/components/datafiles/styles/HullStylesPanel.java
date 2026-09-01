@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.styles;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.files.FileEvents.HullStylesLoaded;
 import shipeditor.representation.ship.HullStyle;
@@ -70,7 +72,7 @@ public class HullStylesPanel extends AbstractStylesPanel {
             JPanel contentContainer = new JPanel();
             contentContainer.setLayout(new BoxLayout(contentContainer, BoxLayout.PAGE_AXIS));
 
-            JLabel ringLabel = new JLabel("Shield ring color:");
+            JLabel ringLabel = new JLabel(StringManager.getString("SHIELD_RING_COLOR"));
             JPanel ringColorPanel = ComponentUtilities.createColorPropertyPanel(ringLabel,
                     checked.getShieldRingColor(), CONTENT_SIDE_PAD, color -> {
                         checked.setShieldRingColor(color);
@@ -78,7 +80,7 @@ public class HullStylesPanel extends AbstractStylesPanel {
                     });
             contentContainer.add(ringColorPanel);
 
-            JLabel innerLabel = new JLabel("Shield inner color:");
+            JLabel innerLabel = new JLabel(StringManager.getString("SHIELD_INNER_COLOR"));
             JPanel innerColorPanel = ComponentUtilities.createColorPropertyPanel(innerLabel,
                     checked.getShieldInnerColor(), CONTENT_SIDE_PAD, color -> {
                         checked.setShieldInnerColor(color);

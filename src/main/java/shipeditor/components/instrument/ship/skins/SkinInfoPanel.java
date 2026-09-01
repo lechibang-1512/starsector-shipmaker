@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.skins;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
@@ -8,8 +10,6 @@ import shipeditor.components.viewer.layers.ship.data.ShipSkin;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.components.instrument.LayerPropertiesPanel;
 import shipeditor.utility.objects.Pair;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -51,7 +51,7 @@ public class SkinInfoPanel extends LayerPropertiesPanel {
 
     private Pair<JLabel, JTextField> createHullNameEditor() {
         JTextField hullNameEditor = new JTextField();
-        hullNameEditor.setToolTipText(StringValues.ENTER_TO_SAVE_CHANGES);
+        hullNameEditor.setToolTipText(StringManager.getString("ENTER_TO_SAVE_CHANGES"));
         hullNameEditor.setColumns(10);
         hullNameEditor.addActionListener(e -> {
             if (isWidgetsReadyForInput()) {
@@ -69,7 +69,7 @@ public class SkinInfoPanel extends LayerPropertiesPanel {
         });
 
         registerWidgetListeners(hullNameEditor, layer -> {
-            hullNameEditor.setText(StringValues.NOT_INITIALIZED);
+            hullNameEditor.setText(StringManager.getString("NOT_INITIALIZED"));
             hullNameEditor.setEnabled(false);
         }, layerPainter -> {
             ShipLayer shipLayer = (ShipLayer) layerPainter.getParentLayer();
@@ -78,7 +78,7 @@ public class SkinInfoPanel extends LayerPropertiesPanel {
             hullNameEditor.setText(skin.getHullName());
         });
 
-        return new Pair<>(new JLabel("Hull name:"), hullNameEditor);
+        return new Pair<>(new JLabel(StringManager.getString("HULL_NAME")), hullNameEditor);
     }
 
 }

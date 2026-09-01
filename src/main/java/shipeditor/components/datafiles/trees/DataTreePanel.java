@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -12,7 +14,6 @@ import shipeditor.persistence.GameDataPackage;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 
 import javax.swing.BorderFactory;
@@ -153,13 +154,13 @@ public abstract class DataTreePanel extends JPanel {
     void resetInfoPanel() {
         if (leftInfoPanel != null) {
             leftInfoPanel.removeAll();
-            leftInfoPanel.add(new JLabel(StringValues.NO_ENTRY_SELECTED));
+            leftInfoPanel.add(new JLabel(StringManager.getString("NO_ENTRY_SELECTED")));
             leftInfoPanel.revalidate();
             leftInfoPanel.repaint();
         }
         JPanel consolePanel = getConsolePanel();
         consolePanel.removeAll();
-        consolePanel.add(new JLabel(StringValues.NO_ENTRY_SELECTED));
+        consolePanel.add(new JLabel(StringManager.getString("NO_ENTRY_SELECTED")));
         consolePanel.revalidate();
         consolePanel.repaint();
     }
@@ -173,7 +174,7 @@ public abstract class DataTreePanel extends JPanel {
         treeContainer.setMinimumSize(new Dimension(120, 100));
 
         leftInfoPanel = new shipeditor.utility.components.containers.TextScrollPanel(new BorderLayout());
-        leftInfoPanel.add(new JLabel(StringValues.NO_ENTRY_SELECTED), BorderLayout.NORTH);
+        leftInfoPanel.add(new JLabel(StringManager.getString("NO_ENTRY_SELECTED")), BorderLayout.NORTH);
         
         JScrollPane leftInfoScroll = new JScrollPane(leftInfoPanel);
         leftInfoScroll.setBorder(null);
@@ -443,17 +444,17 @@ public abstract class DataTreePanel extends JPanel {
 
     JPopupMenu getContextMenu() {
         JPopupMenu menu = new JPopupMenu();
-        JMenuItem collapsePackage = new JMenuItem("Collapse package");
+        JMenuItem collapsePackage = new JMenuItem(StringManager.getString("COLLAPSE_PACKAGE"));
         collapsePackage.addActionListener(getCollapseAction());
         menu.add(collapsePackage);
         menu.addSeparator();
-        JMenuItem openSourceFile = new JMenuItem(StringValues.OPEN_SOURCE_FILE);
+        JMenuItem openSourceFile = new JMenuItem(StringManager.getString("OPEN_SOURCE_FILE"));
         openSourceFile.addActionListener(e -> openEntryPath(OpenDataTarget.FILE));
         menu.add(openSourceFile);
-        JMenuItem openInExplorer = new JMenuItem(StringValues.OPEN_CONTAINING_FOLDER);
+        JMenuItem openInExplorer = new JMenuItem(StringManager.getString("OPEN_CONTAINING_FOLDER"));
         openInExplorer.addActionListener(e -> openEntryPath(OpenDataTarget.CONTAINER));
         menu.add(openInExplorer);
-        JMenuItem openPackage = new JMenuItem(StringValues.OPEN_DATA_PACKAGE);
+        JMenuItem openPackage = new JMenuItem(StringManager.getString("OPEN_DATA_PACKAGE"));
         openPackage.addActionListener(e -> openEntryPath(OpenDataTarget.PACKAGE));
         menu.add(openPackage);
         return menu;

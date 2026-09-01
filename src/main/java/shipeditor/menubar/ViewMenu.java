@@ -1,5 +1,7 @@
 package shipeditor.menubar;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.ViewerBackgroundChanged;
 import shipeditor.communication.events.viewer.control.ControlEvents.ViewerGuidesToggled;
@@ -35,7 +37,7 @@ class ViewMenu extends JMenu {
     }
 
     void initialize() {
-        JMenuItem centerView = new JMenuItem("Reset View / Center");
+        JMenuItem centerView = new JMenuItem(StringManager.getString("RESET_VIEW_CENTER"));
         centerView.setIcon(FontIcon.of(BoxiconsRegular.TARGET_LOCK, 16, Themes.getIconColor()));
         centerView.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK));
         centerView.addActionListener(event -> EventBus.publish(new ViewerTransformsReset()));
@@ -58,10 +60,10 @@ class ViewMenu extends JMenu {
 
         this.addSeparator();
 
-        JMenu bgSubmenu = new JMenu("Background Settings");
+        JMenu bgSubmenu = new JMenu(StringManager.getString("BACKGROUND_SETTINGS"));
         bgSubmenu.setIcon(FontIcon.of(BoxiconsRegular.IMAGE, 16, Themes.getIconColor()));
 
-        JMenuItem changeBackground = new JMenuItem("Change Background Color...");
+        JMenuItem changeBackground = new JMenuItem(StringManager.getString("CHANGE_BACKGROUND_COLOR"));
         changeBackground.addActionListener(event -> {
             Color chosen = ColorUtilities.showColorChooser();
             Settings settings = SettingsManager.getSettings();
@@ -98,7 +100,7 @@ class ViewMenu extends JMenu {
     }
 
     private JMenu createGuidesSubmenu() {
-        JMenu guidesSubmenu = new JMenu("Toggle Guides");
+        JMenu guidesSubmenu = new JMenu(StringManager.getString("TOGGLE_GUIDES"));
         guidesSubmenu.setIcon(FontIcon.of(BoxiconsRegular.GRID_ALT, 16, Themes.getIconColor()));
 
         toggleCursorGuides = new JCheckBoxMenuItem("Show Cursor Guides");

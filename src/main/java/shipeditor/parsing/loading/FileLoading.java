@@ -1,5 +1,7 @@
 package shipeditor.parsing.loading;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import com.fasterxml.jackson.databind.JavaType;
@@ -16,8 +18,6 @@ import shipeditor.representation.weapon.ProjectileSpecFile;
 import shipeditor.representation.weapon.WeaponSpecFile;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import java.awt.image.BufferedImage;
@@ -72,17 +72,17 @@ public final class FileLoading {
     private static void initializeDatabaseInProcess() {
         try {
             if (SettingsManager.isDeveloperModeEnabled()) {
-                log.info(StringValues.STARTING_DB_INDEX_SCAN);
+                log.info(StringManager.getString("STARTING_DB_INDEX_SCAN"));
             }
             IndexScannerTask.scanAndIndexAll(true);
             if (SettingsManager.isDeveloperModeEnabled()) {
-                log.info(StringValues.DB_INDEX_SCAN_COMPLETED);
+                log.info(StringManager.getString("DB_INDEX_SCAN_COMPLETED"));
             }
         } catch (RuntimeException e) {
             if (SettingsManager.isDeveloperModeEnabled()) {
-                log.error(StringValues.DB_INDEX_SCAN_FAILED, e);
+                log.error(StringManager.getString("DB_INDEX_SCAN_FAILED"), e);
             } else {
-                log.error(StringValues.DB_INDEX_SCAN_FAILED);
+                log.error(StringManager.getString("DB_INDEX_SCAN_FAILED"));
             }
         }
     }
@@ -125,38 +125,38 @@ public final class FileLoading {
 
                     // Pre-load CSV data in parallel so caches are warm before tabs render.
                     CompletableFuture<Runnable> shipCsv = CompletableFuture.supplyAsync(() -> {
-                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskStarted(StringValues.TASK_SHIPS)));
+                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskStarted(StringManager.getString("TASK_SHIPS"))));
                         SettingsManager.getGameData().getShipEntriesByPackage();
                         SettingsManager.getGameData().getAllShipEntries();
-                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskCompleted(StringValues.TASK_SHIPS)));
+                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskCompleted(StringManager.getString("TASK_SHIPS"))));
                         return () -> {};
                     });
                     CompletableFuture<Runnable> weaponCsv = CompletableFuture.supplyAsync(() -> {
-                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskStarted(StringValues.TASK_WEAPONS)));
+                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskStarted(StringManager.getString("TASK_WEAPONS"))));
                         SettingsManager.getGameData().getWeaponEntriesByPackage();
                         SettingsManager.getGameData().getAllWeaponEntries();
-                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskCompleted(StringValues.TASK_WEAPONS)));
+                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskCompleted(StringManager.getString("TASK_WEAPONS"))));
                         return () -> {};
                     });
                     CompletableFuture<Runnable> hullmodCsv = CompletableFuture.supplyAsync(() -> {
-                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskStarted(StringValues.TASK_HULLMODS)));
+                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskStarted(StringManager.getString("TASK_HULLMODS"))));
                         SettingsManager.getGameData().getHullmodEntriesByPackage();
                         SettingsManager.getGameData().getAllHullmodEntries();
-                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskCompleted(StringValues.TASK_HULLMODS)));
+                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskCompleted(StringManager.getString("TASK_HULLMODS"))));
                         return () -> {};
                     });
                     CompletableFuture<Runnable> systemCsv = CompletableFuture.supplyAsync(() -> {
-                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskStarted(StringValues.TASK_SHIP_SYSTEMS)));
+                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskStarted(StringManager.getString("TASK_SHIP_SYSTEMS"))));
                         SettingsManager.getGameData().getShipSystemEntriesByPackage();
                         SettingsManager.getGameData().getAllShipsystemEntries();
-                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskCompleted(StringValues.TASK_SHIP_SYSTEMS)));
+                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskCompleted(StringManager.getString("TASK_SHIP_SYSTEMS"))));
                         return () -> {};
                     });
                     CompletableFuture<Runnable> wingCsv = CompletableFuture.supplyAsync(() -> {
-                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskStarted(StringValues.TASK_WINGS)));
+                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskStarted(StringManager.getString("TASK_WINGS"))));
                         SettingsManager.getGameData().getWingEntriesByPackage();
                         SettingsManager.getGameData().getAllWingEntries();
-                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskCompleted(StringValues.TASK_WINGS)));
+                        SwingUtilities.invokeLater(() -> EventBus.publish(new LoadingTaskCompleted(StringManager.getString("TASK_WINGS"))));
                         return () -> {};
                     });
 
@@ -181,9 +181,9 @@ public final class FileLoading {
                 }).whenComplete((runnables, ex) -> {
                     if (ex != null) {
                         if (SettingsManager.isDeveloperModeEnabled()) {
-                            log.error(StringValues.ERROR_LOADING_GAME_DATA, ex);
+                            log.error(StringManager.getString("ERROR_LOADING_GAME_DATA"), ex);
                         } else {
-                            log.error(StringValues.ERROR_LOADING_GAME_DATA);
+                            log.error(StringManager.getString("ERROR_LOADING_GAME_DATA"));
                         }
                     } else if (runnables != null) {
                         Runnable completionTasks = () -> {
@@ -198,11 +198,11 @@ public final class FileLoading {
                             completionTasks.run();
                         } else {
                             SwingUtilities.invokeLater(() -> {
-                                EventBus.publish(new LoadingTaskStarted(StringValues.UPDATING_UI));
+                                EventBus.publish(new LoadingTaskStarted(StringManager.getString("UPDATING_UI")));
                                 // Delay the heavy UI rebuilds by one event cycle so the label can repaint first.
                                 SwingUtilities.invokeLater(() -> executeStaggered(new ArrayList<>(runnables), () -> {
                                     completionTasks.run();
-                                    EventBus.publish(new LoadingTaskCompleted(StringValues.UPDATING_UI));
+                                    EventBus.publish(new LoadingTaskCompleted(StringManager.getString("UPDATING_UI")));
                                 }));
                             });
                         }
@@ -222,9 +222,9 @@ public final class FileLoading {
             task.run();
         } catch (Throwable t) {
             if (SettingsManager.isDeveloperModeEnabled()) {
-                log.error(StringValues.STAGGERED_UI_ERROR, t);
+                log.error(StringManager.getString("STAGGERED_UI_ERROR"), t);
             } else {
-                log.error(StringValues.STAGGERED_UI_ERROR);
+                log.error(StringManager.getString("STAGGERED_UI_ERROR"));
             }
         }
         SwingUtilities.invokeLater(() -> executeStaggered(tasks, onComplete));

@@ -1,11 +1,11 @@
 package shipeditor.utility;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.components.logging.StandardOutputRedirector;
 import shipeditor.persistence.Settings;
 import shipeditor.persistence.SettingsManager;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JOptionPane;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -27,18 +27,18 @@ public final class Errors {
 
     public static void showFileError(String message, Throwable exception) {
         if (java.awt.GraphicsEnvironment.isHeadless()) {
-            log.error(StringValues.FILE_ERROR_HEADLESS, message);
+            log.error(StringManager.getString("FILE_ERROR_HEADLESS"), message);
             if (exception != null && SettingsManager.isDeveloperModeEnabled()) {
                 Errors.printToStream(exception);
             }
             return;
         }
 
-        Object[] options = {StringValues.OPTION_OK, StringValues.OPTION_HIDE_FILE_ERRORS};
+        Object[] options = {StringManager.getString("OPTION_OK"), StringManager.getString("OPTION_HIDE_FILE_ERRORS")};
         int result = JOptionPane.showOptionDialog(
                 null,
                 message,
-                StringValues.FILE_LOADING_ERROR,
+                StringManager.getString("FILE_LOADING_ERROR"),
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.ERROR_MESSAGE,
                 null,
@@ -49,7 +49,7 @@ public final class Errors {
             Settings settings = SettingsManager.getSettings();
             settings.setShowLoadingErrors(false);
             if (SettingsManager.isDeveloperModeEnabled()) {
-                log.info(StringValues.FILE_ERRORS_DISABLED_LOG);
+                log.info(StringManager.getString("FILE_ERRORS_DISABLED_LOG"));
             }
         }
 
@@ -62,12 +62,12 @@ public final class Errors {
         String filePath = toOpen.getAbsolutePath();
 
         if (SettingsManager.isDeveloperModeEnabled()) {
-            log.error(StringValues.FAILED_TO_OPEN_IN_EXPLORER, filePath);
+            log.error(StringManager.getString("FAILED_TO_OPEN_IN_EXPLORER"), filePath);
         }
         if (!java.awt.GraphicsEnvironment.isHeadless()) {
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    StringValues.FAILED_TO_OPEN_IN_EXPLORER_UI + filePath,
-                    StringValues.FILE_LOADING_ERROR,
+                    StringManager.getString("FAILED_TO_OPEN_IN_EXPLORER_UI") + filePath,
+                    StringManager.getString("FILE_LOADING_ERROR"),
                     JOptionPane.ERROR_MESSAGE);
         }
         if (SettingsManager.isDeveloperModeEnabled()) {
@@ -76,11 +76,11 @@ public final class Errors {
     }
 
     static void showSpriteNotFound(String filePath) {
-        String report = StringValues.IMAGE_FILE_NOT_FOUND + filePath;
+        String report = StringManager.getString("IMAGE_FILE_NOT_FOUND") + filePath;
         if (!java.awt.GraphicsEnvironment.isHeadless()) {
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                     report,
-                    StringValues.FILE_LOADING_ERROR,
+                    StringManager.getString("FILE_LOADING_ERROR"),
                     JOptionPane.ERROR_MESSAGE);
         } else {
             log.error(report);
@@ -104,10 +104,10 @@ public final class Errors {
         public void uncaughtException(Thread t, Throwable e) {
             // BREAKPOINT: Place debugger breakpoint here to catch silent Swing NPEs
             try {
-                log.error(StringValues.EXCEPTION_GLOBAL_HANDLER, e);
+                log.error(StringManager.getString("EXCEPTION_GLOBAL_HANDLER"), e);
                 Errors.printToStream(e);
             } catch (Throwable fallback) {
-                System.err.println(StringValues.UNCAUGHT_EXCEPTION_FAILED_LOG);
+                System.err.println(StringManager.getString("UNCAUGHT_EXCEPTION_FAILED_LOG"));
                 e.printStackTrace(System.err);
                 fallback.printStackTrace(System.err);
             }

@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.bounds;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -15,8 +17,6 @@ import shipeditor.components.viewer.painters.points.ship.BoundPointsPainter;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.widgets.PointLocationWidget;
 import shipeditor.utility.objects.Pair;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -173,7 +173,7 @@ public class BoundsPanel extends AbstractShipPropertiesPanel {
         listHeaderPanel.add(reorderWidget.getFirst(), BorderLayout.WEST);
 
         javax.swing.JButton autoGenBtn = new javax.swing.JButton("Auto-Generate");
-        autoGenBtn.setToolTipText("Automatically generate collision bounds based on the sprite's opaque pixels.");
+        autoGenBtn.setToolTipText(StringManager.getString("AUTOMATICALLY_GENERATE_COLLISION_BOUNDS_BASED_ON_THE_SPRITE_S_OPAQUE_PIXELS"));
         autoGenBtn.addActionListener(e -> autoGenerateBounds());
         registerWidgetListeners(autoGenBtn, 
                 layerPainter -> autoGenBtn.setEnabled(false),
@@ -220,7 +220,7 @@ public class BoundsPanel extends AbstractShipPropertiesPanel {
                 opacityGetter, opacitySetter, clearerListener, refresherListener);
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText("Bounds opacity:");
+        opacityLabel.setText(StringManager.getString("BOUNDS_OPACITY"));
 
         return opacityWidget;
     }
@@ -236,7 +236,7 @@ public class BoundsPanel extends AbstractShipPropertiesPanel {
         var opacityWidget = createVisibilityWidget(painterGetter);
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText(StringValues.BOUNDS_VIEW);
+        opacityLabel.setText(StringManager.getString("BOUNDS_VIEW"));
 
         return opacityWidget;
     }

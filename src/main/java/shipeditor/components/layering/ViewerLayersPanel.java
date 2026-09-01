@@ -1,5 +1,7 @@
 package shipeditor.components.layering;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.extern.log4j.Log4j2;
@@ -40,7 +42,6 @@ import shipeditor.representation.weapon.WeaponSpecFile;
 import shipeditor.utility.components.containers.SortableTabbedPane;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 
 import javax.swing.BorderFactory;
@@ -332,7 +333,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
                 if (targetTab < 0) {
                     JPopupMenu menu = new JPopupMenu();
                     
-                    JMenuItem createLayer = new JMenuItem("Create new layer");
+                    JMenuItem createLayer = new JMenuItem(StringManager.getString("CREATE_NEW_LAYER"));
                     createLayer.addActionListener(event -> {
                         Object[] options = {"Ship Layer", "Weapon Layer"};
                         int result = JOptionPane.showOptionDialog(null,
@@ -379,7 +380,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
             ShipPainter shipPainter = shipLayer.getPainter();
             JPopupMenu menu = new JPopupMenu();
 
-            JMenuItem openSprite = new JMenuItem("Load new sprite");
+            JMenuItem openSprite = new JMenuItem(StringManager.getString("LOAD_NEW_SPRITE"));
             openSprite.addActionListener(e -> OpenSpriteAction.openSpriteAndDo(sprite -> {
                 PrimaryViewer viewer = StaticController.getViewer();
                 viewer.loadSpriteToLayer(shipLayer, sprite);
@@ -390,7 +391,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
                 return menu;
             }
 
-            JMenuItem createHullData = new JMenuItem("Create new ship data");
+            JMenuItem createHullData = new JMenuItem(StringManager.getString("CREATE_NEW_SHIP_DATA"));
             createHullData.addActionListener(event -> {
                 HullSpecFile created = new HullSpecFile();
                 shipLayer.initializeHullData(created);
@@ -404,7 +405,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
 
             menu.addSeparator();
 
-            JMenuItem selectEntry = new JMenuItem(StringValues.SELECT_SHIP_ENTRY);
+            JMenuItem selectEntry = new JMenuItem(StringManager.getString("SELECT_SHIP_ENTRY"));
             String baseHullID = GameDataRepository.getBaseHullID(shipLayer.getShipID());
             if (baseHullID != null && !baseHullID.isEmpty()) {
                 ShipCSVEntry entry = GameDataRepository.retrieveShipCSVEntryByID(baseHullID);
@@ -420,11 +421,11 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
 
             menu.addSeparator();
 
-            JMenuItem saveHullData = new JMenuItem("Save hull data");
+            JMenuItem saveHullData = new JMenuItem(StringManager.getString("SAVE_HULL_DATA"));
             saveHullData.addActionListener(event -> EventBus.publish(new HullSaveQueued(shipLayer)));
             menu.add(saveHullData);
 
-            JMenuItem saveActiveVariant = new JMenuItem("Save active variant");
+            JMenuItem saveActiveVariant = new JMenuItem(StringManager.getString("SAVE_ACTIVE_VARIANT"));
             var activeVariant = shipPainter.getActiveVariant();
             if (activeVariant != null && !activeVariant.isEmpty()) {
                 saveActiveVariant.addActionListener(event -> EventBus.publish(new VariantSaveQueued(activeVariant)));
@@ -435,7 +436,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
 
             menu.addSeparator();
 
-            JMenuItem flipPoints = new JMenuItem("Flip active ship points horizontally");
+            JMenuItem flipPoints = new JMenuItem(StringManager.getString("FLIP_ACTIVE_SHIP_POINTS_HORIZONTALLY"));
             flipPoints.addActionListener(event -> shipPainter.flipShipPointsHorizontally());
             menu.add(flipPoints);
 
@@ -450,7 +451,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
             JPopupMenu menu = new JPopupMenu();
 
             if (weaponLayer.getSpecFile() != null) {
-                JMenuItem saveWeaponData = new JMenuItem("Save weapon data");
+                JMenuItem saveWeaponData = new JMenuItem(StringManager.getString("SAVE_WEAPON_DATA"));
                 saveWeaponData.addActionListener(event -> EventBus.publish(new WeaponSaveQueued(weaponLayer)));
                 menu.add(saveWeaponData);
                 menu.addSeparator();
@@ -464,7 +465,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
             JPopupMenu menu = new JPopupMenu();
 
             if (projectileLayer.getSpecFile() != null) {
-                JMenuItem saveProjectileData = new JMenuItem("Save projectile data");
+                JMenuItem saveProjectileData = new JMenuItem(StringManager.getString("SAVE_PROJECTILE_DATA"));
                 saveProjectileData.addActionListener(event -> EventBus.publish(new ProjectileSaveQueued(projectileLayer)));
                 menu.add(saveProjectileData);
                 menu.addSeparator();
@@ -475,7 +476,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
         }
 
         private static JMenuItem createPrintLayerOption(ViewerLayer layer) {
-            JMenuItem printLayer = new JMenuItem("High-Resolution Sprite Print...");
+            JMenuItem printLayer = new JMenuItem(StringManager.getString("HIGH_RESOLUTION_SPRITE_PRINT"));
             printLayer.setIcon(FontIcon.of(BoxiconsRegular.PRINTER, 16, Themes.getIconColor()));
             printLayer.addActionListener(event -> {
                 shipeditor.components.dialogs.ExportDialog dialog = new shipeditor.components.dialogs.ExportDialog(1);

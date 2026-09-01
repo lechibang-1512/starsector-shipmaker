@@ -1,11 +1,11 @@
 package shipeditor.parsing.loading;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.overseers.ImageCache;
-import shipeditor.utility.text.StringValues;
-
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import java.awt.image.BufferedImage;
@@ -44,7 +44,7 @@ public final class SpriteLoader {
                     if (inputStream != null) {
                         return ImageIO.read(inputStream);
                     } else {
-                        log.warn(StringValues.RESOURCE_NOT_FOUND + ": " + imageFilename);
+                        log.warn(StringManager.getString("RESOURCE_NOT_FOUND") + ": " + imageFilename);
                         return null;
                     }
                 } catch (IOException e) {
@@ -54,11 +54,11 @@ public final class SpriteLoader {
             }
             spriteFile = new File(pathURI);
         } catch (URISyntaxException e) {
-            String errorMsg = StringValues.IMAGE_RESOURCE_LOAD_FAILED.replace("{}", String.valueOf(spritePath));
+            String errorMsg = StringManager.getString("IMAGE_RESOURCE_LOAD_FAILED").replace("{}", String.valueOf(spritePath));
             if (!java.awt.GraphicsEnvironment.isHeadless()) {
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                         errorMsg,
-                        StringValues.FILE_LOADING_ERROR,
+                        StringManager.getString("FILE_LOADING_ERROR"),
                         JOptionPane.ERROR_MESSAGE);
             } else {
                 if (SettingsManager.isDeveloperModeEnabled()) {

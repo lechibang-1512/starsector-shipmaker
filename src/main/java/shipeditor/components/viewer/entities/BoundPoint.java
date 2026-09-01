@@ -1,5 +1,7 @@
 package shipeditor.components.viewer.entities;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -8,8 +10,6 @@ import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.painters.points.ship.BoundPointsPainter;
 import shipeditor.utility.graphics.ShapeUtilities;
-import shipeditor.utility.text.StringValues;
-
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -40,20 +40,20 @@ public class BoundPoint extends BaseWorldPoint {
 
     @Override
     public String getNameForLabel() {
-        return StringValues.BOUND;
+        return StringManager.getString("BOUND");
     }
 
     @Override
     protected String[] getHoverLines() {
         Point2D toDisplay = this.getCoordinatesForDisplay();
-        String indexLabel = StringValues.BOUND;
+        String indexLabel = StringManager.getString("BOUND");
         LayerPainter layerPainter = getParent();
         if (layerPainter instanceof ShipPainter shipPainter) {
             BoundPointsPainter boundsPainter = shipPainter.getBoundsPainter();
             List<BoundPoint> points = boundsPainter.getPointsIndex();
             int index = points.indexOf(this);
             if (index >= 0) {
-                indexLabel = StringValues.BOUND + " #" + index;
+                indexLabel = StringManager.getString("BOUND") + " #" + index;
             }
         }
         String coords = "(" + toDisplay.getX() + ", " + toDisplay.getY() + ")";

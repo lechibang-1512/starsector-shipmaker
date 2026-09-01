@@ -1,8 +1,8 @@
 package shipeditor.utility.overseers;
 
-import lombok.extern.log4j.Log4j2;
-import shipeditor.utility.text.StringValues;
+import shipeditor.utility.text.StringManager;
 
+import lombok.extern.log4j.Log4j2;
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import java.awt.image.BufferedImage;
@@ -43,7 +43,7 @@ public final class ImageCache {
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                     "Image file loading failed: " + file,
-                    StringValues.FILE_LOADING_ERROR,
+                    StringManager.getString("FILE_LOADING_ERROR"),
                     JOptionPane.ERROR_MESSAGE);
             throw new UncheckedIOException("Failed to load sprite: " + file.getName(), ex);
         }

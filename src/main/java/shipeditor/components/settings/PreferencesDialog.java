@@ -1,5 +1,7 @@
 package shipeditor.components.settings;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.Main;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.persistence.Settings;
@@ -42,7 +44,7 @@ public class PreferencesDialog extends JDialog {
         this.add(tabbedPane, BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton closeButton = new JButton("Close");
+        JButton closeButton = new JButton(StringManager.getString("CLOSE"));
         closeButton.addActionListener(e -> this.dispose());
         bottomPanel.add(closeButton);
         this.add(bottomPanel, BorderLayout.SOUTH);
@@ -55,43 +57,43 @@ public class PreferencesDialog extends JDialog {
 
         Settings settings = SettingsManager.getSettings();
 
-        JCheckBox autoLoadData = new JCheckBox("Auto-load data at start");
+        JCheckBox autoLoadData = new JCheckBox(StringManager.getString("AUTO_LOAD_DATA_AT_START"));
         autoLoadData.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
-        autoLoadData.setToolTipText("Automatically load indexed mod data when the editor starts");
+        autoLoadData.setToolTipText(StringManager.getString("AUTOMATICALLY_LOAD_INDEXED_MOD_DATA_WHEN_THE_EDITOR_STARTS"));
         autoLoadData.setSelected(SettingsManager.isDataAutoloadEnabled());
         autoLoadData.addActionListener(event ->
                 settings.setLoadDataAtStart(autoLoadData.isSelected())
         );
         panel.add(autoLoadData);
 
-        JCheckBox togglePromptMods = new JCheckBox("Always show Mod Selection at startup");
+        JCheckBox togglePromptMods = new JCheckBox(StringManager.getString("ALWAYS_SHOW_MOD_SELECTION_AT_STARTUP"));
         togglePromptMods.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
-        togglePromptMods.setToolTipText("Force the mod selection dialog to appear every time you open the editor");
+        togglePromptMods.setToolTipText(StringManager.getString("FORCE_THE_MOD_SELECTION_DIALOG_TO_APPEAR_EVERY_TIME_YOU_OPEN_THE_EDITOR"));
         togglePromptMods.setSelected(settings.isPromptForModsAtStart());
         togglePromptMods.addActionListener(event ->
                 settings.setPromptForModsAtStart(togglePromptMods.isSelected())
         );
         panel.add(togglePromptMods);
 
-        JCheckBox toggleFileErrorPopups = new JCheckBox("Enable file error pop-ups");
+        JCheckBox toggleFileErrorPopups = new JCheckBox(StringManager.getString("ENABLE_FILE_ERROR_POP_UPS"));
         toggleFileErrorPopups.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
-        toggleFileErrorPopups.setToolTipText("Show error dialogs when corrupted files are encountered during loading");
+        toggleFileErrorPopups.setToolTipText(StringManager.getString("SHOW_ERROR_DIALOGS_WHEN_CORRUPTED_FILES_ARE_ENCOUNTERED_DURING_LOADING"));
         toggleFileErrorPopups.setSelected(SettingsManager.areFileErrorPopupsEnabled());
         toggleFileErrorPopups.addActionListener(event ->
                 settings.setShowLoadingErrors(toggleFileErrorPopups.isSelected())
         );
         panel.add(toggleFileErrorPopups);
 
-        JCheckBox toggleDeveloperMode = new JCheckBox("Enable developer messages/logs");
+        JCheckBox toggleDeveloperMode = new JCheckBox(StringManager.getString("ENABLE_DEVELOPER_MESSAGES_LOGS"));
         toggleDeveloperMode.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
-        toggleDeveloperMode.setToolTipText("Enable extensive diagnostic logging and developer-only warnings");
+        toggleDeveloperMode.setToolTipText(StringManager.getString("ENABLE_EXTENSIVE_DIAGNOSTIC_LOGGING_AND_DEVELOPER_ONLY_WARNINGS"));
         toggleDeveloperMode.setSelected(SettingsManager.isDeveloperModeEnabled());
         toggleDeveloperMode.addActionListener(event ->
                 settings.setDeveloperMode(toggleDeveloperMode.isSelected())
         );
         panel.add(toggleDeveloperMode);
 
-        JButton openSettings = new JButton("Open settings file");
+        JButton openSettings = new JButton(StringManager.getString("OPEN_SETTINGS_FILE"));
         openSettings.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         openSettings.addActionListener(e -> {
             File settingsPath = SettingsManager.getSettingsPath();
@@ -99,7 +101,7 @@ public class PreferencesDialog extends JDialog {
         });
         panel.add(openSettings);
 
-        JButton openEditorFolder = new JButton("Open editor folder");
+        JButton openEditorFolder = new JButton(StringManager.getString("OPEN_EDITOR_FOLDER"));
         openEditorFolder.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         openEditorFolder.addActionListener(e -> {
             File settingsPath = SettingsManager.getSettingsPath();
@@ -114,9 +116,9 @@ public class PreferencesDialog extends JDialog {
 
         JPanel blacklistPanel = new JPanel(new BorderLayout(5, 5));
         blacklistPanel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
-        blacklistPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Mod Blacklist"));
+        blacklistPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(StringManager.getString("MOD_BLACKLIST")));
         javax.swing.JTextArea blacklistArea = new javax.swing.JTextArea(4, 20);
-        blacklistArea.setToolTipText("Comma-separated list of mod folder names or prefixes to ignore.");
+        blacklistArea.setToolTipText(StringManager.getString("COMMA_SEPARATED_LIST_OF_MOD_FOLDER_NAMES_OR_PREFIXES_TO_IGNORE"));
         if (settings.getBlacklistedMods() != null) {
             blacklistArea.setText(String.join(", ", settings.getBlacklistedMods()));
         }
@@ -125,9 +127,9 @@ public class PreferencesDialog extends JDialog {
         panel.add(blacklistPanel);
         panel.add(javax.swing.Box.createVerticalStrut(10));
 
-        JButton openModSelectionBtn = new JButton("Select Mod Packages...");
+        JButton openModSelectionBtn = new JButton(StringManager.getString("SELECT_MOD_PACKAGES"));
         openModSelectionBtn.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
-        openModSelectionBtn.setToolTipText("Open the mod selection dialog to change indexed mods");
+        openModSelectionBtn.setToolTipText(StringManager.getString("OPEN_THE_MOD_SELECTION_DIALOG_TO_CHANGE_INDEXED_MODS"));
         openModSelectionBtn.addActionListener(e -> {
             shipeditor.components.dialogs.ModSelectionDialog dialog = 
                 new shipeditor.components.dialogs.ModSelectionDialog(
@@ -147,7 +149,7 @@ public class PreferencesDialog extends JDialog {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
         
-        JLabel themeLabel = new JLabel("Select application theme (will take effect after restart):");
+        JLabel themeLabel = new JLabel(StringManager.getString("SELECT_APPLICATION_THEME_WILL_TAKE_EFFECT_AFTER_RESTART"));
         themeLabel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         panel.add(themeLabel);
         panel.add(javax.swing.Box.createVerticalStrut(10));
@@ -179,16 +181,16 @@ public class PreferencesDialog extends JDialog {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        JLabel authorsLabel = new JLabel("Authors: thevolkflower");
+        JLabel authorsLabel = new JLabel(StringManager.getString("AUTHORS_THEVOLKFLOWER"));
         authorsLabel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         panel.add(authorsLabel);
         
-        JLabel startedLabel = new JLabel("Started: May 2026");
+        JLabel startedLabel = new JLabel(StringManager.getString("STARTED_MAY_2026"));
         startedLabel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         panel.add(startedLabel);
         
         String projectVersion = Main.VERSION;
-        JLabel versionLabel = new JLabel("Current version: " + projectVersion);
+        JLabel versionLabel = new JLabel(StringManager.getString("CURRENT_VERSION") + projectVersion);
         versionLabel.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         panel.add(versionLabel);
 

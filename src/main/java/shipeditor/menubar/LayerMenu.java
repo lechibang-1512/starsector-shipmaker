@@ -1,5 +1,7 @@
 package shipeditor.menubar;
 
+import shipeditor.utility.text.StringManager;
+
 import org.kordamp.ikonli.boxicons.BoxiconsRegular;
 import org.kordamp.ikonli.swing.FontIcon;
 import shipeditor.communication.EventBus;
@@ -28,13 +30,13 @@ class LayerMenu extends JMenu {
     }
 
     void initialize() {
-        JMenuItem newShipLayer = new JMenuItem("New Ship Layer");
+        JMenuItem newShipLayer = new JMenuItem(StringManager.getString("NEW_SHIP_LAYER"));
         newShipLayer.setIcon(FontIcon.of(BoxiconsRegular.ROCKET, 16, Themes.getIconColor()));
         newShipLayer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK));
         newShipLayer.addActionListener(e -> EventBus.publish(new ShipLayerCreationQueued()));
         this.add(newShipLayer);
 
-        JMenuItem newWeaponLayer = new JMenuItem("New Weapon Layer");
+        JMenuItem newWeaponLayer = new JMenuItem(StringManager.getString("NEW_WEAPON_LAYER"));
         newWeaponLayer.setIcon(FontIcon.of(BoxiconsRegular.CROSSHAIR, 16, Themes.getIconColor()));
         newWeaponLayer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         newWeaponLayer.addActionListener(e -> EventBus.publish(new WeaponLayerCreationQueued()));
@@ -42,7 +44,7 @@ class LayerMenu extends JMenu {
 
         this.addSeparator();
 
-        removeLayer = new JMenuItem("Remove Active Layer");
+        removeLayer = new JMenuItem(StringManager.getString("REMOVE_ACTIVE_LAYER"));
         removeLayer.setIcon(FontIcon.of(BoxiconsRegular.MINUS, 16, Themes.getIconColor()));
         removeLayer.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.CTRL_DOWN_MASK));
         removeLayer.addActionListener(e -> EventBus.publish(new ActiveLayerRemovalQueued()));

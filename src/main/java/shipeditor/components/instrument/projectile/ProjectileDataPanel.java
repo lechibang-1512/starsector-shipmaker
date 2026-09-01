@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.projectile;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.weapon.ProjectileLayer;
@@ -37,17 +39,17 @@ public class ProjectileDataPanel extends AbstractProjectilePropertiesPanel {
     }
 
     private void addIDPanel() {
-        JLabel label = new JLabel("ID:");
+        JLabel label = new JLabel(StringManager.getString("ID"));
         idEditor = new JTextField();
         idEditor.setColumns(10);
         idEditor.setEditable(false);
-        idEditor.setToolTipText("ID is read-only from the spec file");
+        idEditor.setToolTipText(StringManager.getString("ID_IS_READ_ONLY_FROM_THE_SPEC_FILE"));
 
         ComponentUtilities.addLabelAndComponent(this, label, idEditor, 0);
     }
 
     private void addSpecClassPanel() {
-        JLabel label = new JLabel("Spec Class:");
+        JLabel label = new JLabel(StringManager.getString("SPEC_CLASS"));
         specClassEditor = new JTextField();
         specClassEditor.setColumns(10);
         specClassEditor.addActionListener(e -> {
@@ -68,7 +70,7 @@ public class ProjectileDataPanel extends AbstractProjectilePropertiesPanel {
     }
 
     private void addMissileTypePanel() {
-        JLabel label = new JLabel("Missile Type:");
+        JLabel label = new JLabel(StringManager.getString("MISSILE_TYPE"));
         missileTypeEditor = new JTextField();
         missileTypeEditor.setColumns(10);
         missileTypeEditor.addActionListener(e -> {

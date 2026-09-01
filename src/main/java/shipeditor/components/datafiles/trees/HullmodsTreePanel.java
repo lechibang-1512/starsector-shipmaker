@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.files.FileEvents.HullmodFoldersWalked;
@@ -191,7 +193,7 @@ class HullmodsTreePanel extends CSVDataTreePanel<HullmodCSVEntry>{
 
     private void populateBuiltInOptions(JPopupMenu menu, HullmodCSVEntry entry) {
         EditorInstrument targetMode = EditorInstrument.BUILT_IN_MODS;
-        JMenuItem addToHullBuiltIns = new JMenuItem("Add to hull built-ins");
+        JMenuItem addToHullBuiltIns = new JMenuItem(StringManager.getString("ADD_TO_HULL_BUILT_INS"));
         ViewerLayer activeLayer = StaticController.getActiveLayer();
         addToHullBuiltIns.addActionListener(e -> {
             if (activeLayer instanceof ShipLayer checkedLayer) {
@@ -216,7 +218,7 @@ class HullmodsTreePanel extends CSVDataTreePanel<HullmodCSVEntry>{
 
     private JMenuItem createSkinRemovedOption(HullmodCSVEntry entry,
                                               ViewerLayer activeLayer, EditorInstrument targetMode) {
-        JMenuItem addToSkinRemoved = new JMenuItem("Add to skin built-in removals");
+        JMenuItem addToSkinRemoved = new JMenuItem(StringManager.getString("ADD_TO_SKIN_BUILT_IN_REMOVALS"));
         addToSkinRemoved.addActionListener(e -> {
             if (activeLayer instanceof ShipLayer checkedLayer) {
 
@@ -237,7 +239,7 @@ class HullmodsTreePanel extends CSVDataTreePanel<HullmodCSVEntry>{
 
     private JMenuItem createSkinAddedOption(HullmodCSVEntry entry,
                                             ViewerLayer activeLayer, EditorInstrument targetMode) {
-        JMenuItem addToSkinAdded = new JMenuItem("Add to skin built-ins");
+        JMenuItem addToSkinAdded = new JMenuItem(StringManager.getString("ADD_TO_SKIN_BUILT_INS"));
         addToSkinAdded.addActionListener(e -> {
             if (activeLayer instanceof ShipLayer checkedLayer) {
 

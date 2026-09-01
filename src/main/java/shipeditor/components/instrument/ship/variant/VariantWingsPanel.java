@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.variant;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.components.datafiles.entities.WingCSVEntry;
@@ -13,8 +15,6 @@ import shipeditor.undo.EditDispatch;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.Box;
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
@@ -89,17 +89,17 @@ public class VariantWingsPanel extends JPanel {
         ComponentUtilities.outfitPanelWithTitle(infoPanel, "Fitted wings");
         infoPanel.setLayout(new GridBagLayout());
 
-        JLabel shipOPCapLabel = new JLabel(StringValues.TOTAL_OP_CAPACITY);
+        JLabel shipOPCapLabel = new JLabel(StringManager.getString("TOTAL_OP_CAPACITY"));
         shipOPCap = new JLabel();
 
         ComponentUtilities.addLabelAndComponent(infoPanel, shipOPCapLabel, shipOPCap, 0);
 
-        JLabel usedOPTotalLabel = new JLabel("Used OP for ship:");
+        JLabel usedOPTotalLabel = new JLabel(StringManager.getString("USED_OP_FOR_SHIP"));
         usedOPTotal = new JLabel();
 
         ComponentUtilities.addLabelAndComponent(infoPanel, usedOPTotalLabel, usedOPTotal, 1);
 
-        JLabel usedOPLabel = new JLabel(StringValues.USED_OP_IN_WINGS);
+        JLabel usedOPLabel = new JLabel(StringManager.getString("USED_OP_IN_WINGS"));
         usedOPInWings = new JLabel();
 
         ComponentUtilities.addLabelAndComponent(infoPanel, usedOPLabel, usedOPInWings, 2);
@@ -111,17 +111,17 @@ public class VariantWingsPanel extends JPanel {
         strutConstraints.gridwidth = 2;
         infoPanel.add(Box.createVerticalStrut(10), strutConstraints);
 
-        JLabel totalBaysLabel = new JLabel(StringValues.TOTAL_SHIP_BAYS);
+        JLabel totalBaysLabel = new JLabel(StringManager.getString("TOTAL_SHIP_BAYS"));
         totalBayCount = new JLabel();
 
         ComponentUtilities.addLabelAndComponent(infoPanel, totalBaysLabel, totalBayCount, 4);
 
-        JLabel totalBuiltInsLabel = new JLabel(StringValues.TOTAL_BUILT_IN_WINGS);
+        JLabel totalBuiltInsLabel = new JLabel(StringManager.getString("TOTAL_BUILT_IN_WINGS"));
         builtInWingsCount = new JLabel();
 
         ComponentUtilities.addLabelAndComponent(infoPanel, totalBuiltInsLabel, builtInWingsCount, 5);
 
-        JLabel totalFittedLabel = new JLabel("Total fitted wings:");
+        JLabel totalFittedLabel = new JLabel(StringManager.getString("TOTAL_FITTED_WINGS"));
         fittedWingsCount = new JLabel();
 
         ComponentUtilities.addLabelAndComponent(infoPanel, totalFittedLabel, fittedWingsCount, 6);
@@ -147,7 +147,7 @@ public class VariantWingsPanel extends JPanel {
     }
 
     private void refreshLayerInfo(ViewerLayer selected) {
-        String notInitialized = StringValues.NOT_INITIALIZED;
+        String notInitialized = StringManager.getString("NOT_INITIALIZED");
 
         if (selected instanceof ShipLayer shipLayer) {
 

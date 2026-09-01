@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.variant;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
@@ -8,8 +10,6 @@ import shipeditor.representation.GameDataRepository;
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -44,7 +44,7 @@ public class VariantChooserPanel extends JPanel {
 
         this.add(chooserContainer, constraints);
 
-        createVariantButton = new JButton("Create");
+        createVariantButton = new JButton(StringManager.getString("CREATE"));
         createVariantButton.addActionListener(e -> {
             if (selectedLayer == null) return;
             ShipVariant created = new ShipVariant(false);
@@ -64,7 +64,7 @@ public class VariantChooserPanel extends JPanel {
         constraints.gridy = 1;
         this.add(createVariantButton, constraints);
 
-        removeVariantButton = new JButton(StringValues.REMOVE);
+        removeVariantButton = new JButton(StringManager.getString("REMOVE"));
         String tooltip = Utility.getWithLinebreaks("Remove entry from variants loaded to layer",
                 "Newly created variants will be erased entirely",
                 "Variants from game data files will be reloaded instead");
@@ -106,7 +106,7 @@ public class VariantChooserPanel extends JPanel {
     public ShipVariant refresh(ShipLayer layer) {
         chooserContainer.removeAll();
         selectedLayer = layer;
-        removeVariantButton.setText(StringValues.REMOVE);
+        removeVariantButton.setText(StringManager.getString("REMOVE"));
         createVariantButton.setEnabled(true);
 
         ShipVariant variant = recreateVariantChooser(layer);
@@ -116,7 +116,7 @@ public class VariantChooserPanel extends JPanel {
             removeVariantButton.setEnabled(false);
         } else {
             if (variant.isLoadedFromFile()) {
-                removeVariantButton.setText("Reload");
+                removeVariantButton.setText(StringManager.getString("RELOAD"));
             }
             removeVariantButton.setEnabled(true);
         }
@@ -128,7 +128,7 @@ public class VariantChooserPanel extends JPanel {
     private ShipVariant recreateVariantChooser(ShipLayer checkedLayer) {
         Map<String, Variant> variantFiles = new LinkedHashMap<>();
         Variant empty = VariantFile.empty();
-        variantFiles.put(StringValues.EMPTY, empty);
+        variantFiles.put(StringManager.getString("EMPTY"), empty);
 
         String shipID = checkedLayer.getShipID();
         variantFiles.putAll(GameDataRepository.getMatchingForHullID(shipID));

@@ -1,5 +1,7 @@
 package shipeditor.components.dialogs;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.PrimaryWindow;
 import shipeditor.persistence.Initializations;
@@ -38,8 +40,8 @@ public class FirstTimeSetupDialog extends JDialog {
         mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         JPanel infoPanel = new JPanel(new GridLayout(2, 1, 5, 5));
-        infoPanel.add(new JLabel("Welcome to Starsector Ship Editor!"));
-        infoPanel.add(new JLabel("Please select your Starsector installation folder (contains 'starsector-core' and 'mods')."));
+        infoPanel.add(new JLabel(StringManager.getString("WELCOME_TO_STARSECTOR_SHIP_EDITOR")));
+        infoPanel.add(new JLabel(StringManager.getString("PLEASE_SELECT_YOUR_STARSECTOR_INSTALLATION_FOLDER_CONTAINS_STARSECTOR_CORE_AND_MODS")));
         mainPanel.add(infoPanel, BorderLayout.NORTH);
 
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
@@ -99,7 +101,7 @@ public class FirstTimeSetupDialog extends JDialog {
 
         inputPanel.add(pathComboBox, BorderLayout.CENTER);
 
-        JButton browseButton = new JButton("Browse...");
+        JButton browseButton = new JButton(StringManager.getString("BROWSE"));
         browseButton.addActionListener(e -> {
             JFileChooser folderChooser = new JFileChooser();
             folderChooser.setDialogTitle("Choose folder containing installed game");
@@ -129,7 +131,7 @@ public class FirstTimeSetupDialog extends JDialog {
         mainPanel.add(inputPanel, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton confirmButton = new JButton("Confirm");
+        JButton confirmButton = new JButton(StringManager.getString("CONFIRM"));
         confirmButton.addActionListener(e -> {
             Object selectedItem = pathComboBox.getSelectedItem();
             String currentPath = selectedItem != null ? selectedItem.toString().trim() : "";
@@ -150,7 +152,7 @@ public class FirstTimeSetupDialog extends JDialog {
             }
         });
 
-        JButton exitButton = new JButton("Exit");
+        JButton exitButton = new JButton(StringManager.getString("EXIT"));
         exitButton.addActionListener(e -> this.dispose());
 
         buttonPanel.add(exitButton);

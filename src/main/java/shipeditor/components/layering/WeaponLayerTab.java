@@ -1,11 +1,11 @@
 package shipeditor.components.layering;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.Getter;
 import lombok.Setter;
 import shipeditor.components.viewer.layers.weapon.WeaponLayer;
 import shipeditor.utility.Utility;
-import shipeditor.utility.text.StringValues;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -29,7 +29,7 @@ public class WeaponLayerTab extends LayerTab {
 
     @Override
     public String getTabTooltip() {
-        String notLoaded = StringValues.NOT_LOADED;
+        String notLoaded = StringManager.getString("NOT_LOADED");
 
         String mainSprite = spriteName;
         if (Objects.equals(mainSprite, "") || mainSprite == null) {

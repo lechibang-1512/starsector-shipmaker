@@ -1,11 +1,11 @@
 package shipeditor.components;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.Getter;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.fluentui.FluentUiRegularAL;
 import org.kordamp.ikonli.fluentui.FluentUiRegularMZ;
-import shipeditor.utility.text.StringValues;
-
 public class ComponentEnums {
 
 
@@ -37,9 +37,9 @@ public class ComponentEnums {
 
     @Getter public static enum EditorInstrument {
 
-    LAYER(StringValues.LAYER, FluentUiRegularAL.LAYER_20),
-    COLLISION(StringValues.COLLISION, FluentUiRegularMZ.TARGET_20),
-    SHIELD(StringValues.SHIELD, FluentUiRegularMZ.SHIELD_20),
+    LAYER(StringManager.getString("LAYER"), FluentUiRegularAL.LAYER_20),
+    COLLISION(StringManager.getString("COLLISION"), FluentUiRegularMZ.TARGET_20),
+    SHIELD(StringManager.getString("SHIELD"), FluentUiRegularMZ.SHIELD_20),
     BOUNDS("Bounds", FluentUiRegularAL.DATA_AREA_24),
     WEAPON_SLOTS("Weapon Slots", FluentUiRegularMZ.TARGET_EDIT_20),
     LAUNCH_BAYS("Launch Bays", FluentUiRegularMZ.ROCKET_20),

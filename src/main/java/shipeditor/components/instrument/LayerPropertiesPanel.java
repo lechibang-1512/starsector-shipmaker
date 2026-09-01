@@ -1,5 +1,7 @@
 package shipeditor.components.instrument;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -9,8 +11,6 @@ import shipeditor.components.viewer.ViewerEnums.PainterVisibility;
 import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.objects.Pair;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -168,7 +168,7 @@ public abstract class LayerPropertiesPanel extends JPanel {
                 opacityGetter, opacitySetter, clearerListener, refresherListener);
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText(StringValues.SPRITE_OPACITY);
+        opacityLabel.setText(StringManager.getString("SPRITE_OPACITY"));
 
         return opacityWidget;
     }

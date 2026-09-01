@@ -1,5 +1,7 @@
 package shipeditor.components.viewer.entities;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -13,8 +15,6 @@ import shipeditor.components.viewer.painters.points.ship.ShieldPointPainter;
 import shipeditor.representation.ship.HullStyle;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.graphics.ColorUtilities;
-
-import shipeditor.utility.text.StringValues;
 
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
@@ -53,7 +53,7 @@ public class ShieldCenterPoint extends BaseWorldPoint {
 
     @Override
     public String getNameForLabel() {
-        return StringValues.SHIELD_CENTER;
+        return StringManager.getString("SHIELD_CENTER");
     }
 
     private Color getDisplayedShieldColor(Color base) {

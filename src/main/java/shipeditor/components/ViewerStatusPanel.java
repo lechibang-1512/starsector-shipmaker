@@ -1,4 +1,7 @@
 package shipeditor.components;
+
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.ComponentEnums.CoordsDisplayMode;
 
 
@@ -25,7 +28,6 @@ import shipeditor.utility.components.widgets.Spinners;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.text.CoordinatesFormatter;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 
 import javax.swing.BorderFactory;
@@ -135,10 +137,10 @@ final class ViewerStatusPanel extends JPanel {
                 linkageSpinnerMin, linkageSpinnerMax, 1);
         JSpinner linkageSpinner = Spinners.createUnaryIntegerWheelable(linkageSpinnerModel);
 
-        JLabel toleranceLabel = new JLabel("Distance:");
-        toleranceLabel.setToolTipText("Determines maximum distance at which mirrored points link for interaction");
+        JLabel toleranceLabel = new JLabel(StringManager.getString("DISTANCE"));
+        toleranceLabel.setToolTipText(StringManager.getString("DETERMINES_MAXIMUM_DISTANCE_AT_WHICH_MIRRORED_POINTS_LINK_FOR_INTERACTION"));
 
-        JCheckBox mirrorModeCheckbox = new JCheckBox("Mirroring");
+        JCheckBox mirrorModeCheckbox = new JCheckBox(StringManager.getString("MIRRORING"));
         mirrorModeCheckbox.addItemListener(e -> {
             boolean mirrorModeOn = mirrorModeCheckbox.isSelected();
             EventBus.publish(new MirrorModeChange(mirrorModeOn));
@@ -154,7 +156,7 @@ final class ViewerStatusPanel extends JPanel {
             }
         });
         mirrorModeCheckbox.setMnemonic(KeyEvent.VK_SPACE);
-        mirrorModeCheckbox.setToolTipText("Spacebar to toggle");
+        mirrorModeCheckbox.setToolTipText(StringManager.getString("SPACEBAR_TO_TOGGLE"));
 
         int margin = 6;
 
@@ -185,7 +187,7 @@ final class ViewerStatusPanel extends JPanel {
         leftsideContainer.add(Box.createRigidArea(new Dimension(5, 0)));
 
         dimensions = new JLabel("", SwingConstants.TRAILING);
-        dimensions.setToolTipText("Width / height of active layer");
+        dimensions.setToolTipText(StringManager.getString("WIDTH_HEIGHT_OF_ACTIVE_LAYER"));
         leftsideContainer.add(dimensions);
 
         this.addSeparator();
@@ -193,7 +195,7 @@ final class ViewerStatusPanel extends JPanel {
         cursorCoords = new JLabel("", SwingConstants.TRAILING);
         Insets coordsInsets = new Insets(2, 6, 2, 7);
         cursorCoords.setBorder(new FlatLineBorder(coordsInsets, Themes.getBorderColor()));
-        cursorCoords.setToolTipText("Right-click to change coordinate system");
+        cursorCoords.setToolTipText(StringManager.getString("RIGHT_CLICK_TO_CHANGE_COORDINATE_SYSTEM"));
         JPopupMenu coordsMenu = this.createCoordsMenu();
         cursorCoords.addMouseListener(new MouseoverLabelListener(coordsMenu,
                 cursorCoords));
@@ -205,7 +207,7 @@ final class ViewerStatusPanel extends JPanel {
 
         this.addSeparator();
 
-        JLabel rotationLabel = new JLabel("Rotation:", SwingConstants.TRAILING);
+        JLabel rotationLabel = new JLabel(StringManager.getString("ROTATION"), SwingConstants.TRAILING);
 
         double minimum = 0.0d;
         double maximum = 360.0d;
@@ -217,7 +219,7 @@ final class ViewerStatusPanel extends JPanel {
         rotationSpinner.setEditor(editor);
 
         JPopupMenu rotationResetMenu = new JPopupMenu();
-        JMenuItem resetRotation = new JMenuItem("Reset rotation degrees");
+        JMenuItem resetRotation = new JMenuItem(StringManager.getString("RESET_ROTATION_DEGREES"));
         resetRotation.addActionListener(e -> rotationSpinner.setValue(initial));
         rotationResetMenu.add(resetRotation);
 
@@ -230,7 +232,7 @@ final class ViewerStatusPanel extends JPanel {
         formattedField.addMouseListener(spinnerResetListener);
 
         String rotationTooltip = Utility.getWithLinebreaks("CTRL+Mousewheel to rotate viewer",
-                StringValues.RIGHT_CLICK_TO_RESET_VALUE);
+                StringManager.getString("RIGHT_CLICK_TO_RESET_VALUE"));
         rotationLabel.setToolTipText(rotationTooltip);
 
         leftsideContainer.add(rotationLabel);
@@ -255,9 +257,9 @@ final class ViewerStatusPanel extends JPanel {
     }
 
     private void addZoomWidget() {
-        JLabel zoomLabel = new JLabel("Zoom:", SwingConstants.TRAILING);
+        JLabel zoomLabel = new JLabel(StringManager.getString("ZOOM"), SwingConstants.TRAILING);
         String zoomTooltip = Utility.getWithLinebreaks("Mousewheel to zoom viewer",
-                StringValues.RIGHT_CLICK_TO_RESET_VALUE);
+                StringManager.getString("RIGHT_CLICK_TO_RESET_VALUE"));
         zoomLabel.setToolTipText(zoomTooltip);
 
         double minimum = ControlPredicates.MINIMUM_ZOOM;
@@ -280,7 +282,7 @@ final class ViewerStatusPanel extends JPanel {
         });
 
         JPopupMenu zoomResetMenu = new JPopupMenu();
-        JMenuItem resetZoom = new JMenuItem("Reset zoom level");
+        JMenuItem resetZoom = new JMenuItem(StringManager.getString("RESET_ZOOM_LEVEL"));
         resetZoom.addActionListener(e -> zoomSpinner.setValue(initial));
         zoomResetMenu.add(resetZoom);
 
@@ -385,10 +387,10 @@ final class ViewerStatusPanel extends JPanel {
 
     private void setDimensionsLabel(BufferedImage sprite) {
         if (sprite != null) {
-            dimensions.setText("Size: " + sprite.getWidth() + " × " + sprite.getHeight());
+            dimensions.setText(StringManager.getString("SIZE") + sprite.getWidth() + " × " + sprite.getHeight());
             log.trace("Layer selected: sprite dimensions loaded.");
         } else {
-            dimensions.setText("Size: Sprite not loaded.");
+            dimensions.setText(StringManager.getString("SIZE_SPRITE_NOT_LOADED"));
         }
 
     }
@@ -397,7 +399,7 @@ final class ViewerStatusPanel extends JPanel {
         Point2D cursorPoint = StaticController.getCorrectedCursor();
         LayerPainter selectedLayer = this.viewer.getSelectedLayer();
         if (selectedLayer == null || selectedLayer.isUninitialized()) {
-            cursorCoords.setText("Coords: " + CoordinatesFormatter.formatDisplay(cursorPoint));
+            cursorCoords.setText(StringManager.getString("COORDS") + CoordinatesFormatter.formatDisplay(cursorPoint));
             return;
         }
 
@@ -411,7 +413,7 @@ final class ViewerStatusPanel extends JPanel {
 
         Point2D cursor = Utility.getPointCoordinatesForDisplay(cursorPoint, selectedLayer, displayMode);
         
-        cursorCoords.setText("Coords: " + CoordinatesFormatter.formatDisplay(cursor));
+        cursorCoords.setText(StringManager.getString("COORDS") + CoordinatesFormatter.formatDisplay(cursor));
     }
 
     private void setZoomLevel(double newZoom) {

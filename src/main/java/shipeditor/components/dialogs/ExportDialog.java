@@ -1,5 +1,7 @@
 package shipeditor.components.dialogs;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import org.kordamp.ikonli.boxicons.BoxiconsRegular;
 import org.kordamp.ikonli.swing.FontIcon;
@@ -84,11 +86,11 @@ public class ExportDialog extends JDialog {
         this.add(tabbedPane, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton exportButton = new JButton("Export...", FontIcon.of(BoxiconsRegular.EXPORT, 16, Themes.getIconColor()));
+        JButton exportButton = new JButton(StringManager.getString("EXPORT"), FontIcon.of(BoxiconsRegular.EXPORT, 16, Themes.getIconColor()));
         exportButton.addActionListener(e -> executeExport());
         buttonPanel.add(exportButton);
 
-        JButton cancelButton = new JButton("Cancel");
+        JButton cancelButton = new JButton(StringManager.getString("CANCEL"));
         cancelButton.addActionListener(e -> this.dispose());
         buttonPanel.add(cancelButton);
 
@@ -112,13 +114,13 @@ public class ExportDialog extends JDialog {
         
         vsFormatCombo = new JComboBox<>(new String[]{"PNG", "JPG"});
         vsFormatCombo.addActionListener(e -> updateVsControls());
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Image Format:"), vsFormatCombo, row++);
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("IMAGE_FORMAT")), vsFormatCombo, row++);
 
-        vsTransparentCheck = new JCheckBox("Transparent Background", true);
+        vsTransparentCheck = new JCheckBox(StringManager.getString("TRANSPARENT_BACKGROUND"), true);
         vsTransparentCheck.addActionListener(e -> updateVsControls());
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Background:"), vsTransparentCheck, row++);
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("BACKGROUND")), vsTransparentCheck, row++);
 
-        vsColorButton = new JButton("Select Color");
+        vsColorButton = new JButton(StringManager.getString("SELECT_COLOR"));
         vsColorButton.setBackground(Color.BLACK);
         vsColorButton.setForeground(Color.WHITE);
         vsColorButton.addActionListener(e -> {
@@ -130,7 +132,7 @@ public class ExportDialog extends JDialog {
             }
         });
         vsColorButton.setEnabled(false); // Disabled initially since transparent is checked
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Solid Color:"), vsColorButton, row++);
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("SOLID_COLOR")), vsColorButton, row++);
         
         // Add a push-to-top glue
         GridBagConstraints gbc = new GridBagConstraints();
@@ -158,12 +160,12 @@ public class ExportDialog extends JDialog {
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         spPreviewWrapper = new JPanel(new GridBagLayout());
-        spPreviewLabel = new JLabel("No sprite image");
+        spPreviewLabel = new JLabel(StringManager.getString("NO_SPRITE_IMAGE"));
         spPreviewLabel.setHorizontalAlignment(SwingConstants.CENTER);
         spPreviewWrapper.add(spPreviewLabel);
         
         spScrollPane = new JScrollPane(spPreviewWrapper);
-        spScrollPane.setBorder(BorderFactory.createTitledBorder("Preview"));
+        spScrollPane.setBorder(BorderFactory.createTitledBorder(StringManager.getString("PREVIEW")));
         spScrollPane.setWheelScrollingEnabled(true);
         
         MouseAdapter panAdapter = new MouseAdapter() {
@@ -213,13 +215,13 @@ public class ExportDialog extends JDialog {
         spScaleCombo = new JComboBox<>(new String[]{"1x", "2x", "3x", "4x", "5x", "6x", "8x", "10x", "16x"});
         spPaddingSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 2000, 10));
         spBgCombo = new JComboBox<>(new String[]{"Transparent", "Solid Black", "Solid White", "Solid Gray"});
-        spRenderMountsCheck = new JCheckBox("Render Mounts & Bounds", false);
-        spDimensionLabel = new JLabel("Output Size: ");
+        spRenderMountsCheck = new JCheckBox(StringManager.getString("RENDER_MOUNTS_BOUNDS"), false);
+        spDimensionLabel = new JLabel(StringManager.getString("OUTPUT_SIZE"));
         
         Component[] componentsToAdd = {
-            new JLabel("Output Scale:"), spScaleCombo, Box.createVerticalStrut(15),
-            new JLabel("Padding (px):"), spPaddingSpinner, Box.createVerticalStrut(15),
-            new JLabel("Background:"), spBgCombo, Box.createVerticalStrut(15),
+            new JLabel(StringManager.getString("OUTPUT_SCALE")), spScaleCombo, Box.createVerticalStrut(15),
+            new JLabel(StringManager.getString("PADDING_PX")), spPaddingSpinner, Box.createVerticalStrut(15),
+            new JLabel(StringManager.getString("BACKGROUND")), spBgCombo, Box.createVerticalStrut(15),
             spRenderMountsCheck, Box.createVerticalStrut(25),
             spDimensionLabel, Box.createVerticalGlue()
         };
@@ -241,13 +243,13 @@ public class ExportDialog extends JDialog {
     private void updateSpritePrintPreview() {
         ViewerLayer activeLayer = getActiveLayer();
         if (activeLayer == null) {
-            spPreviewLabel.setText("No active layer");
+            spPreviewLabel.setText(StringManager.getString("NO_ACTIVE_LAYER"));
             return;
         }
 
         LayerPainter painter = activeLayer.getPainter();
         if (painter == null || painter.isUninitialized()) {
-            spPreviewLabel.setText("Layer uninitialized");
+            spPreviewLabel.setText(StringManager.getString("LAYER_UNINITIALIZED"));
             return;
         }
 
@@ -271,7 +273,7 @@ public class ExportDialog extends JDialog {
         
         int outW = (int) Math.round((baseW + pad * 2) * tempScale);
         int outH = (int) Math.round((baseH + pad * 2) * tempScale);
-        spDimensionLabel.setText("Output Size: " + outW + " x " + outH + " px");
+        spDimensionLabel.setText(StringManager.getString("OUTPUT_SIZE") + outW + " x " + outH + " px");
         
         StaticController.getViewer().queueGLTask(() -> {
             BufferedImage fboImg = FramebufferUtilities.renderLayerToImage(
@@ -300,7 +302,7 @@ public class ExportDialog extends JDialog {
         
         int row = 0;
         
-        scRenderMissilesBox = new JCheckBox("Render Loaded Missiles");
+        scRenderMissilesBox = new JCheckBox(StringManager.getString("RENDER_LOADED_MISSILES"));
         scRenderMissilesBox.setSelected(true);
 
         scModComboBox = new JComboBox<>();
@@ -311,20 +313,20 @@ public class ExportDialog extends JDialog {
             scRenderMissilesBox.setEnabled(isWeapons);
             updateShowcaseModList((String) scTypeComboBox.getSelectedItem());
         });
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Showcase Type:"), scTypeComboBox, row++);
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("SHOWCASE_TYPE")), scTypeComboBox, row++);
         
         updateShowcaseModList((String) scTypeComboBox.getSelectedItem());
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Filter Mod:"), scModComboBox, row++);
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("FILTER_MOD")), scModComboBox, row++);
 
         scCellSizeSpinner = new JSpinner(new SpinnerNumberModel(120, 32, 2048, 10));
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Cell Size (px):"), scCellSizeSpinner, row++);
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("CELL_SIZE_PX")), scCellSizeSpinner, row++);
 
         scLimitSpinner = new JSpinner(new SpinnerNumberModel(100, 1, 5000, 1));
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Max Entities:"), scLimitSpinner, row++);
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("MAX_ENTITIES")), scLimitSpinner, row++);
 
         ComponentUtilities.addLabelAndComponent(panel, new JLabel(), scRenderMissilesBox, row++);
 
-        scColorButton = new JButton("Select Color");
+        scColorButton = new JButton(StringManager.getString("SELECT_COLOR"));
         scColorButton.setBackground(scBgColor);
         scColorButton.setForeground(Color.WHITE);
         scColorButton.addActionListener(e -> {
@@ -335,7 +337,7 @@ public class ExportDialog extends JDialog {
                 scColorButton.setForeground(isDark(scBgColor) ? Color.WHITE : Color.BLACK);
             }
         });
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Background Color:"), scColorButton, row++);
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("BACKGROUND_COLOR")), scColorButton, row++);
         
         // Glue
         GridBagConstraints gbc = new GridBagConstraints();

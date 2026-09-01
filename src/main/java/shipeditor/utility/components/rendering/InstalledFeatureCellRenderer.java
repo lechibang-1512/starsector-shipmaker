@@ -1,5 +1,7 @@
 package shipeditor.utility.components.rendering;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.datafiles.entities.CSVEntry;
 import shipeditor.components.instrument.ship.shared.InstalledFeatureList;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
@@ -8,8 +10,6 @@ import shipeditor.components.viewer.painters.points.ship.features.InstalledFeatu
 import shipeditor.representation.RepresentationEnums.SizeEnum;
 import shipeditor.representation.weapon.WeaponEnums.WeaponSize;
 import shipeditor.representation.weapon.WeaponEnums.WeaponType;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -75,8 +75,8 @@ public class InstalledFeatureCellRenderer extends BoxPanelCellRenderer<Installed
         CSVEntry dataEntry = value.getDataEntry();
 
         if (dataEntry == null) {
-            this.setToolTipText("Empty slot");
-            featureIDText.setText("(empty)");
+            this.setToolTipText(StringManager.getString("EMPTY_SLOT"));
+            featureIDText.setText(StringManager.getString("EMPTY_1"));
             Color gray = Color.GRAY;
             slotIDText.setForeground(gray);
             featureIDText.setForeground(gray);
@@ -122,7 +122,7 @@ public class InstalledFeatureCellRenderer extends BoxPanelCellRenderer<Installed
             this.setWarningText("[Slot Not Found]", errorColor);
 
             foreground = errorColor;
-            setToolTipText(StringValues.INVALIDATED_SLOT_NOT_FOUND);
+            setToolTipText(StringManager.getString("INVALIDATED_SLOT_NOT_FOUND"));
 
             slotIDText.setBorder(new EmptyBorder(0, 1, 0, 0));
         }
@@ -136,13 +136,13 @@ public class InstalledFeatureCellRenderer extends BoxPanelCellRenderer<Installed
         featureIDText.setBorder(new EmptyBorder(0, 0, 0, 3));
 
         WeaponType featureType = value.getWeaponType();
-        featureTypeIcon.setText("[" + featureType.getDisplayedName() + "]");
+        featureTypeIcon.setText(StringManager.getString("EMPTY_STRING_2") + featureType.getDisplayedName() + "]");
         featureTypeIcon.setForeground(featureType.getColor());
         featureTypeIcon.setVisible(true);
 
         SizeEnum size = value.getSize();
         String sizeName = size.getDisplayedName();
-        featureSizeIcon.setText("[" + sizeName + "]");
+        featureSizeIcon.setText(StringManager.getString("EMPTY_STRING_2") + sizeName + "]");
         featureSizeIcon.setVisible(true);
 
         Sprite sprite = value.getEntrySprite();
@@ -161,19 +161,19 @@ public class InstalledFeatureCellRenderer extends BoxPanelCellRenderer<Installed
         Color foregroundColor = foreground;
         WeaponType weaponType = slotPoint.getWeaponType();
         slotTypeIcon.setVisible(true);
-        slotTypeIcon.setText("[" + weaponType.getDisplayedName() + "]");
+        slotTypeIcon.setText(StringManager.getString("EMPTY_STRING_2") + weaponType.getDisplayedName() + "]");
         slotTypeIcon.setForeground(weaponType.getColor());
 
         slotIDText.setBorder(new EmptyBorder(0, 4, 0, 0));
 
         WeaponSize size = slotPoint.getWeaponSize();
         slotSizeIcon.setVisible(true);
-        slotSizeIcon.setText("[" + size.getDisplayedName() + "]");
+        slotSizeIcon.setText(StringManager.getString("EMPTY_STRING_2") + size.getDisplayedName() + "]");
         slotSizeIcon.setForeground(foreground);
 
         if (!slotPoint.canFit(value)) {
             foregroundColor = Color.RED;
-            setToolTipText(StringValues.INVALIDATED_WEAPON_UNFIT_FOR_SLOT);
+            setToolTipText(StringManager.getString("INVALIDATED_WEAPON_UNFIT_FOR_SLOT"));
         } else {
             // Read the pre-computed override state from the feature itself.
             FeatureOverrideState state = value.getOverrideState();

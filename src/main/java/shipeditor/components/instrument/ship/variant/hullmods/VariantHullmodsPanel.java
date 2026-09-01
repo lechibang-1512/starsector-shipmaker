@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.variant.hullmods;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
 import shipeditor.components.ComponentEnums.EditorInstrument;
@@ -8,8 +10,6 @@ import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -80,17 +80,17 @@ public class VariantHullmodsPanel extends JPanel {
         ComponentUtilities.outfitPanelWithTitle(infoPanel, "Fitted hullmods");
         infoPanel.setLayout(new GridBagLayout());
 
-        JLabel shipOPCapLabel = new JLabel(StringValues.TOTAL_OP_CAPACITY);
+        JLabel shipOPCapLabel = new JLabel(StringManager.getString("TOTAL_OP_CAPACITY"));
         shipOPCap = new JLabel();
 
         ComponentUtilities.addLabelAndComponent(infoPanel, shipOPCapLabel, shipOPCap, 0);
 
-        JLabel usedOPTotalLabel = new JLabel("Used OP for ship:");
+        JLabel usedOPTotalLabel = new JLabel(StringManager.getString("USED_OP_FOR_SHIP"));
         usedOPTotal = new JLabel();
 
         ComponentUtilities.addLabelAndComponent(infoPanel, usedOPTotalLabel, usedOPTotal, 1);
 
-        JLabel usedOPLabel = new JLabel(StringValues.USED_OP_IN_HULLMODS);
+        JLabel usedOPLabel = new JLabel(StringManager.getString("USED_OP_IN_HULLMODS"));
         usedOPInHullmods = new JLabel();
 
         ComponentUtilities.addLabelAndComponent(infoPanel, usedOPLabel, usedOPInHullmods, 2);
@@ -120,7 +120,7 @@ public class VariantHullmodsPanel extends JPanel {
     }
 
     private void refreshLayerInfo(ViewerLayer selected) {
-        String notInitialized = StringValues.NOT_INITIALIZED;
+        String notInitialized = StringManager.getString("NOT_INITIALIZED");
 
         if (selected instanceof ShipLayer shipLayer) {
             String totalOP = Utility.translateIntegerValue(shipLayer::getTotalOP);

@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.styles;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.files.FileEvents.EngineStylesLoaded;
 import shipeditor.representation.ship.EngineStyle;
@@ -67,7 +69,7 @@ public class EngineStylesPanel extends AbstractStylesPanel {
             JPanel contentContainer = new JPanel();
             contentContainer.setLayout(new BoxLayout(contentContainer, BoxLayout.PAGE_AXIS));
 
-            JLabel engineLabel = new JLabel("Engine color:");
+            JLabel engineLabel = new JLabel(StringManager.getString("ENGINE_COLOR"));
             JPanel engineColorPanel = ComponentUtilities.createColorPropertyPanel(engineLabel,
                     checked.getEngineColor(), CONTENT_SIDE_PAD, color -> {
                         checked.setEngineColor(color);
@@ -75,7 +77,7 @@ public class EngineStylesPanel extends AbstractStylesPanel {
                     });
             contentContainer.add(engineColorPanel);
 
-            JLabel contrailLabel = new JLabel("Contrail color:");
+            JLabel contrailLabel = new JLabel(StringManager.getString("CONTRAIL_COLOR"));
             JPanel contrailColorPanel = ComponentUtilities.createColorPropertyPanel(contrailLabel,
                     checked.getContrailColor(), CONTENT_SIDE_PAD, color -> {
                         checked.setContrailColor(color);

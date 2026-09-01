@@ -1,5 +1,7 @@
 package shipeditor.components.viewer.painters.points.ship;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued;
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
@@ -27,23 +29,23 @@ public final class WeaponSlotContextMenu {
         }
         
         if (installed != null) {
-            JMenuItem infoItem = new JMenuItem("Installed: " + installed.getName());
+            JMenuItem infoItem = new JMenuItem(StringManager.getString("INSTALLED") + installed.getName());
             infoItem.setEnabled(false);
             menu.add(infoItem);
             
-            JMenuItem clearItem = new JMenuItem("Clear module");
+            JMenuItem clearItem = new JMenuItem(StringManager.getString("CLEAR_MODULE"));
             InstalledFeature toRemove = installed;
             clearItem.addActionListener(e -> EditDispatch.postFeatureUninstalled(fittedModules, slotPoint.getId(), toRemove, null));
             menu.add(clearItem);
         } else {
-            JMenuItem emptyItem = new JMenuItem("Slot: " + slotPoint.getId() + " (Empty)");
+            JMenuItem emptyItem = new JMenuItem(StringManager.getString("SLOT") + slotPoint.getId() + " (Empty)");
             emptyItem.setEnabled(false);
             menu.add(emptyItem);
         }
         
         menu.addSeparator();
         
-        JMenuItem selectItem = new JMenuItem("Select slot for install");
+        JMenuItem selectItem = new JMenuItem(StringManager.getString("SELECT_SLOT_FOR_INSTALL"));
         selectItem.addActionListener(e -> EventBus.publish(new PointSelectQueued(slotPoint)));
         menu.add(selectItem);
         

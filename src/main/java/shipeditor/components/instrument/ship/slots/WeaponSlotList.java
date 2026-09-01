@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.slots;
 
+import shipeditor.utility.text.StringManager;
+
 import javax.swing.ListModel;
 
 import shipeditor.communication.EventBus;
@@ -11,7 +13,6 @@ import shipeditor.utility.components.containers.PointList;
 import shipeditor.utility.components.rendering.WeaponSlotCellRenderer;
 
 import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.components.dialog.DialogUtilities;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -72,7 +73,7 @@ public class WeaponSlotList extends PointList<WeaponSlotPoint> {
                 menu.add(removePoint);
                 menu.addSeparator();
 
-                javax.swing.JMenuItem adjustPosition = new javax.swing.JMenuItem(StringValues.ADJUST_POSITION);
+                javax.swing.JMenuItem adjustPosition = new javax.swing.JMenuItem(StringManager.getString("ADJUST_POSITION"));
                 adjustPosition.addActionListener(event -> {
                     WeaponSlotPoint firstSelected = getSelectedValue();
                     if (firstSelected != null) {

@@ -1,5 +1,7 @@
 package shipeditor.parsing;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -30,8 +32,6 @@ import shipeditor.utility.Errors;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.text.StringConstants;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -224,7 +224,7 @@ public final class FileUtilities {
 
     public static JFileChooser getHullFileChooser() {
         FileNameExtensionFilter shipFilter = new FileNameExtensionFilter(
-                StringValues.JSON_SHIP_FILES, "ship");
+                StringManager.getString("JSON_SHIP_FILES"), "ship");
 
         JFileChooser fileChooser = FileUtilities.getFileChooser(shipFilter);
 

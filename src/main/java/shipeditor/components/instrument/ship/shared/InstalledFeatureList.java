@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.shared;
 
+import shipeditor.utility.text.StringManager;
+
 import javax.swing.ListModel;
 
 import lombok.Getter;
@@ -13,8 +15,6 @@ import shipeditor.components.viewer.painters.points.ship.features.InstalledFeatu
 import shipeditor.utility.components.containers.SortableList;
 import shipeditor.utility.components.rendering.InstalledFeatureCellRenderer;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.DefaultListModel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -45,7 +45,7 @@ public class InstalledFeatureList extends SortableList<InstalledFeature> {
     private final Consumer<Map<String, InstalledFeature>> sorter;
 
     protected static final DataFlavor FEATURE_FLAVOR = new DataFlavor(InstalledFeature.class,
-            StringValues.INSTALLED_FEATURE);
+            StringManager.getString("INSTALLED_FEATURE"));
 
     public InstalledFeatureList(ListModel<InstalledFeature> dataModel,
                                 Consumer<InstalledFeature> removeAction,
@@ -113,7 +113,7 @@ public class InstalledFeatureList extends SortableList<InstalledFeature> {
     }
 
     protected JMenuItem getSelectEntryOption(InstalledFeature selected) {
-        JMenuItem selectEntry = new JMenuItem(StringValues.SELECT_WEAPON_ENTRY);
+        JMenuItem selectEntry = new JMenuItem(StringManager.getString("SELECT_WEAPON_ENTRY"));
         selectEntry.addActionListener(event -> actOnSelectedEntry(feature -> {
             CSVEntry dataEntry = feature.getDataEntry();
             if (dataEntry instanceof WeaponCSVEntry weaponEntry) {
@@ -172,7 +172,7 @@ public class InstalledFeatureList extends SortableList<InstalledFeature> {
         InstalledFeature selected = getSelectedValue();
         if (selected == null) return null;
         JPopupMenu menu = new JPopupMenu();
-        JMenuItem removePoint = new JMenuItem(StringValues.UNINSTALL_FEATURE);
+        JMenuItem removePoint = new JMenuItem(StringManager.getString("UNINSTALL_FEATURE"));
         removePoint.addActionListener(event -> actOnSelectedEntry(uninstaller));
         menu.add(removePoint);
 
@@ -184,7 +184,7 @@ public class InstalledFeatureList extends SortableList<InstalledFeature> {
             pickedForInstall = layer.getFeaturesOverseer().getWeaponForInstall();
         }
         if (pickedForInstall != null) {
-            JMenuItem replacePoint = new JMenuItem("Replace with Picked Weapon");
+            JMenuItem replacePoint = new JMenuItem(StringManager.getString("REPLACE_WITH_PICKED_WEAPON"));
             replacePoint.addActionListener(event -> actOnSelectedEntry(feature -> {
                 var slotPainter = InstalledFeatureList.getSlotPainter();
                 if (slotPainter != null) {

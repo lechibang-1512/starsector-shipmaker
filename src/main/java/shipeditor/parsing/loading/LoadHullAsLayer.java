@@ -1,11 +1,12 @@
 package shipeditor.parsing.loading;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.files.FileEvents.HullFileOpened;
 import shipeditor.representation.ship.HullSpecFile;
 import shipeditor.utility.graphics.Sprite;
-import shipeditor.utility.text.StringValues;
 import shipeditor.persistence.SettingsManager;
 
 import javax.swing.AbstractAction;
@@ -28,10 +29,10 @@ public class LoadHullAsLayer extends AbstractAction {
             File file = shipDataChooser.getSelectedFile();
             HullSpecFile hullSpecFile = FileLoading.loadHullFile(file);
             if (hullSpecFile == null) {
-                log.error(StringValues.FAILURE_TO_LOAD_HULL_CANCELLING_ACTION, file);
+                log.error(StringManager.getString("FAILURE_TO_LOAD_HULL_CANCELLING_ACTION"), file);
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                        StringValues.FAILURE_TO_LOAD_HULL_CANCELLING_ACTION_ALT + file,
-                        StringValues.FILE_LOADING_ERROR,
+                        StringManager.getString("FAILURE_TO_LOAD_HULL_CANCELLING_ACTION_ALT") + file,
+                        StringManager.getString("FILE_LOADING_ERROR"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -42,11 +43,11 @@ public class LoadHullAsLayer extends AbstractAction {
             File spriteFile = FileLoading.fetchDataFile(spriteFilePath, null);
             if (spriteFile == null) {
                 if (SettingsManager.isDeveloperModeEnabled()) {
-                    log.error(StringValues.FAILED_TO_FIND_SPRITE, file);
+                    log.error(StringManager.getString("FAILED_TO_FIND_SPRITE"), file);
                 }
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                        StringValues.SPRITE_NOT_FOUND_MSG,
-                        StringValues.SPRITE_NOT_FOUND_TITLE,
+                        StringManager.getString("SPRITE_NOT_FOUND_MSG"),
+                        StringManager.getString("SPRITE_NOT_FOUND_TITLE"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }

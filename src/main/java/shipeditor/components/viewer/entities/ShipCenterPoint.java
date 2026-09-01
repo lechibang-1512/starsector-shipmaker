@@ -1,5 +1,7 @@
 package shipeditor.components.viewer.entities;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -13,8 +15,6 @@ import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.painters.points.ship.CenterPointPainter;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.graphics.ColorUtilities;
-import shipeditor.utility.text.StringValues;
-
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
 
@@ -55,7 +55,7 @@ public class ShipCenterPoint extends BaseWorldPoint {
 
     @Override
     public String getNameForLabel() {
-        return StringValues.SHIP_CENTER;
+        return StringManager.getString("SHIP_CENTER");
     }
 
     @Override

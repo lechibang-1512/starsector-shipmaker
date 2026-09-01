@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.shared;
 
+import shipeditor.utility.text.StringManager;
+
 import javax.swing.ListModel;
 
 import shipeditor.components.datafiles.entities.WingCSVEntry;
@@ -43,7 +45,7 @@ public class WingsList extends OrdnancedEntryList<WingCSVEntry> {
         if (selected == null) return null;
 
         JPopupMenu menu = new JPopupMenu();
-        JMenuItem remove = new JMenuItem("Remove wing");
+        JMenuItem remove = new JMenuItem(StringManager.getString("REMOVE_WING"));
         remove.addActionListener(event -> actOnSelectedWing(removeAction));
         menu.add(remove);
 
