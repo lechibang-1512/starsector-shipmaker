@@ -256,7 +256,7 @@ public class BoundsPanel extends AbstractShipPropertiesPanel {
         java.util.List<java.awt.geom.Point2D> generatedPoints = shipeditor.utility.graphics.CollisionHullGenerator.generateBounds(image, anchor);
         
         if (generatedPoints.isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Could not generate bounds. Sprite might be completely transparent.", "Warning", javax.swing.JOptionPane.WARNING_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, StringManager.getString("COULD_NOT_GENERATE_BOUNDS_SPRITE_MIGHT_B_MSG"), "Warning", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
 

@@ -337,7 +337,7 @@ public final class ViewerLayersPanel extends SortableTabbedPane {
                     createLayer.addActionListener(event -> {
                         Object[] options = {"Ship Layer", "Weapon Layer"};
                         int result = JOptionPane.showOptionDialog(null,
-                                "Select new layer type:",
+                                StringManager.getString("SELECT_NEW_LAYER_TYPE_MSG"),
                                 "Create New Layer",
                                 JOptionPane.YES_NO_CANCEL_OPTION,
                                 JOptionPane.QUESTION_MESSAGE,

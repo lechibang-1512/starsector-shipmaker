@@ -232,7 +232,7 @@ public class HullsTreePanel extends DataTreePanel {
         if (hullSpec == null) {
             log.error("Failed to load hull spec from file: {}", file.getFilePath());
             javax.swing.JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Failed to load hull spec file: " + file.getFilePath(),
+                    StringManager.getString("FAILED_TO_LOAD_HULL_SPEC_FILE_MSG") + file.getFilePath(),
                     shipeditor.utility.text.StringManager.getString("FILE_LOADING_ERROR"),
                     javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
@@ -245,7 +245,7 @@ public class HullsTreePanel extends DataTreePanel {
         if (spriteFile == null) {
             log.error("Sprite file for ship not found: {}", spriteFilePath);
             javax.swing.JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Sprite file for ship not found, layer not created: " + spriteFilePath,
+                    StringManager.getString("SPRITE_FILE_FOR_SHIP_NOT_FOUND_LAYER_NOT_MSG") + spriteFilePath,
                     shipeditor.utility.text.StringManager.getString("FILE_LOADING_ERROR"),
                     javax.swing.JOptionPane.ERROR_MESSAGE);
             return;

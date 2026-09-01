@@ -46,7 +46,7 @@ class DataMenu extends JMenu {
         reindexData.addActionListener(event -> {
             if (FileLoading.isLoadingInProgress()) {
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                        "Cannot re-index while data is currently loading.",
+                        StringManager.getString("CANNOT_RE_INDEX_WHILE_DATA_IS_CURRENTLY_MSG"),
                         "Loading in Progress", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -64,7 +64,7 @@ class DataMenu extends JMenu {
         selectMods.addActionListener(event -> {
             if (FileLoading.isLoadingInProgress()) {
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                        "Cannot modify mod selection while data is currently loading.",
+                        StringManager.getString("CANNOT_MODIFY_MOD_SELECTION_WHILE_DATA_I_MSG"),
                         "Loading in Progress", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -139,12 +139,12 @@ class DataMenu extends JMenu {
                 out.println(result);
             }
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Corrected file saved as:\n" + targetFilePath,
+                    StringManager.getString("CORRECTED_FILE_SAVED_AS_N_MSG") + targetFilePath,
                     "JSON Corrected", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
             log.error("Failed to correct malformed JSON file: " + file.getPath(), ex);
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Failed to process JSON file:\n" + ex.getMessage(),
+                    StringManager.getString("FAILED_TO_PROCESS_JSON_FILE_N_MSG") + ex.getMessage(),
                     "Error Correcting JSON", JOptionPane.ERROR_MESSAGE);
         }
     }

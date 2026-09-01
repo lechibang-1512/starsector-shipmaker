@@ -23,10 +23,11 @@ This skill teaches agents how Starsector data files work and how the editor pars
 - JSON overriding hull properties: sprite, weapon slot overrides, engine style overrides
 
 ## Serialization Pipeline
-- Jackson ObjectMapper with custom serializers/deserializers
-- `Point2DArrayDeserializer`: reads flat number arrays as Point2D pairs
-- `SlotLocationsSerializer` / `Point2DArraySerializer`: writes Point2D[] back as flat arrays
-- `SaveHullAction.transformSlotsFromBays()`: converts LaunchBay port positions using `SHIP_CENTER` coordinate mode
+- Jackson ObjectMapper with custom serializers/deserializers.
+- **Robust Parsing**: Deserializers like `CustomDeserializers.java` (e.g., `Point2DArrayDeserializer`, `ModulesDeserializer`) must always use strict `try-catch` blocks, null checks, and `log.error` to prevent `NullPointerException` crashes on corrupted JSON nodes.
+- `Point2DArrayDeserializer`: reads flat number arrays as Point2D pairs.
+- `SlotLocationsSerializer` / `Point2DArraySerializer`: writes Point2D[] back as flat arrays.
+- `SaveHullAction.transformSlotsFromBays()`: converts LaunchBay port positions using `SHIP_CENTER` coordinate mode.
 - `SaveHullAction` single-port duplication fix: `if (locations.length == 1) { locations = new Point2D.Double[]{locations[0], locations[0]}; }`
 
 ## Coordinate System

@@ -93,7 +93,7 @@ class WeaponOffsetsPanel extends JPanel {
                     cachedLayer.getSpecFile().setVisualRecoil(Double.parseDouble(visualRecoilEditor.getText()));
                     processChange();
                 } catch (NumberFormatException ex) {
-                    javax.swing.JOptionPane.showMessageDialog(this, "Invalid visual recoil value. Please enter a valid number.", "Invalid Input", javax.swing.JOptionPane.ERROR_MESSAGE);
+                    javax.swing.JOptionPane.showMessageDialog(this, StringManager.getString("INVALID_VISUAL_RECOIL_VALUE_PLEASE_ENTER_MSG"), "Invalid Input", javax.swing.JOptionPane.ERROR_MESSAGE);
                 }
             }
         });

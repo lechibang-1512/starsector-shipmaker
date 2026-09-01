@@ -136,7 +136,7 @@ public class FirstTimeSetupDialog extends JDialog {
             Object selectedItem = pathComboBox.getSelectedItem();
             String currentPath = selectedItem != null ? selectedItem.toString().trim() : "";
             if (currentPath.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Path cannot be empty.", "Invalid Path", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, StringManager.getString("PATH_CANNOT_BE_EMPTY_MSG"), "Invalid Path", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -146,7 +146,7 @@ public class FirstTimeSetupDialog extends JDialog {
                 this.dispose();
             } else {
                 JOptionPane.showMessageDialog(this,
-                        "Selected folder does not contain core and mod data folders.",
+                        StringManager.getString("SELECTED_FOLDER_DOES_NOT_CONTAIN_CORE_AN_MSG"),
                         "Invalid folder",
                         JOptionPane.ERROR_MESSAGE);
             }

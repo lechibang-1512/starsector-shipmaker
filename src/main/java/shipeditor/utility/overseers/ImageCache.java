@@ -42,7 +42,7 @@ public final class ImageCache {
             sprite = ImageIO.read(file);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Image file loading failed: " + file,
+                    StringManager.getString("IMAGE_FILE_LOADING_FAILED_MSG") + file,
                     StringManager.getString("FILE_LOADING_ERROR"),
                     JOptionPane.ERROR_MESSAGE);
             throw new UncheckedIOException("Failed to load sprite: " + file.getName(), ex);

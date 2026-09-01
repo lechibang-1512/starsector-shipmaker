@@ -54,19 +54,13 @@ public final class CsvLoader {
         try {
             csvData = readCSVWithCharset(csvFile, csvMapper, csvSchema, effectivePredicate, StandardCharsets.ISO_8859_1);
         } catch (Throwable exception) {
-            if (SettingsManager.isDeveloperModeEnabled()) {
-                log.warn(StringManager.getString("CSV_ISO_LOAD_FAILED"), csvFile.getAbsolutePath(), exception);
-            } else {
-                log.warn(StringManager.getString("CSV_ISO_LOAD_FAILED"), csvFile.getAbsolutePath());
-            }
+            log.warn(StringManager.getString("CSV_ISO_LOAD_FAILED"), csvFile.getAbsolutePath(), exception);
             try {
                 csvData = readCSVWithCharset(csvFile, csvMapper, csvSchema, effectivePredicate, StandardCharsets.UTF_8);
             } catch (Throwable fallbackException) {
+                log.error(StringManager.getString("CSV_FALLBACK_LOAD_FAILED"), csvFile.getAbsolutePath(), fallbackException);
                 if (SettingsManager.isDeveloperModeEnabled()) {
-                    log.error(StringManager.getString("CSV_FALLBACK_LOAD_FAILED"), csvFile.getAbsolutePath(), fallbackException);
                     Errors.printToStream(fallbackException);
-                } else {
-                    log.error(StringManager.getString("CSV_FALLBACK_LOAD_FAILED"), csvFile.getAbsolutePath());
                 }
                 if (SettingsManager.areFileErrorPopupsEnabled()) {
                     Errors.showFileError(StringManager.getString("CSV_PARSE_FAILED") + csvFile, fallbackException);
@@ -159,11 +153,7 @@ public final class CsvLoader {
             try {
                 return readCSVWithCharset(csvFile, csvMapper, csvSchema, acceptAll, StandardCharsets.UTF_8);
             } catch (Throwable fallback) {
-                if (SettingsManager.isDeveloperModeEnabled()) {
-                    log.error(StringManager.getString("CSV_REPARSE_FALLBACK_FAILED"), path, fallback);
-                } else {
-                    log.error(StringManager.getString("CSV_REPARSE_FALLBACK_FAILED"), path);
-                }
+                log.error(StringManager.getString("CSV_REPARSE_FALLBACK_FAILED"), path, fallback);
                 return null;
             }
         }

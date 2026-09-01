@@ -462,7 +462,7 @@ public class HullDataControlPanel extends JPanel {
 
     private static void abortColorInteraction() {
         JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                "Current layer invalid, color interaction aborted.",
+                StringManager.getString("CURRENT_LAYER_INVALID_COLOR_INTERACTION_MSG"),
                 "Color interaction",
                 JOptionPane.ERROR_MESSAGE);
     }

@@ -1,5 +1,7 @@
 package shipeditor.utility.components.dialog;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.files.FileEvents.HullSaveQueued;
 import shipeditor.communication.events.files.FileEvents.VariantSaveQueued;
@@ -16,7 +18,7 @@ public final class DialogHelper {
 
     public static void showDuplicateIDError() {
         JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                "Input ID already assigned to slot.",
+                StringManager.getString("INPUT_ID_ALREADY_ASSIGNED_TO_SLOT_MSG"),
                 "Duplicate ID",
                 JOptionPane.ERROR_MESSAGE);
     }
@@ -83,7 +85,7 @@ public final class DialogHelper {
             Object[] options = {"Save Hull", "Don't Save", "Cancel"};
             int choice = JOptionPane.showOptionDialog(
                     shipeditor.PrimaryWindow.getInstance(),
-                    "Hull has unsaved changes. Do you want to save?",
+                    StringManager.getString("HULL_HAS_UNSAVED_CHANGES_DO_YOU_WANT_TO_MSG"),
                     title,
                     JOptionPane.DEFAULT_OPTION,
                     JOptionPane.WARNING_MESSAGE,
@@ -109,7 +111,7 @@ public final class DialogHelper {
             Object[] options = {"Save Variant", "Don't Save", "Cancel"};
             int choice = JOptionPane.showOptionDialog(
                     shipeditor.PrimaryWindow.getInstance(),
-                    "Variant has unsaved changes. Do you want to save?",
+                    StringManager.getString("VARIANT_HAS_UNSAVED_CHANGES_DO_YOU_WANT_MSG"),
                     title,
                     JOptionPane.DEFAULT_OPTION,
                     JOptionPane.WARNING_MESSAGE,

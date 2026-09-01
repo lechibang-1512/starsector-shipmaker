@@ -55,17 +55,12 @@ public final class SpriteLoader {
             spriteFile = new File(pathURI);
         } catch (URISyntaxException e) {
             String errorMsg = StringManager.getString("IMAGE_RESOURCE_LOAD_FAILED").replace("{}", String.valueOf(spritePath));
+            log.error(errorMsg, e);
             if (!java.awt.GraphicsEnvironment.isHeadless()) {
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                         errorMsg,
                         StringManager.getString("FILE_LOADING_ERROR"),
                         JOptionPane.ERROR_MESSAGE);
-            } else {
-                if (SettingsManager.isDeveloperModeEnabled()) {
-                    log.error(errorMsg, e);
-                } else {
-                    log.error(errorMsg);
-                }
             }
             return null;
         }

@@ -92,7 +92,7 @@ final class SaveVariantAction {
             } catch (IOException e) {
                 log.error("Variant file saving failed: {}", result.getName(), e);
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                        "Variant file saving failed, exception thrown at: " + result,
+                        StringManager.getString("VARIANT_FILE_SAVING_FAILED_EXCEPTION_THR_MSG") + result,
                         StringManager.getString("FILE_SAVING_ERROR"),
                         JOptionPane.ERROR_MESSAGE);
                 Errors.printToStream(e);

@@ -1,5 +1,7 @@
 package shipeditor.components.viewer;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -133,7 +135,7 @@ public class ViewerDropReceiver extends DropTarget {
             ViewerDropReceiver.finishDragToViewer();
             log.error("Drag-and-drop to viewer failed!");
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Failed to conclude drag-and-drop action for viewer, exception thrown at: " + dtde,
+                    StringManager.getString("FAILED_TO_CONCLUDE_DRAG_AND_DROP_ACTION_MSG") + dtde,
                     "Drag-and-drop operation error!",
                     JOptionPane.ERROR_MESSAGE);
             Errors.printToStream(ex);
@@ -154,7 +156,7 @@ public class ViewerDropReceiver extends DropTarget {
         if (firstEligible == null) {
             log.error("Drag-and-drop sprite loading unsuccessful: requires PNG file located in game packages.");
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Failed to load file as sprite or initialize layer with it:" +
+                    StringManager.getString("FAILED_TO_LOAD_FILE_AS_SPRITE_OR_INITIAL_MSG") +
                             " requires PNG file located in game packages.",
                     "Drag-and-drop layer initialization unsuccessful!",
                     JOptionPane.INFORMATION_MESSAGE);

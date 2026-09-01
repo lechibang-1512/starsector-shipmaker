@@ -354,7 +354,7 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
         if (spec == null) {
             log.error("Hull spec file not loaded, layer not created: {}", this.hullID);
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Hull spec file not loaded, layer not created: " + this.hullID,
+                    StringManager.getString("HULL_SPEC_FILE_NOT_LOADED_LAYER_NOT_CREA_MSG") + this.hullID,
                     StringManager.getString("FILE_LOADING_ERROR"),
                     JOptionPane.ERROR_MESSAGE);
             return null;
@@ -366,7 +366,7 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
         if (spriteFile == null) {
             log.error("Sprite file for ship not found: {}", spriteFilePath.toString());
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Sprite file for ship not found, layer not created: " + spriteFilePath,
+                    StringManager.getString("SPRITE_FILE_FOR_SHIP_NOT_FOUND_LAYER_NOT_MSG") + spriteFilePath,
                     StringManager.getString("FILE_LOADING_ERROR"),
                     JOptionPane.ERROR_MESSAGE);
             return null;

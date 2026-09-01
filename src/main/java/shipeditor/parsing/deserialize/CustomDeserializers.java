@@ -42,33 +42,41 @@ public class CustomDeserializers {
 }
 
 
+    @lombok.extern.log4j.Log4j2
     public static class ModulesDeserializer extends JsonDeserializer<Map<String, String>> {
 
-    @Override
-    public Map<String, String> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        ObjectCodec codec = p.getCodec();
-        JsonNode node = codec.readTree(p);
+        @Override
+        public Map<String, String> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            ObjectCodec codec = p.getCodec();
+            JsonNode node = codec.readTree(p);
+            Map<String, String> moduleMap = new LinkedHashMap<>();
 
-        Map<String, String> moduleMap = new LinkedHashMap<>();
+            if (node == null) {
+                return moduleMap;
+            }
 
-        if (node.isArray()) {
-            for (JsonNode entry : node) {
-                if (entry.isObject()) {
-                    entry.fields().forEachRemaining(field -> {
-                        moduleMap.put(field.getKey(), field.getValue().asText());
+            try {
+                if (node.isArray()) {
+                    for (JsonNode entry : node) {
+                        if (entry.isObject()) {
+                            entry.fields().forEachRemaining(field -> {
+                                moduleMap.put(field.getKey(), field.getValue().asText());
+                            });
+                        }
+                    }
+                } else if (node.isObject()) {
+                    Iterator<Map.Entry<String, JsonNode>> entryIterator = node.fields();
+                    entryIterator.forEachRemaining(entry -> {
+                        JsonNode entryValue = entry.getValue();
+                        moduleMap.put(entry.getKey(), entryValue.asText());
                     });
                 }
+            } catch (Exception e) {
+                log.error("Failed to parse modules node", e);
             }
-        } else if (node.isObject()) {
-            Iterator<Map.Entry<String, JsonNode>> entryIterator = node.fields();
-            entryIterator.forEachRemaining(entry -> {
-                JsonNode entryValue = entry.getValue();
-                moduleMap.put(entry.getKey(), entryValue.asText());
-            });
-        }
 
-        return moduleMap;
-    }
+            return moduleMap;
+        }
 }
 
 
@@ -96,23 +104,28 @@ public class CustomDeserializers {
         }
     }
 
+    @lombok.extern.log4j.Log4j2
     public static class Point2DDeserializer extends JsonDeserializer<Point2D.Double> {
 
-    @Override
-    public Point2D.Double deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        ObjectCodec codec = p.getCodec();
-        JsonNode node = codec.readTree(p);
-        if (node == null || !node.isArray() || node.size() < 2) {
-            return new Point2D.Double(0, 0);
+        @Override
+        public Point2D.Double deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            try {
+                ObjectCodec codec = p.getCodec();
+                JsonNode node = codec.readTree(p);
+                if (node == null || !node.isArray() || node.size() < 2) {
+                    return new Point2D.Double(0, 0);
+                }
+                JsonNode xNode = node.get(0);
+                JsonNode yNode = node.get(1);
+                double x = xNode != null ? xNode.asDouble() : 0.0;
+                double y = yNode != null ? yNode.asDouble() : 0.0;
+                return new Point2D.Double(x, y);
+            } catch (Exception e) {
+                log.error("Failed to deserialize Point2D", e);
+                return new Point2D.Double(0, 0);
+            }
         }
-        JsonNode xNode = node.get(0);
-        JsonNode yNode = node.get(1);
-        double x = xNode != null ? xNode.asDouble() : 0.0;
-        double y = yNode != null ? yNode.asDouble() : 0.0;
-        return new Point2D.Double(x, y);
     }
-
-}
 
 
     @lombok.extern.log4j.Log4j2
@@ -144,44 +157,49 @@ public class CustomDeserializers {
 }
 
 
+    @lombok.extern.log4j.Log4j2
     public static class Point2DArrayDeserializer extends JsonDeserializer<Point2D[]> {
 
-    @Override
-    public Point2D.Double[] deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        ObjectCodec codec = p.getCodec();
-        JsonNode node = codec.readTree(p);
-        if (node == null || !node.isArray()) {
-            return new Point2D.Double[0];
-        }
-        
-        if (node.size() > 0 && node.get(0).isNumber()) {
-            int size = node.size() / 2;
-            Point2D.Double[] points = new Point2D.Double[size];
-            for (int i = 0; i < size; i++) {
-                JsonNode xNode = node.get(i * 2);
-                JsonNode yNode = node.get(i * 2 + 1);
-                double x = xNode != null ? xNode.asDouble() : 0.0;
-                double y = yNode != null ? yNode.asDouble() : 0.0;
-                points[i] = new Point2D.Double(x, y);
-            }
-            return points;
-        } else {
-            int size = node.size();
-            Point2D.Double[] points = new Point2D.Double[size];
-            for (int i = 0; i < size; i++) {
-                JsonNode pointNode = node.get(i);
-                if (pointNode.isArray() && pointNode.size() >= 2) {
-                    double x = pointNode.get(0).asDouble();
-                    double y = pointNode.get(1).asDouble();
-                    points[i] = new Point2D.Double(x, y);
-                } else {
-                    points[i] = new Point2D.Double(0, 0);
+        @Override
+        public Point2D.Double[] deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            try {
+                ObjectCodec codec = p.getCodec();
+                JsonNode node = codec.readTree(p);
+                if (node == null || !node.isArray()) {
+                    return new Point2D.Double[0];
                 }
+                
+                if (node.size() > 0 && node.get(0) != null && node.get(0).isNumber()) {
+                    int size = node.size() / 2;
+                    Point2D.Double[] points = new Point2D.Double[size];
+                    for (int i = 0; i < size; i++) {
+                        JsonNode xNode = node.get(i * 2);
+                        JsonNode yNode = node.get(i * 2 + 1);
+                        double x = xNode != null ? xNode.asDouble() : 0.0;
+                        double y = yNode != null ? yNode.asDouble() : 0.0;
+                        points[i] = new Point2D.Double(x, y);
+                    }
+                    return points;
+                } else {
+                    int size = node.size();
+                    Point2D.Double[] points = new Point2D.Double[size];
+                    for (int i = 0; i < size; i++) {
+                        JsonNode pointNode = node.get(i);
+                        if (pointNode != null && pointNode.isArray() && pointNode.size() >= 2) {
+                            double x = pointNode.get(0) != null ? pointNode.get(0).asDouble() : 0.0;
+                            double y = pointNode.get(1) != null ? pointNode.get(1).asDouble() : 0.0;
+                            points[i] = new Point2D.Double(x, y);
+                        } else {
+                            points[i] = new Point2D.Double(0, 0);
+                        }
+                    }
+                    return points;
+                }
+            } catch (Exception e) {
+                log.error("Failed to deserialize Point2DArray", e);
+                return new Point2D.Double[0];
             }
-            return points;
         }
     }
-
-}
 
 }

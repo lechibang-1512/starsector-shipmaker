@@ -46,3 +46,12 @@
 5. **Weapon Barrel Balance**: Burst sizes in `weapon_data.csv` must not exceed physical launch tube / barrel counts from `.wpn` offsets.
 6. **Skin OP Standardization**: Buffed faction skins add +5/+10/+15/+20 OP by hull size; pirate/scavenged skins apply a flat -10% OP delta.
 
+
+## Coding Standards & Refactoring
+- **Skill Module:** Agents must always refer to the `starsector-coding-standards` skill (`.agents/skills/starsector-coding-standards/SKILL.md`) for all code modification workflows.
+- **Rules Summary:**
+  - Zero open-source copying.
+  - Keep basic iteration loops (`for`, `while`) simple; do not over-complicate with Java 8 Streams unless abstracting array generators.
+  - Use Java 14+ `switch` expressions for complex `if..else if` chains evaluating variables.
+  - Wrap risky logic (I/O, Parsing) in `try-catch` blocks and use `@Log4j2` for all logging. No silent swallowing.
+  - Add trace points (`log.debug`, `assert`) before complex blocks acting as runtime breakpoints.

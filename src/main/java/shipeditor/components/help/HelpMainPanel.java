@@ -1,5 +1,7 @@
 package shipeditor.components.help;
 
+import shipeditor.utility.text.StringManager;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.persistence.SettingsManager;
@@ -69,7 +71,7 @@ public class HelpMainPanel extends JPanel {
         } catch (IOException e) {
             log.error("Failed to load help article", e);
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Encountered an error while trying to deserialize file with a help article: " + file.getName(),
+                    StringManager.getString("ENCOUNTERED_AN_ERROR_WHILE_TRYING_TO_DES_MSG") + file.getName(),
                     "Failed to load help article!",
                     JOptionPane.ERROR_MESSAGE);
             return new HelpArticle("Error: " + file.getName(), new java.util.ArrayList<>());

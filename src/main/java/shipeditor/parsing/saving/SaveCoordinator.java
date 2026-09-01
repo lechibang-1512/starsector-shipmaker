@@ -1,5 +1,7 @@
 package shipeditor.parsing.saving;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.files.FileEvents.HullSaveQueued;
 import shipeditor.communication.events.files.FileEvents.VariantSaveQueued;
@@ -55,7 +57,7 @@ public final class SaveCoordinator {
         if (layerManager != null && layerManager.getActiveLayer() != null) {
             saveLayer(layerManager.getActiveLayer());
         } else {
-            JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(), "No active layer to save.", "Warning", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(), StringManager.getString("NO_ACTIVE_LAYER_TO_SAVE_MSG"), "Warning", JOptionPane.WARNING_MESSAGE);
         }
     }
 

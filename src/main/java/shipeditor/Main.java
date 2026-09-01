@@ -1,5 +1,7 @@
 package shipeditor;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.components.logging.StandardOutputRedirector;
 import shipeditor.parsing.loading.FileLoading;
@@ -250,7 +252,7 @@ public final class Main {
                 try {
                     javax.swing.JOptionPane.showMessageDialog(
                             null,
-                            "Starsector Ship Editor is already running!\n\n"
+                            StringManager.getString("STARSECTOR_SHIP_EDITOR_IS_ALREADY_RUNNIN_MSG")
                                     + "Only one instance may run at a time to prevent SQLite database corruption and high memory usage.\n\n"
                                     + "Please close the existing instance or pass '-f' to force start.",
                             "Already Running",

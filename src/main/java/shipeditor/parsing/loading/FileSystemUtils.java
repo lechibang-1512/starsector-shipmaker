@@ -48,11 +48,7 @@ public final class FileSystemUtils {
                 index.computeIfAbsent(fileName, k -> new ArrayList<>()).add(file);
             });
         } catch (IOException e) {
-            if (SettingsManager.isDeveloperModeEnabled()) {
-                log.error(StringManager.getString("FAILED_TO_INDEX_FOLDER"), folderPath, e);
-            } else {
-                log.error(StringManager.getString("FAILED_TO_INDEX_FOLDER"), folderPath);
-            }
+            log.error(StringManager.getString("FAILED_TO_INDEX_FOLDER"), folderPath, e);
         }
         directoryIndices.put(folderPath, new SoftReference<>(index));
         return index;

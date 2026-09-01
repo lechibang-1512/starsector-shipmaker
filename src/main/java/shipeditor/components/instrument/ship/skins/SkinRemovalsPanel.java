@@ -216,13 +216,13 @@ public class SkinRemovalsPanel extends JPanel {
         } else if (typeClass == HullmodCSVEntry.class) {
             HullmodCSVEntry entry = GameDataRepository.retrieveHullmodCSVEntryByID(input);
             if (entry == null) {
-                JOptionPane.showMessageDialog(this, "Unknown Hullmod ID: " + input, "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, StringManager.getString("UNKNOWN_HULLMOD_ID_MSG") + input, "Error", JOptionPane.ERROR_MESSAGE);
             }
             return (T) entry;
         } else if (typeClass == WingCSVEntry.class) {
             WingCSVEntry entry = GameDataRepository.retrieveWingCSVEntryByID(input);
             if (entry == null) {
-                JOptionPane.showMessageDialog(this, "Unknown Wing ID: " + input, "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, StringManager.getString("UNKNOWN_WING_ID_MSG") + input, "Error", JOptionPane.ERROR_MESSAGE);
             }
             return (T) entry;
         }

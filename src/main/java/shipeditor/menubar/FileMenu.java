@@ -85,7 +85,7 @@ class FileMenu extends JMenu {
         clearData.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
                     shipeditor.PrimaryWindow.getInstance(),
-                    "Are you sure you want to delete all application data and settings? The application will close.",
+                    StringManager.getString("ARE_YOU_SURE_YOU_WANT_TO_DELETE_ALL_APPL_MSG"),
                     "Clear Data & Reinitialize",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.WARNING_MESSAGE

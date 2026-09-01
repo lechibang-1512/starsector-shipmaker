@@ -70,7 +70,7 @@ final class SaveWeaponAction {
             } catch (IOException e) {
                 log.error(errorMessage, result.getName(), e);
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                        "Weapon file saving failed, exception thrown at: " + result,
+                        StringManager.getString("WEAPON_FILE_SAVING_FAILED_EXCEPTION_THRO_MSG") + result,
                         StringManager.getString("FILE_SAVING_ERROR"),
                         JOptionPane.ERROR_MESSAGE);
             }

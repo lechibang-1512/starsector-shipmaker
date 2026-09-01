@@ -10,6 +10,8 @@ description: Teaches agents the starsector-shipmaker editor's internal architect
 - **Undo/Redo**: `EditDispatch` posts edits. `PointEdits`, `SlotEdits` handle undoable actions. All mutations go through EditDispatch.
 - **Layer System**: `ViewerLayer` → `ShipLayer` / `WeaponLayer`. Each has a `LayerPainter` for canvas rendering.
 - **Painters**: `ShipPainter` owns sub-painters: `WeaponSlotPainter`, `LaunchBayPainter`, `EngineSlotPainter`, `BoundPointsPainter`, `CenterPointPainter`, `ShieldPointPainter`.
+- **UI Strings / Localization**: Hardcoded UI strings are managed via `shipeditor.utility.text.StringManager`. Values are extracted to JSON resource files (e.g., `system_messages.json`) and retrieved via `StringManager.getString(KEY)`.
+- **Skin Overrides UI**: Managed through `AbstractSkinOverridesPanel`, which encapsulates duplicated `JSplitPane`, `JTable`, and `EventBus` setup. `SkinSlotOverridesPanel` and `SkinEngineOverridesPanel` extend this base to provide unique logic.
 
 ## Launch Bay Architecture
 - `LaunchBay`: Data model (id, arc, angle, size, mount, renderOrderMod, portPoints list)

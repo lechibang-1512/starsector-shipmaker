@@ -272,7 +272,7 @@ class HullmodsTreePanel extends CSVDataTreePanel<HullmodCSVEntry>{
                                                 HullmodCSVEntry entry) {
         if (list.contains(entry)) {
             JOptionPane.showMessageDialog(this,
-                    "Cannot add hullmod entry: already present in list!");
+                    StringManager.getString("CANNOT_ADD_HULLMOD_ENTRY_ALREADY_PRESENT_MSG"));
             return false;
         } else {
             EditDispatch.postHullmodAdded(list, layer, entry);

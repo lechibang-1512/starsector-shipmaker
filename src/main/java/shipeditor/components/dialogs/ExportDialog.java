@@ -364,12 +364,10 @@ public class ExportDialog extends JDialog {
 
     private void executeExport() {
         int selectedIndex = tabbedPane.getSelectedIndex();
-        if (selectedIndex == 0) {
-            executeViewportSnapshot();
-        } else if (selectedIndex == 1) {
-            executeSpritePrint();
-        } else if (selectedIndex == 2) {
-            executeEntityShowcase();
+        switch (selectedIndex) {
+            case 0 -> executeViewportSnapshot();
+            case 1 -> executeSpritePrint();
+            case 2 -> executeEntityShowcase();
         }
     }
 
@@ -398,7 +396,7 @@ public class ExportDialog extends JDialog {
     private void executeSpritePrint() {
         ViewerLayer activeLayer = getActiveLayer();
         if (activeLayer == null || activeLayer.getPainter() == null || activeLayer.getPainter().isUninitialized()) {
-            JOptionPane.showMessageDialog(this, "No valid layer to print.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, StringManager.getString("NO_VALID_LAYER_TO_PRINT_MSG"), "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -422,7 +420,7 @@ public class ExportDialog extends JDialog {
             int height = (int) Math.ceil(bounds.getHeight());
             
             if (width <= 0 || height <= 0) {
-                JOptionPane.showMessageDialog(this, "Layer is empty or invalid size.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, StringManager.getString("LAYER_IS_EMPTY_OR_INVALID_SIZE_MSG"), "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -471,9 +469,9 @@ public class ExportDialog extends JDialog {
                 protected void done() {
                     try {
                         get();
-                        JOptionPane.showMessageDialog(ExportDialog.this, "Showcase generated successfully:\n" + dest.getAbsolutePath(), "Success", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(ExportDialog.this, StringManager.getString("SHOWCASE_GENERATED_SUCCESSFULLY_N_MSG") + dest.getAbsolutePath(), "Success", JOptionPane.INFORMATION_MESSAGE);
                     } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(ExportDialog.this, "Failed to generate showcase:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(ExportDialog.this, StringManager.getString("FAILED_TO_GENERATE_SHOWCASE_N_MSG") + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                         ex.printStackTrace();
                     }
                 }

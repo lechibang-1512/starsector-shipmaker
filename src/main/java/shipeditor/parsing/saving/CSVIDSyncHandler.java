@@ -1,5 +1,7 @@
 package shipeditor.parsing.saving;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.components.datafiles.entities.*;
@@ -69,7 +71,7 @@ public final class CSVIDSyncHandler {
 
         // 4. Prompt user to save to disk
         int response = JOptionPane.showConfirmDialog(null,
-                "ID changed from '" + oldID + "' to '" + newID + "'.\n"
+                StringManager.getString("ID_CHANGED_FROM_MSG") + oldID + "' to '" + newID + "'.\n"
                         + "Save the updated CSV to disk now?",
                 "CSV ID Updated", JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);

@@ -34,88 +34,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-public class SkinEngineOverridesPanel extends JPanel {
-
-    private final JLabel statusLabel;
-    private final JTable overridesTable;
-    private final EngineOverrideTableModel tableModel;
-    private final JPanel editorPanel;
-    private ShipPainter cachedPainter;
+public class SkinEngineOverridesPanel extends AbstractSkinOverridesPanel<SkinEngineOverridesPanel.EngineOverrideTableModel> {
 
     public SkinEngineOverridesPanel() {
-        this.setLayout(new BorderLayout());
-
-        statusLabel = UIFactory.createLabel("No skin active");
-        statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        statusLabel.setBorder(new EmptyBorder(8, 8, 8, 8));
-
-        tableModel = new EngineOverrideTableModel();
-        overridesTable = new JTable(tableModel);
-        overridesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        overridesTable.setRowHeight(24);
-        overridesTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-        overridesTable.getTableHeader().setReorderingAllowed(false);
-
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        overridesTable.setDefaultRenderer(Object.class, centerRenderer);
-
-        JScrollPane scrollPane = new JScrollPane(overridesTable);
-        scrollPane.setBorder(UIConstants.EMPTY_BORDER);
-
-        editorPanel = new JPanel(new BorderLayout());
-        editorPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
-        editorPanel.add(createOverrideEditorPanel(), BorderLayout.PAGE_START);
-
-        JPanel topContainer = new JPanel(new BorderLayout());
-        topContainer.add(statusLabel, BorderLayout.PAGE_START);
-        topContainer.add(editorPanel, BorderLayout.CENTER);
-
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topContainer, scrollPane);
-        splitPane.setResizeWeight(0.35);
-        splitPane.setDividerSize(4);
-        this.add(splitPane, BorderLayout.CENTER);
-
-        overridesTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                refreshEditorPanel();
-            }
-        });
-
-        this.initEventListening();
+        super(new EngineOverrideTableModel(), EditorInstrument.SKIN_ENGINES, "Selected Engine Override");
     }
 
-    private void initEventListening() {
-        EventBus.subscribe(this, event -> {
-            if (event instanceof LayerWasSelected checked) {
-                handleLayerChange(checked.selected());
-            } else if (event instanceof ActiveLayerUpdated checked) {
-                handleLayerChange(checked.updated());
-            }
-        });
-        EventBus.subscribe(this, event -> {
-            if (event instanceof InstrumentRepaintQueued checked) {
-                if (checked.editorMode() == EditorInstrument.SKIN_ENGINES) {
-                    refreshContent();
-                }
-            }
-        });
-    }
-
-    private void handleLayerChange(ViewerLayer layer) {
-        if (layer instanceof ShipLayer shipLayer) {
-            ShipPainter painter = shipLayer.getPainter();
-            if (painter != null && !painter.isUninitialized()) {
-                this.cachedPainter = painter;
-                refreshContent();
-                return;
-            }
-        }
-        this.cachedPainter = null;
-        refreshContent();
-    }
-
-    private void refreshContent() {
+    protected void refreshContent() {
         tableModel.clear();
         editorPanel.setVisible(false);
 
@@ -147,13 +72,8 @@ public class SkinEngineOverridesPanel extends JPanel {
         refreshEditorPanel();
     }
 
-    private JPanel createOverrideEditorPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        ComponentUtilities.outfitPanelWithTitle(panel, "Selected Engine Override");
-        return panel;
-    }
 
-    private void refreshEditorPanel() {
+    protected void refreshEditorPanel() {
         JPanel innerEditor = (JPanel) editorPanel.getComponent(0);
         innerEditor.removeAll();
 
@@ -355,7 +275,7 @@ public class SkinEngineOverridesPanel extends JPanel {
         }
     }
 
-    private static final class EngineOverrideTableModel extends AbstractTableModel {
+    static final class EngineOverrideTableModel extends AbstractTableModel {
         private static final String[] COLUMN_NAMES = {
                 "Index", "Base Angle", "Base Length", "Base Width", "Override?"
         };

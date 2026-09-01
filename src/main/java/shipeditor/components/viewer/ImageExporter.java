@@ -1,5 +1,7 @@
 package shipeditor.components.viewer;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import org.lwjgl.opengl.GL11;
 import shipeditor.PrimaryWindow;
@@ -22,7 +24,7 @@ public class ImageExporter {
         LayerManager layerManager = viewer.getLayerManager();
         ViewerLayer activeLayer = layerManager.getActiveLayer();
         if (activeLayer == null || activeLayer.getPainter() == null) {
-            JOptionPane.showMessageDialog(PrimaryWindow.getInstance(), "No active layer to export.", "Export Failed", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(PrimaryWindow.getInstance(), StringManager.getString("NO_ACTIVE_LAYER_TO_EXPORT_MSG"), "Export Failed", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -82,13 +84,13 @@ public class ImageExporter {
                 log.info("Exported layer to {}: {}", format, finalFile.getAbsolutePath());
 
                 javax.swing.SwingUtilities.invokeLater(() -> 
-                    JOptionPane.showMessageDialog(PrimaryWindow.getInstance(), "Export successful:\n" + finalFile.getAbsolutePath(), "Success", JOptionPane.INFORMATION_MESSAGE)
+                    JOptionPane.showMessageDialog(PrimaryWindow.getInstance(), StringManager.getString("EXPORT_SUCCESSFUL_N_MSG") + finalFile.getAbsolutePath(), "Success", JOptionPane.INFORMATION_MESSAGE)
                 );
 
             } catch (Exception e) {
                 log.error("Failed to export image", e);
                 javax.swing.SwingUtilities.invokeLater(() -> 
-                    JOptionPane.showMessageDialog(PrimaryWindow.getInstance(), "Failed to export image: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE)
+                    JOptionPane.showMessageDialog(PrimaryWindow.getInstance(), StringManager.getString("FAILED_TO_EXPORT_IMAGE_MSG") + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE)
                 );
             }
         });

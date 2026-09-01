@@ -109,7 +109,7 @@ final class SaveHullAction {
             } catch (IOException e) {
                 log.error(errorMessage, result.getName(), e);
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                        "Hull file saving failed, exception thrown at: " + result,
+                        StringManager.getString("HULL_FILE_SAVING_FAILED_EXCEPTION_THROWN_MSG") + result,
                         StringManager.getString("FILE_SAVING_ERROR"),
                         JOptionPane.ERROR_MESSAGE);
             }
@@ -134,7 +134,7 @@ final class SaveHullAction {
             log.error("Engine misconfiguration at hull serialization. Ship ID: {}",
                     shipID);
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Engine misconfiguration at hull serialization. " +
+                    StringManager.getString("ENGINE_MISCONFIGURATION_AT_HULL_SERIALIZ_MSG") +
                             "Ship ID: " + shipID,
                     StringManager.getString("FILE_SAVING_ERROR"),
                     JOptionPane.ERROR_MESSAGE);

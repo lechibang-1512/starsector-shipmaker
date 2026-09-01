@@ -1,5 +1,7 @@
 package shipeditor.components.viewer.layers;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -303,7 +305,7 @@ public class LayerManager {
             Path skinFilePath = skinSpecFile.getFilePath();
             String pathString = skinFilePath != null ? skinFilePath.toString() : skinSpecFile.toString();
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Hull ID of active layer does not equal base hull ID of skin: " + pathString,
+                    StringManager.getString("HULL_ID_OF_ACTIVE_LAYER_DOES_NOT_EQUAL_B_MSG") + pathString,
                     "Ship ID mismatch!",
                     JOptionPane.ERROR_MESSAGE);
             throw new IllegalStateException("Illegal skin file opening operation!");
