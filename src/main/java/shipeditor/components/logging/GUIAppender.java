@@ -18,7 +18,7 @@ import java.io.Serializable;
         elementType = Appender.ELEMENT_TYPE)
 public final class GUIAppender extends AbstractAppender {
 
-    private static final String DEFAULT_PATTERN = "%d{HH:mm:ss.SSS} %-5level %logger{1} - %msg%n";
+    private static final String DEFAULT_PATTERN = "%d{HH:mm:ss.SSS} %-5level %LOGGER{1} - %msg%n";
 
     static final String DESIGNATION = "GUIAppender";
 

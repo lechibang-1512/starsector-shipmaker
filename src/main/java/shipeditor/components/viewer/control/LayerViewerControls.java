@@ -102,7 +102,7 @@ public final class LayerViewerControls implements ViewerControl {
      */
     private final Point layerDragPoint = new Point();
 
-    private static final int layerDragHotkey = KeyEvent.VK_SHIFT;
+    private static final int LAYER_DRAG_HOTKEY = KeyEvent.VK_SHIFT;
 
     @Getter
     private Point mousePoint = new Point();
@@ -167,7 +167,7 @@ public final class LayerViewerControls implements ViewerControl {
                 java.awt.Component focusOwner = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
                 boolean isTextFieldFocused = focusOwner instanceof javax.swing.text.JTextComponent;
 
-                if (keyCode == layerDragHotkey) {
+                if (keyCode == LAYER_DRAG_HOTKEY) {
                     this.parentViewer.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
                     this.parentViewer.setRepaintQueued();
                 } else if (!isTextFieldFocused) {
@@ -196,7 +196,7 @@ public final class LayerViewerControls implements ViewerControl {
                 }
             } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
                 int keyCode = releasedEvent.keyEvent().getKeyCode();
-                if (keyCode == layerDragHotkey) {
+                if (keyCode == LAYER_DRAG_HOTKEY) {
                     this.parentViewer.setCursor(Cursor.getDefaultCursor());
                     this.parentViewer.setRepaintQueued();
                 }
@@ -307,12 +307,12 @@ public final class LayerViewerControls implements ViewerControl {
                 EventBus.publish(new FeatureInstallQueued(position));
             }
         }
-        if (ControlPredicates.removePointPredicate.test(e)) {
+        if (ControlPredicates.REMOVE_POINT_PREDICATE.test(e)) {
             EventBus.publish(new PointRemoveQueued(null, false));
         }
         // Publish raw mouse pressed for painters to evaluate their own predicates.
         EventBus.publish(new ViewerRawMousePressed(e));
-        if (!ControlPredicates.selectPointPredicate.test(e))
+        if (!ControlPredicates.SELECT_POINT_PREDICATE.test(e))
             return;
         if (ControlPredicates.getSelectionMode() == PointSelectionMode.STRICT) {
             EventBus.publish(new PointSelectQueued(null));
@@ -386,19 +386,19 @@ public final class LayerViewerControls implements ViewerControl {
         int y = e.getY();
         LayerPainter selected = this.parentViewer.getSelectedLayer();
         AffineTransform screenToWorld = this.parentViewer.getScreenToWorld();
-        if (ControlPredicates.translatePredicate.test(e)) {
+        if (ControlPredicates.TRANSLATE_PREDICATE.test(e)) {
             int dx = x - this.previousPoint.x;
             int dy = y - this.previousPoint.y;
             this.parentViewer.translate(dx, dy);
             EventBus.publish(new ViewerTransformChanged());
-        } else if (ControlPredicates.layerMovePredicate.test(e)) {
+        } else if (ControlPredicates.LAYER_MOVE_PREDICATE.test(e)) {
             int dx = x - this.layerDragPoint.x;
             int dy = y - this.layerDragPoint.y;
             if (selected != null) {
                 Point2D snappedDifference = this.snapPointToGrid(new Point2D.Double(dx, dy), 1.0f);
                 EventBus.publish(new LayerAnchorDragged(screenToWorld, selected, snappedDifference));
             }
-        } else if (ControlPredicates.layerRotatePredicate.test(e)) {
+        } else if (ControlPredicates.LAYER_ROTATE_PREDICATE.test(e)) {
             if (selected != null) {
                 Point2D worldTarget = screenToWorld.transform(e.getPoint(), null);
                 EventBus.publish(new LayerRotationQueued(selected, worldTarget));
@@ -430,7 +430,7 @@ public final class LayerViewerControls implements ViewerControl {
         this.previousPoint.setLocation(x, y);
         boolean selectionHoldActive = e.isControlDown() && ControlPredicates.isSelectionHoldingEnabled();
         if (ControlPredicates.getSelectionMode() == PointSelectionMode.CLOSEST && !selectionHoldActive &&
-                !ControlPredicates.layerSelectPredicate.test(e)) {
+                !ControlPredicates.LAYER_SELECT_PREDICATE.test(e)) {
             EventBus.publish(new PointSelectQueued(null));
         }
         this.refreshCursorPosition(e);
@@ -441,7 +441,7 @@ public final class LayerViewerControls implements ViewerControl {
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
         double wheelRotation = e.getPreciseWheelRotation();
-        if (ControlPredicates.rotatePredicate.test(e) && this.rotationEnabled) {
+        if (ControlPredicates.ROTATE_PREDICATE.test(e) && this.rotationEnabled) {
             double toRadians = Math.toRadians(wheelRotation);
             double resultRadians = toRadians * ControlPredicates.ROTATION_SPEED;
             rotateViewer(resultRadians);
@@ -549,13 +549,13 @@ public final class LayerViewerControls implements ViewerControl {
         Point2D corrected = Utility.correctAdjustedCursor(adjusted, screenToWorld);
         EventBus.publish(new ViewerCursorMoved(this.mousePoint, adjusted, corrected));
         this.updateHoverStatesForAllPainters();
-        if (ControlPredicates.selectPointPredicate.test(event)) {
+        if (ControlPredicates.SELECT_POINT_PREDICATE.test(event)) {
             Point2D cursor = mousePoint;
             if (ControlPredicates.isCursorSnappingEnabled()) {
                 cursor = adjusted;
             }
             EventBus.publish(new PointDragQueued(screenToWorld, cursor));
-        } else if (ControlPredicates.layerSelectPredicate.test(event)) {
+        } else if (ControlPredicates.LAYER_SELECT_PREDICATE.test(event)) {
             this.tryMouseLayerSelection(mousePoint);
         }
         updateViewerCursorState();

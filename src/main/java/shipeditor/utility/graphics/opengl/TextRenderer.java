@@ -28,7 +28,7 @@ public final class TextRenderer {
         int height;
     }
 
-    private static final Map<String, TextTexture> textTextureCache = new LinkedHashMap<>(64, 0.75f, true) {
+    private static final Map<String, TextTexture> TEXT_TEXTURE_CACHE = new LinkedHashMap<>(64, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, TextTexture> eldest) {
             if (size() > MAX_CACHE_SIZE) {
@@ -46,7 +46,7 @@ public final class TextRenderer {
 
     private static TextTexture getOrCreateTextTexture(String text, Font font, Color color) {
         String key = text + "_" + color.getRGB() + "_" + font.getName() + "_" + font.getSize();
-        return textTextureCache.computeIfAbsent(key, k -> {
+        return TEXT_TEXTURE_CACHE.computeIfAbsent(key, k -> {
             BufferedImage dummy = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
             Graphics2D gDummy = dummy.createGraphics();
             gDummy.setFont(font);

@@ -49,8 +49,8 @@ public class LaunchBayPainter extends MirrorablePointPainter {
     @Getter
     private static boolean addBayHotkeyPressed;
 
-    private static final int addPortHotkey = KeyEvent.VK_SHIFT;
-    private static final int addBayHotkey = KeyEvent.VK_CONTROL;
+    private static final int ADD_PORT_HOTKEY = KeyEvent.VK_SHIFT;
+    private static final int ADD_BAY_HOTKEY = KeyEvent.VK_CONTROL;
 
 
     public LaunchBayPainter(ShipPainter parent) {
@@ -111,8 +111,8 @@ public class LaunchBayPainter extends MirrorablePointPainter {
             }
             if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
                 int keyCode = pressedEvent.keyEvent().getKeyCode();
-                boolean isPortHotkey = (keyCode == addPortHotkey);
-                boolean isBayHotkey = (keyCode == addBayHotkey);
+                boolean isPortHotkey = (keyCode == ADD_PORT_HOTKEY);
+                boolean isBayHotkey = (keyCode == ADD_BAY_HOTKEY);
                 if (isPortHotkey) {
                     addPortHotkeyPressed = true;
                     EventBus.publish(new ViewerRepaintQueued());
@@ -122,8 +122,8 @@ public class LaunchBayPainter extends MirrorablePointPainter {
                 }
             } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
                 int keyCode = releasedEvent.keyEvent().getKeyCode();
-                boolean isPortHotkey = (keyCode == addPortHotkey);
-                boolean isBayHotkey = (keyCode == addBayHotkey);
+                boolean isPortHotkey = (keyCode == ADD_PORT_HOTKEY);
+                boolean isBayHotkey = (keyCode == ADD_BAY_HOTKEY);
                 if (isPortHotkey) {
                     addPortHotkeyPressed = false;
                     EventBus.publish(new ViewerRepaintQueued());

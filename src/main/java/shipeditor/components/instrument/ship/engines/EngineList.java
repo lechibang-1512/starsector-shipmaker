@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 
 public class EngineList extends PointList<EnginePoint> {
 
-    private static final DataFlavor engineFlavor = new DataFlavor(EnginePoint.class, "Engine");
+    private static final DataFlavor ENGINE_FLAVOR = new DataFlavor(EnginePoint.class, "Engine");
 
     private final Consumer<EnginePoint> selectAction;
 
@@ -46,12 +46,12 @@ public class EngineList extends PointList<EnginePoint> {
 
             @Override
             public DataFlavor[] getTransferDataFlavors() {
-                return new DataFlavor[] {engineFlavor, sourceFlavor};
+                return new DataFlavor[] {ENGINE_FLAVOR, sourceFlavor};
             }
 
             @Override
             public boolean isDataFlavorSupported(DataFlavor flavor) {
-                return flavor.equals(engineFlavor);
+                return flavor.equals(ENGINE_FLAVOR);
             }
 
             @Override
@@ -63,7 +63,7 @@ public class EngineList extends PointList<EnginePoint> {
 
     @Override
     protected boolean isSupported(Transferable transferable) {
-        return transferable.isDataFlavorSupported(engineFlavor);
+        return transferable.isDataFlavorSupported(ENGINE_FLAVOR);
     }
 
 }

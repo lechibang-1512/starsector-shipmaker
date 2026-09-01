@@ -42,8 +42,8 @@ public final class SettingsManager {
         }
     }
 
-    @Getter
-    private static final GameDataRepository gameData = new GameDataRepository();
+    private static final GameDataRepository GAME_DATA = new GameDataRepository();
+    public static GameDataRepository getGameData() { return GAME_DATA; }
 
     @Getter
     private static Path applicationDirectory;
@@ -53,8 +53,8 @@ public final class SettingsManager {
 
     private static Path settingsFilePath;
 
-    @Getter
-    private static final String projectVersion = "0.0.1f";
+    private static final String PROJECT_VERSION = "0.0.1f";
+    public static String getProjectVersion() { return PROJECT_VERSION; }
 
     private static GameDataPackage corePackage;
 

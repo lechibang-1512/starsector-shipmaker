@@ -36,7 +36,7 @@ public final class DatabaseQueryService {
         return SettingsManager.isModActive(modId);
     }
 
-    private static final Map<String, List<IndexedFile>> typeCache = new ConcurrentHashMap<>();
+    private static final Map<String, List<IndexedFile>> TYPE_CACHE = new ConcurrentHashMap<>();
 
     private DatabaseQueryService() {}
 
@@ -45,7 +45,7 @@ public final class DatabaseQueryService {
      * operation completes or when the active mod list changes.
      */
     public static void clearTypeCache() {
-        typeCache.clear();
+        TYPE_CACHE.clear();
     }
 
     // --- Synchronous Modifications (Used by Background Scanner) ---
@@ -446,7 +446,7 @@ public final class DatabaseQueryService {
         if (type == null) {
             return new ArrayList<>();
         }
-        List<IndexedFile> cached = typeCache.get(type);
+        List<IndexedFile> cached = TYPE_CACHE.get(type);
         if (cached != null) {
             return cached;
         }
@@ -487,7 +487,7 @@ public final class DatabaseQueryService {
         }
 
         List<IndexedFile> results = new ArrayList<>(deduplicated.values());
-        typeCache.put(type, results);
+        TYPE_CACHE.put(type, results);
         return results;
     }
 

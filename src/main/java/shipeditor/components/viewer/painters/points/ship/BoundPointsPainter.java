@@ -44,9 +44,9 @@ public final class BoundPointsPainter extends MirrorablePointPainter {
     private final org.joml.Vector2f cachedFinishVec = new org.joml.Vector2f();
     private final org.joml.Vector4f cachedOutlineColor = new org.joml.Vector4f();
     private final org.joml.Vector4f cachedLineColor = new org.joml.Vector4f();
-    private static final org.joml.Vector2f cachedCirclePos = new org.joml.Vector2f();
-    private static final org.joml.Vector4f cachedCircleOutline = new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
-    private static final org.joml.Vector4f cachedCircleFill = new org.joml.Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
+    private static final org.joml.Vector2f CACHED_CIRCLE_POS = new org.joml.Vector2f();
+    private static final org.joml.Vector4f CACHED_CIRCLE_OUTLINE = new org.joml.Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
+    private static final org.joml.Vector4f CACHED_CIRCLE_FILL = new org.joml.Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     @Setter
     private List<BoundPoint> boundPoints;
@@ -57,8 +57,8 @@ public final class BoundPointsPainter extends MirrorablePointPainter {
     @Getter
     private static boolean insertBoundHotkeyPressed;
 
-    private static final int appendBoundHotkey = KeyEvent.VK_SHIFT;
-    private static final int insertBoundHotkey = KeyEvent.VK_CONTROL;
+    private static final int APPEND_BOUND_HOTKEY = KeyEvent.VK_SHIFT;
+    private static final int INSERT_BOUND_HOTKEY = KeyEvent.VK_CONTROL;
 
 
     public BoundPointsPainter(ShipPainter parent) {
@@ -128,16 +128,16 @@ public final class BoundPointsPainter extends MirrorablePointPainter {
             }
             if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
                 int keyCode = pressedEvent.keyEvent().getKeyCode();
-                boolean isAppendHotkey = (keyCode == appendBoundHotkey);
-                boolean isInsertHotkey = (keyCode == insertBoundHotkey);
+                boolean isAppendHotkey = (keyCode == APPEND_BOUND_HOTKEY);
+                boolean isInsertHotkey = (keyCode == INSERT_BOUND_HOTKEY);
                 if (isAppendHotkey || isInsertHotkey) {
                     BoundPointsPainter.setHotkeyState(isAppendHotkey, true);
                     EventBus.publish(new ViewerRepaintQueued());
                 }
             } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
                 int keyCode = releasedEvent.keyEvent().getKeyCode();
-                boolean isAppendHotkey = (keyCode == appendBoundHotkey);
-                boolean isInsertHotkey = (keyCode == insertBoundHotkey);
+                boolean isAppendHotkey = (keyCode == APPEND_BOUND_HOTKEY);
+                boolean isInsertHotkey = (keyCode == INSERT_BOUND_HOTKEY);
                 if (isAppendHotkey || isInsertHotkey) {
                     BoundPointsPainter.setHotkeyState(isAppendHotkey, false);
                     EventBus.publish(new ViewerRepaintQueued());
@@ -340,10 +340,10 @@ public final class BoundPointsPainter extends MirrorablePointPainter {
 
     private static void paintProspectiveBound(ShapeRenderer shapeRenderer, AffineTransform worldToScreen, Point2D position) {
         Point2D screenLoc = worldToScreen.transform(position, null);
-        cachedCirclePos.set((float) screenLoc.getX(), (float) screenLoc.getY());
+        CACHED_CIRCLE_POS.set((float) screenLoc.getX(), (float) screenLoc.getY());
         float radius = 6.0f;
-        shapeRenderer.drawCircle(cachedCirclePos, radius, cachedCircleOutline, true);
-        shapeRenderer.drawCircle(cachedCirclePos, radius - 1.5f, cachedCircleFill, true);
+        shapeRenderer.drawCircle(CACHED_CIRCLE_POS, radius, CACHED_CIRCLE_OUTLINE, true);
+        shapeRenderer.drawCircle(CACHED_CIRCLE_POS, radius - 1.5f, CACHED_CIRCLE_FILL, true);
     }
 
     private void handleInsertionGuidelines(ShapeRenderer shapeRenderer, AffineTransform worldToScreen,

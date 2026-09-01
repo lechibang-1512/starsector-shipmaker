@@ -52,7 +52,7 @@ import java.util.stream.Stream;
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public final class FileUtilities {
 
-    private static final ObjectMapper mapper;
+    private static final ObjectMapper MAPPER;
 
     public static final String OPEN_COMMAND_CANCELLED_BY_USER = "Open command cancelled by user.";
 
@@ -69,26 +69,26 @@ public final class FileUtilities {
     private static File lastGeneralDirectory;
 
     static {
-        mapper = new ObjectMapper();
-        mapper.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
-        mapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-        mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
-        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+        MAPPER = new ObjectMapper();
+        MAPPER.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
+        MAPPER.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+        MAPPER.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+        MAPPER.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
         
-        mapper.configure(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature(), true);
-        mapper.configure(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS.mappedFeature(), true);
-        mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
-        mapper.configure(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS.mappedFeature(), true);
-        mapper.configure(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS.mappedFeature(), true);
+        MAPPER.configure(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature(), true);
+        MAPPER.configure(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS.mappedFeature(), true);
+        MAPPER.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
+        MAPPER.configure(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS.mappedFeature(), true);
+        MAPPER.configure(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS.mappedFeature(), true);
 
-        mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
-        mapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
-        mapper.coercionConfigFor(LogicalType.Collection).setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull);
+        MAPPER.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+        MAPPER.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+        MAPPER.coercionConfigFor(LogicalType.Collection).setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull);
 
         DefaultPrettyPrinter prettyPrinter = new BasicPrettyPrinter().createInstance();
-        mapper.setDefaultPrettyPrinter(prettyPrinter);
+        MAPPER.setDefaultPrettyPrinter(prettyPrinter);
 
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        MAPPER.configure(SerializationFeature.INDENT_OUTPUT, true);
 
         SimpleModule module = new SimpleModule();
         module.addSerializer(Color.class, new ColorArrayRGBASerializer());
@@ -99,25 +99,25 @@ public final class FileUtilities {
                 return text != null ? text.intern() : null;
             }
         });
-        mapper.registerModule(module);
+        MAPPER.registerModule(module);
     }
 
     private FileUtilities() {}
 
     public static void updateActionStates(ViewerLayer currentlySelected) {
         if (!(currentlySelected instanceof ShipLayer layer)) {
-            FileLoading.openSprite.setEnabled(true);
-            FileLoading.openShip.setEnabled(false);
+            FileLoading.OPEN_SPRITE.setEnabled(true);
+            FileLoading.OPEN_SHIP.setEnabled(false);
             return;
         }
         ShipPainter painter = layer.getPainter();
         if (painter == null) {
-            FileLoading.openSprite.setEnabled(true);
-            FileLoading.openShip.setEnabled(false);
+            FileLoading.OPEN_SPRITE.setEnabled(true);
+            FileLoading.OPEN_SHIP.setEnabled(false);
         } else {
             boolean hullState = painter.getSprite() != null;
-            FileLoading.openSprite.setEnabled(true);
-            FileLoading.openShip.setEnabled(hullState);
+            FileLoading.OPEN_SPRITE.setEnabled(true);
+            FileLoading.OPEN_SHIP.setEnabled(hullState);
         }
     }
     public static void openPathInDesktop(Path toOpen) {
@@ -187,7 +187,7 @@ public final class FileUtilities {
     }
 
     public static ObjectMapper getConfigured() {
-        return mapper;
+        return MAPPER;
     }
 
     public static JFileChooser getFileChooser() {

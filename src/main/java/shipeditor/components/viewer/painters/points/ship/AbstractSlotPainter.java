@@ -61,23 +61,23 @@ public abstract class AbstractSlotPainter extends AngledPointPainter {
             
             if (event instanceof ViewerRawMouseDragged checked) {
                 MouseEvent me = checked.mouseEvent();
-                if (ControlPredicates.changeAnglePredicate.test(me)) {
+                if (ControlPredicates.CHANGE_ANGLE_PREDICATE.test(me)) {
                     Point2D worldTarget = computeWorldTarget(me);
                     super.changePointAngleByTarget(worldTarget);
-                } else if (ControlPredicates.changeArcOrSizePredicate.test(me)) {
+                } else if (ControlPredicates.CHANGE_ARC_OR_SIZE_PREDICATE.test(me)) {
                     AffineTransform rotatedTransform = StaticController.getScreenToWorld();
                     Point2D worldTarget = rotatedTransform.transform(me.getPoint(), null);
                     this.handleSizeOrArcChange(worldTarget);
                 }
             } else if (event instanceof ViewerRawMouseMoved checked) {
                 MouseEvent me = checked.mouseEvent();
-                if (ControlPredicates.changeAnglePredicate.test(me)) {
+                if (ControlPredicates.CHANGE_ANGLE_PREDICATE.test(me)) {
                     Point2D worldTarget = computeWorldTarget(me);
                     super.changePointAngleByTarget(worldTarget);
                 }
             } else if (event instanceof ViewerRawMousePressed checked) {
                 MouseEvent me = checked.mouseEvent();
-                if (ControlPredicates.changeAnglePredicate.test(me)) {
+                if (ControlPredicates.CHANGE_ANGLE_PREDICATE.test(me)) {
                     Point2D worldTarget = computeWorldTarget(me);
                     super.changePointAngleByTarget(worldTarget);
                 }

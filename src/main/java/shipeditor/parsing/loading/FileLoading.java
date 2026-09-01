@@ -50,14 +50,14 @@ import shipeditor.communication.events.components.ComponentEvents.LoadingActionF
 public final class FileLoading {
 
 
-    @Getter
-    public static final Action openSprite = new OpenSpriteAction();
-    @Getter
-    public static final Action openShip = new OpenHullAction();
-    @Getter
-    private static final Action loadHullAsLayer = new LoadHullAsLayer();
-    @Getter
-    private static final Action loadSpriteAsHull = new LoadSpriteAsNewHull();
+    public static final Action OPEN_SPRITE = new OpenSpriteAction();
+    public static Action getOpenSprite() { return OPEN_SPRITE; }
+    public static final Action OPEN_SHIP = new OpenHullAction();
+    public static Action getOpenShip() { return OPEN_SHIP; }
+    private static final Action LOAD_HULL_AS_LAYER = new LoadHullAsLayer();
+    public static Action getLoadHullAsLayer() { return LOAD_HULL_AS_LAYER; }
+    private static final Action LOAD_SPRITE_AS_HULL = new LoadSpriteAsNewHull();
+    public static Action getLoadSpriteAsHull() { return LOAD_SPRITE_AS_HULL; }
 
     @Getter @Setter
     private static volatile boolean loadingInProgress;

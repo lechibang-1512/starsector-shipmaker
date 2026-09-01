@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 
 public class WeaponSlotList extends PointList<WeaponSlotPoint> {
 
-    private static final DataFlavor slotFlavor = new DataFlavor(WeaponSlotPoint.class, "Slot");
+    private static final DataFlavor SLOT_FLAVOR = new DataFlavor(WeaponSlotPoint.class, "Slot");
 
     private final Consumer<WeaponSlotPoint> selectAction;
 
@@ -141,12 +141,12 @@ public class WeaponSlotList extends PointList<WeaponSlotPoint> {
 
             @Override
             public DataFlavor[] getTransferDataFlavors() {
-                return new DataFlavor[] {slotFlavor, sourceFlavor};
+                return new DataFlavor[] {SLOT_FLAVOR, sourceFlavor};
             }
 
             @Override
             public boolean isDataFlavorSupported(DataFlavor flavor) {
-                return flavor.equals(slotFlavor);
+                return flavor.equals(SLOT_FLAVOR);
             }
 
             @Override
@@ -158,7 +158,7 @@ public class WeaponSlotList extends PointList<WeaponSlotPoint> {
 
     @Override
     protected boolean isSupported(Transferable transferable) {
-        return transferable.isDataFlavorSupported(slotFlavor);
+        return transferable.isDataFlavorSupported(SLOT_FLAVOR);
     }
 
 

@@ -128,7 +128,7 @@ public class WeaponQAReportDialog extends JDialog {
     private record QAIssue(String weaponId, String issueType, String details) {}
 
     private static class QATableModel extends AbstractTableModel {
-        private final String[] COLUMNS = {"Weapon ID", "Issue", "Details"};
+        private final String[] columns = {"Weapon ID", "Issue", "Details"};
         private List<QAIssue> issues = new ArrayList<>();
 
         public void setIssues(List<QAIssue> issues) {
@@ -139,9 +139,9 @@ public class WeaponQAReportDialog extends JDialog {
         @Override
         public int getRowCount() { return issues.size(); }
         @Override
-        public int getColumnCount() { return COLUMNS.length; }
+        public int getColumnCount() { return columns.length; }
         @Override
-        public String getColumnName(int column) { return COLUMNS[column]; }
+        public String getColumnName(int column) { return columns[column]; }
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) { return false; }
         

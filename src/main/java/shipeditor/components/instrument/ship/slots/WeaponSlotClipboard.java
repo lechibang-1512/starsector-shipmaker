@@ -9,25 +9,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class WeaponSlotClipboard {
-    private static final List<CopiedSlotData> clipboard = new ArrayList<>();
+    private static final List<CopiedSlotData> CLIPBOARD = new ArrayList<>();
 
     private WeaponSlotClipboard() {
     }
 
     public static void copy(List<WeaponSlotPoint> slots) {
-        clipboard.clear();
+        CLIPBOARD.clear();
         if (slots == null || slots.isEmpty()) return;
         for (WeaponSlotPoint slot : slots) {
-            clipboard.add(new CopiedSlotData(slot));
+            CLIPBOARD.add(new CopiedSlotData(slot));
         }
     }
 
     public static boolean hasData() {
-        return !clipboard.isEmpty();
+        return !CLIPBOARD.isEmpty();
     }
 
     public static List<CopiedSlotData> getClipboard() {
-        return new ArrayList<>(clipboard);
+        return new ArrayList<>(CLIPBOARD);
     }
 
     public static class CopiedSlotData {

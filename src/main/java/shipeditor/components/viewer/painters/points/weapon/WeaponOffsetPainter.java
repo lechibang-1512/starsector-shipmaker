@@ -163,7 +163,7 @@ public class WeaponOffsetPainter extends AngledPointPainter {
             if (!isInteractionEnabled() || !isControlHotkeyPressed()) return;
 
             MouseEvent me = extractMouseEvent(event);
-            if (me != null && ControlPredicates.changeAnglePredicate.test(me)) {
+            if (me != null && ControlPredicates.CHANGE_ANGLE_PREDICATE.test(me)) {
                 Point2D worldTarget = computeWorldTarget(me);
                 super.changePointAngleByTarget(worldTarget);
             }

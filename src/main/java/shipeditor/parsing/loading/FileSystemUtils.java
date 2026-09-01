@@ -20,19 +20,19 @@ import java.util.stream.Stream;
 @Log4j2
 public final class FileSystemUtils {
 
-    private static final Map<Path, SoftReference<Map<String, List<Path>>>> directoryIndices = new ConcurrentHashMap<>();
+    private static final Map<Path, SoftReference<Map<String, List<Path>>>> DIRECTORY_INDICES = new ConcurrentHashMap<>();
 
     private FileSystemUtils() {
     }
 
     public static void clearDirectoryCache() {
-        directoryIndices.clear();
+        DIRECTORY_INDICES.clear();
     }
 
     private static Map<String, List<Path>> getOrCreateIndex(Path folderPath) {
         if (folderPath == null)
             return java.util.Collections.emptyMap();
-        SoftReference<Map<String, List<Path>>> ref = directoryIndices.get(folderPath);
+        SoftReference<Map<String, List<Path>>> ref = DIRECTORY_INDICES.get(folderPath);
         if (ref != null) {
             Map<String, List<Path>> existing = ref.get();
             if (existing != null) {
@@ -50,7 +50,7 @@ public final class FileSystemUtils {
         } catch (IOException e) {
             log.error(StringManager.getString("FAILED_TO_INDEX_FOLDER"), folderPath, e);
         }
-        directoryIndices.put(folderPath, new SoftReference<>(index));
+        DIRECTORY_INDICES.put(folderPath, new SoftReference<>(index));
         return index;
     }
 

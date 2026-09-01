@@ -1,0 +1,75 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< shipeditor:ship_editor >-----------------------
+[INFO] Building ship_editor 0.0.1f-hf
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- checkstyle:3.5.0:check (default-cli) @ ship_editor ---
+[INFO] Starting audit...
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/communication/EventBus.java:16:35: Name 'bus' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/communication/EventBus.java:44:55: Name 'threadDispatchContext' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/instrument/ship/bounds/BoundList.java:19:37: Name 'boundFlavor' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/instrument/ship/engines/EngineList.java:18:37: Name 'engineFlavor' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/instrument/ship/slots/WeaponSlotClipboard.java:12:47: Name 'clipboard' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/instrument/ship/slots/WeaponSlotList.java:24:37: Name 'slotFlavor' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/logging/LogsPanel.java:16:36: Name 'logger' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/control/ControlPredicates.java:62:40: Name 'translatePredicate' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/control/ControlPredicates.java:65:40: Name 'layerMovePredicate' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/control/ControlPredicates.java:68:40: Name 'layerSelectPredicate' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/control/ControlPredicates.java:70:40: Name 'layerRotatePredicate' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/control/ControlPredicates.java:73:40: Name 'removePointPredicate' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/control/ControlPredicates.java:76:40: Name 'selectPointPredicate' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/control/ControlPredicates.java:79:47: Name 'changeAnglePredicate' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/control/ControlPredicates.java:82:47: Name 'changeArcOrSizePredicate' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/control/ControlPredicates.java:85:40: Name 'rotatePredicate' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/control/LayerViewerControls.java:105:30: Name 'layerDragHotkey' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/painters/points/ship/BoundPointsPainter.java:47:44: Name 'cachedCirclePos' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/painters/points/ship/BoundPointsPainter.java:48:44: Name 'cachedCircleOutline' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/painters/points/ship/BoundPointsPainter.java:49:44: Name 'cachedCircleFill' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/painters/points/ship/BoundPointsPainter.java:60:30: Name 'appendBoundHotkey' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/painters/points/ship/BoundPointsPainter.java:61:30: Name 'insertBoundHotkey' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/painters/points/ship/CenterPointPainter.java:54:30: Name 'dragCollisionRadiusHotkey' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/painters/points/ship/LaunchBayPainter.java:52:30: Name 'addPortHotkey' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/painters/points/ship/LaunchBayPainter.java:53:30: Name 'addBayHotkey' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/painters/points/ship/ShieldPointPainter.java:40:30: Name 'dragShieldRadiusHotkey' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/components/viewer/PrimaryViewer.java:61:36: Name 'minimumPanelSize' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/parsing/loading/FileLoading.java:54:32: Name 'openSprite' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/parsing/loading/FileLoading.java:56:32: Name 'openShip' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/parsing/loading/FileLoading.java:58:33: Name 'loadHullAsLayer' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/parsing/loading/FileLoading.java:60:33: Name 'loadSpriteAsHull' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/parsing/loading/FileSystemUtils.java:23:76: Name 'directoryIndices' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/parsing/FileUtilities.java:55:39: Name 'mapper' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/persistence/database/CoreIndexManager.java:23:57: Name 'coreFilesByType' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/persistence/database/CoreIndexManager.java:24:64: Name 'coreFilesByEntityId' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/persistence/database/CoreIndexManager.java:25:51: Name 'coreFilesByPath' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/persistence/database/DatabaseQueryService.java:39:57: Name 'typeCache' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/persistence/SettingsManager.java:46:45: Name 'gameData' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/persistence/SettingsManager.java:57:33: Name 'projectVersion' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/undo/UndoOverseer.java:44:39: Name 'seer' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/components/dialog/HullQAReportDialog.java:142:32: Name 'COLUMNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/components/dialog/WeaponQAReportDialog.java:131:32: Name 'COLUMNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/graphics/opengl/TextRenderer.java:31:51: Name 'textTextureCache' must match pattern '^log$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'. [ConstantName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/graphics/ColorSpaceTransform.java:63:39: Name 'L' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/graphics/ColorSpaceTransform.java:81:42: Name 'L' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/graphics/ColorSpaceTransform.java:162:39: Name 'L' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/graphics/ColorSpaceTransform.java:163:15: Name 'C' must match pattern '^[a-z][a-zA-Z0-9]*$'. [LocalVariableName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/graphics/ColorSpaceTransform.java:171:42: Name 'L' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/graphics/ColorSpaceTransform.java:180:39: Name 'L' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/graphics/ColorSpaceTransform.java:180:48: Name 'C' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/graphics/ColorSpaceTransform.java:187:42: Name 'L' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]
+[ERROR] /home/lechibang/Documents/starsector/starsector-shipmaker/src/main/java/shipeditor/utility/graphics/ColorSpaceTransform.java:187:51: Name 'C' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]
+Audit done.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  8.099 s
+[INFO] Finished at: 2026-09-02T00:58:23+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin:3.5.0:check (default-cli) on project ship_editor: Failed during checkstyle execution: There are 52 errors reported by Checkstyle 9.3 with checkstyle.xml ruleset. -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

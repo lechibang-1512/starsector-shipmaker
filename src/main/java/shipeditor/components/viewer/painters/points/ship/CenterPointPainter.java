@@ -51,7 +51,7 @@ public class CenterPointPainter extends SinglePointPainter {
     @Getter @Setter
     private Point2D moduleAnchorOffset;
 
-    private static final int dragCollisionRadiusHotkey = KeyEvent.VK_CONTROL;
+    private static final int DRAG_COLLISION_RADIUS_HOTKEY = KeyEvent.VK_CONTROL;
     private boolean collisionRadiusHotkeyPressed;
 
     public CenterPointPainter(ShipPainter parent) {
@@ -141,14 +141,14 @@ public class CenterPointPainter extends SinglePointPainter {
             }
             if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
                 int keyCode = pressedEvent.keyEvent().getKeyCode();
-                boolean isCollisionHotkey = (keyCode == dragCollisionRadiusHotkey);
+                boolean isCollisionHotkey = (keyCode == DRAG_COLLISION_RADIUS_HOTKEY);
                 if (isCollisionHotkey) {
                     this.collisionRadiusHotkeyPressed = true;
                     EventBus.publish(new ViewerRepaintQueued());
                 }
             } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
                 int keyCode = releasedEvent.keyEvent().getKeyCode();
-                boolean isCollisionHotkey = (keyCode == dragCollisionRadiusHotkey);
+                boolean isCollisionHotkey = (keyCode == DRAG_COLLISION_RADIUS_HOTKEY);
                 if (isCollisionHotkey) {
                     this.collisionRadiusHotkeyPressed = false;
                     EventBus.publish(new ViewerRepaintQueued());

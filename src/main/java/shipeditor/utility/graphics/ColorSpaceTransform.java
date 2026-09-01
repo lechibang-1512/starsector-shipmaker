@@ -31,7 +31,7 @@ public final class ColorSpaceTransform {
      * @param r Red [0, 1]
      * @param g Green [0, 1]
      * @param b Blue [0, 1]
-     * @param out Float array of size >= 3 [L (0..100), a (-128..127), b (-128..127)]
+     * @param out Float array of size >= 3 [l (0..100), a (-128..127), b (-128..127)]
      */
     public static void rgbToLab(float r, float g, float b, float[] out) {
         double rLin = (r <= 0.04045f) ? (r / 12.92) : Math.pow((r + 0.055) / 1.055, 2.4);
@@ -60,8 +60,8 @@ public final class ColorSpaceTransform {
     /**
      * Converts CIELAB under D65 illuminant to sRGB float [0, 1].
      */
-    public static void labToRgb(float L, float a, float b, float[] out) {
-        double fy = (L + 16.0) / 116.0;
+    public static void labToRgb(float l, float a, float b, float[] out) {
+        double fy = (l + 16.0) / 116.0;
         double fx = a / 500.0 + fy;
         double fz = fy - b / 200.0;
 
@@ -78,9 +78,9 @@ public final class ColorSpaceTransform {
         out[2] = (float) clamp01((bLin <= 0.0031308) ? (12.92 * bLin) : (1.055 * Math.pow(Math.max(bLin, 0.0), 1.0 / 2.4) - 0.055));
     }
 
-    public static float[] labToRgb(float L, float a, float b) {
+    public static float[] labToRgb(float l, float a, float b) {
         float[] out = new float[3];
-        labToRgb(L, a, b, out);
+        labToRgb(l, a, b, out);
         return out;
     }
 
@@ -159,34 +159,34 @@ public final class ColorSpaceTransform {
     /**
      * Converts CIELAB to CIELCh (Lightness [0..100], Chroma [0..150], Hue [0..360) degrees).
      */
-    public static void labToLch(float L, float a, float b, float[] out) {
-        float C = (float) Math.sqrt(a * a + b * b);
+    public static void labToLch(float l, float a, float b, float[] out) {
+        float c = (float) Math.sqrt(a * a + b * b);
         double hDeg = Math.toDegrees(Math.atan2(b, a));
         if (hDeg < 0.0) hDeg += 360.0;
-        out[0] = L;
-        out[1] = C;
+        out[0] = l;
+        out[1] = c;
         out[2] = (float) hDeg;
     }
 
-    public static float[] labToLch(float L, float a, float b) {
+    public static float[] labToLch(float l, float a, float b) {
         float[] out = new float[3];
-        labToLch(L, a, b, out);
+        labToLch(l, a, b, out);
         return out;
     }
 
     /**
      * Converts CIELCh (Hue in degrees [0..360)) to CIELAB.
      */
-    public static void lchToLab(float L, float C, float hDeg, float[] out) {
+    public static void lchToLab(float l, float c, float hDeg, float[] out) {
         double hRad = Math.toRadians(hDeg);
-        out[0] = L;
-        out[1] = (float) (C * Math.cos(hRad));
-        out[2] = (float) (C * Math.sin(hRad));
+        out[0] = l;
+        out[1] = (float) (c * Math.cos(hRad));
+        out[2] = (float) (c * Math.sin(hRad));
     }
 
-    public static float[] lchToLab(float L, float C, float hDeg) {
+    public static float[] lchToLab(float l, float c, float hDeg) {
         float[] out = new float[3];
-        lchToLab(L, C, hDeg, out);
+        lchToLab(l, c, hDeg, out);
         return out;
     }
 

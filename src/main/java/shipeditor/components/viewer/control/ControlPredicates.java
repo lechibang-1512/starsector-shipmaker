@@ -59,30 +59,30 @@ public final class ControlPredicates {
         });
     }
 
-    static final Predicate<MouseEvent> translatePredicate = e -> SwingUtilities.isMiddleMouseButton(e)
+    static final Predicate<MouseEvent> TRANSLATE_PREDICATE = e -> SwingUtilities.isMiddleMouseButton(e)
             && !e.isControlDown() && !e.isShiftDown() && !e.isAltDown();
 
-    static final Predicate<MouseEvent> layerMovePredicate = e -> SwingUtilities.isMiddleMouseButton(e)
+    static final Predicate<MouseEvent> LAYER_MOVE_PREDICATE = e -> SwingUtilities.isMiddleMouseButton(e)
             && e.isShiftDown();
 
-    static final Predicate<MouseEvent> layerSelectPredicate = e -> e.isControlDown() && e.isAltDown();
+    static final Predicate<MouseEvent> LAYER_SELECT_PREDICATE = e -> e.isControlDown() && e.isAltDown();
 
-    static final Predicate<MouseEvent> layerRotatePredicate = e -> SwingUtilities.isMiddleMouseButton(e)
+    static final Predicate<MouseEvent> LAYER_ROTATE_PREDICATE = e -> SwingUtilities.isMiddleMouseButton(e)
             && e.isAltDown();
 
-    static final Predicate<MouseEvent> removePointPredicate = e -> SwingUtilities.isRightMouseButton(e)
+    static final Predicate<MouseEvent> REMOVE_POINT_PREDICATE = e -> SwingUtilities.isRightMouseButton(e)
             && e.isControlDown();
 
-    static final Predicate<MouseEvent> selectPointPredicate = e -> SwingUtilities.isLeftMouseButton(e)
+    static final Predicate<MouseEvent> SELECT_POINT_PREDICATE = e -> SwingUtilities.isLeftMouseButton(e)
             && !e.isControlDown() && !e.isShiftDown() && !e.isAltDown();
 
-    public static final Predicate<MouseEvent> changeAnglePredicate = e -> SwingUtilities.isLeftMouseButton(e)
+    public static final Predicate<MouseEvent> CHANGE_ANGLE_PREDICATE = e -> SwingUtilities.isLeftMouseButton(e)
             && e.isAltDown();
 
-    public static final Predicate<MouseEvent> changeArcOrSizePredicate = e -> SwingUtilities.isRightMouseButton(e)
+    public static final Predicate<MouseEvent> CHANGE_ARC_OR_SIZE_PREDICATE = e -> SwingUtilities.isRightMouseButton(e)
             && e.isAltDown();
 
-    static final Predicate<MouseEvent> rotatePredicate = e -> e.isControlDown();
+    static final Predicate<MouseEvent> ROTATE_PREDICATE = e -> e.isControlDown();
 
     private ControlPredicates() {
     }

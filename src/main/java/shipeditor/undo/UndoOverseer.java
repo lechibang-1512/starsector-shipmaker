@@ -41,7 +41,7 @@ import java.util.Deque;
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public final class UndoOverseer {
 
-    private static final UndoOverseer seer = new UndoOverseer();
+    private static final UndoOverseer SEER = new UndoOverseer();
 
     @Getter @Setter
     private static boolean paused = false;
@@ -113,19 +113,19 @@ public final class UndoOverseer {
     }
 
     public static Action getUndoAction() {
-        return seer.undoAction;
+        return SEER.undoAction;
     }
 
     public static Action getRedoAction() {
-        return seer.redoAction;
+        return SEER.redoAction;
     }
 
     public static Deque<Edit> getUndoStack() {
-        return seer.undoStack;
+        return SEER.undoStack;
     }
 
     public static Deque<Edit> getRedoStack() {
-        return seer.redoStack;
+        return SEER.redoStack;
     }
 
     public static Edit getNextUndoable() {
@@ -149,16 +149,16 @@ public final class UndoOverseer {
         
         UndoOverseer.clearRedoStack();
         markActiveLayerDirty(edit);
-        seer.updateActionState();
+        SEER.updateActionState();
     }
 
     private static void clearRedoStack() {
-        seer.redoStack.clear();
+        SEER.redoStack.clear();
     }
 
     private static Collection<Edit> getAllEdits() {
-        Collection<Edit> allEdits = new ArrayList<>(seer.undoStack);
-        allEdits.addAll(seer.redoStack);
+        Collection<Edit> allEdits = new ArrayList<>(SEER.undoStack);
+        allEdits.addAll(SEER.redoStack);
         return allEdits;
     }
 
@@ -177,9 +177,9 @@ public final class UndoOverseer {
     }
 
     public static void cleanupRemovedLayer(LayerPainter painter) {
-        UndoOverseer.cleanupStack(painter,  seer.undoStack);
-        UndoOverseer.cleanupStack(painter,  seer.redoStack);
-        seer.updateActionState();
+        UndoOverseer.cleanupStack(painter,  SEER.undoStack);
+        UndoOverseer.cleanupStack(painter,  SEER.redoStack);
+        SEER.updateActionState();
     }
 
     private static void cleanupStack(LayerPainter painter, Collection<Edit> stack) {

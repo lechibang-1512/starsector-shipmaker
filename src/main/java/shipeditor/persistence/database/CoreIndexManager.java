@@ -20,17 +20,17 @@ import java.util.stream.Collectors;
  */
 @Log4j2
 public class CoreIndexManager {
-    private static final Map<String, List<IndexedFile>> coreFilesByType = new ConcurrentHashMap<>();
-    private static final Map<String, Map<String, IndexedFile>> coreFilesByEntityId = new ConcurrentHashMap<>();
-    private static final Map<String, IndexedFile> coreFilesByPath = new ConcurrentHashMap<>();
+    private static final Map<String, List<IndexedFile>> CORE_FILES_BY_TYPE = new ConcurrentHashMap<>();
+    private static final Map<String, Map<String, IndexedFile>> CORE_FILES_BY_ENTITY_ID = new ConcurrentHashMap<>();
+    private static final Map<String, IndexedFile> CORE_FILES_BY_PATH = new ConcurrentHashMap<>();
     private static final Object LOCK = new Object();
     private static volatile boolean isLoaded = false;
 
     public static void reset() {
         synchronized (LOCK) {
-            coreFilesByType.clear();
-            coreFilesByEntityId.clear();
-            coreFilesByPath.clear();
+            CORE_FILES_BY_TYPE.clear();
+            CORE_FILES_BY_ENTITY_ID.clear();
+            CORE_FILES_BY_PATH.clear();
             isLoaded = false;
         }
     }
@@ -49,9 +49,9 @@ public class CoreIndexManager {
             return;
         }
 
-            coreFilesByType.clear();
-            coreFilesByEntityId.clear();
-            coreFilesByPath.clear();
+            CORE_FILES_BY_TYPE.clear();
+            CORE_FILES_BY_ENTITY_ID.clear();
+            CORE_FILES_BY_PATH.clear();
 
             long startTime = System.currentTimeMillis();
 
@@ -112,15 +112,15 @@ public class CoreIndexManager {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
-            coreFilesByType.put(type, typeList);
+            CORE_FILES_BY_TYPE.put(type, typeList);
             allIndexedFiles.addAll(typeList);
 
             Map<String, IndexedFile> entityIdMap = new ConcurrentHashMap<>();
             for (IndexedFile file : typeList) {
                 entityIdMap.put(file.getEntityId(), file);
-                coreFilesByPath.put(file.getFilePath().toString(), file);
+                CORE_FILES_BY_PATH.put(file.getFilePath().toString(), file);
             }
-            coreFilesByEntityId.put(type, entityIdMap);
+            CORE_FILES_BY_ENTITY_ID.put(type, entityIdMap);
         }
 
         // Persist to database for faster subsequent startups.
@@ -171,28 +171,28 @@ public class CoreIndexManager {
 
             for (IndexedFile file : allCoreFiles) {
                 String type = file.getEntityType();
-                coreFilesByType.computeIfAbsent(type, k -> new ArrayList<>()).add(file);
+                CORE_FILES_BY_TYPE.computeIfAbsent(type, k -> new ArrayList<>()).add(file);
                 
                 String entityId = file.getEntityId();
                 if (entityId != null) {
-                    coreFilesByEntityId.computeIfAbsent(type, k -> new ConcurrentHashMap<>()).put(entityId, file);
+                    CORE_FILES_BY_ENTITY_ID.computeIfAbsent(type, k -> new ConcurrentHashMap<>()).put(entityId, file);
                 }
                 
-                coreFilesByPath.put(file.getFilePath().toString(), file);
+                CORE_FILES_BY_PATH.put(file.getFilePath().toString(), file);
             }
 
             // Migration check: detect stale DB entries that used filename as entityName
             // instead of hullName. If entityName equals entityId for ship files, the old
             // indexing format is cached and a re-scan is needed.
-            List<IndexedFile> shipFiles = coreFilesByType.get(StringConstants.SHIP_TYPE);
+            List<IndexedFile> shipFiles = CORE_FILES_BY_TYPE.get(StringConstants.SHIP_TYPE);
             if (shipFiles != null && !shipFiles.isEmpty()) {
                 IndexedFile sample = shipFiles.get(0);
                 if (sample.getEntityName() != null && sample.getEntityId() != null
                         && sample.getEntityName().equals(sample.getEntityId())) {
                     log.info("Detected stale entity name format in database cache, triggering re-scan.");
-                    coreFilesByType.clear();
-                    coreFilesByEntityId.clear();
-                    coreFilesByPath.clear();
+                    CORE_FILES_BY_TYPE.clear();
+                    CORE_FILES_BY_ENTITY_ID.clear();
+                    CORE_FILES_BY_PATH.clear();
                     return false;
                 }
             }
@@ -240,14 +240,14 @@ public class CoreIndexManager {
         if (!isLoaded) {
             loadCoreData();
         }
-        return coreFilesByType.getOrDefault(type, Collections.emptyList());
+        return CORE_FILES_BY_TYPE.getOrDefault(type, Collections.emptyList());
     }
 
     public static IndexedFile getFileByEntityId(String entityId, String type) {
         if (!isLoaded) {
             loadCoreData();
         }
-        Map<String, IndexedFile> entityMap = coreFilesByEntityId.get(type);
+        Map<String, IndexedFile> entityMap = CORE_FILES_BY_ENTITY_ID.get(type);
         return entityMap != null ? entityMap.get(entityId) : null;
     }
 
@@ -255,6 +255,6 @@ public class CoreIndexManager {
         if (!isLoaded) {
             loadCoreData();
         }
-        return coreFilesByPath.get(pathStr);
+        return CORE_FILES_BY_PATH.get(pathStr);
     }
 }

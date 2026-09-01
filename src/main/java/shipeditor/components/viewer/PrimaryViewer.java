@@ -58,7 +58,7 @@ import shipeditor.communication.events.viewer.control.ControlEvents.ViewerTransf
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public final class PrimaryViewer extends JPanel implements LayerViewer {
 
-    private static final Dimension minimumPanelSize = new Dimension(240, 120);
+    private static final Dimension MINIMUM_PANEL_SIZE = new Dimension(240, 120);
 
     private final LayerManager layerManager;
 
@@ -84,7 +84,7 @@ public final class PrimaryViewer extends JPanel implements LayerViewer {
 
     public PrimaryViewer() {
         this.setLayout(new BorderLayout());
-        this.setMinimumSize(minimumPanelSize);
+        this.setMinimumSize(MINIMUM_PANEL_SIZE);
         this.setBackground(Color.GRAY);
 
         this.layerManager = new LayerManager();

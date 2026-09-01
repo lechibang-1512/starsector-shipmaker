@@ -16,7 +16,7 @@ import java.util.List;
 @Log4j2
 final class BoundList extends PointList<BoundPoint> {
 
-    private static final DataFlavor boundFlavor = new DataFlavor(BoundPoint.class, StringManager.getString("BOUND"));
+    private static final DataFlavor BOUND_FLAVOR = new DataFlavor(BoundPoint.class, StringManager.getString("BOUND"));
 
     private final Runnable selectionRefresher;
 
@@ -48,12 +48,12 @@ final class BoundList extends PointList<BoundPoint> {
 
             @Override
             public DataFlavor[] getTransferDataFlavors() {
-                return new DataFlavor[] {boundFlavor, sourceFlavor};
+                return new DataFlavor[] {BOUND_FLAVOR, sourceFlavor};
             }
 
             @Override
             public boolean isDataFlavorSupported(DataFlavor flavor) {
-                return flavor.equals(boundFlavor);
+                return flavor.equals(BOUND_FLAVOR);
             }
 
             @Override
@@ -65,7 +65,7 @@ final class BoundList extends PointList<BoundPoint> {
 
     @Override
     protected boolean isSupported(Transferable transferable) {
-        return transferable.isDataFlavorSupported(boundFlavor);
+        return transferable.isDataFlavorSupported(BOUND_FLAVOR);
     }
 
 }

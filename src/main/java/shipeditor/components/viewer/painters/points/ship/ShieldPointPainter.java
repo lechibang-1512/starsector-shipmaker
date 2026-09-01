@@ -37,7 +37,7 @@ public class ShieldPointPainter extends SinglePointPainter {
     @Getter
     private ShieldCenterPoint shieldCenterPoint;
 
-    private static final int dragShieldRadiusHotkey = KeyEvent.VK_CONTROL;
+    private static final int DRAG_SHIELD_RADIUS_HOTKEY = KeyEvent.VK_CONTROL;
 
     private boolean shieldRadiusHotkeyPressed;
 
@@ -151,14 +151,14 @@ public class ShieldPointPainter extends SinglePointPainter {
             }
             if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
                 int keyCode = pressedEvent.keyEvent().getKeyCode();
-                boolean isShieldHotkey = (keyCode == dragShieldRadiusHotkey);
+                boolean isShieldHotkey = (keyCode == DRAG_SHIELD_RADIUS_HOTKEY);
                 if (isShieldHotkey) {
                     this.shieldRadiusHotkeyPressed = true;
                     EventBus.publish(new ViewerRepaintQueued());
                 }
             } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
                 int keyCode = releasedEvent.keyEvent().getKeyCode();
-                boolean isShieldHotkey = (keyCode == dragShieldRadiusHotkey);
+                boolean isShieldHotkey = (keyCode == DRAG_SHIELD_RADIUS_HOTKEY);
                 if (isShieldHotkey) {
                     this.shieldRadiusHotkeyPressed = false;
                     EventBus.publish(new ViewerRepaintQueued());
