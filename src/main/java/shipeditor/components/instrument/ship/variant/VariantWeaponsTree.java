@@ -21,6 +21,7 @@ import shipeditor.components.viewer.painters.points.ship.features.InstalledFeatu
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.containers.trees.DynamicWidthTree;
+import shipeditor.utility.components.dialog.DialogUtilities;
 import shipeditor.utility.components.rendering.CustomTreeNode;
 import shipeditor.utility.overseers.StaticController;
 
@@ -74,6 +75,11 @@ public class VariantWeaponsTree extends DynamicWidthTree {
                     action.accept(node);
                     break;
                 }
+            } else if (nodeObject instanceof WeaponSlotPoint slotPoint) {
+                if (Objects.equals(slotPoint.getId(), point.getId())) {
+                    action.accept(node);
+                    break;
+                }
             }
         }
     }
@@ -90,6 +96,38 @@ public class VariantWeaponsTree extends DynamicWidthTree {
                     EventBus.publish(new ViewerRepaintQueued());
                 }
                 selectionAction.accept(checked);
+            } else if (nodeObject instanceof WeaponSlotPoint emptySlot) {
+                if (!emptySlot.isPointSelected()) {
+                    EventBus.publish(new PointSelectQueued(emptySlot));
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
+            }
+        });
+        this.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+                    TreePath path = getPathForLocation(e.getX(), e.getY());
+                    if (path != null && path.getLastPathComponent() instanceof CustomTreeNode node) {
+                        Object obj = node.getUserObject();
+                        WeaponSlotPoint slot = null;
+                        if (obj instanceof InstalledFeature feature) {
+                            slot = getSlotPoint(feature);
+                        } else if (obj instanceof WeaponSlotPoint slotPoint) {
+                            slot = slotPoint;
+                        }
+                        if (slot != null) {
+                            var layer = StaticController.getActiveLayer();
+                            if (layer instanceof ShipLayer shipLayer) {
+                                shipeditor.components.datafiles.entities.WeaponCSVEntry picked = 
+                                        DialogUtilities.showWeaponPickerDialog(slot);
+                                if (picked != null) {
+                                    shipLayer.getFeaturesOverseer().installWeapon(slot, picked);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         });
         this.addMouseListener(new WeaponTreeContextMenuController(this));
@@ -197,13 +235,36 @@ public class VariantWeaponsTree extends DynamicWidthTree {
         variant.ensureBuiltInsSync(shipPainter);
 
         final var weaponGroups = variant.getWeaponGroups();
+        java.util.Set<String> fittedSlotIDs = new java.util.HashSet<>();
         for (FittedWeaponGroup group : weaponGroups) {
             this.addWeaponGroup(group);
             final ListOrderedMap<String, InstalledFeature> weapons = group.getWeapons();
             for (InstalledFeature feature : weapons.valueList()) {
                 this.addWeaponInstall(feature, group);
+                fittedSlotIDs.add(feature.getSlotID());
             }
         }
+
+        // Query all weapon slots from slotPainter to include unassigned / empty slots
+        if (slotPainter != null) {
+            List<WeaponSlotPoint> allSlots = slotPainter.getSlotPoints();
+            List<WeaponSlotPoint> unassignedSlots = new java.util.ArrayList<>();
+            for (WeaponSlotPoint slot : allSlots) {
+                if (slot.isFittable() && !fittedSlotIDs.contains(slot.getId())) {
+                    unassignedSlots.add(slot);
+                }
+            }
+
+            if (!unassignedSlots.isEmpty()) {
+                CustomTreeNode unassignedRoot = new CustomTreeNode("Unassigned Slots (" + unassignedSlots.size() + ")");
+                model.insertNodeInto(unassignedRoot, rootNode, rootNode.getChildCount());
+                for (WeaponSlotPoint emptySlot : unassignedSlots) {
+                    CustomTreeNode slotNode = new CustomTreeNode(emptySlot);
+                    model.insertNodeInto(slotNode, unassignedRoot, unassignedRoot.getChildCount());
+                }
+            }
+        }
+
         this.reloadModel();
     }
 

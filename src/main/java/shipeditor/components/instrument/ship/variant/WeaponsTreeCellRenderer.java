@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.variant;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
 import shipeditor.components.viewer.ViewerEnums.FireMode;
 import shipeditor.components.viewer.painters.points.ship.features.FittedWeaponGroup;
@@ -11,7 +13,6 @@ import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.containers.trees.SortableTree;
 import shipeditor.utility.components.rendering.CustomTreeNode;
 import shipeditor.utility.components.rendering.SortableTreeCellRenderer;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 import shipeditor.utility.components.UIConstants;
 
@@ -104,14 +105,14 @@ public class WeaponsTreeCellRenderer extends SortableTreeCellRenderer {
         JLabel textLabel = getTextLabel();
 
         Color iconColor = Themes.getIconColor();
-        iconLabel.setText("[Group]");
+        iconLabel.setText(StringManager.getString("GROUP"));
         iconLabel.setBorder(new EmptyBorder(0, 0, 0, 2));
-        textLabel.setText("Weapon Group " + weaponGroup.getIndexToDisplay());
+        textLabel.setText(StringManager.getString("WEAPON_GROUP") + weaponGroup.getIndexToDisplay());
 
         setBackgroundNonSelectionColor(Themes.getPanelDarkColor());
 
         if (weaponGroup.isAutofire()) {
-            slotTypeIcon.setText("[Autofire]");
+            slotTypeIcon.setText(StringManager.getString("AUTOFIRE"));
             slotTypeIcon.setForeground(iconColor);
             slotTypeIcon.setOpaque(false);
             slotTypeIcon.setBorder(new EmptyBorder(0, 4, 0, 0));
@@ -120,10 +121,10 @@ public class WeaponsTreeCellRenderer extends SortableTreeCellRenderer {
             treeNode.setFirstLineTip("Autofire: ON");
         }
         if (weaponGroup.getMode() == FireMode.ALTERNATING) {
-            builtInIcon.setText("[Alternating]");
+            builtInIcon.setText(StringManager.getString("ALTERNATING"));
             treeNode.setSecondLineTip("Firing mode: ALTERNATING");
         } else {
-            builtInIcon.setText("[Linked]");
+            builtInIcon.setText(StringManager.getString("LINKED"));
             treeNode.setSecondLineTip("Firing mode: LINKED");
         }
         builtInIcon.setForeground(iconColor);
@@ -139,10 +140,10 @@ public class WeaponsTreeCellRenderer extends SortableTreeCellRenderer {
         var slot = getSlotPoint(feature);
 
         lowerRightLabel.setText(feature.getName());
-        treeNode.setFirstLineTip(StringValues.WEAPON_ID + feature.getFeatureID());
+        treeNode.setFirstLineTip(StringManager.getString("WEAPON_ID") + feature.getFeatureID());
 
         if (feature.isContainedInBuiltIns()) {
-            builtInIcon.setText("[Built-in]");
+            builtInIcon.setText(StringManager.getString("BUILT_IN"));
             builtInIcon.setForeground(Themes.getIconColor());
             builtInIcon.setVisible(true);
 
@@ -152,29 +153,29 @@ public class WeaponsTreeCellRenderer extends SortableTreeCellRenderer {
 
         if (slot == null) {
             setForeground(Themes.getReddishFontColor());
-            iconLabel.setText("[Slot Not Found]");
+            iconLabel.setText(StringManager.getString("SLOT_NOT_FOUND"));
             iconLabel.setForeground(Color.RED);
             iconLabel.setOpaque(false);
             iconLabel.setBorder(new EmptyBorder(1, 0, 0, 0));
 
             textLabel.setBorder(UIConstants.EMPTY_BORDER);
 
-            treeNode.setSecondLineTip(StringValues.INVALIDATED_SLOT_NOT_FOUND);
+            treeNode.setSecondLineTip(StringManager.getString("INVALIDATED_SLOT_NOT_FOUND"));
         } else {
             slotTypeIcon.setVisible(true);
             WeaponType weaponType = slot.getWeaponType();
-            slotTypeIcon.setText("[" + weaponType.getDisplayedName() + "]");
+            slotTypeIcon.setText(StringManager.getString("EMPTY_STRING_2") + weaponType.getDisplayedName() + "]");
             slotTypeIcon.setForeground(weaponType.getColor());
             slotTypeIcon.setOpaque(false);
             slotTypeIcon.setBorder(null);
 
             WeaponSize weaponSize = slot.getWeaponSize();
-            iconLabel.setText("[" + weaponSize.getDisplayedName() + "]");
+            iconLabel.setText(StringManager.getString("EMPTY_STRING_2") + weaponSize.getDisplayedName() + "]");
             iconLabel.setForeground(Themes.getIconColor());
 
             if (!slot.canFit(feature)) {
                 setForeground(Themes.getReddishFontColor());
-                String weaponUnfitForSlot = StringValues.INVALIDATED_WEAPON_UNFIT_FOR_SLOT;
+                String weaponUnfitForSlot = StringManager.getString("INVALIDATED_WEAPON_UNFIT_FOR_SLOT");
                 if (feature.isContainedInBuiltIns()) {
                     weaponUnfitForSlot = Utility.getWithLinebreaks(weaponUnfitForSlot,
                             "Built-in: will appear in game");
@@ -183,7 +184,33 @@ public class WeaponsTreeCellRenderer extends SortableTreeCellRenderer {
             }
         }
         textLabel.setText(feature.getSlotID());
-        upperRightLabel.setText("OP: " + feature.getOPCost());
+        upperRightLabel.setText(StringManager.getString("OP") + feature.getOPCost());
+    }
+
+    private void handleEmptySlotAppearance(CustomTreeNode treeNode, WeaponSlotPoint slot) {
+        JLabel iconLabel = getIconLabel();
+        JLabel textLabel = getTextLabel();
+
+        slotTypeIcon.setVisible(true);
+        WeaponType weaponType = slot.getWeaponType();
+        slotTypeIcon.setText(StringManager.getString("EMPTY_STRING_2") + weaponType.getDisplayedName() + "]");
+        slotTypeIcon.setForeground(weaponType.getColor());
+        slotTypeIcon.setOpaque(false);
+        slotTypeIcon.setBorder(null);
+
+        WeaponSize weaponSize = slot.getWeaponSize();
+        iconLabel.setText(StringManager.getString("EMPTY_STRING_2") + weaponSize.getDisplayedName() + "]");
+        iconLabel.setForeground(Themes.getIconColor());
+
+        textLabel.setText(slot.getId());
+        upperRightLabel.setText(StringManager.getString("EMPTY_STRING_2") + slot.getWeaponMount().getDisplayName() + "]");
+        upperRightLabel.setForeground(Themes.getDisabledTextColor());
+
+        lowerRightLabel.setText(StringManager.getString("EMPTY"));
+        lowerRightLabel.setForeground(Themes.getDisabledTextColor());
+
+        treeNode.setFirstLineTip("Slot ID: " + slot.getId());
+        treeNode.setSecondLineTip("Double-click or right-click to install weapon");
     }
 
     @Override
@@ -230,14 +257,21 @@ public class WeaponsTreeCellRenderer extends SortableTreeCellRenderer {
                 this.handleGroupAppearance(treeNode, checked);
             } else if (object instanceof InstalledFeature checked && leaf) {
                 this.handleFeatureAppearance(treeNode, checked);
+            } else if (object instanceof WeaponSlotPoint emptySlot) {
+                this.handleEmptySlotAppearance(treeNode, emptySlot);
             } else {
                 textLabel.setText(" " + value);
+                if (value.toString().startsWith("Unassigned Slots")) {
+                    iconLabel.setText(StringManager.getString("EMPTY_SLOTS"));
+                    iconLabel.setForeground(Themes.getIconColor());
+                    setBackgroundNonSelectionColor(Themes.getPanelDarkColor());
+                }
             }
 
             return this;
         } catch (Exception e) {
             log.error("Silent Swing exception caught during cell render for row {}", row, e);
-            getTextLabel().setText(" [Render Error]");
+            getTextLabel().setText(StringManager.getString("RENDER_ERROR"));
             getTextLabel().setForeground(Color.RED);
             return this;
         }

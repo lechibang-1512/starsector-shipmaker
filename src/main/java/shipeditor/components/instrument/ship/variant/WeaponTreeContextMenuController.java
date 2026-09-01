@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.variant;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.components.datafiles.entities.CSVEntry;
 import shipeditor.components.datafiles.entities.WeaponCSVEntry;
@@ -8,8 +10,12 @@ import shipeditor.components.viewer.painters.points.ship.features.InstalledFeatu
 import shipeditor.components.viewer.ViewerEnums.FireMode;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.components.rendering.CustomTreeNode;
-import shipeditor.utility.text.StringValues;
 import shipeditor.communication.events.components.ComponentEvents.SelectWeaponDataEntry;
+
+import shipeditor.components.viewer.entities.weapon.WeaponSlotPoint;
+import shipeditor.components.viewer.layers.ship.ShipLayer;
+import shipeditor.utility.components.dialog.DialogUtilities;
+import shipeditor.utility.overseers.StaticController;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
@@ -60,16 +66,34 @@ public class WeaponTreeContextMenuController extends MouseAdapter {
             contextMenu = getWeaponGroupContextPopupMenu((FittedWeaponGroup) nodeUserObject);
         } else if (nodeUserObject instanceof InstalledFeature) {
             contextMenu = getInstalledFeatureContextMenu((InstalledFeature) nodeUserObject);
+        } else if (nodeUserObject instanceof WeaponSlotPoint slot) {
+            contextMenu = getEmptySlotContextMenu(slot);
         }
 
         return contextMenu;
     }
 
-    private static JPopupMenu getInstalledFeatureContextMenu(InstalledFeature feature) {
+    private JPopupMenu getInstalledFeatureContextMenu(InstalledFeature feature) {
         JPopupMenu contextMenu = new JPopupMenu();
 
+        WeaponSlotPoint slot = tree.getSlotPainter() != null ? tree.getSlotPainter().getSlotByID(feature.getSlotID()) : null;
+
+        if (slot != null && !feature.isContainedInBuiltIns()) {
+            JMenuItem changeFeature = new JMenuItem(StringManager.getString("CHANGE_WEAPON"));
+            changeFeature.addActionListener(e -> {
+                var layer = StaticController.getActiveLayer();
+                if (layer instanceof ShipLayer shipLayer) {
+                    WeaponCSVEntry picked = DialogUtilities.showWeaponPickerDialog(slot);
+                    if (picked != null) {
+                        shipLayer.getFeaturesOverseer().installWeapon(slot, picked);
+                    }
+                }
+            });
+            contextMenu.add(changeFeature);
+        }
+
         if (!feature.isContainedInBuiltIns()) {
-            JMenuItem uninstallFeature = new JMenuItem(StringValues.UNINSTALL_FEATURE);
+            JMenuItem uninstallFeature = new JMenuItem(StringManager.getString("UNINSTALL_FEATURE"));
             uninstallFeature.addActionListener(e -> {
                 var group = feature.getParentGroup();
                 EditDispatch.postFeatureUninstalled(group.getWeapons(), feature.getSlotID(),
@@ -78,7 +102,7 @@ public class WeaponTreeContextMenuController extends MouseAdapter {
             contextMenu.add(uninstallFeature);
         }
 
-        JMenuItem selectEntry = new JMenuItem(StringValues.SELECT_WEAPON_ENTRY);
+        JMenuItem selectEntry = new JMenuItem(StringManager.getString("SELECT_WEAPON_ENTRY"));
         selectEntry.addActionListener(event ->  {
             CSVEntry dataEntry = feature.getDataEntry();
             if (dataEntry instanceof WeaponCSVEntry weaponEntry) {
@@ -86,6 +110,24 @@ public class WeaponTreeContextMenuController extends MouseAdapter {
             }
         });
         contextMenu.add(selectEntry);
+        return contextMenu;
+    }
+
+    private JPopupMenu getEmptySlotContextMenu(WeaponSlotPoint slot) {
+        JPopupMenu contextMenu = new JPopupMenu();
+
+        JMenuItem installFeature = new JMenuItem(StringManager.getString("INSTALL_WEAPON"));
+        installFeature.addActionListener(e -> {
+            var layer = StaticController.getActiveLayer();
+            if (layer instanceof ShipLayer shipLayer) {
+                WeaponCSVEntry picked = DialogUtilities.showWeaponPickerDialog(slot);
+                if (picked != null) {
+                    shipLayer.getFeaturesOverseer().installWeapon(slot, picked);
+                }
+            }
+        });
+        contextMenu.add(installFeature);
+
         return contextMenu;
     }
 
@@ -105,14 +147,14 @@ public class WeaponTreeContextMenuController extends MouseAdapter {
 
         contextMenu.addSeparator();
 
-        JMenuItem removeGroup = new JMenuItem("Remove weapon group");
+        JMenuItem removeGroup = new JMenuItem(StringManager.getString("REMOVE_WEAPON_GROUP"));
         removeGroup.addActionListener(e -> tree.removeWeaponGroup(weaponGroup));
         contextMenu.add(removeGroup);
         return contextMenu;
     }
 
     private JMenu getModeSubmenu(FittedWeaponGroup weaponGroup) {
-        JMenu modeSubmenu = new JMenu("Firing mode");
+        JMenu modeSubmenu = new JMenu(StringManager.getString("FIRING_MODE"));
 
         JMenuItem linkedMode = new JRadioButtonMenuItem("Mode: Linked");
         linkedMode.setSelected(weaponGroup.getMode() == FireMode.LINKED);

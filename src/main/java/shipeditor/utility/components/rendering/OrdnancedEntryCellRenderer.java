@@ -1,5 +1,7 @@
 package shipeditor.utility.components.rendering;
 
+import shipeditor.utility.text.StringManager;
+
 import com.formdev.flatlaf.ui.FlatLineBorder;
 import shipeditor.components.datafiles.entities.OrdnancedCSVEntry;
 import shipeditor.representation.RepresentationEnums.HullSize;
@@ -23,9 +25,8 @@ public class OrdnancedEntryCellRenderer extends PanelListCellRenderer<OrdnancedC
 
     public OrdnancedEntryCellRenderer() {
         iconLabel = new JLabel();
-        iconLabel.setOpaque(true);
-        iconLabel.setBorder(new FlatLineBorder(new Insets(2, 2, 2, 2), Color.GRAY));
-        iconLabel.setBackground(Color.LIGHT_GRAY);
+        iconLabel.setOpaque(false);
+        iconLabel.setBorder(null);
 
         textLabel = new JLabel();
         ordnanceLabel = new JLabel();
@@ -72,7 +73,7 @@ public class OrdnancedEntryCellRenderer extends PanelListCellRenderer<OrdnancedC
             iconLabel.setText(label.getText());
         } else {
             iconLabel.setIcon(null);
-            iconLabel.setText("?");
+            iconLabel.setText(StringManager.getString("EMPTY_STRING_1"));
         }
 
         textLabel.setText(value.getEntryName());
@@ -80,7 +81,7 @@ public class OrdnancedEntryCellRenderer extends PanelListCellRenderer<OrdnancedC
         HullSize size = StaticController.getSizeOfActiveLayer();
         if (size != null) {
             int ordnanceCost = value.getOrdnanceCost(size);
-            ordnanceLabel.setText("OP: " + ordnanceCost);
+            ordnanceLabel.setText(StringManager.getString("OP") + ordnanceCost);
         }
 
         this.setToolTipText(value.getMultilineTooltip());

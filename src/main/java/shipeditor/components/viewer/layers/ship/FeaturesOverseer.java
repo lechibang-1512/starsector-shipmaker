@@ -343,7 +343,13 @@ public class FeaturesOverseer {
         }
     }
 
-    private void installWeapon(SlotData selected, WeaponCSVEntry forInstall) {
+    public void uninstallWeapon(SlotData selected) {
+        var shipPainter = parent.getPainter();
+        if (shipPainter == null || shipPainter.isUninitialized()) return;
+        FeaturesOverseer.handleFeatureRemoval(selected, EditorInstrument.VARIANT_WEAPONS, shipPainter);
+    }
+
+    public void installWeapon(SlotData selected, WeaponCSVEntry forInstall) {
         var shipPainter = parent.getPainter();
         var activeVariant = shipPainter.getActiveVariant();
         if (activeVariant == null || activeVariant.isEmpty()) return;

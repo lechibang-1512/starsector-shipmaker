@@ -1,13 +1,12 @@
 package shipeditor.components.instrument.ship.variant.hullmods;
 
+import shipeditor.utility.text.StringManager;
 
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.utility.components.ComponentUtilities;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JList;
@@ -42,17 +41,37 @@ class SuppressedModsPanel extends JPanel {
 
         JPanel controlPanel = new JPanel(new BorderLayout(4, 0));
         addField = new JTextField();
-        addField.setToolTipText("Enter hullmod ID to suppress, then press Add or Enter");
+        addField.setToolTipText(StringManager.getString("ENTER_HULLMOD_ID_TO_SUPPRESS_THEN_PRESS_ADD_OR_ENTER"));
         addField.addActionListener(e -> addFromField());
         controlPanel.add(addField, BorderLayout.CENTER);
 
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
 
-        JButton addButton = new JButton("Add");
+        JButton addButton = new JButton(StringManager.getString("ADD_1"));
         addButton.addActionListener(e -> addFromField());
         buttonsPanel.add(addButton);
 
-        JButton removeButton = new JButton(StringValues.REMOVE);
+        JButton pickButton = new JButton(StringManager.getString("PICK"));
+        pickButton.setToolTipText(StringManager.getString("BROWSE_AND_PICK_A_HULLMOD_TO_SUPPRESS"));
+        pickButton.addActionListener(e -> {
+            var activeLayer = shipeditor.utility.overseers.StaticController.getActiveLayer();
+            if (!(activeLayer instanceof ShipLayer shipLayer)) return;
+            var shipHull = shipLayer.getHull();
+            var shipSize = shipHull != null ? shipHull.getHullSize() : null;
+
+            shipeditor.components.datafiles.entities.HullmodCSVEntry picked = 
+                    shipeditor.utility.components.dialog.DialogUtilities.showHullmodPickerDialog(shipSize, shipLayer);
+            if (picked != null) {
+                String id = picked.getID();
+                if (!listModel.contains(id)) {
+                    listModel.addElement(id);
+                    syncBackToVariant();
+                }
+            }
+        });
+        buttonsPanel.add(pickButton);
+
+        JButton removeButton = new JButton(StringManager.getString("REMOVE"));
         removeButton.addActionListener(e -> {
             String selected = modsList.getSelectedValue();
             if (selected == null) return;

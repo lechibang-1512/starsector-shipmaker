@@ -123,7 +123,7 @@ public class BaseWorldPoint implements WorldPoint, OpenGLPainter {
         return new Color(0xFFFFFFFF, true);
     }
 
-    boolean isInteractable() {
+    protected boolean isInteractable() {
         LayerPainter layer = getParent();
         if (layer == null) {
             return true;

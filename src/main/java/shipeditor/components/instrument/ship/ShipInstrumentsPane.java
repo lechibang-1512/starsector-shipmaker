@@ -13,7 +13,10 @@ import shipeditor.components.instrument.ship.bays.LaunchBaysPanel;
 import shipeditor.components.instrument.ship.bounds.BoundsPanel;
 import shipeditor.components.instrument.ship.builtins.hullmods.BuiltInHullmodsPanel;
 import shipeditor.components.instrument.ship.builtins.wings.BuiltInWingsPanel;
+import shipeditor.components.instrument.ship.centers.CollisionPanel;
+import shipeditor.components.instrument.ship.centers.ShieldPanel;
 import shipeditor.components.instrument.ship.engines.EnginesPanel;
+import shipeditor.components.instrument.ship.hull.ShipLayerInfoPanel;
 import shipeditor.components.instrument.ship.skins.SkinDataPanel;
 import shipeditor.components.instrument.ship.skins.SkinSlotOverridesPanel;
 import shipeditor.components.instrument.ship.skins.SkinEngineOverridesPanel;
@@ -44,7 +47,7 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
 
     public ShipInstrumentsPane() {
         this.createTabs();
-        // Initial dispatch — first tab is a JScrollPane wrapping ShipHullPanel
+        // Initial dispatch — first tab is a JTabbedPane with sub-tabs (Hull Data, Collision, Shield)
         Component selected = getSelectedComponent();
         if (selected instanceof JPanel panel) {
             this.dispatchModeChange(panel);
@@ -73,13 +76,17 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
     private void createTabs() {
         FlatLaf.showMnemonics(this);
 
-        // Tab 1: Hull — collapsible sections for Layer Info, Collision, Shield
-        ShipHullPanel hullPanel = new ShipHullPanel();
-        javax.swing.JScrollPane hullScroll = new javax.swing.JScrollPane(hullPanel);
-        hullScroll.setBorder(null);
-        hullScroll.getVerticalScrollBar().setUnitIncrement(16);
-        panelMode.put(hullPanel, EditorInstrument.LAYER);
-        this.addTab("Hull", null, hullScroll, "Hull Properties");
+        // Tab 1: Hull — inner tabs for Hull Info, Collision, Shield
+        JTabbedPane hullTabs = new JTabbedPane(SwingConstants.TOP);
+        hullTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        this.styleSubTabbedPane(hullTabs);
+        this.createInnerTab(hullTabs, new ShipLayerInfoPanel(), "Hull Data", EditorInstrument.LAYER, KeyEvent.VK_H);
+        this.createInnerTab(hullTabs, new CollisionPanel(), EditorInstrument.COLLISION, KeyEvent.VK_C);
+        this.createInnerTab(hullTabs, new ShieldPanel(), EditorInstrument.SHIELD, KeyEvent.VK_S);
+        this.createInnerTab(hullTabs, new BoundsPanel(), EditorInstrument.BOUNDS, KeyEvent.VK_B);
+        this.createInnerTab(hullTabs, new EnginesPanel(), EditorInstrument.ENGINES, KeyEvent.VK_E);
+        this.addTab("Hull", null, hullTabs, "Hull Properties & Centers");
+        this.addInnerTabChangeListener(hullTabs);
 
         // Tab 2: Fittings — inner tabs for table-based panels
         JTabbedPane fittingsTabs = new JTabbedPane(SwingConstants.TOP);
@@ -87,8 +94,6 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
         this.styleSubTabbedPane(fittingsTabs);
         this.createInnerTab(fittingsTabs, new WeaponSlotsPanel(), EditorInstrument.WEAPON_SLOTS, KeyEvent.VK_W);
         this.createInnerTab(fittingsTabs, new LaunchBaysPanel(), EditorInstrument.LAUNCH_BAYS, KeyEvent.VK_L);
-        this.createInnerTab(fittingsTabs, new EnginesPanel(), EditorInstrument.ENGINES, KeyEvent.VK_E);
-        this.createInnerTab(fittingsTabs, new BoundsPanel(), EditorInstrument.BOUNDS, KeyEvent.VK_B);
         this.createInnerTab(fittingsTabs, new BuiltInHullmodsPanel(), EditorInstrument.BUILT_IN_MODS, KeyEvent.VK_H);
         this.createInnerTab(fittingsTabs, new BuiltInWingsPanel(), EditorInstrument.BUILT_IN_WINGS, KeyEvent.VK_N);
         this.addTab("Fittings", null, fittingsTabs, "Ship Fittings & Modifications");
@@ -139,8 +144,15 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
     }
 
     private void createInnerTab(JTabbedPane parent, JPanel panel, EditorInstrument mode, int mnemonic) {
+        this.createInnerTab(parent, panel, mode.getTitle(), mode, mnemonic);
+    }
+
+    private void createInnerTab(JTabbedPane parent, JPanel panel, String title, EditorInstrument mode, int mnemonic) {
         panelMode.put(panel, mode);
-        parent.addTab(mode.getTitle(), null, panel, mode.getTitle());
+        parent.addTab(title, null, panel, title);
+        if (mnemonic != 0) {
+            parent.setMnemonicAt(parent.getTabCount() - 1, mnemonic);
+        }
     }
 
     @Override

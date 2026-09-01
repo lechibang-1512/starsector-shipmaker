@@ -39,6 +39,8 @@ public final class GuidesPainters {
     private final OpenGLPainter bordersPaint;
     @Getter
     private final OpenGLPainter centerPaint;
+    @Getter
+    private final OpenGLPainter pixelGridPaint;
 
     private boolean drawGuides;
     private boolean drawBorders;
@@ -62,6 +64,7 @@ public final class GuidesPainters {
         this.guidesPaint = createGuidesPainter();
         this.bordersPaint = createBordersPainter();
         this.centerPaint = createSpriteCenterPainter();
+        this.pixelGridPaint = new PixelGridPainter();
     }
 
     private void listenForToggling() {
@@ -239,4 +242,53 @@ public final class GuidesPainters {
 
     }
 
+
+    private class PixelGridPainter implements OpenGLPainter {
+        private final org.joml.Vector4f gridColor = new org.joml.Vector4f(1.0f, 1.0f, 1.0f, 0.0f);
+        private final org.joml.Vector2f v1 = new org.joml.Vector2f();
+        private final org.joml.Vector2f v2 = new org.joml.Vector2f();
+
+        @Override
+        public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
+            if (!drawGuides) return;
+            double zoomLevel = StaticController.getZoomLevel();
+            // Start fading in at zoom level 15, fully visible at zoom 25
+            if (zoomLevel < 15.0) return;
+
+            LayerPainter layer = parent.getSelectedLayer();
+            if (layer == null || layer.getSprite() == null) return;
+
+            double width = layer.getSpriteWidth();
+            double height = layer.getSpriteHeight();
+            Point2D anchor = layer.getAnchor();
+
+            float startX = (float) anchor.getX();
+            float startY = (float) anchor.getY();
+            float endX = startX + (float) width;
+            float endY = startY + (float) height;
+
+            float alpha = (float) ((zoomLevel - 15.0) / 10.0);
+            alpha = Math.min(alpha, 1.0f);
+            gridColor.w = 0.25f * alpha; // 25% opacity max
+
+            shapeRenderer.begin(projection, view);
+            org.lwjgl.opengl.GL11.glLineWidth(1.0f);
+
+            // Draw vertical lines
+            for (int x = 0; x <= width; x++) {
+                v1.set(startX + x, startY);
+                v2.set(startX + x, endY);
+                shapeRenderer.drawLine(v1, v2, gridColor);
+            }
+
+            // Draw horizontal lines
+            for (int y = 0; y <= height; y++) {
+                v1.set(startX, startY + y);
+                v2.set(endX, startY + y);
+                shapeRenderer.drawLine(v1, v2, gridColor);
+            }
+
+            shapeRenderer.end();
+        }
+    }
 }

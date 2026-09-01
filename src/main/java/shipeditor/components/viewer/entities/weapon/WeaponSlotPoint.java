@@ -210,6 +210,52 @@ public class WeaponSlotPoint extends AngledPoint implements SlotPoint {
         return ColorUtilities.getBlendedColor(base, Color.WHITE, 0.5);
     }
 
+    @Override
+    protected boolean isInteractable() {
+        ShipPainter layer = getParent();
+        if (layer == null) {
+            return true;
+        }
+        EditorInstrument mode = StaticController.getEditorMode();
+        boolean validMode = mode == EditorInstrument.WEAPON_SLOTS ||
+                            mode == EditorInstrument.VARIANT_WEAPONS ||
+                            mode == EditorInstrument.VARIANT_MODULES ||
+                            mode == EditorInstrument.SKIN_SLOTS;
+        return validMode && layer.isLayerActive();
+    }
+
+    public InstalledFeature getInstalledBuiltIn() {
+        ShipPainter shipPainter = this.getParent();
+        if (shipPainter == null || this.id == null) return null;
+        var activeSkin = shipPainter.getActiveSkin();
+        if (activeSkin != null && !activeSkin.isBase()) {
+            var skinBuiltIns = activeSkin.getInitializedBuiltIns();
+            if (skinBuiltIns != null && skinBuiltIns.containsKey(this.id)) {
+                return skinBuiltIns.get(this.id);
+            }
+        }
+        var baseBuiltIns = shipPainter.getBuiltInWeapons();
+        if (baseBuiltIns != null) {
+            return baseBuiltIns.get(this.id);
+        }
+        return null;
+    }
+
+    public boolean hasBuiltInWeapon() {
+        return getInstalledBuiltIn() != null;
+    }
+
+    public String getBuiltInWeaponName() {
+        InstalledFeature feature = getInstalledBuiltIn();
+        if (feature != null) {
+            if (feature.getName() != null && !feature.getName().isBlank()) {
+                return feature.getName();
+            }
+            return feature.getID();
+        }
+        return null;
+    }
+
     public String getNameForLabel() {
         WeaponType type = getWeaponType();
         return type.getDisplayedName();
@@ -225,6 +271,10 @@ public class WeaponSlotPoint extends AngledPoint implements SlotPoint {
         String angleArc = "Angle: " + Utility.round(getAngle(), 1) + "\u00B0"
                 + "  Arc: " + Utility.round(getArc(), 1) + "\u00B0";
         String coords = "(" + toDisplay.getX() + ", " + toDisplay.getY() + ")";
+        String builtIn = getBuiltInWeaponName();
+        if (builtIn != null) {
+            return new String[] { idLine + " [Built-in: " + builtIn + "]", typeMountSize, angleArc, coords };
+        }
         return new String[] { idLine, typeMountSize, angleArc, coords };
     }
 

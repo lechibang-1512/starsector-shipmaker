@@ -180,6 +180,47 @@ public class ShapeRenderer {
         GL11.glDrawArrays(mode, 0, count);
     }
 
+    public void drawTriangle(Vector2f v0, Vector2f v1, Vector2f v2, Vector4f color, boolean filled) {
+        circleBuffer.clear();
+        circleBuffer.put(v0.x).put(v0.y);
+        circleBuffer.put(v1.x).put(v1.y);
+        circleBuffer.put(v2.x).put(v2.y);
+        circleBuffer.flip();
+
+        shader.setUniform("shapeColor", color);
+
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
+        GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, circleBuffer);
+
+        GL11.glDrawArrays(filled ? GL11.GL_TRIANGLES : GL11.GL_LINE_LOOP, 0, 3);
+    }
+
+    public void drawQuad(Vector2f v0, Vector2f v1, Vector2f v2, Vector2f v3, Vector4f color, boolean filled) {
+        circleBuffer.clear();
+        if (filled) {
+            circleBuffer.put(v0.x).put(v0.y);
+            circleBuffer.put(v1.x).put(v1.y);
+            circleBuffer.put(v2.x).put(v2.y);
+
+            circleBuffer.put(v0.x).put(v0.y);
+            circleBuffer.put(v2.x).put(v2.y);
+            circleBuffer.put(v3.x).put(v3.y);
+        } else {
+            circleBuffer.put(v0.x).put(v0.y);
+            circleBuffer.put(v1.x).put(v1.y);
+            circleBuffer.put(v2.x).put(v2.y);
+            circleBuffer.put(v3.x).put(v3.y);
+        }
+        circleBuffer.flip();
+
+        shader.setUniform("shapeColor", color);
+
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
+        GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, circleBuffer);
+
+        GL11.glDrawArrays(filled ? GL11.GL_TRIANGLES : GL11.GL_LINE_LOOP, 0, filled ? 6 : 4);
+    }
+
     public void drawCircle(Vector2f center, float radius, Vector4f color, boolean filled) {
         int count = filled ? CIRCLE_SEGMENTS * 3 : CIRCLE_SEGMENTS;
         int capacityFloats = count * 2;
