@@ -116,7 +116,7 @@ class RealSpriteRegressionTest {
     @Test
     @EnabledIf("gameSpritesAvailable")
     @DisplayName("SpriteOutlineTracer: tiny frigate (spark) — 30x24px")
-    void testOutlineTracer_Spark() throws IOException {
+    void testOutlineTracerSpark() throws IOException {
         BufferedImage img = loadSprite("graphics/ships/remnants/spark.png");
         List<Point2D> contour = SpriteOutlineTracer.generateExactContour(img);
         assertContourInvariants(contour, img, "spark");
@@ -132,7 +132,7 @@ class RealSpriteRegressionTest {
     @Test
     @EnabledIf("gameSpritesAvailable")
     @DisplayName("SpriteOutlineTracer: destroyer (hammerhead) — 108x164px")
-    void testOutlineTracer_Hammerhead() throws IOException {
+    void testOutlineTracerHammerhead() throws IOException {
         BufferedImage img = loadSprite("graphics/ships/hammerhead/hammerhead_base.png");
         List<Point2D> contour = SpriteOutlineTracer.generateExactContour(img);
         assertContourInvariants(contour, img, "hammerhead");
@@ -148,7 +148,7 @@ class RealSpriteRegressionTest {
     @Test
     @EnabledIf("gameSpritesAvailable")
     @DisplayName("SpriteOutlineTracer: capital ship (astral) — 320x440px")
-    void testOutlineTracer_Astral() throws IOException {
+    void testOutlineTracerAstral() throws IOException {
         BufferedImage img = loadSprite("graphics/ships/astral_cv.png");
         List<Point2D> contour = SpriteOutlineTracer.generateExactContour(img);
         assertContourInvariants(contour, img, "astral");
@@ -164,7 +164,7 @@ class RealSpriteRegressionTest {
     @Test
     @EnabledIf("gameSpritesAvailable")
     @DisplayName("SpriteOutlineTracer: station module (remnant shield) — 128x128px")
-    void testOutlineTracer_StationModule() throws IOException {
+    void testOutlineTracerStationModule() throws IOException {
         BufferedImage img = loadSprite("graphics/ships/remnants/remnant_station_shield1.png");
         List<Point2D> contour = SpriteOutlineTracer.generateExactContour(img);
         assertContourInvariants(contour, img, "remnant_station_shield1");
@@ -179,7 +179,7 @@ class RealSpriteRegressionTest {
     @Test
     @EnabledIf("gameSpritesAvailable")
     @DisplayName("SpriteOutlineTracer: large station (remnant station) — 512x512px")
-    void testOutlineTracer_LargeStation() throws IOException {
+    void testOutlineTracerLargeStation() throws IOException {
         BufferedImage img = loadSprite("graphics/ships/remnants/remnant_station1.png");
         List<Point2D> contour = SpriteOutlineTracer.generateExactContour(img);
         assertContourInvariants(contour, img, "remnant_station1");
@@ -199,7 +199,7 @@ class RealSpriteRegressionTest {
     @Test
     @EnabledIf("gameSpritesAvailable")
     @DisplayName("CollisionHullGenerator: hammerhead game bounds are valid and offset by anchor")
-    void testGameBounds_Hammerhead() throws IOException {
+    void testGameBoundsHammerhead() throws IOException {
         BufferedImage img = loadSprite("graphics/ships/hammerhead/hammerhead_base.png");
         Point2D anchor = new Point2D.Double(100.0, 200.0);
 
@@ -221,7 +221,7 @@ class RealSpriteRegressionTest {
     @Test
     @EnabledIf("gameSpritesAvailable")
     @DisplayName("CollisionHullGenerator: large station game bounds with zero anchor")
-    void testGameBounds_Station() throws IOException {
+    void testGameBoundsStation() throws IOException {
         BufferedImage img = loadSprite("graphics/ships/remnants/remnant_station1.png");
         Point2D anchor = new Point2D.Double(0, 0);
 
@@ -246,7 +246,7 @@ class RealSpriteRegressionTest {
     @Test
     @EnabledIf("gameSpritesAvailable")
     @DisplayName("SpriteOutlineTracer contour differs from CollisionHullGenerator bounds (validates decoupling)")
-    void testOutlineVsGameBounds_Hammerhead() throws IOException {
+    void testOutlineVsGameBoundsHammerhead() throws IOException {
         BufferedImage img = loadSprite("graphics/ships/hammerhead/hammerhead_base.png");
         Point2D anchor = new Point2D.Double(0, 0);
 
@@ -282,7 +282,7 @@ class RealSpriteRegressionTest {
     @Test
     @EnabledIf("gameSpritesAvailable")
     @DisplayName("SpriteOutlineTracer: no crash on ANY ship sprite in graphics/ships/")
-    void testOutlineTracer_AllShipSprites() throws IOException {
+    void testOutlineTracerAllShipSprites() throws IOException {
         Path shipsDir = gameFolder.resolve("graphics").resolve("ships");
         assertTrue(Files.isDirectory(shipsDir));
 
@@ -335,7 +335,7 @@ class RealSpriteRegressionTest {
     @Test
     @EnabledIf("gameSpritesAvailable")
     @DisplayName("CollisionHullGenerator: no crash on ANY ship sprite in graphics/ships/")
-    void testGameBounds_AllShipSprites() throws IOException {
+    void testGameBoundsAllShipSprites() throws IOException {
         Path shipsDir = gameFolder.resolve("graphics").resolve("ships");
         assertTrue(Files.isDirectory(shipsDir));
 

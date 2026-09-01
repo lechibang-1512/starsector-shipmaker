@@ -356,24 +356,24 @@ public final class ImageProcessing {
         return out;
     }
 
-    public static float[][] guidedFilter(float[][] p, float[][] I, int r, float eps) {
+    public static float[][] guidedFilter(float[][] p, float[][] i, int r, float eps) {
         int h = p.length;
         int w = p[0].length;
 
-        float[][] meanI = boxFilter(I, r);
+        float[][] meanI = boxFilter(i, r);
         float[][] meanP = boxFilter(p, r);
 
-        float[][] Ip = new float[h][w];
-        float[][] II = new float[h][w];
+        float[][] ip = new float[h][w];
+        float[][] ii = new float[h][w];
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                Ip[y][x] = I[y][x] * p[y][x];
-                II[y][x] = I[y][x] * I[y][x];
+                ip[y][x] = i[y][x] * p[y][x];
+                ii[y][x] = i[y][x] * i[y][x];
             }
         }
 
-        float[][] meanIp = boxFilter(Ip, r);
-        float[][] meanII = boxFilter(II, r);
+        float[][] meanIp = boxFilter(ip, r);
+        float[][] meanII = boxFilter(ii, r);
 
         float[][] a = new float[h][w];
         float[][] b = new float[h][w];
@@ -392,7 +392,7 @@ public final class ImageProcessing {
         float[][] q = new float[h][w];
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                float val = meanA[y][x] * I[y][x] + meanB[y][x];
+                float val = meanA[y][x] * i[y][x] + meanB[y][x];
                 q[y][x] = Math.max(0.0f, Math.min(1.0f, val));
             }
         }

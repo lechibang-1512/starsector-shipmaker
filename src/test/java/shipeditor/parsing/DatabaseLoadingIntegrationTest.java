@@ -51,7 +51,7 @@ class DatabaseLoadingIntegrationTest {
     // ============================================================
 
     @Test
-    void testParseShipCSV_normalRows() throws IOException {
+    void testParseShipCSVNormalRows() throws IOException {
         String csv = """
                 name,id,designation,tech/manufacturer,system id,fleet pts,hitpoints,armor rating,ordnance points,hints,tags,rarity
                 Onslaught,onslaught,Battleship,Low Tech,burndrive,40,17000,1500,400,SHIP,lowtech_bp,1
@@ -476,7 +476,7 @@ class DatabaseLoadingIntegrationTest {
     }
 
     @Test
-    void testCommentRowFiltering_normalPredicate() throws IOException {
+    void testCommentRowFilteringNormalPredicate() throws IOException {
         String csv = """
                 name,id,hitpoints
                 Real Ship,real_ship,5000
@@ -507,7 +507,7 @@ class DatabaseLoadingIntegrationTest {
     }
 
     @Test
-    void testCommentRowFiltering_wingPredicate() throws IOException {
+    void testCommentRowFilteringWingPredicate() throws IOException {
         String csv = """
                 id,variant,op cost
                 broadsword_wing,broadsword_Fighter,8
@@ -695,7 +695,7 @@ class DatabaseLoadingIntegrationTest {
     // ============================================================
 
     @Test
-    void testFullPipelineSimulation_allEntityTypes() throws IOException {
+    void testFullPipelineSimulationAllEntityTypes() throws IOException {
         // This test simulates the complete IndexScannerTask → LoadCSVDataAction pipeline
         // without needing the database or SettingsManager
 

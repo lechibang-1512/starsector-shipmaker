@@ -17,19 +17,19 @@ public class DeltaEMathTest {
     @Test
     public void testDeltaECiede2000SharmaBenchmarks() {
         // Standard Sharma, Wu, Dalal (2005) verification pairs
-        float[] p1_1 = {50.0f, 2.6772f, -79.7751f};
-        float[] p1_2 = {50.0f, 0.0f, -82.7485f};
-        float de1 = DeltaEMath.deltaECiede2000(p1_1, p1_2);
+        float[] p11 = {50.0f, 2.6772f, -79.7751f};
+        float[] p12 = {50.0f, 0.0f, -82.7485f};
+        float de1 = DeltaEMath.deltaECiede2000(p11, p12);
         assertEquals(2.0425f, de1, 0.005f);
 
-        float[] p2_1 = {50.0f, 3.1571f, -77.5521f};
-        float[] p2_2 = {50.0f, 0.0f, -82.7485f};
-        float de2 = DeltaEMath.deltaECiede2000(p2_1, p2_2);
+        float[] p21 = {50.0f, 3.1571f, -77.5521f};
+        float[] p22 = {50.0f, 0.0f, -82.7485f};
+        float de2 = DeltaEMath.deltaECiede2000(p21, p22);
         assertEquals(2.800f, de2, 0.01f);
 
-        float[] p3_1 = {50.0f, 2.8361f, -74.02f};
-        float[] p3_2 = {50.0f, 0.0f, -82.7485f};
-        float de3 = DeltaEMath.deltaECiede2000(p3_1, p3_2);
+        float[] p31 = {50.0f, 2.8361f, -74.02f};
+        float[] p32 = {50.0f, 0.0f, -82.7485f};
+        float de3 = DeltaEMath.deltaECiede2000(p31, p32);
         assertEquals(3.4412f, de3, 0.01f);
 
         // Identical pair

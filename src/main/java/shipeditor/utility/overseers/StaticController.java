@@ -63,8 +63,11 @@ public final class StaticController {
     @Getter
     private static Point2D correctedCursor = new Point2D.Double();
 
-    @Getter
-    private static final EventScheduler scheduler = new EventScheduler();
+    private static final EventScheduler SCHEDULER = new EventScheduler();
+
+    public static EventScheduler getScheduler() {
+        return SCHEDULER;
+    }
 
     @Getter
     private static CoordsDisplayMode coordsMode = CoordsDisplayMode.SHIP_CENTER;

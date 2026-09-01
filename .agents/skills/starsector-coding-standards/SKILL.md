@@ -22,3 +22,10 @@ When refactoring deep or repetitive `if..else if` chains that evaluate the same 
 
 ## 5. Trace "Breakpoints"
 Because standard Java lacks inline debugger breakpoints (`debugger;`), you must implement trace points by inserting highly descriptive `log.debug(...)`, `log.trace(...)`, or `assert` statements directly before executing complex logic blocks to aid in runtime debugging.
+
+## 6. Naming Conventions (Checkstyle Enforced)
+- **Classes/Interfaces**: `PascalCase` (e.g., `ShipPainter`).
+- **Methods**: `camelCase` (e.g., `rotatePointByCenter`).
+- **Instance Fields/Local Variables**: `camelCase`. No Hungarian notation (do NOT prefix with `m` or `_`).
+- **Constants (`static final`)**: `UPPER_SNAKE_CASE` (e.g., `DEFAULT_ZOOM_LEVEL`), with the exception of the standard `log` instance.
+*Any violations of these rules will actively fail the `mvn package` checkstyle validation build phase.*

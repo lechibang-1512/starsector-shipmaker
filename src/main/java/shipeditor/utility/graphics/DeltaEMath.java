@@ -31,14 +31,14 @@ public final class DeltaEMath {
     /**
      * CIE94 perceptual color difference (Graphic Arts standard).
      */
-    public static float deltaECie94(float[] lab1, float[] lab2, float kL, float kC, float kH, float K1, float K2) {
+    public static float deltaECie94(float[] lab1, float[] lab2, float kL, float kC, float kH, float k1, float k2) {
         float dL = lab1[0] - lab2[0];
         float a1 = lab1[1], b1 = lab1[2];
         float a2 = lab2[1], b2 = lab2[2];
 
-        double C1 = Math.sqrt(a1 * a1 + b1 * b1);
-        double C2 = Math.sqrt(a2 * a2 + b2 * b2);
-        double dC = C1 - C2;
+        double c1 = Math.sqrt(a1 * a1 + b1 * b1);
+        double c2 = Math.sqrt(a2 * a2 + b2 * b2);
+        double dC = c1 - c2;
 
         float da = a1 - a2;
         float db = b1 - b2;
@@ -46,8 +46,8 @@ public final class DeltaEMath {
         double dH = Math.sqrt(dH2);
 
         double sL = 1.0;
-        double sC = 1.0 + K1 * C1;
-        double sH = 1.0 + K2 * C1;
+        double sC = 1.0 + k1 * c1;
+        double sH = 1.0 + k2 * c1;
 
         double vL = dL / (kL * sL);
         double vC = dC / (kC * sC);
@@ -64,80 +64,80 @@ public final class DeltaEMath {
      * CIEDE2000 perceptual color difference formula (Sharma, Wu, Dalal 2005 standard).
      */
     public static float deltaECiede2000(float[] lab1, float[] lab2, float kL, float kC, float kH) {
-        double L1 = lab1[0], a1 = lab1[1], b1 = lab1[2];
-        double L2 = lab2[0], a2 = lab2[1], b2 = lab2[2];
+        double l1 = lab1[0], a1 = lab1[1], b1 = lab1[2];
+        double l2 = lab2[0], a2 = lab2[1], b2 = lab2[2];
 
-        double C1 = Math.sqrt(a1 * a1 + b1 * b1);
-        double C2 = Math.sqrt(a2 * a2 + b2 * b2);
-        double C_bar = (C1 + C2) / 2.0;
+        double c1 = Math.sqrt(a1 * a1 + b1 * b1);
+        double c2 = Math.sqrt(a2 * a2 + b2 * b2);
+        double cBar = (c1 + c2) / 2.0;
 
-        double C_bar7 = Math.pow(C_bar, 7.0);
-        double G = 0.5 * (1.0 - Math.sqrt(C_bar7 / (C_bar7 + TWENTY_FIVE_POW_7 + 1e-12)));
+        double cBar7 = Math.pow(cBar, 7.0);
+        double g = 0.5 * (1.0 - Math.sqrt(cBar7 / (cBar7 + TWENTY_FIVE_POW_7 + 1e-12)));
 
-        double a1_prime = (1.0 + G) * a1;
-        double a2_prime = (1.0 + G) * a2;
+        double a1Prime = (1.0 + g) * a1;
+        double a2Prime = (1.0 + g) * a2;
 
-        double C1_prime = Math.sqrt(a1_prime * a1_prime + b1 * b1);
-        double C2_prime = Math.sqrt(a2_prime * a2_prime + b2 * b2);
+        double c1Prime = Math.sqrt(a1Prime * a1Prime + b1 * b1);
+        double c2Prime = Math.sqrt(a2Prime * a2Prime + b2 * b2);
 
-        double h1_prime = (Math.toDegrees(Math.atan2(b1, a1_prime)) + 360.0) % 360.0;
-        double h2_prime = (Math.toDegrees(Math.atan2(b2, a2_prime)) + 360.0) % 360.0;
+        double h1Prime = (Math.toDegrees(Math.atan2(b1, a1Prime)) + 360.0) % 360.0;
+        double h2Prime = (Math.toDegrees(Math.atan2(b2, a2Prime)) + 360.0) % 360.0;
 
-        double dL_prime = L2 - L1;
-        double dC_prime = C2_prime - C1_prime;
+        double dlPrime = l2 - l1;
+        double dcPrime = c2Prime - c1Prime;
 
-        double h_diff = h2_prime - h1_prime;
-        double dh_prime = 0.0;
+        double hDiff = h2Prime - h1Prime;
+        double dhPrime = 0.0;
 
-        if (C1_prime * C2_prime != 0.0) {
-            if (Math.abs(h_diff) <= 180.0) {
-                dh_prime = h_diff;
-            } else if (h_diff > 180.0) {
-                dh_prime = h_diff - 360.0;
+        if (c1Prime * c2Prime != 0.0) {
+            if (Math.abs(hDiff) <= 180.0) {
+                dhPrime = hDiff;
+            } else if (hDiff > 180.0) {
+                dhPrime = hDiff - 360.0;
             } else {
-                dh_prime = h_diff + 360.0;
+                dhPrime = hDiff + 360.0;
             }
         }
 
-        double dH_prime = 2.0 * Math.sqrt(C1_prime * C2_prime) * Math.sin(Math.toRadians(dh_prime / 2.0));
+        double dHPrime = 2.0 * Math.sqrt(c1Prime * c2Prime) * Math.sin(Math.toRadians(dhPrime / 2.0));
 
-        double L_bar_prime = (L1 + L2) / 2.0;
-        double C_bar_prime = (C1_prime + C2_prime) / 2.0;
+        double lBarPrime = (l1 + l2) / 2.0;
+        double cBarPrime = (c1Prime + c2Prime) / 2.0;
 
-        double h_bar_prime;
-        if (C1_prime * C2_prime == 0.0) {
-            h_bar_prime = h1_prime + h2_prime;
-        } else if (Math.abs(h1_prime - h2_prime) <= 180.0) {
-            h_bar_prime = (h1_prime + h2_prime) / 2.0;
-        } else if ((h1_prime + h2_prime) < 360.0) {
-            h_bar_prime = (h1_prime + h2_prime + 360.0) / 2.0;
+        double hBarPrime;
+        if (c1Prime * c2Prime == 0.0) {
+            hBarPrime = h1Prime + h2Prime;
+        } else if (Math.abs(h1Prime - h2Prime) <= 180.0) {
+            hBarPrime = (h1Prime + h2Prime) / 2.0;
+        } else if ((h1Prime + h2Prime) < 360.0) {
+            hBarPrime = (h1Prime + h2Prime + 360.0) / 2.0;
         } else {
-            h_bar_prime = (h1_prime + h2_prime - 360.0) / 2.0;
+            hBarPrime = (h1Prime + h2Prime - 360.0) / 2.0;
         }
 
-        double T = 1.0 - 0.17 * Math.cos(Math.toRadians(h_bar_prime - 30.0))
-                + 0.24 * Math.cos(Math.toRadians(2.0 * h_bar_prime))
-                + 0.32 * Math.cos(Math.toRadians(3.0 * h_bar_prime + 6.0))
-                - 0.20 * Math.cos(Math.toRadians(4.0 * h_bar_prime - 63.0));
+        double t = 1.0 - 0.17 * Math.cos(Math.toRadians(hBarPrime - 30.0))
+                + 0.24 * Math.cos(Math.toRadians(2.0 * hBarPrime))
+                + 0.32 * Math.cos(Math.toRadians(3.0 * hBarPrime + 6.0))
+                - 0.20 * Math.cos(Math.toRadians(4.0 * hBarPrime - 63.0));
 
-        double d_theta = 30.0 * Math.exp(-Math.pow((h_bar_prime - 275.0) / 25.0, 2.0));
+        double dTheta = 30.0 * Math.exp(-Math.pow((hBarPrime - 275.0) / 25.0, 2.0));
 
-        double C_bar_prime7 = Math.pow(C_bar_prime, 7.0);
-        double R_C = 2.0 * Math.sqrt(C_bar_prime7 / (C_bar_prime7 + TWENTY_FIVE_POW_7 + 1e-12));
+        double cBarPrime7 = Math.pow(cBarPrime, 7.0);
+        double rC = 2.0 * Math.sqrt(cBarPrime7 / (cBarPrime7 + TWENTY_FIVE_POW_7 + 1e-12));
 
-        double L_bar_50_sq = (L_bar_prime - 50.0) * (L_bar_prime - 50.0);
-        double S_L = 1.0 + (0.015 * L_bar_50_sq) / Math.sqrt(20.0 + L_bar_50_sq);
-        double S_C = 1.0 + 0.045 * C_bar_prime;
-        double S_H = 1.0 + 0.015 * C_bar_prime * T;
+        double lBar50Sq = (lBarPrime - 50.0) * (lBarPrime - 50.0);
+        double sL = 1.0 + (0.015 * lBar50Sq) / Math.sqrt(20.0 + lBar50Sq);
+        double sC = 1.0 + 0.045 * cBarPrime;
+        double sH = 1.0 + 0.015 * cBarPrime * t;
 
-        double R_T = -Math.sin(Math.toRadians(2.0 * d_theta)) * R_C;
+        double rT = -Math.sin(Math.toRadians(2.0 * dTheta)) * rC;
 
-        double vL = dL_prime / (kL * S_L);
-        double vC = dC_prime / (kC * S_C);
-        double vH = dH_prime / (kH * S_H);
+        double vL = dlPrime / (kL * sL);
+        double vC = dcPrime / (kC * sC);
+        double vH = dHPrime / (kH * sH);
 
-        double dE_sq = vL * vL + vC * vC + vH * vH + R_T * vC * vH;
-        return (float) Math.sqrt(Math.max(0.0, dE_sq));
+        double deSq = vL * vL + vC * vC + vH * vH + rT * vC * vH;
+        return (float) Math.sqrt(Math.max(0.0, deSq));
     }
 
     public static float deltaECiede2000(float[] lab1, float[] lab2) {
@@ -152,14 +152,14 @@ public final class DeltaEMath {
         float a1 = lab1[1], b1 = lab1[2];
         float a2 = lab2[1], b2 = lab2[2];
 
-        double C1 = Math.sqrt(a1 * a1 + b1 * b1);
-        double C2 = Math.sqrt(a2 * a2 + b2 * b2);
-        double dC = C1 - C2;
+        double c1 = Math.sqrt(a1 * a1 + b1 * b1);
+        double c2 = Math.sqrt(a2 * a2 + b2 * b2);
+        double dC = c1 - c2;
 
         double h1 = (Math.toDegrees(Math.atan2(b1, a1)) + 360.0) % 360.0;
         double h2 = (Math.toDegrees(Math.atan2(b2, a2)) + 360.0) % 360.0;
         double dh = ((h2 - h1 + 180.0) % 360.0) - 180.0;
-        double dH = 2.0 * Math.sqrt(C1 * C2) * Math.sin(Math.toRadians(dh / 2.0));
+        double dH = 2.0 * Math.sqrt(c1 * c2) * Math.sin(Math.toRadians(dh / 2.0));
 
         double termL = wL * dL;
         double termC = wC * dC;
@@ -176,16 +176,16 @@ public final class DeltaEMath {
         float a1 = lab1[1], b1 = lab1[2];
         float a2 = lab2[1], b2 = lab2[2];
 
-        double C1 = Math.sqrt(a1 * a1 + b1 * b1);
-        double C2 = Math.sqrt(a2 * a2 + b2 * b2);
-        double dC = C1 - C2;
+        double c1 = Math.sqrt(a1 * a1 + b1 * b1);
+        double c2 = Math.sqrt(a2 * a2 + b2 * b2);
+        double dC = c1 - c2;
 
         double h1 = (Math.toDegrees(Math.atan2(b1, a1)) + 360.0) % 360.0;
         double h2 = (Math.toDegrees(Math.atan2(b2, a2)) + 360.0) % 360.0;
         double dh = ((h2 - h1 + 180.0) % 360.0) - 180.0;
-        double dH = 2.0 * Math.sqrt(C1 * C2) * Math.sin(Math.toRadians(dh / 2.0));
+        double dH = 2.0 * Math.sqrt(c1 * c2) * Math.sin(Math.toRadians(dh / 2.0));
 
-        double meanChroma = (C1 + C2) / 2.0;
+        double meanChroma = (c1 + c2) / 2.0;
         double chromaFactor = Math.max(0.20, Math.min(1.0, meanChroma / 12.0));
         double effectiveWl = lightnessWeight * chromaFactor;
         double highDlBoost = (Math.abs(dL) > 18.0) ? 1.0 : effectiveWl;

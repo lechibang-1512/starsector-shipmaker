@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Log4j2
 public final class ImageCache {
 
-    private static final ImageCache instance = new ImageCache();
+    private static final ImageCache INSTANCE = new ImageCache();
 
     private final Map<File, SoftReference<BufferedImage>> cache;
 
@@ -28,7 +28,7 @@ public final class ImageCache {
         if (file == null) {
             return null;
         }
-        SoftReference<BufferedImage> ref = instance.cache.get(file);
+        SoftReference<BufferedImage> ref = INSTANCE.cache.get(file);
         if (ref != null) {
             BufferedImage sprite = ref.get();
             if (sprite != null) {
@@ -48,12 +48,12 @@ public final class ImageCache {
             throw new UncheckedIOException("Failed to load sprite: " + file.getName(), ex);
         }
         log.trace("Opening sprite: {}.", file.getName());
-        instance.cache.put(file, new SoftReference<>(sprite));
+        INSTANCE.cache.put(file, new SoftReference<>(sprite));
         return sprite;
     }
 
     public static void clearCache() {
-        instance.cache.clear();
+        INSTANCE.cache.clear();
     }
 
 }
