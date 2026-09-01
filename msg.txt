@@ -1,0 +1,5 @@
+refactor(ui): nested tabs, strings decoupling, and UI fixes
+
+- Disabled Linux popup drop shadows
+- Replaced ShipHullPanel with nested JTabbedPane
+- Decoupled UI strings into external JSON resources

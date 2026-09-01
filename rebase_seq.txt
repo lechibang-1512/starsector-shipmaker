@@ -1,0 +1,19 @@
+pick 09e1376b chore(build): update dependencies, JVM options, and Java 17 toolchain
+squash 3702b763 docs: update agent guidelines, modding skills, and mod data integrity documentation
+squash 205ef3cc refactor: remove obsolete utility scripts and jqwik database file
+pick 5c667a1c refactor(graphics): standardize cross-platform graphics initialization and OpenGL rendering
+squash 1baa61f7 fix(rendering): correct weapon recoil, missile sprite scaling, and hardpoint pivot rendering
+squash 158ed39c feat(tools): port experiment tools to native Java 17 graphics pipeline
+pick 3574c547 fix(saving): fix hull saving crash, weapon slot UI, and launch bay serialization
+squash 715a61b4 fix(data): resolve ship/weapon loading, name display, tree rendering, and serialization bugs
+squash 862bab60 fix(data): fix hullmod, wing, and systems repository caching and retrieval
+squash ab64d5a9 perf: implement lazy sprite loading and caching for hullmod and weapon list components
+pick 1f8c90a3 feat: add auto-calculate radius and center-to-sprite buttons to collision and shield panels, and add null checks for engine data controls
+squash 0f46f6d0 feat: replace collision and shield radius modification with Ctrl+LMB drag interaction
+pick bf876162 feat: enhance weapon slot display and overhaul built-in weapon picker
+squash 6f7162f3 feat: add interactive weapon slot inspector panel to manage weapon installations directly from the variant weapons tab
+squash 7cf0c883 feat: implement hullmod picker dialog and add/remove controls to hullmod list panels
+squash 1a803b52 fix: add null checks for weapon components and reorganize ship instrument tabs
+pick a6a5f636 fix: disable Linux popup drop shadows and replace sprite path text areas with non-editable text fields
+squash 1ea3b878 refactor: replace ShipHullPanel with nested JTabbedPane for improved hull component organization
+squash d061e983 refactor: decouple UI strings and editor configurations into external JSON resources
