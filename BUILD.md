@@ -1,3 +1,79 @@
+# Building Ship-Editor from Source
+
+If you wish to compile the project yourself, follow these instructions.
+
+## Prerequisites
+- **Java Development Kit (JDK)**: JDK 17.
+- **Maven**: Ensure Maven is installed on your system.
+
+## Compiling
+To compile the project and generate the executable fat JAR, run:
+```bash
+mvn clean package -DskipTests
+```
+This builds the application and outputs the executable JAR file in the `target/` directory (e.g. `target/ship_editor-0.0.1f.jar`).
+
+## Running Developer Build
+To run the compiled JAR, execute:
+```bash
+java -jar target/ship_editor-*.jar
+```
+
+## Running from Source Code
+To compile and run the application directly from source using Maven without building a JAR:
+```bash
+MAVEN_OPTS="-Xmx4g" mvn compile exec:java -Dexec.mainClass="shipeditor.Main"
+```
+
+## Managing Releases
+To automate a new release locally without relying on GitHub:
+```bash
+python3 scripts/release.py
+```
+This script will:
+1. Extract the current version from `pom.xml` and prompt you for the target release version.
+2. Verify that `CHANGELOG.md` has an entry for the target version.
+3. Automatically bump the version in `pom.xml` and Java source files (`Main.java`, `SettingsManager.java`).
+4. Compile and package the application using Maven.
+5. Create a standalone portable ZIP archive (e.g., `releases/ship-editor-0.0.1d.zip`) containing the fat JAR, launchers, `CHANGELOG.md`, `LICENSE`, and `README.md`.
+6. Commit the version bump and create a local Git release tag (e.g., `v0.0.1d`).
+
+**Available options:**
+*   `--dry-run`: Performs compilation, packages the zip, but reverts all code modifications and skips Git operations. Useful for testing the release build.
+*   `--no-git`: Bumps version and builds/packages, but skips Git commit and tag creation.
+*   `--allow-dirty`: Allows running the script even if there are uncommitted changes in the working directory.
+
+
+# Development Environment Setup
+
+When setting up or building the Starsector Ship Editor project, please follow these guidelines and known environment quirks:
+
+## 1. Java Version Requirement
+- **JDK 17 is strictly required.**
+- **Do not use Java 25 or newer.** The Lombok library used in this project crashes on JDK 25+ with a `TypeTag :: UNKNOWN ExceptionInInitializerError`.
+
+## 2. Linux (Fedora) Maven Quirks
+- On Fedora, the system `mvn` wrapper ignores the `update-alternatives` system and defaults to the system's latest Java (often Java 25).
+- **Fix:** You must force Maven to use JDK 17 by setting `JAVA_HOME`. For users running `mvn` commands locally on Linux, create or update `~/.mavenrc` with the path to a local JDK 17 installation.
+  - Example: `export JAVA_HOME=$HOME/.jdk/jdk-17.0.20+8`
+
+## 3. Ubuntu/Debian IDE Quirks
+- On Ubuntu/Debian, internal IDE terminals (like VS Code) may completely ignore `~/.mavenrc`.
+- **Fix:** The `JAVA_HOME` must be explicitly exported in `~/.bashrc` (e.g., `export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64`) to prevent the environment from defaulting to the wrong Java version and crashing during compilation.
+
+## 4. Concurrent Maven Executions
+- When running `mvn clean compile exec:java`, **never** execute concurrent background `mvn clean` tasks.
+- Maven's `exec:java` loads classes dynamically. A concurrent `clean` goal will purge the `target/classes` directory right as the application JVM initializes, throwing a `java.lang.NoClassDefFoundError` and crashing the startup sequence.
+
+## 5. Memory Allocation for Maven
+- The `Main.java` class includes a `checkAndRelaunch` method that forks a new JVM with `-Xmx4g` if the available heap is less than 4GB.
+- When launching via `mvn exec:java`, the classpath only contains the Plexus Launcher. Therefore, Maven itself must be allocated sufficient memory to avoid triggering this relaunch fallback, which would fail to find the project classpath.
+- **Fix:** Provide Maven with enough heap memory: `MAVEN_OPTS="-Xmx4g" mvn compile exec:java -Dexec.mainClass="shipeditor.Main"`
+
+
+<details>
+<summary>Click here for a detailed step-by-step Building Guide for Beginners</summary>
+
 # Building Ship Editor from Source — Complete Guide
 
 This guide walks you through compiling Ship Editor from its source code on **Windows**, **macOS**, or **Linux**. No prior programming experience is assumed — every step is explained in full.
@@ -9,7 +85,7 @@ This guide walks you through compiling Ship Editor from its source code on **Win
 1. [What You're Doing](#what-youre-doing)
 2. [Prerequisites](#prerequisites)
    - [Install Git](#step-1-install-git)
-   - [Install JDK 21](#step-2-install-jdk-21)
+   - [Install JDK 17](#step-2-install-jdk-21)
    - [Install Maven](#step-3-install-maven)
 3. [Download the Source Code](#download-the-source-code)
 4. [Build the Application](#build-the-application)
@@ -63,7 +139,7 @@ sudo dnf install git -y
 
 ---
 
-### Step 2: Install JDK 21
+### Step 2: Install JDK 17
 
 You need the **Java Development Kit (JDK)**, not just the JRE. Version **21** is recommended.
 
@@ -72,7 +148,7 @@ You need the **Java Development Kit (JDK)**, not just the JRE. Version **21** is
 
 #### Windows
 
-1. Go to the [Eclipse Temurin JDK 21 download page](https://adoptium.net/temurin/releases/?version=21).
+1. Go to the [Eclipse Temurin JDK 17 download page](https://adoptium.net/temurin/releases/?version=21).
 2. Make sure the filters are set to:
    - **Operating System:** Windows
    - **Architecture:** x64
@@ -85,7 +161,7 @@ You need the **Java Development Kit (JDK)**, not just the JRE. Version **21** is
 
 #### macOS
 
-1. Go to the [Eclipse Temurin JDK 21 download page](https://adoptium.net/temurin/releases/?version=21).
+1. Go to the [Eclipse Temurin JDK 17 download page](https://adoptium.net/temurin/releases/?version=21).
 2. Set the filters to:
    - **Operating System:** macOS
    - **Architecture:** aarch64 (Apple Silicon M1/M2/M3) or x64 (Intel)
@@ -276,8 +352,8 @@ The `-Xmx4g` flag allocates up to 4 GB of memory to the application, which is re
 
 **Cause:** Maven is using a Java version older than 17.
 
-**Fix:** Make sure JDK 21 is installed and that Maven is using it. Run `mvn -version` and check the Java version line. If it shows an older version:
-- **Windows:** Reinstall JDK 21 with "Set JAVA_HOME" enabled.
+**Fix:** Make sure JDK 17 is installed and that Maven is using it. Run `mvn -version` and check the Java version line. If it shows an older version:
+- **Windows:** Reinstall JDK 17 with "Set JAVA_HOME" enabled.
 - **Linux:** Set `JAVA_HOME` in `~/.bashrc` or `~/.mavenrc` as described above.
 
 ---
@@ -286,7 +362,7 @@ The `-Xmx4g` flag allocates up to 4 GB of memory to the application, which is re
 
 **Cause:** You are using JDK 25 or newer, which is incompatible with the Lombok version used by this project.
 
-**Fix:** Install and use JDK 21 instead. Do not use JDK 25+.
+**Fix:** Install and use JDK 17 instead. Do not use JDK 25+.
 
 ---
 
@@ -305,7 +381,7 @@ The `-Xmx4g` flag allocates up to 4 GB of memory to the application, which is re
 
 **Cause:** JDK is not installed or not in your system PATH.
 
-**Fix:** Reinstall JDK 21 and make sure the "Add to PATH" option was checked during installation. Open a **new** terminal window after installation.
+**Fix:** Reinstall JDK 17 and make sure the "Add to PATH" option was checked during installation. Open a **new** terminal window after installation.
 
 ---
 
@@ -347,3 +423,5 @@ mvn clean package -DskipTests
 ```
 
 The new `ship_editor.jar` will be generated with your changes.
+
+</details>
