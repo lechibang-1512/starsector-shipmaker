@@ -84,7 +84,14 @@ final class SaveHullAction {
             log.info("Commencing hull saving: {}", result);
 
             ObjectMapper objectMapper = FileUtilities.getConfigured();
-            HullSpecFile toSerialize = SaveHullAction.rebuildHullFile(shipLayer);
+            HullSpecFile toSerialize = null;
+            try {
+                toSerialize = SaveHullAction.rebuildHullFile(shipLayer);
+            } catch (Exception e) {
+                log.error("Failed to rebuild HullSpecFile before saving: {}", result.getName(), e);
+                return;
+            }
+            
             String errorMessage = "Hull file saving failed: {}";
             if (toSerialize == null) {
                 log.error(errorMessage, result.getName());
@@ -111,13 +118,16 @@ final class SaveHullAction {
 
     @SuppressWarnings("OverlyCoupledMethod")
     private static HullSpecFile rebuildHullFile(ShipLayer shipLayer) {
+        log.trace("Rebuilding HullSpecFile for ship ID: {}", shipLayer.getShipID());
         HullSpecFile result = new HullSpecFile();
 
         var shipPainter = shipLayer.getPainter();
 
+        log.trace("Rebuilding bounds...");
         Point2D.Double[] serializableBounds = SaveHullAction.rebuildBounds(shipPainter);
         result.setBounds(serializableBounds);
 
+        log.trace("Rebuilding engines...");
         EngineSlot[] serializableEngines = SaveHullAction.rebuildEngineSlots(shipPainter);
         if (serializableEngines == null) {
             String shipID = shipLayer.getShipID();
@@ -216,16 +226,10 @@ final class SaveHullAction {
         BoundPointsPainter boundsPainter = shipPainter.getBoundsPainter();
         var boundPoints = boundsPainter.getPointsIndex();
 
-        Point2D.Double[] serializableBounds = new Point2D.Double[boundPoints.size()];
-
-        for (int i = 0; i < boundPoints.size(); i++) {
-            BoundPoint boundPoint = boundPoints.get(i);
-            Point2D locationRelativeToCenter = Utility.getPointCoordinatesForDisplay(boundPoint.getPosition(),
-                    shipPainter, CoordsDisplayMode.SHIP_CENTER);
-            serializableBounds[i] = (Point2D.Double) locationRelativeToCenter;
-        }
-
-        return serializableBounds;
+        return boundPoints.stream()
+                .map(boundPoint -> (Point2D.Double) Utility.getPointCoordinatesForDisplay(
+                        boundPoint.getPosition(), shipPainter, CoordsDisplayMode.SHIP_CENTER))
+                .toArray(Point2D.Double[]::new);
     }
 
     private static EngineSlot[] rebuildEngineSlots(ShipPainter shipPainter) {
@@ -384,14 +388,9 @@ final class SaveHullAction {
         if (runtimeWings == null || runtimeWings.isEmpty()) {
             return null;
         } else {
-            String[] serializableWings = new String[runtimeWings.size()];
-
-            for (int i = 0; i < runtimeWings.size(); i++) {
-                var wingEntry = runtimeWings.get(i);
-                serializableWings[i] = wingEntry.getWingID();
-            }
-
-            return serializableWings;
+            return runtimeWings.stream()
+                    .map(wingEntry -> wingEntry.getWingID())
+                    .toArray(String[]::new);
         }
     }
 
@@ -435,14 +434,9 @@ final class SaveHullAction {
         if (runtimeMods == null || runtimeMods.isEmpty()) {
             return null;
         } else {
-            String[] serializableMods = new String[runtimeMods.size()];
-
-            for (int i = 0; i < runtimeMods.size(); i++) {
-                var modEntry = runtimeMods.get(i);
-                serializableMods[i] = modEntry.getHullmodID();
-            }
-
-            return serializableMods;
+            return runtimeMods.stream()
+                    .map(modEntry -> modEntry.getHullmodID())
+                    .toArray(String[]::new);
         }
     }
 

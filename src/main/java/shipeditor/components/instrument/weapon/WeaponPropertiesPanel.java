@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
 
     private WeaponLayer cachedLayer;
-    private boolean readyForInput;
+    
 
     // --- Identity section ---
     private JTextField idEditor;
@@ -84,7 +84,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
     protected void populateContent() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        Supplier<Boolean> readinessChecker = () -> readyForInput;
+        Supplier<Boolean> readinessChecker = () -> isWidgetsReadyForInput();
         Runnable onChange = this::processChange;
         Supplier<WeaponSpecFile> specSupplier = () -> cachedLayer != null ? cachedLayer.getSpecFile() : null;
 
@@ -125,7 +125,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
         specClassSelector = new JComboBox<>(SPEC_CLASS_SUGGESTIONS);
         specClassSelector.setEditable(true);
         specClassSelector.addActionListener(e -> {
-            if (readyForInput && cachedLayer != null) {
+            if (isWidgetsReadyForInput() && cachedLayer != null) {
                 WeaponSpecFile spec = cachedLayer.getSpecFile();
                 if (spec != null) {
                     String selected = (String) specClassSelector.getSelectedItem();
@@ -140,7 +140,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
 
         typeSelector = new JComboBox<>(WeaponType.values());
         typeSelector.addActionListener(e -> {
-            if (readyForInput && cachedLayer != null) {
+            if (isWidgetsReadyForInput() && cachedLayer != null) {
                 WeaponSpecFile spec = cachedLayer.getSpecFile();
                 if (spec != null) {
                     WeaponType selected = (WeaponType) typeSelector.getSelectedItem();
@@ -155,7 +155,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
 
         sizeSelector = new JComboBox<>(WeaponSize.values());
         sizeSelector.addActionListener(e -> {
-            if (readyForInput && cachedLayer != null) {
+            if (isWidgetsReadyForInput() && cachedLayer != null) {
                 WeaponSpecFile spec = cachedLayer.getSpecFile();
                 if (spec != null) {
                     WeaponSize selected = (WeaponSize) sizeSelector.getSelectedItem();
@@ -170,7 +170,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
 
         mountTypeOverrideSelector = new JComboBox<>(WeaponType.values());
         mountTypeOverrideSelector.addActionListener(e -> {
-            if (readyForInput && cachedLayer != null) {
+            if (isWidgetsReadyForInput() && cachedLayer != null) {
                 WeaponSpecFile spec = cachedLayer.getSpecFile();
                 if (spec != null) {
                     WeaponType selected = (WeaponType) mountTypeOverrideSelector.getSelectedItem();
@@ -196,7 +196,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
         collisionClassSelector = new JComboBox<>(COLLISION_CLASS_SUGGESTIONS);
         collisionClassSelector.setEditable(true);
         collisionClassSelector.addActionListener(e -> {
-            if (readyForInput && cachedLayer != null) {
+            if (isWidgetsReadyForInput() && cachedLayer != null) {
                 WeaponSpecFile spec = cachedLayer.getSpecFile();
                 if (spec != null) {
                     String text = (String) collisionClassSelector.getSelectedItem();
@@ -212,7 +212,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
         collisionClassByFighterSelector = new JComboBox<>(COLLISION_CLASS_SUGGESTIONS);
         collisionClassByFighterSelector.setEditable(true);
         collisionClassByFighterSelector.addActionListener(e -> {
-            if (readyForInput && cachedLayer != null) {
+            if (isWidgetsReadyForInput() && cachedLayer != null) {
                 WeaponSpecFile spec = cachedLayer.getSpecFile();
                 if (spec != null) {
                     String text = (String) collisionClassByFighterSelector.getSelectedItem();
@@ -395,80 +395,6 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
         return new CollapsibleSection("Beam", content, true);
     }
 
-    // ========== Field Factory Methods ==========
-
-    private JTextField createTextField(Consumer<String> setter) {
-        JTextField textField = new JTextField();
-        textField.setColumns(10);
-        textField.addActionListener(e -> {
-            if (readyForInput) {
-                setter.accept(textField.getText());
-                processChange();
-            }
-        });
-        return textField;
-    }
-
-    private JTextField createDoubleField(Consumer<Double> setter) {
-        JTextField textField = new JTextField();
-        textField.setColumns(10);
-        textField.addActionListener(e -> {
-            if (readyForInput) {
-                try {
-                    setter.accept(Double.parseDouble(textField.getText()));
-                    processChange();
-                } catch (NumberFormatException ex) {
-                    // Ignore invalid input
-                }
-            }
-        });
-        return textField;
-    }
-
-    private JTextField createIntField(Consumer<Integer> setter) {
-        JTextField textField = new JTextField();
-        textField.setColumns(10);
-        textField.addActionListener(e -> {
-            if (readyForInput) {
-                try {
-                    setter.accept(Integer.parseInt(textField.getText()));
-                    processChange();
-                } catch (NumberFormatException ex) {
-                    // Ignore invalid input
-                }
-            }
-        });
-        return textField;
-    }
-
-    private JTextField createListField(Consumer<List<String>> setter) {
-        JTextField textField = new JTextField();
-        textField.setColumns(10);
-        textField.addActionListener(e -> {
-            if (readyForInput) {
-                String text = textField.getText();
-                if (text.isEmpty()) {
-                    setter.accept(null);
-                } else {
-                    setter.accept(Arrays.asList(text.split("\\s*,\\s*")));
-                }
-                processChange();
-            }
-        });
-        return textField;
-    }
-
-    private JCheckBox createCheckBox(String text, Consumer<Boolean> setter) {
-        JCheckBox checkBox = new JCheckBox(text);
-        checkBox.addActionListener(e -> {
-            if (readyForInput) {
-                setter.accept(checkBox.isSelected());
-                processChange();
-            }
-        });
-        return checkBox;
-    }
-
     // ========== processChange ==========
 
     @Override
@@ -494,7 +420,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
             return;
         }
 
-        readyForInput = false;
+        
 
         // Identity
         idEditor.setText(spec.getId() != null ? spec.getId() : "");
@@ -538,11 +464,11 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
         convergeOnPointCheckbox.setSelected(spec.isConvergeOnPoint());
         skipIdleFrameIfZeroBurstDelayCheckbox.setSelected(spec.isSkipIdleFrameIfZeroBurstDelay());
 
-        readyForInput = true;
+        
     }
 
     private void clearData() {
-        readyForInput = false;
+        
 
         // Identity
         idEditor.setText("");

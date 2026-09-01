@@ -157,6 +157,76 @@ public abstract class LayerPropertiesPanel extends JPanel {
         );
     }
 
+    protected javax.swing.JTextField createTextField(Consumer<String> setter) {
+        javax.swing.JTextField textField = new javax.swing.JTextField();
+        textField.setColumns(10);
+        textField.addActionListener(e -> {
+            if (isWidgetsReadyForInput()) {
+                setter.accept(textField.getText());
+                processChange();
+            }
+        });
+        return textField;
+    }
+
+    protected javax.swing.JTextField createDoubleField(Consumer<Double> setter) {
+        javax.swing.JTextField textField = new javax.swing.JTextField();
+        textField.setColumns(10);
+        textField.addActionListener(e -> {
+            if (isWidgetsReadyForInput()) {
+                try {
+                    setter.accept(Double.parseDouble(textField.getText()));
+                    processChange();
+                } catch (NumberFormatException ex) {
+                }
+            }
+        });
+        return textField;
+    }
+
+    protected javax.swing.JTextField createIntField(Consumer<Integer> setter) {
+        javax.swing.JTextField textField = new javax.swing.JTextField();
+        textField.setColumns(10);
+        textField.addActionListener(e -> {
+            if (isWidgetsReadyForInput()) {
+                try {
+                    setter.accept(Integer.parseInt(textField.getText()));
+                    processChange();
+                } catch (NumberFormatException ex) {
+                }
+            }
+        });
+        return textField;
+    }
+
+    protected javax.swing.JTextField createListField(Consumer<java.util.List<String>> setter) {
+        javax.swing.JTextField textField = new javax.swing.JTextField();
+        textField.setColumns(10);
+        textField.addActionListener(e -> {
+            if (isWidgetsReadyForInput()) {
+                String text = textField.getText();
+                if (text.isEmpty()) {
+                    setter.accept(null);
+                } else {
+                    setter.accept(java.util.Arrays.asList(text.split("\\s*,\\s*")));
+                }
+                processChange();
+            }
+        });
+        return textField;
+    }
+
+    protected javax.swing.JCheckBox createCheckBox(String text, Consumer<Boolean> setter) {
+        javax.swing.JCheckBox checkBox = new javax.swing.JCheckBox(text);
+        checkBox.addActionListener(e -> {
+            if (isWidgetsReadyForInput()) {
+                setter.accept(checkBox.isSelected());
+                processChange();
+            }
+        });
+        return checkBox;
+    }
+
     protected Pair<JLabel, JSlider> createOpacityWidget(Function<LayerPainter, Float> opacityGetter,
                                                         Consumer<Float> opacitySetter) {
         BooleanSupplier readinessChecker = this::isWidgetsReadyForInput;

@@ -38,16 +38,21 @@ public class TreeDataGestureListener implements DragGestureListener {
             if (userObject instanceof shipeditor.persistence.database.IndexedFile file) {
                 var gameData = shipeditor.persistence.SettingsManager.getGameData();
                 String type = file.getEntityType();
-                if ("SHIP".equals(type)) {
-                    if (gameData != null) userObject = gameData.getOrCreateShipEntry(file);
-                } else if ("WEAPON".equals(type)) {
-                    if (gameData != null) userObject = gameData.getOrCreateWeaponEntry(file);
-                } else if ("HULLMOD".equals(type)) {
-                    var map = gameData != null ? gameData.getAllHullmodEntries() : null;
-                    if (map != null) userObject = map.get(file.getEntityId());
-                } else if ("WING".equals(type)) {
-                    var map = gameData != null ? gameData.getAllWingEntries() : null;
-                    if (map != null) userObject = map.get(file.getEntityId());
+                switch (type) {
+                    case "SHIP" -> {
+                        if (gameData != null) userObject = gameData.getOrCreateShipEntry(file);
+                    }
+                    case "WEAPON" -> {
+                        if (gameData != null) userObject = gameData.getOrCreateWeaponEntry(file);
+                    }
+                    case "HULLMOD" -> {
+                        var map = gameData != null ? gameData.getAllHullmodEntries() : null;
+                        if (map != null) userObject = map.get(file.getEntityId());
+                    }
+                    case "WING" -> {
+                        var map = gameData != null ? gameData.getAllWingEntries() : null;
+                        if (map != null) userObject = map.get(file.getEntityId());
+                    }
                 }
             }
 

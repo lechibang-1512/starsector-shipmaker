@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
 
     private WeaponLayer cachedLayer;
-    private boolean readyForInput;
+    
 
     // Turret sprites
     private JTextField turretSpriteEditor;
@@ -84,7 +84,7 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
     protected void populateContent() {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        Supplier<Boolean> readinessChecker = () -> readyForInput;
+        Supplier<Boolean> readinessChecker = () -> isWidgetsReadyForInput();
         Runnable onChange = this::processChange;
         Supplier<WeaponSpecFile> specSupplier = () -> cachedLayer != null ? cachedLayer.getSpecFile() : null;
 
@@ -207,7 +207,7 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
         int row = 0;
 
         fringeColorValue = new JLabel();
-        JLabel fringeColorLabel = createColorLabel("Fringe Color:", fringeColorValue,
+        JLabel fringeColorLabel = WeaponFirePanelUtilities.createColorLabel("Fringe Color:", fringeColorValue,
                 () -> cachedLayer != null ? cachedLayer.getSpecFile().getFringeColor() : null,
                 color -> {
                     if (cachedLayer != null && cachedLayer.getSpecFile() != null) {
@@ -218,7 +218,7 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
         ComponentUtilities.addLabelAndComponent(content, fringeColorLabel, fringeColorValue, row++);
 
         coreColorValue = new JLabel();
-        JLabel coreColorLabel = createColorLabel("Core Color:", coreColorValue,
+        JLabel coreColorLabel = WeaponFirePanelUtilities.createColorLabel("Core Color:", coreColorValue,
                 () -> cachedLayer != null ? cachedLayer.getSpecFile().getCoreColor() : null,
                 color -> {
                     if (cachedLayer != null && cachedLayer.getSpecFile() != null) {
@@ -229,7 +229,7 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
         ComponentUtilities.addLabelAndComponent(content, coreColorLabel, coreColorValue, row++);
 
         glowColorValue = new JLabel();
-        JLabel glowColorLabel = createColorLabel("Glow Color:", glowColorValue,
+        JLabel glowColorLabel = WeaponFirePanelUtilities.createColorLabel("Glow Color:", glowColorValue,
                 () -> cachedLayer != null ? cachedLayer.getSpecFile().getGlowColor() : null,
                 color -> {
                     if (cachedLayer != null && cachedLayer.getSpecFile() != null) {
@@ -322,127 +322,6 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
         return new CollapsibleSection("Misc", content, true);
     }
 
-    // ========== Field Factory Methods ==========
-
-    private JTextField createTextField(Consumer<String> setter) {
-        JTextField textField = new JTextField();
-        textField.setColumns(10);
-        textField.addActionListener(e -> {
-            if (readyForInput) {
-                setter.accept(textField.getText());
-                processChange();
-            }
-        });
-        return textField;
-    }
-
-    private JTextField createDoubleField(Consumer<Double> setter) {
-        JTextField textField = new JTextField();
-        textField.setColumns(10);
-        textField.addActionListener(e -> {
-            if (readyForInput) {
-                try {
-                    setter.accept(Double.parseDouble(textField.getText()));
-                    processChange();
-                } catch (NumberFormatException ex) {
-                    // Ignore invalid input
-                }
-            }
-        });
-        return textField;
-    }
-
-    private JTextField createIntField(Consumer<Integer> setter) {
-        JTextField textField = new JTextField();
-        textField.setColumns(10);
-        textField.addActionListener(e -> {
-            if (readyForInput) {
-                try {
-                    setter.accept(Integer.parseInt(textField.getText()));
-                    processChange();
-                } catch (NumberFormatException ex) {
-                    // Ignore invalid input
-                }
-            }
-        });
-        return textField;
-    }
-
-    private JTextField createListField(Consumer<List<String>> setter) {
-        JTextField textField = new JTextField();
-        textField.setColumns(10);
-        textField.addActionListener(e -> {
-            if (readyForInput) {
-                String text = textField.getText();
-                if (text.isEmpty()) {
-                    setter.accept(null);
-                } else {
-                    setter.accept(Arrays.asList(text.split("\\s*,\\s*")));
-                }
-                processChange();
-            }
-        });
-        return textField;
-    }
-
-    private JCheckBox createCheckBox(String text, Consumer<Boolean> setter) {
-        JCheckBox checkBox = new JCheckBox(text);
-        checkBox.addActionListener(e -> {
-            if (readyForInput) {
-                setter.accept(checkBox.isSelected());
-                processChange();
-            }
-        });
-        return checkBox;
-    }
-
-    private JLabel createColorLabel(String labelText, JLabel valueLabel, Supplier<Color> getter, Consumer<Color> setter) {
-        JLabel label = new JLabel(labelText);
-        label.setToolTipText(StringManager.getString("RIGHT_CLICK_TO_CHANGE_COLOR"));
-
-        JPopupMenu colorChooserMenu = new JPopupMenu();
-        JMenuItem adjustColor = new JMenuItem(StringManager.getString("ADJUST_VALUE"));
-        adjustColor.addActionListener(event -> {
-            Color current = getter.get();
-            Color chosen = current != null ? ColorUtilities.showColorChooser(current) : ColorUtilities.showColorChooser();
-            if (chosen != null) {
-                setter.accept(chosen);
-            }
-        });
-        colorChooserMenu.add(adjustColor);
-
-        JMenuItem removeColor = new JMenuItem(StringManager.getString("CLEAR_VALUE"));
-        removeColor.addActionListener(event -> setter.accept(null));
-        colorChooserMenu.add(removeColor);
-
-        label.addMouseListener(new MouseoverLabelListener(colorChooserMenu, label));
-        valueLabel.addMouseListener(new MouseoverLabelListener(colorChooserMenu, valueLabel));
-        Insets insets = ComponentUtilities.createLabelInsets();
-        insets.top = 1;
-        label.setBorder(ComponentUtilities.createLabelSimpleBorder(insets));
-
-        return label;
-    }
-
-    private void updateColorLabel(JLabel valueLabel, Color color) {
-        if (color != null) {
-            valueLabel.setIcon(ComponentUtilities.createIconFromColor(color, 10, 10));
-            valueLabel.setOpaque(true);
-            valueLabel.setBorder(new FlatLineBorder(new Insets(2, 2, 2, 2), Themes.getBorderColor()));
-            valueLabel.setBackground(Themes.getPanelHighlightColor());
-            valueLabel.setToolTipText(ColorUtilities.getColorBreakdown(color));
-            valueLabel.setText(null);
-        } else {
-            valueLabel.setIcon(null);
-            valueLabel.setOpaque(false);
-            valueLabel.setBorder(new EmptyBorder(0, 2, 0, 2));
-            valueLabel.setBackground(null);
-            valueLabel.setToolTipText(null);
-            valueLabel.setText(StringManager.getString("NOT_DEFINED"));
-        }
-        valueLabel.setForeground(Themes.getTextColor());
-    }
-
     // ========== processChange ==========
 
     @Override
@@ -468,7 +347,7 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
             return;
         }
 
-        readyForInput = false;
+        
 
         // Turret sprites
         turretSpriteEditor.setText(spec.getTurretSprite() != null ? spec.getTurretSprite() : "");
@@ -488,9 +367,9 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
         renderAdditiveCheckbox.setSelected(spec.isRenderAdditive());
 
         // Colors
-        updateColorLabel(fringeColorValue, spec.getFringeColor());
-        updateColorLabel(coreColorValue, spec.getCoreColor());
-        updateColorLabel(glowColorValue, spec.getGlowColor());
+        WeaponFirePanelUtilities.updateColorLabel(fringeColorValue, spec.getFringeColor());
+        WeaponFirePanelUtilities.updateColorLabel(coreColorValue, spec.getCoreColor());
+        WeaponFirePanelUtilities.updateColorLabel(glowColorValue, spec.getGlowColor());
 
         // Animation
         numFramesEditor.setText(String.valueOf(spec.getNumFrames()));
@@ -505,11 +384,11 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
         renderHintsEditor.setText(spec.getRenderHints() != null ? String.join(", ", spec.getRenderHints()) : "");
         displayArcRadiusEditor.setText(String.valueOf(spec.getDisplayArcRadius()));
 
-        readyForInput = true;
+        
     }
 
     private void clearData() {
-        readyForInput = false;
+        
 
         if (turretSpriteEditor != null) turretSpriteEditor.setText("");
         if (turretUnderSpriteEditor != null) turretUnderSpriteEditor.setText("");
@@ -525,9 +404,9 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
         if (renderAboveWeaponsCheckbox != null) renderAboveWeaponsCheckbox.setSelected(false);
         if (renderAdditiveCheckbox != null) renderAdditiveCheckbox.setSelected(false);
 
-        if (fringeColorValue != null) updateColorLabel(fringeColorValue, null);
-        if (coreColorValue != null) updateColorLabel(coreColorValue, null);
-        if (glowColorValue != null) updateColorLabel(glowColorValue, null);
+        if (fringeColorValue != null) WeaponFirePanelUtilities.updateColorLabel(fringeColorValue, null);
+        if (coreColorValue != null) WeaponFirePanelUtilities.updateColorLabel(coreColorValue, null);
+        if (glowColorValue != null) WeaponFirePanelUtilities.updateColorLabel(glowColorValue, null);
 
         if (numFramesEditor != null) numFramesEditor.setText("");
         if (frameRateEditor != null) frameRateEditor.setText("");

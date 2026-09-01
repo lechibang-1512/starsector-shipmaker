@@ -37,6 +37,63 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
+    private void registerSkinOverrideSpinner(JSpinner spinner, java.util.function.Function<WeaponSlotOverride, Object> overrideCheck, java.util.function.Function<SlotData, Double> valueGetter, String lockedTooltipKey) {
+        registerWidgetListeners(spinner, layerPainter -> {
+            spinner.setValue(0.0d);
+            spinner.setToolTipText(null);
+            spinner.setEnabled(false);
+        }, layerPainter -> {
+            var selectedSlot = getSelectedFromLayer(layerPainter);
+
+            if (selectedSlot != null) {
+                WeaponSlotOverride skinOverride = null;
+                if (selectedSlot instanceof SlotPoint checked) {
+                    skinOverride = checked.getSkinOverride();
+                }
+
+                if (skinOverride != null && overrideCheck.apply(skinOverride) != null) {
+                    spinner.setToolTipText(StringManager.getString(lockedTooltipKey));
+                    spinner.setEnabled(false);
+                } else {
+                    spinner.setValue(valueGetter.apply(selectedSlot));
+                    spinner.setEnabled(true);
+                }
+            } else {
+                spinner.setValue(0.0d);
+                spinner.setToolTipText(null);
+                spinner.setEnabled(false);
+            }
+        });
+    }
+
+    private <V> void registerSkinOverrideComboBox(JComboBox<V> comboBox, java.util.function.Function<WeaponSlotOverride, Object> overrideCheck, java.util.function.Function<SlotData, V> valueGetter, String lockedTooltipKey) {
+        registerWidgetListeners(comboBox, layerPainter -> {
+            comboBox.setSelectedItem(null);
+            comboBox.setToolTipText(null);
+            comboBox.setEnabled(false);
+        }, layerPainter -> {
+            var selectedSlot = getSelectedFromLayer(layerPainter);
+
+            if (selectedSlot != null) {
+                WeaponSlotOverride skinOverride = null;
+                if (selectedSlot instanceof SlotPoint checked) {
+                    skinOverride = checked.getSkinOverride();
+                }
+
+                if (skinOverride != null && overrideCheck.apply(skinOverride) != null) {
+                    comboBox.setToolTipText(StringManager.getString(lockedTooltipKey));
+                    comboBox.setEnabled(false);
+                } else {
+                    comboBox.setSelectedItem(valueGetter.apply(selectedSlot));
+                    comboBox.setEnabled(true);
+                }
+            } else {
+                comboBox.setSelectedItem(null);
+                comboBox.setToolTipText(null);
+                comboBox.setEnabled(false);
+            }
+        });
+    }
 
     private final boolean multiSelectionAllowed;
 
@@ -215,32 +272,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
             }
         });
 
-        registerWidgetListeners(typeSelector, layerPainter -> {
-            typeSelector.setSelectedItem(null);
-            typeSelector.setToolTipText(null);
-            typeSelector.setEnabled(false);
-        }, layerPainter -> {
-            var selectedSlot = getSelectedFromLayer(layerPainter);
-
-            if (selectedSlot != null) {
-                WeaponSlotOverride skinOverride = null;
-                if (selectedSlot instanceof SlotPoint checked) {
-                    skinOverride = checked.getSkinOverride();
-                }
-
-                if (skinOverride != null && skinOverride.getWeaponType() != null) {
-                    typeSelector.setToolTipText(StringManager.getString("LOCKED_TYPE_OVERRIDDEN_BY_SKIN"));
-                    typeSelector.setEnabled(false);
-                } else {
-                    typeSelector.setSelectedItem(selectedSlot.getWeaponType());
-                    typeSelector.setEnabled(true);
-                }
-            } else {
-                typeSelector.setSelectedItem(null);
-                typeSelector.setToolTipText(null);
-                typeSelector.setEnabled(false);
-            }
-        });
+        registerSkinOverrideComboBox(typeSelector, WeaponSlotOverride::getWeaponType, SlotData::getWeaponType, "LOCKED_TYPE_OVERRIDDEN_BY_SKIN");
 
         return new Pair<>(selectorLabel, typeSelector);
     }
@@ -261,32 +293,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
             }
         });
 
-        registerWidgetListeners(mountSelector, layerPainter -> {
-            mountSelector.setSelectedItem(null);
-            mountSelector.setToolTipText(null);
-            mountSelector.setEnabled(false);
-        }, layerPainter -> {
-            var selectedSlot = getSelectedFromLayer(layerPainter);
-
-            if (selectedSlot != null) {
-                WeaponSlotOverride skinOverride = null;
-                if (selectedSlot instanceof SlotPoint checked) {
-                    skinOverride = checked.getSkinOverride();
-                }
-
-                if (skinOverride != null && skinOverride.getWeaponMount() != null) {
-                    mountSelector.setToolTipText(StringManager.getString("LOCKED_MOUNT_OVERRIDDEN_BY_SKIN"));
-                    mountSelector.setEnabled(false);
-                } else {
-                    mountSelector.setSelectedItem(selectedSlot.getWeaponMount());
-                    mountSelector.setEnabled(true);
-                }
-            } else {
-                mountSelector.setSelectedItem(null);
-                mountSelector.setToolTipText(null);
-                mountSelector.setEnabled(false);
-            }
-        });
+        registerSkinOverrideComboBox(mountSelector, WeaponSlotOverride::getWeaponMount, SlotData::getWeaponMount, "LOCKED_MOUNT_OVERRIDDEN_BY_SKIN");
 
         return new Pair<>(selectorLabel, mountSelector);
     }
@@ -307,32 +314,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
             }
         });
 
-        registerWidgetListeners(sizeSelector, layerPainter -> {
-            sizeSelector.setSelectedItem(null);
-            sizeSelector.setToolTipText(null);
-            sizeSelector.setEnabled(false);
-        }, layerPainter -> {
-            var selectedSlot = getSelectedFromLayer(layerPainter);
-
-            if (selectedSlot != null) {
-                WeaponSlotOverride skinOverride = null;
-                if (selectedSlot instanceof SlotPoint checked) {
-                    skinOverride = checked.getSkinOverride();
-                }
-
-                if (skinOverride != null && skinOverride.getWeaponSize() != null) {
-                    sizeSelector.setToolTipText(StringManager.getString("LOCKED_SIZE_OVERRIDDEN_BY_SKIN"));
-                    sizeSelector.setEnabled(false);
-                } else {
-                    sizeSelector.setSelectedItem(selectedSlot.getWeaponSize());
-                    sizeSelector.setEnabled(true);
-                }
-            } else {
-                sizeSelector.setSelectedItem(null);
-                sizeSelector.setToolTipText(null);
-                sizeSelector.setEnabled(false);
-            }
-        });
+        registerSkinOverrideComboBox(sizeSelector, WeaponSlotOverride::getWeaponSize, SlotData::getWeaponSize, "LOCKED_SIZE_OVERRIDDEN_BY_SKIN");
 
         return new Pair<>(selectorLabel, sizeSelector);
     }
@@ -365,32 +347,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
             }
         });
 
-        registerWidgetListeners(spinner, layerPainter -> {
-            spinner.setValue(0.0d);
-            spinner.setToolTipText(null);
-            spinner.setEnabled(false);
-        }, layerPainter -> {
-            var selectedSlot = getSelectedFromLayer(layerPainter);
-
-            if (selectedSlot != null) {
-                WeaponSlotOverride skinOverride = null;
-                if (selectedSlot instanceof SlotPoint checked) {
-                    skinOverride = checked.getSkinOverride();
-                }
-
-                if (skinOverride != null && skinOverride.getBoxedAngle() != null) {
-                    spinner.setToolTipText(StringManager.getString("LOCKED_ANGLE_OVERRIDDEN_BY_SKIN"));
-                    spinner.setEnabled(false);
-                } else {
-                    spinner.setValue(selectedSlot.getAngle());
-                    spinner.setEnabled(true);
-                }
-            } else {
-                spinner.setValue(0.0d);
-                spinner.setToolTipText(null);
-                spinner.setEnabled(false);
-            }
-        });
+        registerSkinOverrideSpinner(spinner, WeaponSlotOverride::getBoxedAngle, SlotData::getAngle, "LOCKED_ANGLE_OVERRIDDEN_BY_SKIN");
 
         return new Pair<>(selectorLabel, spinner);
     }
@@ -423,32 +380,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
             }
         });
 
-        registerWidgetListeners(spinner, layerPainter -> {
-            spinner.setValue(0.0d);
-            spinner.setToolTipText(null);
-            spinner.setEnabled(false);
-        }, layerPainter -> {
-            var selectedSlot = getSelectedFromLayer(layerPainter);
-
-            if (selectedSlot != null) {
-                WeaponSlotOverride skinOverride = null;
-                if (selectedSlot instanceof SlotPoint checked) {
-                    skinOverride = checked.getSkinOverride();
-                }
-
-                if (skinOverride != null && skinOverride.getBoxedArc() != null) {
-                    spinner.setToolTipText(StringManager.getString("LOCKED_ARC_OVERRIDDEN_BY_SKIN"));
-                    spinner.setEnabled(false);
-                } else {
-                    spinner.setValue(selectedSlot.getArc());
-                    spinner.setEnabled(true);
-                }
-            } else {
-                spinner.setValue(0.0d);
-                spinner.setToolTipText(null);
-                spinner.setEnabled(false);
-            }
-        });
+        registerSkinOverrideSpinner(spinner, WeaponSlotOverride::getBoxedArc, SlotData::getArc, "LOCKED_ARC_OVERRIDDEN_BY_SKIN");
 
         return new Pair<>(selectorLabel, spinner);
     }
@@ -481,32 +413,7 @@ public abstract class AbstractSlotValuesPanel extends LayerPropertiesPanel {
             }
         });
 
-        registerWidgetListeners(spinner, layerPainter -> {
-            spinner.setValue(0.0d);
-            spinner.setToolTipText(null);
-            spinner.setEnabled(false);
-        }, layerPainter -> {
-            var selectedSlot = getSelectedFromLayer(layerPainter);
-
-            if (selectedSlot != null) {
-                WeaponSlotOverride skinOverride = null;
-                if (selectedSlot instanceof SlotPoint checked) {
-                    skinOverride = checked.getSkinOverride();
-                }
-
-                if (skinOverride != null && skinOverride.getRenderOrderModBoxed() != null) {
-                    spinner.setToolTipText(StringManager.getString("LOCKED_RENDER_ORDER_OVERRIDDEN_BY_SKIN"));
-                    spinner.setEnabled(false);
-                } else {
-                    spinner.setValue((double) selectedSlot.getRenderOrderMod());
-                    spinner.setEnabled(true);
-                }
-            } else {
-                spinner.setValue(0.0d);
-                spinner.setToolTipText(null);
-                spinner.setEnabled(false);
-            }
-        });
+        registerSkinOverrideSpinner(spinner, WeaponSlotOverride::getRenderOrderModBoxed, slot -> (double) slot.getRenderOrderMod(), "LOCKED_RENDER_ORDER_OVERRIDDEN_BY_SKIN");
 
         return new Pair<>(selectorLabel, spinner);
     }

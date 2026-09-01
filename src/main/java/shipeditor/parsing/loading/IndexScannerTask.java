@@ -67,20 +67,23 @@ public final class IndexScannerTask {
                 if (id == null || id.isEmpty()) continue;
                 
                 com.fasterxml.jackson.databind.node.ObjectNode rowNode = rootNode.putObject(id);
-                if (StringConstants.SHIP_CSV_TYPE.equals(type)) {
-                    String tech = row.get("tech/manufacturer");
-                    if (tech != null) rowNode.put("tech/manufacturer", tech);
-                    String hullSize = row.get("hull size");
-                    if (hullSize != null) rowNode.put("hull size", hullSize);
-                } else if (StringConstants.WEAPON_CSV_TYPE.equals(type)) {
-                    String tech = row.get("tech/manufacturer");
-                    if (tech != null) rowNode.put("tech/manufacturer", tech);
-                    String ops = row.get("OPs");
-                    if (ops != null) rowNode.put("OPs", ops);
-                    String size = row.get("size");
-                    if (size != null) rowNode.put("size", size);
-                    String weaponType = row.get("type");
-                    if (weaponType != null) rowNode.put("type", weaponType);
+                switch (type) {
+                    case StringConstants.SHIP_CSV_TYPE -> {
+                        String tech = row.get("tech/manufacturer");
+                        if (tech != null) rowNode.put("tech/manufacturer", tech);
+                        String hullSize = row.get("hull size");
+                        if (hullSize != null) rowNode.put("hull size", hullSize);
+                    }
+                    case StringConstants.WEAPON_CSV_TYPE -> {
+                        String tech = row.get("tech/manufacturer");
+                        if (tech != null) rowNode.put("tech/manufacturer", tech);
+                        String ops = row.get("OPs");
+                        if (ops != null) rowNode.put("OPs", ops);
+                        String size = row.get("size");
+                        if (size != null) rowNode.put("size", size);
+                        String weaponType = row.get("type");
+                        if (weaponType != null) rowNode.put("type", weaponType);
+                    }
                 }
             }
             return SettingsManager.getMapperForSettingsFile().writeValueAsString(rootNode);

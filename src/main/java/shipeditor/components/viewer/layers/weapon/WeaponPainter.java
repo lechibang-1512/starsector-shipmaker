@@ -87,13 +87,11 @@ public class WeaponPainter extends LayerPainter {
     }
 
     public WeaponOffsetPainter getOffsetPainter() {
-        if (mount == WeaponMount.HARDPOINT) {
-            return hardpointOffsetPainter;
-        } else if (mount == WeaponMount.HIDDEN) {
-            return hiddenOffsetPainter;
-        } else {
-            return turretOffsetPainter;
-        }
+        return switch (mount) {
+            case HARDPOINT -> hardpointOffsetPainter;
+            case HIDDEN -> hiddenOffsetPainter;
+            default -> turretOffsetPainter;
+        };
     }
 
     @Override

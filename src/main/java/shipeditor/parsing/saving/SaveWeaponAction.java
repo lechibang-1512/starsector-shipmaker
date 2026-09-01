@@ -56,7 +56,13 @@ final class SaveWeaponAction {
             try {
                 weaponSpecFile.setWeaponSpecFilePath(result.toPath());
                 
-                SaveWeaponAction.syncOffsetsToSpec(weaponLayer);
+                try {
+                    log.trace("Syncing weapon offsets to spec file...");
+                    SaveWeaponAction.syncOffsetsToSpec(weaponLayer);
+                } catch (Exception e) {
+                    log.error("Failed to sync weapon offsets to spec before saving", e);
+                    // continue saving, but offsets may be missing or corrupt
+                }
 
                 objectMapper.writeValue(result, weaponSpecFile);
                 

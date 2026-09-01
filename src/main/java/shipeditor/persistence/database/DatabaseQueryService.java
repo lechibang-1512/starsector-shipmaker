@@ -265,9 +265,7 @@ public final class DatabaseQueryService {
         if (activeMods.isEmpty()) return "";
 
         StringBuilder sql = new StringBuilder("SELECT file_name FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
-        for (int i = 0; i < activeMods.size(); i++) {
-            sql.append(i == 0 ? "?" : ",?");
-        }
+        sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
         sql.append(") LIMIT 1;");
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -275,8 +273,9 @@ public final class DatabaseQueryService {
             
             pstmt.setString(1, entityId);
             pstmt.setString(2, type);
-            for (int i = 0; i < activeMods.size(); i++) {
-                pstmt.setString(3 + i, activeMods.get(i));
+            int paramIndex = 3;
+            for (String modId : activeMods) {
+                pstmt.setString(paramIndex++, modId);
             }
             
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -301,9 +300,7 @@ public final class DatabaseQueryService {
         if (activeMods.isEmpty()) return null;
 
         StringBuilder sql = new StringBuilder("SELECT * FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
-        for (int i = 0; i < activeMods.size(); i++) {
-            sql.append(i == 0 ? "?" : ",?");
-        }
+        sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
         sql.append(") LIMIT 1;");
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -311,8 +308,9 @@ public final class DatabaseQueryService {
 
             pstmt.setString(1, entityId);
             pstmt.setString(2, type);
-            for (int i = 0; i < activeMods.size(); i++) {
-                pstmt.setString(3 + i, activeMods.get(i));
+            int paramIndex = 3;
+            for (String modId : activeMods) {
+                pstmt.setString(paramIndex++, modId);
             }
 
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -337,9 +335,7 @@ public final class DatabaseQueryService {
         if (activeMods.isEmpty()) return null;
 
         StringBuilder sql = new StringBuilder("SELECT file_path FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
-        for (int i = 0; i < activeMods.size(); i++) {
-            sql.append(i == 0 ? "?" : ",?");
-        }
+        sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
         sql.append(") LIMIT 1;");
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -347,8 +343,9 @@ public final class DatabaseQueryService {
 
             pstmt.setString(1, entityId);
             pstmt.setString(2, type);
-            for (int i = 0; i < activeMods.size(); i++) {
-                pstmt.setString(3 + i, activeMods.get(i));
+            int paramIndex = 3;
+            for (String modId : activeMods) {
+                pstmt.setString(paramIndex++, modId);
             }
 
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -464,17 +461,16 @@ public final class DatabaseQueryService {
         List<String> activeMods = getActiveModIds();
         if (!activeMods.isEmpty()) {
             StringBuilder sql = new StringBuilder("SELECT * FROM indexed_files WHERE entity_type = ? AND mod_id IN (");
-            for (int i = 0; i < activeMods.size(); i++) {
-                sql.append(i == 0 ? "?" : ",?");
-            }
+            sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
             sql.append(") ORDER BY mod_id ASC, entity_id ASC;");
 
             try (Connection conn = DatabaseManager.getConnection();
                  PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
                 pstmt.setString(1, type);
-                for (int i = 0; i < activeMods.size(); i++) {
-                    pstmt.setString(2 + i, activeMods.get(i));
+                int paramIndex = 2;
+                for (String modId : activeMods) {
+                    pstmt.setString(paramIndex++, modId);
                 }
 
                 try (ResultSet rs = pstmt.executeQuery()) {

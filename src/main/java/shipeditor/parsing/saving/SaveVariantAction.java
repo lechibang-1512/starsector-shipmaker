@@ -69,7 +69,13 @@ final class SaveVariantAction {
             log.info("Commencing variant saving: {}", result);
 
             ObjectMapper objectMapper = FileUtilities.getConfigured();
-            VariantFile toSerialize = SaveVariantAction.rebuildVariantFile(variant);
+            VariantFile toSerialize = null;
+            try {
+                toSerialize = SaveVariantAction.rebuildVariantFile(variant);
+            } catch (Exception e) {
+                log.error("Failed to rebuild VariantFile before saving: {}", result.getName(), e);
+                return;
+            }
             try {
                 toSerialize.setVariantFilePath(result.toPath());
                 objectMapper.writeValue(result, toSerialize);
@@ -84,7 +90,7 @@ final class SaveVariantAction {
                     }
                 }
             } catch (IOException e) {
-                log.error("Variant file saving failed: {}", result.getName());
+                log.error("Variant file saving failed: {}", result.getName(), e);
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                         "Variant file saving failed, exception thrown at: " + result,
                         StringManager.getString("FILE_SAVING_ERROR"),
@@ -95,6 +101,7 @@ final class SaveVariantAction {
     }
 
     private static VariantFile rebuildVariantFile(ShipVariant shipVariant) {
+        log.trace("Rebuilding VariantFile for variant ID: {}", shipVariant.getVariantId());
         VariantFile result = new VariantFile();
 
         result.setDisplayName(shipVariant.getDisplayName());

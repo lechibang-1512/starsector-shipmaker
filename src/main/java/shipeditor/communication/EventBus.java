@@ -143,22 +143,16 @@ public final class EventBus {
             activeListeners.clear();
             
             synchronized (bus.floatingSubscribers) {
-                for (BusEventListener listener : bus.floatingSubscribers) {
-                    activeListeners.add(listener);
-                }
+                activeListeners.addAll(bus.floatingSubscribers);
             }
             
             synchronized (bus.lifecycleSubscribers) {
                 for (java.util.List<BusEventListener> list : bus.lifecycleSubscribers.values()) {
-                    int size = list.size();
-                    for (int j = 0; j < size; j++) {
-                        activeListeners.add(list.get(j));
-                    }
+                    activeListeners.addAll(list);
                 }
             }
 
-            for (int i = 0; i < activeListeners.size(); i++) {
-                BusEventListener receiver = activeListeners.get(i);
+            for (BusEventListener receiver : activeListeners) {
                 if (receiver == null) continue;
                 try {
                     receiver.handleEvent(event);

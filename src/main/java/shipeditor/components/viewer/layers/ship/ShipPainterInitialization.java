@@ -254,21 +254,48 @@ public final class ShipPainterInitialization {
      * @return new {@code Point2D} representing the rotated point.
      */
     public static Point2D rotatePointByCenter(Point2D input, Point2D translatedCenter) {
-        double translatedX = -input.getY() + translatedCenter.getX();
-        double translatedY = -input.getX() + translatedCenter.getY();
-        return new Point2D.Double(translatedX, translatedY);
+        if (input == null || translatedCenter == null) {
+            log.error("Null input provided to rotatePointByCenter. Input: {}, Center: {}", input, translatedCenter);
+            throw new IllegalArgumentException("Null arguments to rotatePointByCenter");
+        }
+        try {
+            double translatedX = -input.getY() + translatedCenter.getX();
+            double translatedY = -input.getX() + translatedCenter.getY();
+            return new Point2D.Double(translatedX, translatedY);
+        } catch (Exception e) {
+            log.error("Failed to rotate point", e);
+            throw e;
+        }
     }
 
     private static Point2D rotateCenter(Point2D hullCenter, Point2D anchor) {
-        double anchorX = anchor.getX();
-        double anchorY = anchor.getY();
-        return new Point2D.Double(hullCenter.getX() + anchorX, -hullCenter.getY() + anchorY);
+        if (hullCenter == null || anchor == null) {
+            log.error("Null input provided to rotateCenter. HullCenter: {}, Anchor: {}", hullCenter, anchor);
+            throw new IllegalArgumentException("Null arguments to rotateCenter");
+        }
+        try {
+            double anchorX = anchor.getX();
+            double anchorY = anchor.getY();
+            return new Point2D.Double(hullCenter.getX() + anchorX, -hullCenter.getY() + anchorY);
+        } catch (Exception e) {
+            log.error("Failed to rotate center", e);
+            throw e;
+        }
     }
 
     public static Point2D derotatePointByCenter(Point2D canvasPoint, Point2D translatedCenter) {
-        double originalX = translatedCenter.getY() - canvasPoint.getY();
-        double originalY = translatedCenter.getX() - canvasPoint.getX();
-        return new Point2D.Double(originalX, originalY);
+        if (canvasPoint == null || translatedCenter == null) {
+            log.error("Null input provided to derotatePointByCenter. CanvasPoint: {}, Center: {}", canvasPoint, translatedCenter);
+            throw new IllegalArgumentException("Null arguments to derotatePointByCenter");
+        }
+        try {
+            double originalX = translatedCenter.getY() - canvasPoint.getY();
+            double originalY = translatedCenter.getX() - canvasPoint.getX();
+            return new Point2D.Double(originalX, originalY);
+        } catch (Exception e) {
+            log.error("Failed to derotate point", e);
+            throw e;
+        }
     }
 
 }

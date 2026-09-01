@@ -51,27 +51,33 @@ public final class DialogHelper {
                     options[0]
             );
 
-            if (choice == 0) { // Save Both
-                EventBus.publish(new HullSaveQueued(shipLayer));
-                ShipVariant variant = shipLayer.getActiveVariant();
-                if (variant != null && !variant.isEmpty()) {
-                    EventBus.publish(new VariantSaveQueued(variant));
+            switch (choice) {
+                case 0 -> { // Save Both
+                    EventBus.publish(new HullSaveQueued(shipLayer));
+                    ShipVariant variant = shipLayer.getActiveVariant();
+                    if (variant != null && !variant.isEmpty()) {
+                        EventBus.publish(new VariantSaveQueued(variant));
+                    }
+                    return !manager.isHullDirty(shipLayer) && !manager.isVariantDirty(shipLayer);
                 }
-                return !manager.isHullDirty(shipLayer) && !manager.isVariantDirty(shipLayer);
-            } else if (choice == 1) { // Save Hull
-                EventBus.publish(new HullSaveQueued(shipLayer));
-                return !manager.isHullDirty(shipLayer);
-            } else if (choice == 2) { // Save Variant
-                ShipVariant variant = shipLayer.getActiveVariant();
-                if (variant != null && !variant.isEmpty()) {
-                    EventBus.publish(new VariantSaveQueued(variant));
+                case 1 -> { // Save Hull
+                    EventBus.publish(new HullSaveQueued(shipLayer));
+                    return !manager.isHullDirty(shipLayer);
                 }
-                return !manager.isVariantDirty(shipLayer);
-            } else if (choice == 3) { // Don't Save
-                manager.getUnsavedChangesRegistry().remove(shipLayer);
-                return true;
-            } else { // Cancel
-                return false;
+                case 2 -> { // Save Variant
+                    ShipVariant variant = shipLayer.getActiveVariant();
+                    if (variant != null && !variant.isEmpty()) {
+                        EventBus.publish(new VariantSaveQueued(variant));
+                    }
+                    return !manager.isVariantDirty(shipLayer);
+                }
+                case 3 -> { // Don't Save
+                    manager.getUnsavedChangesRegistry().remove(shipLayer);
+                    return true;
+                }
+                default -> { // Cancel
+                    return false;
+                }
             }
         } else if (hullDirty) {
             Object[] options = {"Save Hull", "Don't Save", "Cancel"};
@@ -86,14 +92,18 @@ public final class DialogHelper {
                     options[0]
             );
 
-            if (choice == 0) { // Save Hull
-                EventBus.publish(new HullSaveQueued(shipLayer));
-                return !manager.isHullDirty(shipLayer);
-            } else if (choice == 1) { // Don't Save
-                manager.getUnsavedChangesRegistry().remove(shipLayer);
-                return true;
-            } else { // Cancel
-                return false;
+            switch (choice) {
+                case 0 -> { // Save Hull
+                    EventBus.publish(new HullSaveQueued(shipLayer));
+                    return !manager.isHullDirty(shipLayer);
+                }
+                case 1 -> { // Don't Save
+                    manager.getUnsavedChangesRegistry().remove(shipLayer);
+                    return true;
+                }
+                default -> { // Cancel
+                    return false;
+                }
             }
         } else { // variantDirty
             Object[] options = {"Save Variant", "Don't Save", "Cancel"};
@@ -108,17 +118,21 @@ public final class DialogHelper {
                     options[0]
             );
 
-            if (choice == 0) { // Save Variant
-                ShipVariant variant = shipLayer.getActiveVariant();
-                if (variant != null && !variant.isEmpty()) {
-                    EventBus.publish(new VariantSaveQueued(variant));
+            switch (choice) {
+                case 0 -> { // Save Variant
+                    ShipVariant variant = shipLayer.getActiveVariant();
+                    if (variant != null && !variant.isEmpty()) {
+                        EventBus.publish(new VariantSaveQueued(variant));
+                    }
+                    return !manager.isVariantDirty(shipLayer);
                 }
-                return !manager.isVariantDirty(shipLayer);
-            } else if (choice == 1) { // Don't Save
-                manager.getUnsavedChangesRegistry().remove(shipLayer);
-                return true;
-            } else { // Cancel
-                return false;
+                case 1 -> { // Don't Save
+                    manager.getUnsavedChangesRegistry().remove(shipLayer);
+                    return true;
+                }
+                default -> { // Cancel
+                    return false;
+                }
             }
         }
     }

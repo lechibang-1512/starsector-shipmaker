@@ -82,11 +82,9 @@ public class DataTreeSearchController {
     }
 
     private void selectMatchedNodes(List<DefaultMutableTreeNode> nodes) {
-        TreePath[] paths = new TreePath[nodes.size()];
-        for (int i = 0; i < nodes.size(); i++) {
-            DefaultMutableTreeNode node = nodes.get(i);
-            paths[i] = new TreePath(node.getPath());
-        }
+        TreePath[] paths = nodes.stream()
+                .map(node -> new TreePath(node.getPath()))
+                .toArray(TreePath[]::new);
         tree.setSelectionPaths(paths);
         tree.scrollPathToVisible(paths[0]);
     }
