@@ -1,13 +1,13 @@
 package shipeditor.parsing.saving;
 
+import shipeditor.utility.text.StringManager;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.components.viewer.layers.weapon.WeaponLayer;
 import shipeditor.parsing.FileUtilities;
 import shipeditor.representation.weapon.WeaponSpecFile;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import java.io.File;
@@ -65,7 +65,7 @@ final class SaveWeaponAction {
                 log.error(errorMessage, result.getName(), e);
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                         "Weapon file saving failed, exception thrown at: " + result,
-                        StringValues.FILE_SAVING_ERROR,
+                        StringManager.getString("FILE_SAVING_ERROR"),
                         JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -78,10 +78,12 @@ final class SaveWeaponAction {
 
         shipeditor.components.viewer.painters.points.weapon.WeaponOffsetPainter turretPainter = null;
         shipeditor.components.viewer.painters.points.weapon.WeaponOffsetPainter hardpointPainter = null;
+        shipeditor.components.viewer.painters.points.weapon.WeaponOffsetPainter hiddenPainter = null;
         for (shipeditor.components.viewer.painters.points.AbstractPointPainter pointPainter : painter.getAllPainters()) {
             if (pointPainter instanceof shipeditor.components.viewer.painters.points.weapon.WeaponOffsetPainter wop) {
                 if (wop.getDesignatedType() == shipeditor.representation.weapon.WeaponEnums.WeaponMount.TURRET) turretPainter = wop;
                 if (wop.getDesignatedType() == shipeditor.representation.weapon.WeaponEnums.WeaponMount.HARDPOINT) hardpointPainter = wop;
+                if (wop.getDesignatedType() == shipeditor.representation.weapon.WeaponEnums.WeaponMount.HIDDEN) hiddenPainter = wop;
             }
         }
 
@@ -91,7 +93,7 @@ final class SaveWeaponAction {
             double[] angles = new double[points.size()];
             for (int i = 0; i < points.size(); i++) {
                 shipeditor.components.viewer.entities.weapon.OffsetPoint p = points.get(i);
-                java.awt.geom.Point2D derotated = shipeditor.components.viewer.layers.ship.ShipPainterInitialization.derotatePointByCenter(p.getPosition(), painter.getEntityCenter());
+                java.awt.geom.Point2D derotated = shipeditor.components.viewer.layers.ship.ShipPainterInitialization.derotatePointByCenter(p.getPosition(), painter.getSpecificRotationAnchor(shipeditor.representation.weapon.WeaponEnums.WeaponMount.TURRET));
                 offsets[i] = new java.awt.geom.Point2D.Double(derotated.getX(), derotated.getY());
                 angles[i] = p.getAngle();
             }
@@ -105,12 +107,26 @@ final class SaveWeaponAction {
             double[] angles = new double[points.size()];
             for (int i = 0; i < points.size(); i++) {
                 shipeditor.components.viewer.entities.weapon.OffsetPoint p = points.get(i);
-                java.awt.geom.Point2D derotated = shipeditor.components.viewer.layers.ship.ShipPainterInitialization.derotatePointByCenter(p.getPosition(), painter.getEntityCenter());
+                java.awt.geom.Point2D derotated = shipeditor.components.viewer.layers.ship.ShipPainterInitialization.derotatePointByCenter(p.getPosition(), painter.getSpecificRotationAnchor(shipeditor.representation.weapon.WeaponEnums.WeaponMount.HARDPOINT));
                 offsets[i] = new java.awt.geom.Point2D.Double(derotated.getX(), derotated.getY());
                 angles[i] = p.getAngle();
             }
             specFile.setHardpointOffsets(offsets);
             specFile.setHardpointAngleOffsets(angles);
+        }
+
+        if (hiddenPainter != null) {
+            java.util.List<shipeditor.components.viewer.entities.weapon.OffsetPoint> points = hiddenPainter.getOffsetPoints();
+            java.awt.geom.Point2D.Double[] offsets = new java.awt.geom.Point2D.Double[points.size()];
+            double[] angles = new double[points.size()];
+            for (int i = 0; i < points.size(); i++) {
+                shipeditor.components.viewer.entities.weapon.OffsetPoint p = points.get(i);
+                java.awt.geom.Point2D derotated = shipeditor.components.viewer.layers.ship.ShipPainterInitialization.derotatePointByCenter(p.getPosition(), painter.getSpecificRotationAnchor(shipeditor.representation.weapon.WeaponEnums.WeaponMount.HIDDEN));
+                offsets[i] = new java.awt.geom.Point2D.Double(derotated.getX(), derotated.getY());
+                angles[i] = p.getAngle();
+            }
+            specFile.setHiddenOffsets(offsets);
+            specFile.setHiddenAngleOffsets(angles);
         }
     }
 }

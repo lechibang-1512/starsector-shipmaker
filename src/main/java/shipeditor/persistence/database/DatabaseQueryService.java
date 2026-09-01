@@ -290,6 +290,42 @@ public final class DatabaseQueryService {
         return "";
     }
 
+    public static IndexedFile getFileByEntityId(String entityId, String type) {
+        if (entityId == null || type == null) {
+            return null;
+        }
+        IndexedFile coreFile = CoreIndexManager.getFileByEntityId(entityId, type);
+        if (coreFile != null) return coreFile;
+
+        List<String> activeMods = getActiveModIds();
+        if (activeMods.isEmpty()) return null;
+
+        StringBuilder sql = new StringBuilder("SELECT * FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
+        for (int i = 0; i < activeMods.size(); i++) {
+            sql.append(i == 0 ? "?" : ",?");
+        }
+        sql.append(") LIMIT 1;");
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+            pstmt.setString(1, entityId);
+            pstmt.setString(2, type);
+            for (int i = 0; i < activeMods.size(); i++) {
+                pstmt.setString(3 + i, activeMods.get(i));
+            }
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToIndexedFile(rs);
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Failed to lookup file by entity: {} ({})", entityId, type, e);
+        }
+        return null;
+    }
+
     public static Path getFilePathForEntity(String entityId, String type) {
         if (entityId == null || type == null) {
             return null;
@@ -418,7 +454,12 @@ public final class DatabaseQueryService {
             return cached;
         }
 
-        List<IndexedFile> results = new ArrayList<>(CoreIndexManager.getFilesByType(type));
+        Map<String, IndexedFile> deduplicated = new LinkedHashMap<>();
+        for (IndexedFile coreFile : CoreIndexManager.getFilesByType(type)) {
+            if (coreFile != null && coreFile.getFilePath() != null) {
+                deduplicated.put(coreFile.getFilePath().toString(), coreFile);
+            }
+        }
 
         List<String> activeMods = getActiveModIds();
         if (!activeMods.isEmpty()) {
@@ -438,7 +479,10 @@ public final class DatabaseQueryService {
 
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
-                        results.add(mapRowToIndexedFile(rs));
+                        IndexedFile file = mapRowToIndexedFile(rs);
+                        if (file != null && file.getFilePath() != null) {
+                            deduplicated.put(file.getFilePath().toString(), file);
+                        }
                     }
                 }
             } catch (SQLException e) {
@@ -446,6 +490,7 @@ public final class DatabaseQueryService {
             }
         }
 
+        List<IndexedFile> results = new ArrayList<>(deduplicated.values());
         typeCache.put(type, results);
         return results;
     }

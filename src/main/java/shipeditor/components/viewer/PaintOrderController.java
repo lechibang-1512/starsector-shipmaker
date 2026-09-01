@@ -82,7 +82,11 @@ public class PaintOrderController implements OpenGLPainter {
 
     private void repaintViewer() {
         this.repaintQueued = false;
-        parent.repaint();
+        if (parent.getGlCanvas() != null && parent.getGlCanvas().isDisplayable()) {
+            parent.getGlCanvas().render();
+        } else {
+            parent.repaint();
+        }
     }
 
     // We pass w and h because some painters need to know the screen size
@@ -166,6 +170,7 @@ public class PaintOrderController implements OpenGLPainter {
         // but for now we just pass the standard view matrix.
         
         PaintOrderController.paintIfPresent(spriteRenderer, shapeRenderer, projection, view, guidesPainters.getBordersPaint());
+        PaintOrderController.paintIfPresent(spriteRenderer, shapeRenderer, projection, view, guidesPainters.getPixelGridPaint());
         PaintOrderController.paintIfPresent(spriteRenderer, shapeRenderer, projection, view, guidesPainters.getCenterPaint());
         if (!ViewerDropReceiver.isDragToViewerInProgress() && parent.isCursorInViewer()) {
             PaintOrderController.paintIfPresent(spriteRenderer, shapeRenderer, projection, view, guidesPainters.getGuidesPaint());

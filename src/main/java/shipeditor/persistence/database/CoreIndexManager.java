@@ -49,14 +49,18 @@ public class CoreIndexManager {
             return;
         }
 
-        long startTime = System.currentTimeMillis();
+            coreFilesByType.clear();
+            coreFilesByEntityId.clear();
+            coreFilesByPath.clear();
 
-        // Check if we can load from the database instead of re-scanning.
-        if (tryLoadFromDatabase(coreFolder)) {
-            isLoaded = true;
-            log.info("Core memory index loaded from database cache in {}ms", System.currentTimeMillis() - startTime);
-            return;
-        }
+            long startTime = System.currentTimeMillis();
+
+            // Check if we can load from the database instead of re-scanning.
+            if (tryLoadFromDatabase(coreFolder)) {
+                isLoaded = true;
+                log.info("Core memory index loaded from database cache in {}ms", System.currentTimeMillis() - startTime);
+                return;
+            }
 
         log.info("Scanning starsector-core into memory index...");
 
@@ -84,12 +88,14 @@ public class CoreIndexManager {
                         try {
                             IndexScannerTask.EntityMetadata metadata = IndexScannerTask.extractEntityMetadata(file, type, mapper);
                             String entityId = metadata.id();
-                            String entityName = file.getName().replace("." + ext, "");
+                            String fileBaseName = file.getName().replace("." + ext, "");
+                            String entityName = metadata.hullName() != null && !metadata.hullName().isBlank()
+                                    ? metadata.hullName() : fileBaseName;
 
                             return IndexedFile.builder()
                                     .uuid(UUID.randomUUID())
                                     .modId("starsector-core")
-                                    .entityId(entityId != null ? entityId : entityName)
+                                    .entityId(entityId != null ? entityId : fileBaseName)
                                     .entityName(entityName)
                                     .entityType(type)
                                     .fileName(file.getName())
@@ -174,6 +180,23 @@ public class CoreIndexManager {
                 
                 coreFilesByPath.put(file.getFilePath().toString(), file);
             }
+
+            // Migration check: detect stale DB entries that used filename as entityName
+            // instead of hullName. If entityName equals entityId for ship files, the old
+            // indexing format is cached and a re-scan is needed.
+            List<IndexedFile> shipFiles = coreFilesByType.get(StringConstants.SHIP_TYPE);
+            if (shipFiles != null && !shipFiles.isEmpty()) {
+                IndexedFile sample = shipFiles.get(0);
+                if (sample.getEntityName() != null && sample.getEntityId() != null
+                        && sample.getEntityName().equals(sample.getEntityId())) {
+                    log.info("Detected stale entity name format in database cache, triggering re-scan.");
+                    coreFilesByType.clear();
+                    coreFilesByEntityId.clear();
+                    coreFilesByPath.clear();
+                    return false;
+                }
+            }
+
             return true;
         } catch (Exception e) {
             log.warn("Failed to load core index from database, will re-scan.", e);

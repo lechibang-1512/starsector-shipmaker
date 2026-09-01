@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.entities;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -18,8 +20,6 @@ import shipeditor.utility.Utility;
 import shipeditor.utility.graphics.DrawUtilities;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.text.StringConstants;
-import shipeditor.utility.text.StringValues;
-
 import shipeditor.persistence.SettingsManager;
 import shipeditor.persistence.database.DatabaseQueryService;
 import shipeditor.persistence.database.IndexedFile;
@@ -204,9 +204,19 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
 
     public String getShipName() {
         if (activeSkinSpecFile != null && !activeSkinSpecFile.isBase()) {
-            return activeSkinSpecFile.getHullName();
+            String skinName = activeSkinSpecFile.getHullName();
+            if (skinName != null && !skinName.isBlank()) {
+                return skinName;
+            }
         }
         String name = rowData.get(StringConstants.NAME);
+        if (name != null && !name.isBlank()) {
+            return name;
+        }
+        HullSpecFile spec = this.getHullSpecFile();
+        if (spec != null && spec.getHullName() != null && !spec.getHullName().isBlank()) {
+            return spec.getHullName();
+        }
         return name != null ? name : "";
     }
 
@@ -327,11 +337,14 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
 
     @Override
     public String toString() {
-        String displayedName = rowData.get(StringConstants.NAME);
-        if (displayedName == null || displayedName.isEmpty()) {
-            displayedName = rowData.get(StringConstants.DESIGNATION);
+        String displayedName = getShipName();
+        if (displayedName == null || displayedName.isBlank()) {
+            displayedName = getShipDesignation();
         }
-        return displayedName != null ? displayedName : "Unknown Ship";
+        if (displayedName == null || displayedName.isBlank()) {
+            displayedName = this.hullID;
+        }
+        return (displayedName != null && !displayedName.isBlank()) ? displayedName : "Unknown Ship";
     }
 
     @SuppressWarnings("MethodWithMultipleReturnPoints")
@@ -342,7 +355,7 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
             log.error("Hull spec file not loaded, layer not created: {}", this.hullID);
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                     "Hull spec file not loaded, layer not created: " + this.hullID,
-                    StringValues.FILE_LOADING_ERROR,
+                    StringManager.getString("FILE_LOADING_ERROR"),
                     JOptionPane.ERROR_MESSAGE);
             return null;
         }
@@ -354,7 +367,7 @@ public class ShipCSVEntry implements LayerableEntry, InstallableEntry {
             log.error("Sprite file for ship not found: {}", spriteFilePath.toString());
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                     "Sprite file for ship not found, layer not created: " + spriteFilePath,
-                    StringValues.FILE_LOADING_ERROR,
+                    StringManager.getString("FILE_LOADING_ERROR"),
                     JOptionPane.ERROR_MESSAGE);
             return null;
         }

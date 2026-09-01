@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.components.ComponentEnums.OpenDataTarget;
@@ -57,7 +59,7 @@ public class HullsTreePanel extends DataTreePanel {
             if (StaticController.getEditorMode() == EditorInstrument.VARIANT_MODULES) {
                 dragHint = "(Drag to install as module)";
             }
-            shipeditor.components.datafiles.entities.ShipCSVEntry shipEntry = SettingsManager.getGameData().getAllShipEntries().get(file.getEntityId());
+            shipeditor.components.datafiles.entities.ShipCSVEntry shipEntry = SettingsManager.getGameData().getOrCreateShipEntry(file);
             String displayName = shipEntry != null ? shipEntry.toString() : "Hull ID: " + file.getEntityId();
             return displayName + "\n" + dragHint;
         } else if (entry instanceof GameDataPackage dataPackage) {
@@ -134,7 +136,7 @@ public class HullsTreePanel extends DataTreePanel {
 
     private JTextField getSearchField() {
         JTextField searchField = new JTextField();
-        searchField.setToolTipText("Search by ship name, hull ID, or filename.");
+        searchField.setToolTipText(StringManager.getString("SEARCH_BY_SHIP_NAME_HULL_ID_OR_FILENAME"));
         javax.swing.Timer timer = new javax.swing.Timer(300, e -> {
             ShipFilterPanel.setCurrentTextFilter(searchField.getText());
             this.reload();
@@ -168,9 +170,9 @@ public class HullsTreePanel extends DataTreePanel {
                 leftPanel.repaint();
 
                 ShipCSVEntry checked = null;
-                var shipEntries = SettingsManager.getGameData().getAllShipEntries();
-                if (shipEntries != null) {
-                    checked = shipEntries.get(file.getEntityId());
+                var gameData = SettingsManager.getGameData();
+                if (gameData != null) {
+                    checked = gameData.getOrCreateShipEntry(file);
                 }
 
                 if (checked != null) {
@@ -207,6 +209,52 @@ public class HullsTreePanel extends DataTreePanel {
 
         infoPanel.revalidate();
         infoPanel.repaint();
+    }
+
+    /**
+     * Loads a ship into the editor from an IndexedFile entry.
+     * First attempts to use the ShipCSVEntry path (which includes skin support).
+     * Falls back to direct .ship file loading for ships not in ship_data.csv
+     * (e.g. station modules, drones, boss ships).
+     */
+    private void loadShipFromIndexedFile(shipeditor.persistence.database.IndexedFile file) {
+        var gameData = SettingsManager.getGameData();
+        ShipCSVEntry checked = gameData != null ? gameData.getOrCreateShipEntry(file) : null;
+        if (checked != null) {
+            log.debug("Loading hull via entry: {}", file.getEntityId());
+            checked.loadLayerFromEntry();
+            return;
+        }
+        // Direct fallback: load from .ship file if repository not initialized
+        java.io.File shipFile = file.getFilePath().toFile();
+        shipeditor.representation.ship.HullSpecFile hullSpec =
+                shipeditor.parsing.loading.FileLoading.loadHullFile(shipFile);
+        if (hullSpec == null) {
+            log.error("Failed to load hull spec from file: {}", file.getFilePath());
+            javax.swing.JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
+                    "Failed to load hull spec file: " + file.getFilePath(),
+                    shipeditor.utility.text.StringManager.getString("FILE_LOADING_ERROR"),
+                    javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        String spriteName = hullSpec.getSpriteName();
+        Path spriteFilePath = Path.of(spriteName);
+        // Resolve the mod folder from the IndexedFile to search for sprites.
+        Path modFolder = SettingsManager.getFolderForModId(file.getModId());
+        java.io.File spriteFile = shipeditor.parsing.loading.FileLoading.fetchDataFile(spriteFilePath, modFolder);
+        if (spriteFile == null) {
+            log.error("Sprite file for ship not found: {}", spriteFilePath);
+            javax.swing.JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
+                    "Sprite file for ship not found, layer not created: " + spriteFilePath,
+                    shipeditor.utility.text.StringManager.getString("FILE_LOADING_ERROR"),
+                    javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        shipeditor.components.viewer.layers.ship.ShipLayer newLayer =
+                FileUtilities.createShipLayerWithSprite(spriteFile);
+        if (newLayer != null) {
+            newLayer.initializeHullData(hullSpec);
+        }
     }
 
     @Override
@@ -265,13 +313,7 @@ public class HullsTreePanel extends DataTreePanel {
         public void actionPerformed(ActionEvent e) {
             DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
             if (cachedSelectForMenu.getUserObject() instanceof shipeditor.persistence.database.IndexedFile file) {
-                var shipEntries = SettingsManager.getGameData().getAllShipEntries();
-                if (shipEntries != null) {
-                    ShipCSVEntry checked = shipEntries.get(file.getEntityId());
-                    if (checked != null) {
-                        log.debug("DOUBLE CLICK DETECTED ON HULL!"); checked.loadLayerFromEntry();
-                    }
-                }
+                loadShipFromIndexedFile(file);
             }
         }
     }
@@ -292,7 +334,7 @@ public class HullsTreePanel extends DataTreePanel {
     JPopupMenu getContextMenu() {
         JPopupMenu menu = super.getContextMenu();
         DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
-        JMenuItem loadAsLayer = new JMenuItem("Load as ship layer");
+        JMenuItem loadAsLayer = new JMenuItem(StringManager.getString("LOAD_AS_SHIP_LAYER"));
         loadAsLayer.addActionListener(new HullsTreePanel.LoadLayerFromTree());
         menu.insert(loadAsLayer, 0);
         menu.insert(new JPopupMenu.Separator(), 1);
@@ -317,7 +359,7 @@ public class HullsTreePanel extends DataTreePanel {
         SkinSpecFile activeSkinSpecFile = checked.getActiveSkinSpecFile();
         if (activeSkinSpecFile == null || activeSkinSpecFile.isBase())
             return null;
-        JMenuItem openSkin = new JMenuItem("Open skin file");
+        JMenuItem openSkin = new JMenuItem(StringManager.getString("OPEN_SKIN_FILE"));
         openSkin.addActionListener(e -> {
             Path toOpen = activeSkinSpecFile.getFilePath();
             FileUtilities.openPathInDesktop(toOpen);
@@ -363,12 +405,26 @@ public class HullsTreePanel extends DataTreePanel {
             DataTreePanel.configureCellRendererColors(object, this);
             setIcon(null);
             if (object instanceof shipeditor.persistence.database.IndexedFile file && leaf) {
-                ShipCSVEntry entry = SettingsManager.getGameData().getAllShipEntries().get(file.getEntityId());
+                var gameData = SettingsManager.getGameData();
+                ShipCSVEntry entry = gameData != null ? gameData.getOrCreateShipEntry(file) : null;
+                String title;
                 if (entry != null) {
-                    setText(entry.toString());
+                    title = entry.getShipName();
+                    if (title == null || title.isBlank()) {
+                        title = entry.toString();
+                    }
+                    if (title == null || title.isBlank()) {
+                        title = file.getEntityName() != null ? file.getEntityName() : file.getEntityId();
+                    }
+
+                    shipeditor.representation.RepresentationEnums.HullSize hullSize = entry.getSize();
+                    if (hullSize != null && hullSize != shipeditor.representation.RepresentationEnums.HullSize.DEFAULT) {
+                        title = "[" + hullSize.getDisplayedName() + "] " + title;
+                    }
                 } else {
-                    setText(file.getEntityName());
+                    title = file.getEntityName() != null ? file.getEntityName() : file.getEntityId();
                 }
+                setText(title);
             }
             return this;
         }
@@ -393,13 +449,7 @@ public class HullsTreePanel extends DataTreePanel {
                 return;
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) targetPath.getLastPathComponent();
             if (node.getUserObject() instanceof shipeditor.persistence.database.IndexedFile file) {
-                var shipEntries = SettingsManager.getGameData().getAllShipEntries();
-                if (shipEntries != null) {
-                    ShipCSVEntry checked = shipEntries.get(file.getEntityId());
-                    if (checked != null) {
-                        log.debug("DOUBLE CLICK DETECTED ON HULL!"); checked.loadLayerFromEntry();
-                    }
-                }
+                loadShipFromIndexedFile(file);
             }
         }
     }

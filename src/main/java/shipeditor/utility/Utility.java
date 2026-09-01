@@ -1,5 +1,7 @@
 package shipeditor.utility;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.components.ComponentEnums.CoordsDisplayMode;
 import shipeditor.components.viewer.entities.AngledPoint;
@@ -15,8 +17,6 @@ import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.overseers.MiscCaching;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.text.CoordinatesFormatter;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.Timer;
 import java.awt.Font;
 import java.awt.event.ActionListener;
@@ -50,6 +50,23 @@ public final class Utility {
      * Private constructor prevents instantiation of utility class.
      */
     private Utility() {}
+
+    private static final String OS_NAME = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+    private static final boolean IS_WINDOWS = OS_NAME.contains("win");
+    private static final boolean IS_LINUX = OS_NAME.contains("linux") || OS_NAME.contains("nix");
+    private static final boolean IS_MAC = OS_NAME.contains("mac");
+
+    public static boolean isWindows() {
+        return IS_WINDOWS;
+    }
+
+    public static boolean isLinux() {
+        return IS_LINUX;
+    }
+
+    public static boolean isMac() {
+        return IS_MAC;
+    }
 
     public static int parseIntegerOrDefault(String value, int defaultValue) {
         if (value == null || value.trim().isEmpty()) return defaultValue;
@@ -272,7 +289,7 @@ public final class Utility {
     }
 
     public static String translateIntegerValue(Supplier<Integer> getter) {
-        String notInitialized = StringValues.NOT_INITIALIZED;
+        String notInitialized = StringManager.getString("NOT_INITIALIZED");
         int value = getter.get();
         String textResult;
         if (value == -1) {
