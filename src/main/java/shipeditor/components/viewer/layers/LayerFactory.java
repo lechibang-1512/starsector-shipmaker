@@ -33,11 +33,16 @@ public final class LayerFactory {
         if (specFile instanceof SkinSpecFile checkedSkin) {
             baseHullId = checkedSkin.getBaseHullId();
             skinSpec = checkedSkin;
-        } else {
+        } else if (specFile != null) {
             baseHullId = specFile.getHullId();
+        } else {
+            baseHullId = shipHullId;
         }
+        if (baseHullId == null) return null;
         ShipCSVEntry csvEntry = GameDataRepository.retrieveShipCSVEntryByID(baseHullId);
+        if (csvEntry == null) return null;
         ShipLayer shipLayer = csvEntry.loadLayerFromEntry();
+        if (shipLayer == null) return null;
         ShipPainter shipPainter = shipLayer.getPainter();
 
         if (skinSpec != null) {
@@ -69,11 +74,16 @@ public final class LayerFactory {
         if (specFile instanceof SkinSpecFile checkedSkin) {
             baseHullId = checkedSkin.getBaseHullId();
             skinSpec = checkedSkin;
-        } else {
+        } else if (specFile != null) {
             baseHullId = specFile.getHullId();
+        } else {
+            baseHullId = shipHullId;
         }
+        if (baseHullId == null) return null;
         ShipCSVEntry csvEntry = GameDataRepository.retrieveShipCSVEntryByID(baseHullId);
+        if (csvEntry == null) return null;
         ShipPainter modulePainter = csvEntry.createPainterFromEntry(null);
+        if (modulePainter == null) return null;
 
         if (skinSpec != null) {
             ShipSkin shipSkin = ShipSkin.createFromSpec(skinSpec);

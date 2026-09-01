@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import shipeditor.communication.EventBus;
 import shipeditor.components.datafiles.entities.WeaponCSVEntry;
@@ -14,6 +16,7 @@ import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.persistence.database.IndexedFile;
+import shipeditor.utility.overseers.StaticController;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -83,13 +86,24 @@ public class WeaponsTreePanel extends DataTreePanel {
             }
             DataTreePanel.configureCellRendererColors(object, this);
             if (object instanceof IndexedFile file && leaf) {
-                WeaponCSVEntry entry = SettingsManager.getGameData().getAllWeaponEntries().get(file.getEntityId());
+                var gameData = SettingsManager.getGameData();
+                WeaponCSVEntry entry = gameData != null ? gameData.getOrCreateWeaponEntry(file) : null;
                 if (entry != null) {
                     WeaponType weaponType = entry.getLazyType();
-                    setIcon(ComponentUtilities.createIconFromColor(weaponType.getColor(), 10, 10));
-                    setText(entry.toString());
+                    if (weaponType != null && weaponType.getColor() != null) {
+                        setIcon(ComponentUtilities.createIconFromColor(weaponType.getColor(), 10, 10));
+                    } else {
+                        setIcon(null);
+                    }
+                    String title = entry.toString();
+                    var size = entry.getSize();
+                    if (size != null) {
+                        title = "[" + size.getDisplayedName() + "] " + title;
+                    }
+                    setText(title);
                 } else {
-                    setText(file.getEntityName());
+                    setIcon(null);
+                    setText(file.getEntityName() != null ? file.getEntityName() : file.getEntityId());
                 }
             }
             return this;
@@ -127,7 +141,34 @@ public class WeaponsTreePanel extends DataTreePanel {
                 }
             }
         });
-        getTree().addMouseListener(new DoubleClickLayerLoader());
+        JTree tree = getTree();
+        tree.addTreeSelectionListener(e -> {
+            TreePath selectedNode = e.getNewLeadSelectionPath();
+            if (selectedNode == null)
+                return;
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectedNode.getLastPathComponent();
+            if (node.getUserObject() instanceof IndexedFile file) {
+                var gameData = SettingsManager.getGameData();
+                WeaponCSVEntry entry = gameData != null ? gameData.getOrCreateWeaponEntry(file) : null;
+                if (entry != null) {
+                    JPanel infoPanel = getLeftInfoPanel();
+                    infoPanel.removeAll();
+                    infoPanel.add(new JLabel(StringManager.getString("LOADING_1")));
+                    infoPanel.revalidate();
+                    infoPanel.repaint();
+
+                    java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                        entry.getWeaponImage(); // pre-load sprite off EDT
+                        return entry;
+                    }).thenAccept(loaded -> javax.swing.SwingUtilities.invokeLater(() -> updateEntryPanel(loaded)));
+                } else {
+                    resetInfoPanel();
+                }
+            } else {
+                resetInfoPanel();
+            }
+        });
+        tree.addMouseListener(new DoubleClickLayerLoader());
     }
 
     @Override
@@ -179,7 +220,7 @@ public class WeaponsTreePanel extends DataTreePanel {
         JPanel infoPanel = getLeftInfoPanel();
         infoPanel.removeAll();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-        infoPanel.add(new JLabel("Select a weapon to view information."));
+        infoPanel.add(new JLabel(StringManager.getString("SELECT_A_WEAPON_TO_VIEW_INFORMATION")));
         infoPanel.revalidate();
         infoPanel.repaint();
     }
@@ -198,7 +239,7 @@ public class WeaponsTreePanel extends DataTreePanel {
 
     private JTextField getTextField() {
         JTextField searchField = new JTextField();
-        searchField.setToolTipText("Input is checked against displayed filename and weapon ID as a substring.");
+        searchField.setToolTipText(StringManager.getString("INPUT_IS_CHECKED_AGAINST_DISPLAYED_FILENAME_AND_WEAPON_ID_AS_A_SUBSTRING"));
         javax.swing.Timer timer = new javax.swing.Timer(300, e -> {
             WeaponFilterPanel.setCurrentTextFilter(searchField.getText());
             this.reload();
@@ -212,17 +253,19 @@ public class WeaponsTreePanel extends DataTreePanel {
     @Override
     protected JPanel createTopPanel() {
         JPanel topPanel = new JPanel();
-        JCheckBox expandNodes = new JCheckBox("Auto-expand nodes");
+        JCheckBox expandNodes = new JCheckBox(StringManager.getString("AUTO_EXPAND_NODES"));
         expandNodes.addActionListener(e -> this.autoExpandNodes = expandNodes.isSelected());
         topPanel.add(expandNodes);
         return topPanel;
     }
 
+
     @Override
     protected String getTooltipForEntry(Object entry) {
         if (entry instanceof IndexedFile file) {
             String dragHint = "(Double-click or drag to load weapon sprite)";
-            WeaponCSVEntry weaponEntry = SettingsManager.getGameData().getAllWeaponEntries().get(file.getEntityId());
+            var gameData = SettingsManager.getGameData();
+            WeaponCSVEntry weaponEntry = gameData != null ? gameData.getOrCreateWeaponEntry(file) : null;
             String displayName = weaponEntry != null ? weaponEntry.toString() : "Weapon ID: " + file.getEntityId();
             return displayName + "\n" + dragHint;
         } else if (entry instanceof GameDataPackage dataPackage) {
@@ -314,12 +357,72 @@ public class WeaponsTreePanel extends DataTreePanel {
         JPopupMenu menu = super.getContextMenu();
         DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
         if (cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof IndexedFile) {
-            JMenuItem loadAsLayer = new JMenuItem("Load as weapon layer");
+            int insertIndex = 0;
+            var layer = StaticController.getActiveLayer();
+            if (layer instanceof shipeditor.components.viewer.layers.ship.ShipLayer shipLayer) {
+                var slotPainter = shipLayer.getPainter() != null ? shipLayer.getPainter().getWeaponSlotPainter() : null;
+                var selectedSlot = slotPainter != null ? slotPainter.getSelected() : null;
+                if (selectedSlot != null) {
+                    JMenuItem installBuiltIn = new JMenuItem(StringManager.getString("INSTALL_AS_BUILT_IN_ON") + selectedSlot.getId());
+                    installBuiltIn.addActionListener(new InstallAsBuiltInAction());
+                    menu.insert(installBuiltIn, insertIndex++);
+
+                    JMenuItem fitVariant = new JMenuItem(StringManager.getString("FIT_ON") + selectedSlot.getId() + " (Variant)");
+                    fitVariant.addActionListener(new FitOnSlotAction());
+                    menu.insert(fitVariant, insertIndex++);
+
+                    menu.insert(new JPopupMenu.Separator(), insertIndex++);
+                }
+            }
+
+            JMenuItem loadAsLayer = new JMenuItem(StringManager.getString("LOAD_AS_WEAPON_LAYER"));
             loadAsLayer.addActionListener(new LoadWeaponLayerFromTree());
-            menu.insert(loadAsLayer, 0);
-            menu.insert(new JPopupMenu.Separator(), 1);
+            menu.insert(loadAsLayer, insertIndex++);
+            menu.insert(new JPopupMenu.Separator(), insertIndex);
         }
         return menu;
+    }
+
+    private class InstallAsBuiltInAction extends AbstractAction {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
+            if (cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof IndexedFile checked) {
+                var gameData = SettingsManager.getGameData();
+                WeaponCSVEntry entry = gameData != null ? gameData.getOrCreateWeaponEntry(checked) : null;
+                if (entry != null) {
+                    var layer = StaticController.getActiveLayer();
+                    if (layer instanceof shipeditor.components.viewer.layers.ship.ShipLayer shipLayer) {
+                        var slotPainter = shipLayer.getPainter() != null ? shipLayer.getPainter().getWeaponSlotPainter() : null;
+                        var selectedSlot = slotPainter != null ? slotPainter.getSelected() : null;
+                        if (selectedSlot != null) {
+                            shipLayer.getFeaturesOverseer().installBuiltIn(selectedSlot, entry);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private class FitOnSlotAction extends AbstractAction {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
+            if (cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof IndexedFile checked) {
+                var gameData = SettingsManager.getGameData();
+                WeaponCSVEntry entry = gameData != null ? gameData.getOrCreateWeaponEntry(checked) : null;
+                if (entry != null) {
+                    var layer = StaticController.getActiveLayer();
+                    if (layer instanceof shipeditor.components.viewer.layers.ship.ShipLayer shipLayer) {
+                        var slotPainter = shipLayer.getPainter() != null ? shipLayer.getPainter().getWeaponSlotPainter() : null;
+                        var selectedSlot = slotPainter != null ? slotPainter.getSelected() : null;
+                        if (selectedSlot != null) {
+                            shipLayer.getFeaturesOverseer().addWeaponToSelectedSlot(entry);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private class LoadWeaponLayerFromTree extends AbstractAction {
@@ -332,9 +435,10 @@ public class WeaponsTreePanel extends DataTreePanel {
         public void actionPerformed(ActionEvent e) {
             DefaultMutableTreeNode cachedSelectForMenu = getCachedSelectForMenu();
             if (cachedSelectForMenu != null && cachedSelectForMenu.getUserObject() instanceof IndexedFile checked) {
-                WeaponCSVEntry entry = SettingsManager.getGameData().getAllWeaponEntries().get(checked.getEntityId());
+                var gameData = SettingsManager.getGameData();
+                WeaponCSVEntry entry = gameData != null ? gameData.getOrCreateWeaponEntry(checked) : null;
                 if (entry != null) {
-                    log.debug("DOUBLE CLICK DETECTED ON WEAPON!"); entry.loadLayerFromEntry();
+                    entry.loadLayerFromEntry();
                 }
             }
         }
@@ -357,6 +461,7 @@ public class WeaponsTreePanel extends DataTreePanel {
     private class DoubleClickLayerLoader extends java.awt.event.MouseAdapter {
         @Override
         public void mousePressed(java.awt.event.MouseEvent e) {
+            if (e.getButton() != java.awt.event.MouseEvent.BUTTON1 || e.getClickCount() != 2) return;
             JTree tree = getTree();
             java.awt.Point eventPoint = e.getPoint();
             TreePath pathForLocation = tree.getPathForLocation(eventPoint.x, eventPoint.y);
@@ -365,23 +470,10 @@ public class WeaponsTreePanel extends DataTreePanel {
             if (targetPath == null) return;
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) targetPath.getLastPathComponent();
             if (node.getUserObject() instanceof IndexedFile checked) {
-                WeaponCSVEntry entry = SettingsManager.getGameData().getAllWeaponEntries().get(checked.getEntityId());
+                var gameData = SettingsManager.getGameData();
+                WeaponCSVEntry entry = gameData != null ? gameData.getOrCreateWeaponEntry(checked) : null;
                 if (entry != null) {
-                    if (e.getButton() == java.awt.event.MouseEvent.BUTTON1 && e.getClickCount() == 2) {
-                        log.debug("DOUBLE CLICK DETECTED ON WEAPON!"); entry.loadLayerFromEntry();
-                    } else {
-                        // Async info panel: load sprite off EDT, then update UI
-                        JPanel infoPanel = getLeftInfoPanel();
-                        infoPanel.removeAll();
-                        infoPanel.add(new JLabel("Loading..."));
-                        infoPanel.revalidate();
-                        infoPanel.repaint();
-
-                        java.util.concurrent.CompletableFuture.supplyAsync(() -> {
-                            entry.getWeaponImage(); // pre-load sprite off EDT
-                            return entry;
-                        }).thenAccept(loaded -> javax.swing.SwingUtilities.invokeLater(() -> updateEntryPanel(loaded)));
-                    }
+                    entry.loadLayerFromEntry();
                 }
             }
         }

@@ -43,11 +43,17 @@ public class SlotDrawer {
 
     private boolean drawAngle = true;
 
+    private boolean drawMount = true;
+
     // Pre-allocated rendering caches to prevent per-frame object allocation
     private final Point2D p0Screen = new Point2D.Double();
     private final Point2D p1Screen = new Point2D.Double();
     private final Point2D centerScreen = new Point2D.Double();
     private final org.joml.Vector4f colorGl = new org.joml.Vector4f();
+    private final org.joml.Vector4f fillGl = new org.joml.Vector4f();
+    private final org.joml.Vector4f arcFillGl = new org.joml.Vector4f();
+    private final org.joml.Vector4f highlightGl = new org.joml.Vector4f();
+    private final org.joml.Vector4f builtInGl = new org.joml.Vector4f();
     private final org.joml.Vector4f blackGl = new org.joml.Vector4f();
     private final org.joml.Vector4f whiteGl = new org.joml.Vector4f();
     private final org.joml.Vector2f centerGl = new org.joml.Vector2f();
@@ -115,8 +121,16 @@ public class SlotDrawer {
         double enlargedRadius = circleRadius * 1.65f;
 
         float alpha = 1.0f;
+        boolean isSelected = false;
+        boolean isHovered = false;
+        boolean hasBuiltIn = false;
+        if (parentPoint instanceof shipeditor.components.viewer.entities.BaseWorldPoint bwp) {
+            isSelected = bwp.isPointSelected();
+            isHovered = bwp.isCursorInBounds();
+        }
         if (parentPoint instanceof WeaponSlotPoint weaponSlotPoint) {
             alpha = (float) weaponSlotPoint.getTransparency();
+            hasBuiltIn = weaponSlotPoint.hasBuiltInWeapon();
         }
 
         Color mountColor = this.type.getColor();
@@ -124,42 +138,55 @@ public class SlotDrawer {
             mountColor = parentPoint.getCurrentColor();
         }
 
-        colorGl.set(
-            mountColor.getRed() / 255.0f,
-            mountColor.getGreen() / 255.0f,
-            mountColor.getBlue() / 255.0f,
-            mountColor.getAlpha() / 255.0f * alpha
-        );
-        blackGl.set(0.0f, 0.0f, 0.0f, 0.4f * alpha);
+        float r = mountColor.getRed() / 255.0f;
+        float g = mountColor.getGreen() / 255.0f;
+        float b = mountColor.getBlue() / 255.0f;
+
+        colorGl.set(r, g, b, mountColor.getAlpha() / 255.0f * alpha);
+
+        float fillAlpha = (isSelected ? 0.40f : (isHovered ? 0.30f : 0.16f)) * alpha;
+        fillGl.set(r, g, b, fillAlpha);
+
+        float arcAlpha = (isSelected ? 0.14f : (isHovered ? 0.10f : 0.05f)) * alpha;
+        arcFillGl.set(r, g, b, arcAlpha);
+
+        highlightGl.set(1.0f, 0.95f, 0.6f, 0.85f * alpha);
+        builtInGl.set(0.4f, 0.9f, 1.0f, 0.95f * alpha);
+
+        blackGl.set(0.0f, 0.0f, 0.0f, 0.55f * alpha);
         whiteGl.set(1.0f, 1.0f, 1.0f, alpha);
 
         Point2D centerScreenPoint = worldToScreen.transform(position, centerScreen);
         centerGl.set((float) centerScreenPoint.getX(), (float) centerScreenPoint.getY());
 
-        this.drawMountShapeGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, enlargedRadius, colorGl, blackGl);
-
         if (drawArc) {
-            this.drawArcGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, colorGl, blackGl, alpha);
+            this.drawArcGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, colorGl, blackGl, arcFillGl, alpha);
         }
+
+        if (drawMount) {
+            this.drawMountShapeGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, enlargedRadius, colorGl, fillGl, highlightGl, blackGl, isSelected, isHovered);
+        }
+
         if (drawAngle) {
-            this.drawAnglePointerGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, colorGl, whiteGl, alpha);
+            this.drawAnglePointerGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, colorGl, whiteGl, builtInGl, hasBuiltIn, alpha);
         }
     }
 
     private void drawMountShapeGL(ShapeRenderer shapeRenderer, AffineTransform worldToScreen, double wtsScale,
                                   org.joml.Vector2f centerGl, double circleRadius, double enlargedRadius,
-                                  org.joml.Vector4f colorGl, org.joml.Vector4f blackGl) {
+                                  org.joml.Vector4f colorGl, org.joml.Vector4f fillGl, org.joml.Vector4f highlightGl,
+                                  org.joml.Vector4f blackGl, boolean isSelected, boolean isHovered) {
         WeaponMount slotMount = this.mount;
         WeaponSize slotSize = this.size;
 
-        this.paintMountGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, enlargedRadius, 1.0d, slotMount, colorGl, blackGl);
+        this.paintMountGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, enlargedRadius, 1.0d, slotMount, colorGl, fillGl, highlightGl, blackGl, isSelected, isHovered, true);
 
         if (slotSize == WeaponSize.MEDIUM || slotSize == WeaponSize.LARGE) {
             double scaleMedium = 1.25d;
-            this.paintMountGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, enlargedRadius, scaleMedium, slotMount, colorGl, blackGl);
+            this.paintMountGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, enlargedRadius, scaleMedium, slotMount, colorGl, fillGl, highlightGl, blackGl, isSelected, isHovered, false);
             if (slotSize == WeaponSize.LARGE) {
                 double scaleLarge = 1.5d;
-                this.paintMountGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, enlargedRadius, scaleLarge, slotMount, colorGl, blackGl);
+                this.paintMountGL(shapeRenderer, worldToScreen, wtsScale, centerGl, circleRadius, enlargedRadius, scaleLarge, slotMount, colorGl, fillGl, highlightGl, blackGl, isSelected, isHovered, false);
             }
         }
     }
@@ -167,7 +194,8 @@ public class SlotDrawer {
     private void paintMountGL(ShapeRenderer shapeRenderer, AffineTransform worldToScreen, double wtsScale,
                               org.joml.Vector2f centerGl, double circleRadius, double enlargedRadius,
                               double scale, WeaponMount slotMount,
-                              org.joml.Vector4f colorGl, org.joml.Vector4f blackGl) {
+                              org.joml.Vector4f colorGl, org.joml.Vector4f fillGl, org.joml.Vector4f highlightGl,
+                              org.joml.Vector4f blackGl, boolean isSelected, boolean isHovered, boolean drawFill) {
         
         Point2D centerScreenPoint = this.centerScreen;
         centerScreenPoint.setLocation(centerGl.x, centerGl.y);
@@ -189,10 +217,21 @@ public class SlotDrawer {
                 double arcStartAngle = Math.toRadians(transformedAngle - halfArc);
                 double arcRads = Math.toRadians(this.arc);
 
+                if (drawFill) {
+                    shapeRenderer.drawPartialCircle(centerGl, (float) finalHalfExtentPixels, fillGl, true, arcStartAngle, arcRads);
+                }
+
                 org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
                 shapeRenderer.drawPartialCircle(centerGl, (float) finalHalfExtentPixels, blackGl, false, arcStartAngle, arcRads);
-                org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
+
+                float lineWidth = isSelected ? GraphicConstants.LINE_WIDTH_NORMAL : (isHovered ? 2.2f : GraphicConstants.LINE_WIDTH_DEFAULT);
+                org.lwjgl.opengl.GL11.glLineWidth(lineWidth);
                 shapeRenderer.drawPartialCircle(centerGl, (float) finalHalfExtentPixels, colorGl, false, arcStartAngle, arcRads);
+
+                if (isSelected && drawFill) {
+                    org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
+                    shapeRenderer.drawCircle(centerGl, (float) (finalHalfExtentPixels + 3.0f), highlightGl, false);
+                }
             }
             case HARDPOINT -> {
                 double transformedAngle = Utility.transformAngle(this.angle);
@@ -212,17 +251,27 @@ public class SlotDrawer {
                 v2Cached.set(centerGl.x + (float)((s2Cached.getX() - centerScreenPoint.getX()) * pixelScale), centerGl.y + (float)((s2Cached.getY() - centerScreenPoint.getY()) * pixelScale));
                 v3Cached.set(centerGl.x + (float)((s3Cached.getX() - centerScreenPoint.getX()) * pixelScale), centerGl.y + (float)((s3Cached.getY() - centerScreenPoint.getY()) * pixelScale));
 
+                if (drawFill) {
+                    shapeRenderer.drawQuad(v0Cached, v1Cached, v2Cached, v3Cached, fillGl, true);
+                }
+
                 org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
                 shapeRenderer.drawLine(v0Cached, v1Cached, blackGl);
                 shapeRenderer.drawLine(v1Cached, v2Cached, blackGl);
                 shapeRenderer.drawLine(v2Cached, v3Cached, blackGl);
                 shapeRenderer.drawLine(v3Cached, v0Cached, blackGl);
 
-                org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
+                float lineWidth = isSelected ? GraphicConstants.LINE_WIDTH_NORMAL : (isHovered ? 2.2f : GraphicConstants.LINE_WIDTH_DEFAULT);
+                org.lwjgl.opengl.GL11.glLineWidth(lineWidth);
                 shapeRenderer.drawLine(v0Cached, v1Cached, colorGl);
                 shapeRenderer.drawLine(v1Cached, v2Cached, colorGl);
                 shapeRenderer.drawLine(v2Cached, v3Cached, colorGl);
                 shapeRenderer.drawLine(v3Cached, v0Cached, colorGl);
+
+                if (isSelected && drawFill) {
+                    org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
+                    shapeRenderer.drawCircle(centerGl, (float) (finalHalfExtentPixels + 3.0f), highlightGl, false);
+                }
             }
             case HIDDEN -> {
                 double transformedAngle = Utility.transformAngle(this.angle);
@@ -240,22 +289,33 @@ public class SlotDrawer {
                 v1Cached.set(centerGl.x + (float)((s1Cached.getX() - centerScreenPoint.getX()) * pixelScale), centerGl.y + (float)((s1Cached.getY() - centerScreenPoint.getY()) * pixelScale));
                 v2Cached.set(centerGl.x + (float)((s2Cached.getX() - centerScreenPoint.getX()) * pixelScale), centerGl.y + (float)((s2Cached.getY() - centerScreenPoint.getY()) * pixelScale));
 
+                if (drawFill) {
+                    shapeRenderer.drawTriangle(v0Cached, v1Cached, v2Cached, fillGl, true);
+                }
+
                 org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
                 shapeRenderer.drawLine(v0Cached, v1Cached, blackGl);
                 shapeRenderer.drawLine(v1Cached, v2Cached, blackGl);
                 shapeRenderer.drawLine(v2Cached, v0Cached, blackGl);
 
-                org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
+                float lineWidth = isSelected ? GraphicConstants.LINE_WIDTH_NORMAL : (isHovered ? 2.2f : GraphicConstants.LINE_WIDTH_DEFAULT);
+                org.lwjgl.opengl.GL11.glLineWidth(lineWidth);
                 shapeRenderer.drawLine(v0Cached, v1Cached, colorGl);
                 shapeRenderer.drawLine(v1Cached, v2Cached, colorGl);
                 shapeRenderer.drawLine(v2Cached, v0Cached, colorGl);
+
+                if (isSelected && drawFill) {
+                    org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
+                    shapeRenderer.drawCircle(centerGl, (float) (finalHalfExtentPixels + 3.0f), highlightGl, false);
+                }
             }
         }
     }
 
     private void drawArcGL(ShapeRenderer shapeRenderer, AffineTransform worldToScreen, double wtsScale,
                            org.joml.Vector2f centerGl, double circleRadius,
-                           org.joml.Vector4f colorGl, org.joml.Vector4f blackGl, float alpha) {
+                           org.joml.Vector4f colorGl, org.joml.Vector4f blackGl,
+                           org.joml.Vector4f arcFillGl, float alpha) {
         Point2D position = this.pointPosition;
         double slotArc = this.arc;
         double halfArc = slotArc * 0.5d;
@@ -285,6 +345,14 @@ public class SlotDrawer {
         vEndEndpoint.set((float) sEndEndpoint.getX(), (float) sEndEndpoint.getY());
         vEndCirclePoint.set((float) sEndCirclePoint.getX(), (float) sEndCirclePoint.getY());
 
+        double startAngleRads = Math.toRadians(transformedAngle - halfArc);
+        double arcRads = Math.toRadians(slotArc);
+        float screenArcRadius = (float) (effectiveArcRadius * wtsScale);
+
+        // Subtle filled arc sector
+        shapeRenderer.drawPartialCircle(centerGl, screenArcRadius, arcFillGl, true, startAngleRads, arcRads);
+
+        // Arc radial boundary lines
         org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
         shapeRenderer.drawLine(vStartEndpoint, vStartCirclePoint, blackGl);
         shapeRenderer.drawLine(vEndEndpoint, vEndCirclePoint, blackGl);
@@ -293,10 +361,7 @@ public class SlotDrawer {
         shapeRenderer.drawLine(vStartEndpoint, vStartCirclePoint, colorGl);
         shapeRenderer.drawLine(vEndEndpoint, vEndCirclePoint, colorGl);
 
-        double startAngleRads = Math.toRadians(transformedAngle - halfArc);
-        double arcRads = Math.toRadians(slotArc);
-        float screenArcRadius = (float) (effectiveArcRadius * wtsScale);
-
+        // Outer curved rim
         org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
         shapeRenderer.drawPartialCircle(centerGl, screenArcRadius, blackGl, false, startAngleRads, arcRads);
 
@@ -306,7 +371,8 @@ public class SlotDrawer {
 
     private void drawAnglePointerGL(ShapeRenderer shapeRenderer, AffineTransform worldToScreen, double wtsScale,
                                      org.joml.Vector2f centerGl, double circleRadius,
-                                     org.joml.Vector4f colorGl, org.joml.Vector4f whiteGl, float alpha) {
+                                     org.joml.Vector4f colorGl, org.joml.Vector4f whiteGl,
+                                     org.joml.Vector4f builtInGl, boolean hasBuiltIn, float alpha) {
         Point2D position = this.pointPosition;
         double transformedAngle = Utility.transformAngle(this.angle);
 
@@ -330,10 +396,21 @@ public class SlotDrawer {
         org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
         shapeRenderer.drawLine(vLineEndpoint, vClosestIntersection, whiteGl);
 
+        float centerRadiusPixels = (float) (effectiveRadius * wtsScale);
         org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
-        shapeRenderer.drawCircle(centerGl, (float) (effectiveRadius * wtsScale), blackGl, false);
+        shapeRenderer.drawCircle(centerGl, centerRadiusPixels, blackGl, false);
         org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_DEFAULT);
-        shapeRenderer.drawCircle(centerGl, (float) (effectiveRadius * wtsScale), colorGl, false);
+        shapeRenderer.drawCircle(centerGl, centerRadiusPixels, colorGl, false);
+
+        // Center dot / Built-in indicator
+        if (hasBuiltIn) {
+            float diamondSize = Math.max(centerRadiusPixels * 0.7f, 4.0f);
+            shapeRenderer.drawCircle(centerGl, diamondSize, builtInGl, true);
+            org.lwjgl.opengl.GL11.glLineWidth(GraphicConstants.LINE_WIDTH_THIN);
+            shapeRenderer.drawCircle(centerGl, diamondSize, whiteGl, false);
+        } else {
+            shapeRenderer.drawCircle(centerGl, Math.max(centerRadiusPixels * 0.45f, 2.0f), colorGl, true);
+        }
     }
 
 }

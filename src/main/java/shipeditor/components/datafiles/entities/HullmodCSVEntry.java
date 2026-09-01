@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.entities;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -9,8 +11,6 @@ import shipeditor.representation.RepresentationEnums.HullSize;
 import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.text.StringConstants;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JLabel;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -56,7 +56,7 @@ public class HullmodCSVEntry implements OrdnancedCSVEntry {
     public String toString() {
         String displayedName = rowData.get(StringConstants.NAME);
         if (displayedName == null || displayedName.isEmpty()) {
-            displayedName = StringValues.UNTITLED;
+            displayedName = StringManager.getString("UNTITLED");
         }
         return displayedName;
     }
@@ -70,6 +70,46 @@ public class HullmodCSVEntry implements OrdnancedCSVEntry {
     public String getMultilineTooltip() {
         String entryID = "Hullmod ID: " + this.getHullmodID();
         return Utility.getWithLinebreaks(entryID);
+    }
+
+    public String getName() {
+        return toString();
+    }
+
+    public String getDescription() {
+        String desc = rowData.get("desc");
+        if (desc == null || desc.isBlank()) {
+            desc = rowData.get("short_desc");
+        }
+        if (desc == null || desc.isBlank()) {
+            desc = rowData.get("description");
+        }
+        return desc != null ? desc : "";
+    }
+
+    public String getTags() {
+        String tags = rowData.get("tags");
+        return tags != null ? tags : "";
+    }
+
+    private volatile BufferedImage cachedSpriteImage;
+    private volatile boolean spriteLoaded = false;
+
+    public BufferedImage getSpriteImage() {
+        if (!spriteLoaded) {
+            synchronized (this) {
+                if (!spriteLoaded) {
+                    try {
+                        File imageFile = this.fetchHullmodSpriteFile();
+                        cachedSpriteImage = FileLoading.loadSpriteAsImage(imageFile);
+                    } catch (Exception e) {
+                        cachedSpriteImage = null;
+                    }
+                    spriteLoaded = true;
+                }
+            }
+        }
+        return cachedSpriteImage;
     }
 
     @Override
@@ -100,7 +140,7 @@ public class HullmodCSVEntry implements OrdnancedCSVEntry {
             return cachedIconLabel;
         }
         if (cachedIconLabel == null) {
-            cachedIconLabel = new JLabel("...");
+            cachedIconLabel = new JLabel(StringManager.getString("EMPTY_STRING"));
         }
         if (!isIconLoading) {
             isIconLoading = true;
@@ -124,7 +164,7 @@ public class HullmodCSVEntry implements OrdnancedCSVEntry {
                 } catch (Exception ex) {
                     log.error("Failed to load hullmod icon: " + name, ex);
                     javax.swing.SwingUtilities.invokeLater(() -> {
-                        cachedIconLabel.setText("?");
+                        cachedIconLabel.setText(StringManager.getString("EMPTY_STRING_1"));
                         if (name != null && !name.isEmpty()) {
                             cachedIconLabel.setToolTipText(name);
                         }

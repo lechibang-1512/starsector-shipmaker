@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import shipeditor.communication.events.files.FileEvents.HullmodDataSet;
 import shipeditor.communication.events.files.FileEvents.WingDataSet;
+import shipeditor.utility.text.StringConstants;
 import java.nio.file.Paths;
 
 @Log4j2
@@ -180,7 +181,7 @@ public class GameDataRepository {
      * All projectile files by variant IDs.
      */
     @Setter
-    private volatile Map<String, ProjectileSpecFile> allProjectiles;
+    private final Map<String, ProjectileSpecFile> allProjectiles = new ConcurrentHashMap<>();
 
     @Setter
     private volatile boolean shipDataLoaded;
@@ -425,13 +426,17 @@ public class GameDataRepository {
 
     public void reset() {
         if (allSpecEntries != null) allSpecEntries.clear();
-        if (allShipEntries != null) allShipEntries.clear();
-        if (allHullmodEntries != null) allHullmodEntries.clear();
-        if (allShipsystemEntries != null) allShipsystemEntries.clear();
-        if (allWingEntries != null) allWingEntries.clear();
-        if (allWeaponEntries != null) allWeaponEntries.clear();
+        allShipEntries = null;
+        allHullmodEntries = null;
+        allShipsystemEntries = null;
+        allWingEntries = null;
+        allWeaponEntries = null;
         allVariants = null;
+        allHullStyles = null;
+        allEngineStyles = null;
+        if (variantsByHullID != null) variantsByHullID.clear();
         if (allProjectiles != null) allProjectiles.clear();
+        csvCacheByPath.clear();
 
         shipEntriesByPackage = null;
         weaponEntriesByPackage = null;
@@ -449,16 +454,30 @@ public class GameDataRepository {
 
     public void setShipEntriesByPackage(Map<Path, List<ShipCSVEntry>> shipEntries) {
         this.shipEntriesByPackage = shipEntries;
+        Map<String, ShipCSVEntry> newAllShipEntries = new ConcurrentHashMap<>();
         if (shipEntries != null) {
+            shipEntries.values().forEach(list -> list.forEach(entry -> {
+                if (entry.getID() != null && !entry.getID().isEmpty()) {
+                    newAllShipEntries.put(entry.getID(), entry);
+                }
+            }));
             SettingsManager.announcePackages(shipEntries);
         }
+        this.allShipEntries = newAllShipEntries;
     }
 
     public void setWeaponEntriesByPackage(Map<Path, List<WeaponCSVEntry>> weaponEntries) {
         this.weaponEntriesByPackage = weaponEntries;
+        Map<String, WeaponCSVEntry> newAllWeaponEntries = new ConcurrentHashMap<>();
         if (weaponEntries != null) {
+            weaponEntries.values().forEach(list -> list.forEach(entry -> {
+                if (entry.getID() != null && !entry.getID().isEmpty()) {
+                    newAllWeaponEntries.put(entry.getID(), entry);
+                }
+            }));
             SettingsManager.announcePackages(weaponEntries);
         }
+        this.allWeaponEntries = newAllWeaponEntries;
     }
 
     public void setProjectileEntriesByPackage(Map<Path, List<ProjectileSpecFile>> projectileEntries) {
@@ -472,7 +491,11 @@ public class GameDataRepository {
         this.hullmodEntriesByPackage = hullmodEntries;
         Map<String, HullmodCSVEntry> newAllHullmodEntries = new ConcurrentHashMap<>();
         if (hullmodEntries != null) {
-            hullmodEntries.values().forEach(list -> list.forEach(entry -> newAllHullmodEntries.put(entry.getID(), entry)));
+            hullmodEntries.values().forEach(list -> list.forEach(entry -> {
+                if (entry.getID() != null && !entry.getID().isEmpty()) {
+                    newAllHullmodEntries.put(entry.getID(), entry);
+                }
+            }));
             SettingsManager.announcePackages(hullmodEntries);
         }
         this.allHullmodEntries = newAllHullmodEntries;
@@ -482,7 +505,11 @@ public class GameDataRepository {
         this.shipSystemEntriesByPackage = shipSystemEntries;
         Map<String, ShipSystemCSVEntry> newAllShipsystemEntries = new ConcurrentHashMap<>();
         if (shipSystemEntries != null) {
-            shipSystemEntries.values().forEach(list -> list.forEach(entry -> newAllShipsystemEntries.put(entry.getID(), entry)));
+            shipSystemEntries.values().forEach(list -> list.forEach(entry -> {
+                if (entry.getID() != null && !entry.getID().isEmpty()) {
+                    newAllShipsystemEntries.put(entry.getID(), entry);
+                }
+            }));
             SettingsManager.announcePackages(shipSystemEntries);
         }
         this.allShipsystemEntries = newAllShipsystemEntries;
@@ -492,10 +519,34 @@ public class GameDataRepository {
         this.wingEntriesByPackage = wingEntries;
         Map<String, WingCSVEntry> newAllWingEntries = new ConcurrentHashMap<>();
         if (wingEntries != null) {
-            wingEntries.values().forEach(list -> list.forEach(entry -> newAllWingEntries.put(entry.getID(), entry)));
+            wingEntries.values().forEach(list -> list.forEach(entry -> {
+                if (entry.getID() != null && !entry.getID().isEmpty()) {
+                    newAllWingEntries.put(entry.getID(), entry);
+                }
+            }));
             SettingsManager.announcePackages(wingEntries);
         }
         this.allWingEntries = newAllWingEntries;
+    }
+
+    public ShipCSVEntry getOrCreateShipEntry(shipeditor.persistence.database.IndexedFile file) {
+        if (file == null || file.getEntityId() == null) return null;
+        Map<String, ShipCSVEntry> entries = getAllShipEntries();
+        ShipCSVEntry existing = entries.get(file.getEntityId());
+        if (existing != null) return existing;
+
+        Path folder = SettingsManager.getFolderForModId(file.getModId());
+        Map<String, String> row = new HashMap<>();
+        row.put(StringConstants.ID, file.getEntityId());
+        if (file.getEntityName() != null && !file.getEntityName().isBlank()) {
+            row.put(StringConstants.NAME, file.getEntityName());
+        }
+        if (file.getDesignation() != null && !file.getDesignation().isBlank()) {
+            row.put(StringConstants.DESIGNATION, file.getDesignation());
+        }
+        ShipCSVEntry synthetic = new ShipCSVEntry(row, null, folder, file.getFileName());
+        entries.put(file.getEntityId(), synthetic);
+        return synthetic;
     }
 
     public static ShipCSVEntry retrieveShipCSVEntryByID(String baseHullID) {
@@ -505,7 +556,31 @@ public class GameDataRepository {
         GameDataRepository dataRepository = SettingsManager.getGameData();
         if (dataRepository == null) return null;
         var shipEntries = dataRepository.getAllShipEntries();
-        return shipEntries != null ? shipEntries.get(baseHullID) : null;
+        if (shipEntries != null) {
+            ShipCSVEntry found = shipEntries.get(baseHullID);
+            if (found != null) return found;
+        }
+        shipeditor.persistence.database.IndexedFile file =
+                shipeditor.persistence.database.DatabaseQueryService.getFileByEntityId(baseHullID, StringConstants.SHIP_TYPE);
+        if (file != null) {
+            return dataRepository.getOrCreateShipEntry(file);
+        }
+        return null;
+    }
+
+    public HullmodCSVEntry getOrCreateHullmodEntry(String hullmodID) {
+        if (hullmodID == null || hullmodID.isBlank()) return null;
+        Map<String, HullmodCSVEntry> entries = getAllHullmodEntries();
+        if (entries == null) return null;
+        HullmodCSVEntry existing = entries.get(hullmodID);
+        if (existing != null) return existing;
+
+        Map<String, String> row = new HashMap<>();
+        row.put(StringConstants.ID, hullmodID);
+        row.put(StringConstants.NAME, hullmodID);
+        HullmodCSVEntry synthetic = new HullmodCSVEntry(row, null, null);
+        entries.put(hullmodID, synthetic);
+        return synthetic;
     }
 
     public static HullmodCSVEntry retrieveHullmodCSVEntryByID(String hullmodID) {
@@ -515,7 +590,86 @@ public class GameDataRepository {
         GameDataRepository dataRepository = SettingsManager.getGameData();
         if (dataRepository == null) return null;
         var hullmodEntries = dataRepository.getAllHullmodEntries();
-        return hullmodEntries != null ? hullmodEntries.get(hullmodID) : null;
+        if (hullmodEntries != null) {
+            HullmodCSVEntry found = hullmodEntries.get(hullmodID);
+            if (found != null) return found;
+        }
+        return dataRepository.getOrCreateHullmodEntry(hullmodID);
+    }
+
+    public WingCSVEntry getOrCreateWingEntry(String wingID) {
+        if (wingID == null || wingID.isBlank()) return null;
+        Map<String, WingCSVEntry> entries = getAllWingEntries();
+        if (entries == null) return null;
+        WingCSVEntry existing = entries.get(wingID);
+        if (existing != null) return existing;
+
+        Map<String, String> row = new HashMap<>();
+        row.put(StringConstants.ID, wingID);
+        row.put(StringConstants.NAME, wingID);
+        WingCSVEntry synthetic = new WingCSVEntry(row, null, null);
+        entries.put(wingID, synthetic);
+        return synthetic;
+    }
+
+    public static WingCSVEntry retrieveWingCSVEntryByID(String wingID) {
+        if (wingID == null) {
+            return null;
+        }
+        GameDataRepository dataRepository = SettingsManager.getGameData();
+        if (dataRepository == null) return null;
+        var wingEntries = dataRepository.getAllWingEntries();
+        if (wingEntries != null) {
+            WingCSVEntry found = wingEntries.get(wingID);
+            if (found != null) return found;
+        }
+        return dataRepository.getOrCreateWingEntry(wingID);
+    }
+
+    public ShipSystemCSVEntry getOrCreateShipsystemEntry(String systemID) {
+        if (systemID == null || systemID.isBlank()) return null;
+        Map<String, ShipSystemCSVEntry> entries = getAllShipsystemEntries();
+        if (entries == null) return null;
+        ShipSystemCSVEntry existing = entries.get(systemID);
+        if (existing != null) return existing;
+
+        Map<String, String> row = new HashMap<>();
+        row.put(StringConstants.ID, systemID);
+        row.put(StringConstants.NAME, systemID);
+        ShipSystemCSVEntry synthetic = new ShipSystemCSVEntry(row, null, null);
+        entries.put(systemID, synthetic);
+        return synthetic;
+    }
+
+    public static ShipSystemCSVEntry retrieveShipsystemCSVEntryByID(String systemID) {
+        if (systemID == null) {
+            return null;
+        }
+        GameDataRepository dataRepository = SettingsManager.getGameData();
+        if (dataRepository == null) return null;
+        var systemEntries = dataRepository.getAllShipsystemEntries();
+        if (systemEntries != null) {
+            ShipSystemCSVEntry found = systemEntries.get(systemID);
+            if (found != null) return found;
+        }
+        return dataRepository.getOrCreateShipsystemEntry(systemID);
+    }
+
+    public WeaponCSVEntry getOrCreateWeaponEntry(shipeditor.persistence.database.IndexedFile file) {
+        if (file == null || file.getEntityId() == null) return null;
+        Map<String, WeaponCSVEntry> entries = getAllWeaponEntries();
+        WeaponCSVEntry existing = entries.get(file.getEntityId());
+        if (existing != null) return existing;
+
+        Path folder = SettingsManager.getFolderForModId(file.getModId());
+        Map<String, String> row = new HashMap<>();
+        row.put(StringConstants.ID, file.getEntityId());
+        if (file.getEntityName() != null && !file.getEntityName().isBlank()) {
+            row.put(StringConstants.NAME, file.getEntityName());
+        }
+        WeaponCSVEntry synthetic = new WeaponCSVEntry(row, folder, null);
+        entries.put(file.getEntityId(), synthetic);
+        return synthetic;
     }
 
     public static WeaponCSVEntry retrieveWeaponCSVEntryByID(String weaponID) {
@@ -525,7 +679,16 @@ public class GameDataRepository {
         GameDataRepository dataRepository = SettingsManager.getGameData();
         if (dataRepository == null) return null;
         var weaponEntries = dataRepository.getAllWeaponEntries();
-        return weaponEntries != null ? weaponEntries.get(weaponID) : null;
+        if (weaponEntries != null) {
+            WeaponCSVEntry found = weaponEntries.get(weaponID);
+            if (found != null) return found;
+        }
+        shipeditor.persistence.database.IndexedFile file =
+                shipeditor.persistence.database.DatabaseQueryService.getFileByEntityId(weaponID, StringConstants.WEAPON_TYPE);
+        if (file != null) {
+            return dataRepository.getOrCreateWeaponEntry(file);
+        }
+        return null;
     }
 
     public static ShipSpecFile retrieveSpecByID(String hullID) {
@@ -682,15 +845,12 @@ public class GameDataRepository {
         }
         var dataRepository = SettingsManager.getGameData();
         if (dataRepository == null) return null;
-        ProjectileSpecFile spec = dataRepository.allProjectiles != null ? dataRepository.allProjectiles.get(projectileID) : null;
+        ProjectileSpecFile spec = dataRepository.allProjectiles.get(projectileID);
         if (spec == null) {
             Path filePath = shipeditor.persistence.database.DatabaseQueryService.getFilePathForEntity(projectileID, shipeditor.utility.text.StringConstants.PROJECTILE_TYPE);
             if (filePath != null) {
                 spec = shipeditor.parsing.loading.FileLoading.loadProjectileFile(filePath.toFile());
                 if (spec != null) {
-                    if (dataRepository.allProjectiles == null) {
-                        dataRepository.allProjectiles = new ConcurrentHashMap<>();
-                    }
                     dataRepository.allProjectiles.put(projectileID, spec);
                 }
             }
@@ -699,13 +859,7 @@ public class GameDataRepository {
     }
 
     public static WeaponCSVEntry getWeaponByID(String weaponID) {
-        if (weaponID == null) {
-            return null;
-        }
-        var dataRepository = SettingsManager.getGameData();
-        if (dataRepository == null) return null;
-        Map<String, WeaponCSVEntry> weapons = dataRepository.getAllWeaponEntries();
-        return weapons != null ? weapons.get(weaponID) : null;
+        return retrieveWeaponCSVEntryByID(weaponID);
     }
 
     public static Map<String, VariantFile> getMatchingForHullID(String shipHullID) {

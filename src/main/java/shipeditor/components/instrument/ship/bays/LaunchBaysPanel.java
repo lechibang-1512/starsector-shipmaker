@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.bays;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.instrument.ship.AbstractShipPropertiesPanel;
@@ -53,7 +55,7 @@ public class LaunchBaysPanel extends AbstractShipPropertiesPanel {
         EventBus.subscribe(this, event -> {
             if (event instanceof InstrumentRepaintQueued checked) {
                 if (checked.editorMode() == EditorInstrument.LAUNCH_BAYS) {
-                    this.baysTree.reloadModel();
+                    this.baysTree.repaint();
                     this.refreshPointDataPane(null);
                 }
             }
@@ -161,7 +163,7 @@ public class LaunchBaysPanel extends AbstractShipPropertiesPanel {
         );
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText("Bays view");
+        opacityLabel.setText(StringManager.getString("BAYS_VIEW"));
 
         return opacityWidget;
     }

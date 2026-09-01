@@ -17,6 +17,7 @@ import shipeditor.parsing.deserialize.CustomDeserializers.ColorArrayRGBADeserial
 import shipeditor.parsing.deserialize.CustomDeserializers.Point2DArrayDeserializer;
 import shipeditor.parsing.deserialize.CustomDeserializers.TextureTypeDeserializer;
 import shipeditor.parsing.serialize.CustomSerializers.ColorArrayRGBASerializer;
+import shipeditor.parsing.serialize.points.Point2DArraySerializer;
 import shipeditor.representation.weapon.WeaponEnums.AnimationType;
 import shipeditor.representation.weapon.WeaponEnums.BarrelMode;
 import shipeditor.representation.weapon.animation.MuzzleFlashSpec;
@@ -136,6 +137,7 @@ public class WeaponSpecFile {
 
     @JsonProperty("turretOffsets")
     @JsonDeserialize(using = Point2DArrayDeserializer.class)
+    @JsonSerialize(using = Point2DArraySerializer.class)
     private Point2D.Double[] turretOffsets;
 
     @JsonProperty("turretAngleOffsets")
@@ -143,6 +145,7 @@ public class WeaponSpecFile {
 
     @JsonProperty("hardpointOffsets")
     @JsonDeserialize(using = Point2DArrayDeserializer.class)
+    @JsonSerialize(using = Point2DArraySerializer.class)
     private Point2D.Double[] hardpointOffsets;
 
     @JsonProperty("hardpointAngleOffsets")
@@ -150,6 +153,7 @@ public class WeaponSpecFile {
 
     @JsonProperty("hiddenOffsets")
     @JsonDeserialize(using = Point2DArrayDeserializer.class)
+    @JsonSerialize(using = Point2DArraySerializer.class)
     private Point2D.Double[] hiddenOffsets;
 
     @JsonProperty("hiddenAngleOffsets")

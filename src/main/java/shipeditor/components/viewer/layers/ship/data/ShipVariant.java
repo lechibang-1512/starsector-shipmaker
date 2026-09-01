@@ -1,5 +1,7 @@
 package shipeditor.components.viewer.layers.ship.data;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -24,8 +26,6 @@ import shipeditor.representation.ship.SpecWeaponGroup;
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.representation.weapon.WeaponSpecFile;
 import shipeditor.undo.EditDispatch;
-import shipeditor.utility.text.StringValues;
-
 import java.nio.file.Path;
 import java.util.*;
 
@@ -128,9 +128,9 @@ public class ShipVariant implements Variant {
     }
 
     public String getFileName() {
-        if (variantFilePath == null) return StringValues.EMPTY;
+        if (variantFilePath == null) return StringManager.getString("EMPTY");
         Path fileNamePath = variantFilePath.getFileName();
-        return fileNamePath != null ? fileNamePath.toString() : StringValues.EMPTY;
+        return fileNamePath != null ? fileNamePath.toString() : StringManager.getString("EMPTY");
     }
 
     public void ensureBuiltInsSync(ShipPainter painter) {
@@ -155,7 +155,7 @@ public class ShipVariant implements Variant {
                 var groupWeapons = groupWithFit.getWeapons();
                 int index = groupWeapons.indexOf(slotID);
                 feature.setParentGroup(groupWithFit);
-                groupWeapons.put(index, slotID, feature);
+                groupWeapons.setValue(index, feature);
             } else {
                 if (weaponGroups.isEmpty() || weaponGroups.get(0) == null) {
                     FittedWeaponGroup newGroup = new FittedWeaponGroup(this,
@@ -187,6 +187,14 @@ public class ShipVariant implements Variant {
             }
         }
         return result;
+    }
+
+    public InstalledFeature getFittedWeaponBySlot(String inputSlotID) {
+        FittedWeaponGroup group = getGroupWithExistingMapping(inputSlotID);
+        if (group != null) {
+            return group.getWeapons().get(inputSlotID);
+        }
+        return null;
     }
 
     public ShipCSVEntry getEntryFromShipID() {
@@ -333,8 +341,12 @@ public class ShipVariant implements Variant {
             fittedModules = new ListOrderedMap<>();
             installedModules.forEach((slotID, variantID) -> {
                 VariantFile variant = GameDataRepository.getVariantByID(variantID);
-                InstalledFeature moduleFeature = shipeditor.components.viewer.layers.LayerFactory.createModuleFromVariant(slotID, variant);
-                fittedModules.put(slotID, moduleFeature);
+                if (variant != null) {
+                    InstalledFeature moduleFeature = shipeditor.components.viewer.layers.LayerFactory.createModuleFromVariant(slotID, variant);
+                    if (moduleFeature != null) {
+                        fittedModules.put(slotID, moduleFeature);
+                    }
+                }
             });
         }
 
@@ -361,10 +373,8 @@ public class ShipVariant implements Variant {
         var fileWings = file.getWings();
         if (fileWings != null) {
             this.wings = new ArrayList<>();
-            GameDataRepository gameData = SettingsManager.getGameData();
-            Map<String, WingCSVEntry> allWingEntries = gameData.getAllWingEntries();
             fileWings.forEach(wingID -> {
-                WingCSVEntry entry = allWingEntries.get(wingID);
+                WingCSVEntry entry = GameDataRepository.retrieveWingCSVEntryByID(wingID);
                 if (entry != null) {
                     wings.add(entry);
                 } else {

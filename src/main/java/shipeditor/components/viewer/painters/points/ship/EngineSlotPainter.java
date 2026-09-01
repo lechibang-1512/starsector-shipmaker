@@ -136,7 +136,7 @@ public class EngineSlotPainter extends AbstractSlotPainter {
         }
         int slotIndex = this.enginePoints.indexOf(enginePoint);
         Map<Integer, EngineDataOverride> engineSlotChanges = skin.getEngineSlotChanges();
-        EngineDataOverride matchingOverride = engineSlotChanges.get(slotIndex);
+        EngineDataOverride matchingOverride = engineSlotChanges != null ? engineSlotChanges.get(slotIndex) : null;
         enginePoint.setSkinOverride(matchingOverride);
     }
 

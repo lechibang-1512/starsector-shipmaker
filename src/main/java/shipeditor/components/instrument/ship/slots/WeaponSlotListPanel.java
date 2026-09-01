@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.slots;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -14,8 +16,13 @@ import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 import shipeditor.components.viewer.painters.points.ship.WeaponSlotPainter;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.objects.Pair;
-import shipeditor.utility.text.StringValues;
+import org.kordamp.ikonli.boxicons.BoxiconsRegular;
+import org.kordamp.ikonli.swing.FontIcon;
+import shipeditor.utility.components.dialog.DialogUtilities;
+import shipeditor.utility.themes.Themes;
 
+import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -25,6 +32,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.util.Map;
 import java.util.function.Function;
 import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
@@ -110,6 +118,14 @@ public class WeaponSlotListPanel extends AbstractShipPropertiesPanel {
 
         Pair<JPanel, JCheckBox> reorderWidget = ComponentUtilities.createReorderCheckboxPanel(slotPointContainer);
         reorderCheckbox = reorderWidget.getSecond();
+
+        JButton addSlotDefaultsBtn = new JButton(StringManager.getString("NEW_SLOT_DEFAULTS"));
+        addSlotDefaultsBtn.setIcon(FontIcon.of(BoxiconsRegular.PLUS_CIRCLE, 14, Themes.getIconColor()));
+        addSlotDefaultsBtn.setToolTipText(StringManager.getString("CONFIGURE_DEFAULT_PROPERTIES_AND_MODE_FOR_NEWLY_CREATED_WEAPON_SLOTS"));
+        addSlotDefaultsBtn.addActionListener(e -> DialogUtilities.showSlotCreationDialog());
+        reorderWidget.getFirst().add(addSlotDefaultsBtn);
+        reorderWidget.getFirst().add(Box.createRigidArea(new Dimension(6, 0)));
+
         northContainer.add(reorderWidget.getFirst(), BorderLayout.PAGE_END);
 
         this.add(northContainer, BorderLayout.PAGE_START);
@@ -203,7 +219,7 @@ public class WeaponSlotListPanel extends AbstractShipPropertiesPanel {
         var opacityWidget = createVisibilityWidget(painterGetter);
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText(StringValues.SLOTS_VIEW);
+        opacityLabel.setText(StringManager.getString("SLOTS_VIEW"));
 
         return opacityWidget;
     }

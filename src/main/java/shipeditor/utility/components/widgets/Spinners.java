@@ -1,8 +1,9 @@
 package shipeditor.utility.components.widgets;
+
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.utility.UtilityEnums.IncrementType;
 
-
-import shipeditor.utility.text.StringValues;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -26,8 +27,14 @@ public final class Spinners {
      */
     public static void addLabelWithDegreeSpinner(JPanel container, String labelText,
                                                  Consumer<Double> spinnerEffect, int y) {
-        SpinnerNumberModel spinnerNumberModel = new SpinnerNumberModel(0,
-                0, 360, 0.5d);
+        Spinners.addLabelWithDegreeSpinner(container, labelText, 0.0, spinnerEffect, y);
+    }
+
+    public static void addLabelWithDegreeSpinner(JPanel container, String labelText,
+                                                 double initialValue,
+                                                 Consumer<Double> spinnerEffect, int y) {
+        SpinnerNumberModel spinnerNumberModel = new SpinnerNumberModel(initialValue,
+                0.0, 360.0, 0.5d);
         Spinners.addLabelWithSpinner(container, labelText, spinnerEffect, spinnerNumberModel, y);
     }
 
@@ -75,7 +82,7 @@ public final class Spinners {
                                                    Supplier<Point2D> pointGetter,
                                                    Consumer<Point2D> pointSetter) {
         return Spinners.createLocationSpinners(initial, pointGetter,
-                pointSetter, StringValues.X_COORDINATE, StringValues.Y_COORDINATE);
+                pointSetter, StringManager.getString("X_COORDINATE"), StringManager.getString("Y_COORDINATE"));
     }
 
     public static TwinSpinnerPanel createLocationSpinners(Point2D initial,

@@ -1,5 +1,7 @@
 package shipeditor.menubar;
 
+import shipeditor.utility.text.StringManager;
+
 import org.kordamp.ikonli.boxicons.BoxiconsRegular;
 import org.kordamp.ikonli.swing.FontIcon;
 import shipeditor.communication.EventBus;
@@ -35,14 +37,14 @@ class EditMenu extends JMenu {
     }
 
     void initialize() {
-        JMenuItem undo = new JMenuItem("Undo");
+        JMenuItem undo = new JMenuItem(StringManager.getString("UNDO"));
         undo.setAction(UndoOverseer.getUndoAction());
         undo.setIcon(FontIcon.of(BoxiconsRegular.UNDO, 16, Themes.getIconColor()));
         KeyStroke keyStrokeToUndo = KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK);
         undo.setAccelerator(keyStrokeToUndo);
         this.add(undo);
 
-        JMenuItem redo = new JMenuItem("Redo");
+        JMenuItem redo = new JMenuItem(StringManager.getString("REDO"));
         redo.setAction(UndoOverseer.getRedoAction());
         redo.setIcon(FontIcon.of(BoxiconsRegular.REDO, 16, Themes.getIconColor()));
         KeyStroke keyStrokeToRedo = KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK);
@@ -51,7 +53,7 @@ class EditMenu extends JMenu {
 
         this.addSeparator();
 
-        JMenuItem flipShip = new JMenuItem("Flip Active Ship Horizontally");
+        JMenuItem flipShip = new JMenuItem(StringManager.getString("FLIP_ACTIVE_SHIP_HORIZONTALLY"));
         flipShip.setIcon(FontIcon.of(BoxiconsRegular.REFRESH, 16, Themes.getIconColor()));
         flipShip.addActionListener(e -> {
             LayerManager layerManager = StaticController.getLayerManager();
@@ -69,12 +71,12 @@ class EditMenu extends JMenu {
         JMenuItem pointSelectionMode = this.createPointSelectionModeOptions();
         this.add(pointSelectionMode);
 
-        JMenu snappingMenu = new JMenu("Snapping & Rounding");
+        JMenu snappingMenu = new JMenu(StringManager.getString("SNAPPING_ROUNDING"));
         snappingMenu.setIcon(FontIcon.of(BoxiconsRegular.MAGNET, 16, Themes.getIconColor()));
 
         JCheckBoxMenuItem toggleSelectionHold = new JCheckBoxMenuItem("Enable Selection Holding (Ctrl-Hold)");
         toggleSelectionHold.setSelected(true);
-        toggleSelectionHold.setToolTipText("Enables CTRL-hold to prevent mouse motion from changing selection.");
+        toggleSelectionHold.setToolTipText(StringManager.getString("ENABLES_CTRL_HOLD_TO_PREVENT_MOUSE_MOTION_FROM_CHANGING_SELECTION"));
         toggleSelectionHold.addActionListener(event ->
                 ControlPredicates.setSelectionHoldingEnabled(toggleSelectionHold.isSelected())
         );
@@ -105,10 +107,17 @@ class EditMenu extends JMenu {
         snappingMenu.add(toggleRotationRounding);
 
         this.add(snappingMenu);
+
+        this.addSeparator();
+
+        JMenuItem slotDefaults = new JMenuItem(StringManager.getString("WEAPON_SLOT_CREATION_DEFAULTS"));
+        slotDefaults.setIcon(FontIcon.of(BoxiconsRegular.PLUS_CIRCLE, 16, Themes.getIconColor()));
+        slotDefaults.addActionListener(e -> shipeditor.utility.components.dialog.DialogUtilities.showSlotCreationDialog());
+        this.add(slotDefaults);
     }
 
     private JMenu createPointSelectionModeOptions() {
-        JMenu newSubmenu = new JMenu("Point Selection Mode");
+        JMenu newSubmenu = new JMenu(StringManager.getString("POINT_SELECTION_MODE"));
         newSubmenu.setIcon(FontIcon.of(BoxiconsRegular.POINTER, 16, Themes.getIconColor()));
 
         JMenuItem selectHovered = new JRadioButtonMenuItem("Select Clicked Point");

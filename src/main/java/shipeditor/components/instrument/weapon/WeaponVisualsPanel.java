@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.weapon;
 
+import shipeditor.utility.text.StringManager;
+
 import com.formdev.flatlaf.ui.FlatLineBorder;
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.components.ComponentEvents.LayerTabUpdated;
@@ -11,7 +13,6 @@ import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.MouseoverLabelListener;
 import shipeditor.utility.graphics.ColorUtilities;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 
 import javax.swing.BoxLayout;
@@ -110,25 +111,25 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setTurretSprite(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Sprite:"), turretSpriteEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("SPRITE")), turretSpriteEditor, row++);
 
         turretUnderSpriteEditor = createTextField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setTurretUnderSprite(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Under Sprite:"), turretUnderSpriteEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("UNDER_SPRITE")), turretUnderSpriteEditor, row++);
 
         turretGunSpriteEditor = createTextField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setTurretGunSprite(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Gun Sprite:"), turretGunSpriteEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("GUN_SPRITE")), turretGunSpriteEditor, row++);
 
         turretGlowSpriteEditor = createTextField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setTurretGlowSprite(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Glow Sprite:"), turretGlowSpriteEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("GLOW_SPRITE")), turretGlowSpriteEditor, row++);
 
         return new CollapsibleSection("Turret Sprites", content);
     }
@@ -144,25 +145,25 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setHardpointSprite(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Sprite:"), hardpointSpriteEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("SPRITE")), hardpointSpriteEditor, row++);
 
         hardpointUnderSpriteEditor = createTextField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setHardpointUnderSprite(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Under Sprite:"), hardpointUnderSpriteEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("UNDER_SPRITE")), hardpointUnderSpriteEditor, row++);
 
         hardpointGunSpriteEditor = createTextField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setHardpointGunSprite(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Gun Sprite:"), hardpointGunSpriteEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("GUN_SPRITE")), hardpointGunSpriteEditor, row++);
 
         hardpointGlowSpriteEditor = createTextField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setHardpointGlowSprite(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Glow Sprite:"), hardpointGlowSpriteEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("GLOW_SPRITE")), hardpointGlowSpriteEditor, row++);
 
         return new CollapsibleSection("Hardpoint Sprites", content);
     }
@@ -178,18 +179,21 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setRenderBelowAllWeapons(value);
         });
+        renderBelowWeaponsCheckbox.setToolTipText(StringManager.getString("RENDER_THIS_WEAPON_BELOW_ALL_OTHER_WEAPONS_USEFUL_FOR_DECORATIVE_PARTS"));
         ComponentUtilities.addLabelAndComponent(content, new JLabel(), renderBelowWeaponsCheckbox, row++);
 
         renderAboveWeaponsCheckbox = createCheckBox("Render Above All Weapons", value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setRenderAboveAllWeapons(value);
         });
+        renderAboveWeaponsCheckbox.setToolTipText(StringManager.getString("RENDER_THIS_WEAPON_ABOVE_ALL_OTHER_WEAPONS"));
         ComponentUtilities.addLabelAndComponent(content, new JLabel(), renderAboveWeaponsCheckbox, row++);
 
         renderAdditiveCheckbox = createCheckBox("Render Additive", value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setRenderAdditive(value);
         });
+        renderAdditiveCheckbox.setToolTipText(StringManager.getString("RENDER_THIS_WEAPON_WITH_ADDITIVE_BLENDING_USEFUL_FOR_ENERGY_WEAPONS_AND_GLOWS"));
         ComponentUtilities.addLabelAndComponent(content, new JLabel(), renderAdditiveCheckbox, row++);
 
         return new CollapsibleSection("Render Flags", content);
@@ -249,18 +253,19 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setNumFrames(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Num Frames:"), numFramesEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("NUM_FRAMES")), numFramesEditor, row++);
 
         frameRateEditor = createIntField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setFrameRate(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Frame Rate:"), frameRateEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("FRAME_RATE")), frameRateEditor, row++);
 
         alwaysAnimateCheckbox = createCheckBox("Always Animate", value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setAlwaysAnimate(value);
         });
+        alwaysAnimateCheckbox.setToolTipText(StringManager.getString("ALWAYS_PLAY_THE_ANIMATION_EVEN_WHEN_NOT_FIRING"));
         ComponentUtilities.addLabelAndComponent(content, new JLabel(), alwaysAnimateCheckbox, row++);
 
         return new CollapsibleSection("Animation", content);
@@ -304,13 +309,15 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setRenderHints(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Render Hints:"), renderHintsEditor, row++);
+        renderHintsEditor.setToolTipText(StringManager.getString("COMMA_SEPARATED_RENDER_HINTS_E_G_RENDER_BARREL_BELOW_SUSPEND_RECOIL"));
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("RENDER_HINTS")), renderHintsEditor, row++);
 
         displayArcRadiusEditor = createDoubleField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setDisplayArcRadius(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Display Arc Radius:"), displayArcRadiusEditor, row++);
+        displayArcRadiusEditor.setToolTipText(StringManager.getString("RADIUS_OF_THE_FIRING_ARC_DISPLAY_0_DEFAULT"));
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("DISPLAY_ARC_RADIUS")), displayArcRadiusEditor, row++);
 
         return new CollapsibleSection("Misc", content, true);
     }
@@ -391,10 +398,10 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
 
     private JLabel createColorLabel(String labelText, JLabel valueLabel, Supplier<Color> getter, Consumer<Color> setter) {
         JLabel label = new JLabel(labelText);
-        label.setToolTipText(StringValues.RIGHT_CLICK_TO_CHANGE_COLOR);
+        label.setToolTipText(StringManager.getString("RIGHT_CLICK_TO_CHANGE_COLOR"));
 
         JPopupMenu colorChooserMenu = new JPopupMenu();
-        JMenuItem adjustColor = new JMenuItem(StringValues.ADJUST_VALUE);
+        JMenuItem adjustColor = new JMenuItem(StringManager.getString("ADJUST_VALUE"));
         adjustColor.addActionListener(event -> {
             Color current = getter.get();
             Color chosen = current != null ? ColorUtilities.showColorChooser(current) : ColorUtilities.showColorChooser();
@@ -404,11 +411,12 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
         });
         colorChooserMenu.add(adjustColor);
 
-        JMenuItem removeColor = new JMenuItem("Clear value");
+        JMenuItem removeColor = new JMenuItem(StringManager.getString("CLEAR_VALUE"));
         removeColor.addActionListener(event -> setter.accept(null));
         colorChooserMenu.add(removeColor);
 
         label.addMouseListener(new MouseoverLabelListener(colorChooserMenu, label));
+        valueLabel.addMouseListener(new MouseoverLabelListener(colorChooserMenu, valueLabel));
         Insets insets = ComponentUtilities.createLabelInsets();
         insets.top = 1;
         label.setBorder(ComponentUtilities.createLabelSimpleBorder(insets));
@@ -430,7 +438,7 @@ public class WeaponVisualsPanel extends AbstractWeaponPropertiesPanel {
             valueLabel.setBorder(new EmptyBorder(0, 2, 0, 2));
             valueLabel.setBackground(null);
             valueLabel.setToolTipText(null);
-            valueLabel.setText("Not defined");
+            valueLabel.setText(StringManager.getString("NOT_DEFINED"));
         }
         valueLabel.setForeground(Themes.getTextColor());
     }

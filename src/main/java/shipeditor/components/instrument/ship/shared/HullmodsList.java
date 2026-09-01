@@ -28,8 +28,10 @@ public class HullmodsList extends OrdnancedEntryList<HullmodCSVEntry> {
         if (model.contains(entry)) {
             int former = model.indexOf(entry);
             model.remove(former);
-            model.add(Math.min(model.size(), targetIndex), entry);
-            setSelectedIndex(targetIndex);
+            int adjustedIndex = targetIndex > former ? targetIndex - 1 : targetIndex;
+            int insertIndex = Math.max(0, Math.min(model.size(), adjustedIndex));
+            model.add(insertIndex, entry);
+            setSelectedIndex(insertIndex);
         } else {
             super.confirmDrop(targetIndex, entry);
         }

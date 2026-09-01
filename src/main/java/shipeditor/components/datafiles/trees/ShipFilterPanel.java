@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
@@ -48,7 +50,7 @@ public class ShipFilterPanel extends JPanel {
         gbc.gridx = 0;
         
         gbc.gridy = 0;
-        this.add(new JLabel("Tech / Manufacturer:"), gbc);
+        this.add(new JLabel(StringManager.getString("TECH_MANUFACTURER")), gbc);
         
         gbc.gridy = 1;
         techCombo = new JComboBox<>();
@@ -62,7 +64,7 @@ public class ShipFilterPanel extends JPanel {
         this.add(techCombo, gbc);
         
         gbc.gridy = 2;
-        this.add(new JLabel("Hull Size:"), gbc);
+        this.add(new JLabel(StringManager.getString("HULL_SIZE")), gbc);
         
         gbc.gridy = 3;
         sizeCombo = new JComboBox<>();
@@ -163,6 +165,10 @@ public class ShipFilterPanel extends JPanel {
 
         ShipCSVEntry csvEntry = shipEntries.get(entry.getEntityId());
         if (csvEntry != null) {
+            HullSize size = csvEntry.getSize();
+            if (size != null && size != HullSize.DEFAULT) {
+                return size == selectedSize;
+            }
             Map<String, String> row = csvEntry.getRowData();
             String sizeStr = row.get("hull size");
             if (sizeStr != null) {

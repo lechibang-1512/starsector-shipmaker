@@ -1,9 +1,10 @@
 package shipeditor.components.instrument.weapon;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.MouseoverLabelListener;
 import shipeditor.utility.graphics.ColorUtilities;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 import com.formdev.flatlaf.ui.FlatLineBorder;
 
@@ -20,9 +21,10 @@ import java.util.function.Supplier;
 
 public class WeaponFirePanelUtilities {
 
-    public static JTextField createTextField(Supplier<Boolean> readinessChecker, Consumer<String> setter, Runnable onChange) {
+    public static JTextField createTextField(String tooltip, Supplier<Boolean> readinessChecker, Consumer<String> setter, Runnable onChange) {
         JTextField textField = new JTextField();
         textField.setColumns(10);
+        if (tooltip != null) textField.setToolTipText(tooltip);
         textField.addActionListener(e -> {
             if (readinessChecker.get()) {
                 setter.accept(textField.getText());
@@ -32,9 +34,10 @@ public class WeaponFirePanelUtilities {
         return textField;
     }
 
-    public static JTextField createDoubleField(Supplier<Boolean> readinessChecker, Consumer<Double> setter, Runnable onChange) {
+    public static JTextField createDoubleField(String tooltip, Supplier<Boolean> readinessChecker, Consumer<Double> setter, Runnable onChange) {
         JTextField textField = new JTextField();
         textField.setColumns(10);
+        if (tooltip != null) textField.setToolTipText(tooltip);
         textField.addActionListener(e -> {
             if (readinessChecker.get()) {
                 try {
@@ -48,9 +51,10 @@ public class WeaponFirePanelUtilities {
         return textField;
     }
 
-    public static JTextField createIntField(Supplier<Boolean> readinessChecker, Consumer<Integer> setter, Runnable onChange) {
+    public static JTextField createIntField(String tooltip, Supplier<Boolean> readinessChecker, Consumer<Integer> setter, Runnable onChange) {
         JTextField textField = new JTextField();
         textField.setColumns(10);
+        if (tooltip != null) textField.setToolTipText(tooltip);
         textField.addActionListener(e -> {
             if (readinessChecker.get()) {
                 try {
@@ -64,8 +68,9 @@ public class WeaponFirePanelUtilities {
         return textField;
     }
 
-    public static JCheckBox createCheckBox(String text, Supplier<Boolean> readinessChecker, Consumer<Boolean> setter, Runnable onChange) {
+    public static JCheckBox createCheckBox(String text, String tooltip, Supplier<Boolean> readinessChecker, Consumer<Boolean> setter, Runnable onChange) {
         JCheckBox checkBox = new JCheckBox(text);
+        if (tooltip != null) checkBox.setToolTipText(tooltip);
         checkBox.addActionListener(e -> {
             if (readinessChecker.get()) {
                 setter.accept(checkBox.isSelected());
@@ -77,10 +82,10 @@ public class WeaponFirePanelUtilities {
 
     public static JLabel createColorLabel(String labelText, JLabel valueLabel, Supplier<Color> getter, Consumer<Color> setter) {
         JLabel label = new JLabel(labelText);
-        label.setToolTipText(StringValues.RIGHT_CLICK_TO_CHANGE_COLOR);
+        label.setToolTipText(StringManager.getString("RIGHT_CLICK_TO_CHANGE_COLOR"));
 
         JPopupMenu colorChooserMenu = new JPopupMenu();
-        JMenuItem adjustColor = new JMenuItem(StringValues.ADJUST_VALUE);
+        JMenuItem adjustColor = new JMenuItem(StringManager.getString("ADJUST_VALUE"));
         adjustColor.addActionListener(event -> {
             Color current = getter.get();
             Color chosen = current != null ? ColorUtilities.showColorChooser(current) : ColorUtilities.showColorChooser();
@@ -90,11 +95,12 @@ public class WeaponFirePanelUtilities {
         });
         colorChooserMenu.add(adjustColor);
 
-        JMenuItem removeColor = new JMenuItem("Clear value");
+        JMenuItem removeColor = new JMenuItem(StringManager.getString("CLEAR_VALUE"));
         removeColor.addActionListener(event -> setter.accept(null));
         colorChooserMenu.add(removeColor);
 
         label.addMouseListener(new MouseoverLabelListener(colorChooserMenu, label));
+        valueLabel.addMouseListener(new MouseoverLabelListener(colorChooserMenu, valueLabel));
         Insets insets = ComponentUtilities.createLabelInsets();
         insets.top = 1;
         label.setBorder(ComponentUtilities.createLabelSimpleBorder(insets));
@@ -116,7 +122,7 @@ public class WeaponFirePanelUtilities {
             valueLabel.setBorder(new EmptyBorder(0, 2, 0, 2));
             valueLabel.setBackground(null);
             valueLabel.setToolTipText(null);
-            valueLabel.setText("Not defined");
+            valueLabel.setText(StringManager.getString("NOT_DEFINED"));
         }
         valueLabel.setForeground(Themes.getTextColor());
     }

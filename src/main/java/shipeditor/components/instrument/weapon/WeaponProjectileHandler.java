@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.weapon;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.representation.weapon.WeaponEnums.AnimationType;
 import shipeditor.representation.weapon.WeaponEnums.BarrelMode;
 import shipeditor.representation.weapon.WeaponSpecFile;
@@ -17,12 +19,13 @@ public class WeaponProjectileHandler {
     private final JComboBox<AnimationType> animationTypeSelector;
 
     public WeaponProjectileHandler(Supplier<Boolean> readinessChecker, Runnable onChange, Supplier<WeaponSpecFile> specSupplier) {
-        projectileSpecIdEditor = WeaponFirePanelUtilities.createTextField(readinessChecker, value -> {
+        projectileSpecIdEditor = WeaponFirePanelUtilities.createTextField("ID of the projectile or beam spec (defined in projectile/beam files).", readinessChecker, value -> {
             WeaponSpecFile spec = specSupplier.get();
             if (spec != null) spec.setProjectileSpecId(value);
         }, onChange);
 
         barrelModeSelector = new JComboBox<>(BarrelMode.values());
+        barrelModeSelector.setToolTipText(StringManager.getString("DETERMINES_HOW_THE_WEAPON_FIRES_FROM_MULTIPLE_BARRELS_ALTERNATING_LINKED_ETC"));
         barrelModeSelector.addActionListener(e -> {
             if (readinessChecker.get()) {
                 WeaponSpecFile spec = specSupplier.get();
@@ -37,6 +40,7 @@ public class WeaponProjectileHandler {
         });
 
         animationTypeSelector = new JComboBox<>(AnimationType.values());
+        animationTypeSelector.setToolTipText(StringManager.getString("DETERMINES_THE_FIRING_ANIMATION_TYPE_MUZZLE_FLASH_SMOKE_NONE_ETC"));
         animationTypeSelector.addActionListener(e -> {
             if (readinessChecker.get()) {
                 WeaponSpecFile spec = specSupplier.get();
@@ -53,9 +57,9 @@ public class WeaponProjectileHandler {
 
     public int populate(JPanel panel, int startRow) {
         int row = startRow;
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Projectile Spec ID:"), projectileSpecIdEditor, row++);
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Barrel Mode:"), barrelModeSelector, row++);
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Animation Type:"), animationTypeSelector, row++);
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("PROJECTILE_SPEC_ID")), projectileSpecIdEditor, row++);
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("BARREL_MODE")), barrelModeSelector, row++);
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("ANIMATION_TYPE")), animationTypeSelector, row++);
         return row;
     }
 

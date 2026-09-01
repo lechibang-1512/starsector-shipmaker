@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.weapon;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.components.ComponentEvents.LayerTabUpdated;
 import shipeditor.components.viewer.layers.LayerPainter;
@@ -117,8 +119,8 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
         idEditor = new JTextField();
         idEditor.setColumns(10);
         idEditor.setEditable(false);
-        idEditor.setToolTipText("ID is read-only from the spec file");
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("ID:"), idEditor, row++);
+        idEditor.setToolTipText(StringManager.getString("ID_IS_READ_ONLY_FROM_THE_SPEC_FILE"));
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("ID")), idEditor, row++);
 
         specClassSelector = new JComboBox<>(SPEC_CLASS_SUGGESTIONS);
         specClassSelector.setEditable(true);
@@ -134,7 +136,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
                 }
             }
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Spec Class:"), specClassSelector, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("SPEC_CLASS")), specClassSelector, row++);
 
         typeSelector = new JComboBox<>(WeaponType.values());
         typeSelector.addActionListener(e -> {
@@ -149,7 +151,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
                 }
             }
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Type:"), typeSelector, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("TYPE")), typeSelector, row++);
 
         sizeSelector = new JComboBox<>(WeaponSize.values());
         sizeSelector.addActionListener(e -> {
@@ -164,7 +166,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
                 }
             }
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Size:"), sizeSelector, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("SIZE_1")), sizeSelector, row++);
 
         mountTypeOverrideSelector = new JComboBox<>(WeaponType.values());
         mountTypeOverrideSelector.addActionListener(e -> {
@@ -179,7 +181,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
                 }
             }
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Mount Type Override:"), mountTypeOverrideSelector, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("MOUNT_TYPE_OVERRIDE")), mountTypeOverrideSelector, row++);
 
         return new CollapsibleSection("Identity", content);
     }
@@ -205,7 +207,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
                 }
             }
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Collision Class:"), collisionClassSelector, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("COLLISION_CLASS")), collisionClassSelector, row++);
 
         collisionClassByFighterSelector = new JComboBox<>(COLLISION_CLASS_SUGGESTIONS);
         collisionClassByFighterSelector.setEditable(true);
@@ -221,7 +223,7 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
                 }
             }
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("By Fighter:"), collisionClassByFighterSelector, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("BY_FIGHTER")), collisionClassByFighterSelector, row++);
 
         return new CollapsibleSection("Collision", content);
     }
@@ -248,13 +250,13 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
         int row = firingLogicHandler.populate(content, 0);
 
         // Misc checkboxes from old WeaponDataPanel
-        showDamageWhenDecorativeCheckbox = WeaponFirePanelUtilities.createCheckBox("Show Damage When Decorative", readinessChecker, value -> {
+        showDamageWhenDecorativeCheckbox = WeaponFirePanelUtilities.createCheckBox("Show Damage When Decorative", "Show damage state even when slot is decorative", readinessChecker, value -> {
             WeaponSpecFile spec = specSupplier.get();
             if (spec != null) spec.setShowDamageWhenDecorative(value);
         }, onChange);
         ComponentUtilities.addLabelAndComponent(content, new JLabel(), showDamageWhenDecorativeCheckbox, row++);
 
-        passThroughMissilesCheckbox = WeaponFirePanelUtilities.createCheckBox("Pass Through Missiles", readinessChecker, value -> {
+        passThroughMissilesCheckbox = WeaponFirePanelUtilities.createCheckBox("Pass Through Missiles", "Projectiles from this weapon pass through missiles", readinessChecker, value -> {
             WeaponSpecFile spec = specSupplier.get();
             if (spec != null) spec.setPassThroughMissiles(value);
         }, onChange);
@@ -286,13 +288,13 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setEveryFrameEffect(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Every Frame Effect:"), everyFrameEffectEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("EVERY_FRAME_EFFECT")), everyFrameEffectEditor, row++);
 
         beamEffectEditor = createTextField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setBeamEffect(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Beam Effect:"), beamEffectEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("BEAM_EFFECT")), beamEffectEditor, row++);
 
         beamFireOnlyOnFullChargeCheckbox = createCheckBox("Beam Fire Only On Full Charge", value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
@@ -304,67 +306,67 @@ public class WeaponPropertiesPanel extends AbstractWeaponPropertiesPanel {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setWidth(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Width:"), widthEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("WIDTH")), widthEditor, row++);
 
         coreWidthMultEditor = createDoubleField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setCoreWidthMult(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Core Width Mult:"), coreWidthMultEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("CORE_WIDTH_MULT")), coreWidthMultEditor, row++);
 
         textureScrollSpeedEditor = createDoubleField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setTextureScrollSpeed(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Texture Scroll Speed:"), textureScrollSpeedEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("TEXTURE_SCROLL_SPEED")), textureScrollSpeedEditor, row++);
 
         fringeScrollSpeedMultEditor = createDoubleField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setFringeScrollSpeedMult(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Fringe Scroll Speed Mult:"), fringeScrollSpeedMultEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("FRINGE_SCROLL_SPEED_MULT")), fringeScrollSpeedMultEditor, row++);
 
         pixelsPerTexelEditor = createDoubleField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setPixelsPerTexel(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Pixels Per Texel:"), pixelsPerTexelEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("PIXELS_PER_TEXEL")), pixelsPerTexelEditor, row++);
 
         textureTypeEditor = createListField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setTextureType(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Texture Type:"), textureTypeEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("TEXTURE_TYPE")), textureTypeEditor, row++);
 
         hitGlowBrightenDurationEditor = createIntField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setHitGlowBrightenDuration(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Hit Glow Brighten Duration:"), hitGlowBrightenDurationEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("HIT_GLOW_BRIGHTEN_DURATION")), hitGlowBrightenDurationEditor, row++);
 
         hitGlowRadiusEditor = createIntField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setHitGlowRadius(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Hit Glow Radius:"), hitGlowRadiusEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("HIT_GLOW_RADIUS")), hitGlowRadiusEditor, row++);
 
         specialWeaponGlowWidthEditor = createIntField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setSpecialWeaponGlowWidth(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Special Weapon Glow Width:"), specialWeaponGlowWidthEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("SPECIAL_WEAPON_GLOW_WIDTH")), specialWeaponGlowWidthEditor, row++);
 
         specialWeaponGlowHeightEditor = createIntField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setSpecialWeaponGlowHeight(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Special Weapon Glow Height:"), specialWeaponGlowHeightEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("SPECIAL_WEAPON_GLOW_HEIGHT")), specialWeaponGlowHeightEditor, row++);
 
         pierceSetEditor = createListField(value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)
                 cachedLayer.getSpecFile().setPierceSet(value);
         });
-        ComponentUtilities.addLabelAndComponent(content, new JLabel("Pierce Set:"), pierceSetEditor, row++);
+        ComponentUtilities.addLabelAndComponent(content, new JLabel(StringManager.getString("PIERCE_SET")), pierceSetEditor, row++);
 
         useGlowColorForHitGlowCheckbox = createCheckBox("Use Glow Color For Hit Glow", value -> {
             if (cachedLayer != null && cachedLayer.getSpecFile() != null)

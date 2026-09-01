@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.weapon;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.representation.weapon.WeaponSpecFile;
 import shipeditor.representation.weapon.animation.MuzzleFlashSpec;
 import shipeditor.utility.components.ComponentUtilities;
@@ -27,32 +29,32 @@ public class WeaponMuzzleFlashHandler {
     }
 
     public WeaponMuzzleFlashHandler(Supplier<Boolean> readinessChecker, Runnable onChange, Supplier<WeaponSpecFile> specSupplier) {
-        mfLengthEditor = WeaponFirePanelUtilities.createDoubleField(readinessChecker, value -> {
+        mfLengthEditor = WeaponFirePanelUtilities.createDoubleField(null, readinessChecker, value -> {
             WeaponSpecFile spec = specSupplier.get();
             if (spec != null) getOrCreate(spec).setLength(value);
         }, onChange);
 
-        mfSpreadEditor = WeaponFirePanelUtilities.createDoubleField(readinessChecker, value -> {
+        mfSpreadEditor = WeaponFirePanelUtilities.createDoubleField(null, readinessChecker, value -> {
             WeaponSpecFile spec = specSupplier.get();
             if (spec != null) getOrCreate(spec).setSpread(value);
         }, onChange);
 
-        mfParticleSizeMinEditor = WeaponFirePanelUtilities.createDoubleField(readinessChecker, value -> {
+        mfParticleSizeMinEditor = WeaponFirePanelUtilities.createDoubleField(null, readinessChecker, value -> {
             WeaponSpecFile spec = specSupplier.get();
             if (spec != null) getOrCreate(spec).setParticleSizeMin(value);
         }, onChange);
 
-        mfParticleSizeRangeEditor = WeaponFirePanelUtilities.createDoubleField(readinessChecker, value -> {
+        mfParticleSizeRangeEditor = WeaponFirePanelUtilities.createDoubleField(null, readinessChecker, value -> {
             WeaponSpecFile spec = specSupplier.get();
             if (spec != null) getOrCreate(spec).setParticleSizeRange(value);
         }, onChange);
 
-        mfParticleDurationEditor = WeaponFirePanelUtilities.createDoubleField(readinessChecker, value -> {
+        mfParticleDurationEditor = WeaponFirePanelUtilities.createDoubleField(null, readinessChecker, value -> {
             WeaponSpecFile spec = specSupplier.get();
             if (spec != null) getOrCreate(spec).setParticleDuration(value);
         }, onChange);
 
-        mfParticleCountEditor = WeaponFirePanelUtilities.createIntField(readinessChecker, value -> {
+        mfParticleCountEditor = WeaponFirePanelUtilities.createIntField(null, readinessChecker, value -> {
             WeaponSpecFile spec = specSupplier.get();
             if (spec != null) getOrCreate(spec).setParticleCount(value);
         }, onChange);
@@ -74,13 +76,18 @@ public class WeaponMuzzleFlashHandler {
 
     public int populate(JPanel panel, int startRow) {
         int row = startRow;
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("<html><b>Muzzle Flash</b></html>"), new JLabel(""), row++);
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Length:"), mfLengthEditor, row++);
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Spread:"), mfSpreadEditor, row++);
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Particle Size Min:"), mfParticleSizeMinEditor, row++);
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Particle Size Range:"), mfParticleSizeRangeEditor, row++);
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Particle Duration:"), mfParticleDurationEditor, row++);
-        ComponentUtilities.addLabelAndComponent(panel, new JLabel("Particle Count:"), mfParticleCountEditor, row++);
+        mfLengthEditor.setToolTipText(StringManager.getString("LENGTH_OF_THE_MUZZLE_FLASH"));
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("LENGTH")), mfLengthEditor, row++);
+        mfSpreadEditor.setToolTipText(StringManager.getString("SPREAD_OF_THE_MUZZLE_FLASH_IN_PIXELS_DEGREES"));
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("SPREAD")), mfSpreadEditor, row++);
+        mfParticleSizeMinEditor.setToolTipText(StringManager.getString("MINIMUM_SIZE_OF_MUZZLE_FLASH_PARTICLES"));
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("PARTICLE_SIZE_MIN")), mfParticleSizeMinEditor, row++);
+        mfParticleSizeRangeEditor.setToolTipText(StringManager.getString("RANDOM_SIZE_ADDED_TO_MIN_SIZE_FOR_PARTICLES"));
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("PARTICLE_SIZE_RANGE")), mfParticleSizeRangeEditor, row++);
+        mfParticleDurationEditor.setToolTipText(StringManager.getString("HOW_LONG_THE_PARTICLES_LAST"));
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("PARTICLE_DURATION")), mfParticleDurationEditor, row++);
+        mfParticleCountEditor.setToolTipText(StringManager.getString("NUMBER_OF_PARTICLES_SPAWNED_PER_SHOT"));
+        ComponentUtilities.addLabelAndComponent(panel, new JLabel(StringManager.getString("PARTICLE_COUNT")), mfParticleCountEditor, row++);
         ComponentUtilities.addLabelAndComponent(panel, colorLabel, mfParticleColorValue, row++);
         return row;
     }

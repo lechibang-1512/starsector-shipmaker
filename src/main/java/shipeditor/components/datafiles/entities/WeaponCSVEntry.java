@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.entities;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -25,8 +27,6 @@ import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.objects.Size2D;
 import shipeditor.utility.overseers.StaticController;
 import shipeditor.utility.text.StringConstants;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -105,7 +105,7 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
     }
 
     public String getMultilineTooltip(String appendHint) {
-        String entryID = StringValues.WEAPON_ID + this.getWeaponID();
+        String entryID = StringManager.getString("WEAPON_ID") + this.getWeaponID();
         WeaponType weaponType = this.getType();
         String type =  "Weapon type: " + weaponType.getDisplayedName();
         WeaponSize weaponSize = this.getSize();
@@ -171,23 +171,25 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
             WeaponSprites spriteHolder = new WeaponSprites();
             WeaponSpecFile weaponSpecFile = this.getSpecFile();
 
-            String turretSprite = weaponSpecFile.getTurretSprite();
-            setSpecSpriteFromPath(turretSprite, spriteHolder::setTurretSprite);
-            String turretGunSprite = weaponSpecFile.getTurretGunSprite();
-            setSpecSpriteFromPath(turretGunSprite, spriteHolder::setTurretGunSprite);
-            String turretGlowSprite = weaponSpecFile.getTurretGlowSprite();
-            setSpecSpriteFromPath(turretGlowSprite, spriteHolder::setTurretGlowSprite);
-            String turretUnderSprite = weaponSpecFile.getTurretUnderSprite();
-            setSpecSpriteFromPath(turretUnderSprite, spriteHolder::setTurretUnderSprite);
+            if (weaponSpecFile != null) {
+                String turretSprite = weaponSpecFile.getTurretSprite();
+                setSpecSpriteFromPath(turretSprite, spriteHolder::setTurretSprite);
+                String turretGunSprite = weaponSpecFile.getTurretGunSprite();
+                setSpecSpriteFromPath(turretGunSprite, spriteHolder::setTurretGunSprite);
+                String turretGlowSprite = weaponSpecFile.getTurretGlowSprite();
+                setSpecSpriteFromPath(turretGlowSprite, spriteHolder::setTurretGlowSprite);
+                String turretUnderSprite = weaponSpecFile.getTurretUnderSprite();
+                setSpecSpriteFromPath(turretUnderSprite, spriteHolder::setTurretUnderSprite);
 
-            String hardpointSprite = weaponSpecFile.getHardpointSprite();
-            setSpecSpriteFromPath(hardpointSprite, spriteHolder::setHardpointSprite);
-            String hardpointGunSprite = weaponSpecFile.getHardpointGunSprite();
-            setSpecSpriteFromPath(hardpointGunSprite, spriteHolder::setHardpointGunSprite);
-            String hardpointGlowSprite = weaponSpecFile.getHardpointGlowSprite();
-            setSpecSpriteFromPath(hardpointGlowSprite, spriteHolder::setHardpointGlowSprite);
-            String hardpointUnderSprite = weaponSpecFile.getHardpointUnderSprite();
-            setSpecSpriteFromPath(hardpointUnderSprite, spriteHolder::setHardpointUnderSprite);
+                String hardpointSprite = weaponSpecFile.getHardpointSprite();
+                setSpecSpriteFromPath(hardpointSprite, spriteHolder::setHardpointSprite);
+                String hardpointGunSprite = weaponSpecFile.getHardpointGunSprite();
+                setSpecSpriteFromPath(hardpointGunSprite, spriteHolder::setHardpointGunSprite);
+                String hardpointGlowSprite = weaponSpecFile.getHardpointGlowSprite();
+                setSpecSpriteFromPath(hardpointGlowSprite, spriteHolder::setHardpointGlowSprite);
+                String hardpointUnderSprite = weaponSpecFile.getHardpointUnderSprite();
+                setSpecSpriteFromPath(hardpointUnderSprite, spriteHolder::setHardpointUnderSprite);
+            }
 
             sprites = spriteHolder;
         }
@@ -363,6 +365,7 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
         if (loadedTurretSprite != null) {
             weaponPainter.setSprite(loadedTurretSprite);
         }
+        weaponPainter.setMount(WeaponMount.TURRET);
         return weaponPainter;
     }
 
@@ -399,12 +402,12 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
         weaponPickPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
 
         WeaponSize weaponSize = this.getSize();
-        JLabel sizeLabel = new JLabel("[" + weaponSize.getDisplayedName() + "]");
+        JLabel sizeLabel = new JLabel(StringManager.getString("EMPTY_STRING_2") + weaponSize.getDisplayedName() + "]");
         sizeLabel.setToolTipText(weaponSize.getDisplayedName());
         weaponPickPanel.add(sizeLabel);
 
         WeaponType weaponType = this.getType();
-        JLabel typeLabel = new JLabel("[" + weaponType.getDisplayedName() + "]");
+        JLabel typeLabel = new JLabel(StringManager.getString("EMPTY_STRING_2") + weaponType.getDisplayedName() + "]");
         typeLabel.setForeground(weaponType.getColor());
         typeLabel.setToolTipText(weaponType.getDisplayedName());
         weaponPickPanel.add(typeLabel);
@@ -414,18 +417,18 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
         weaponPickPanel.add(text);
 
         Insets insets = new Insets(1, 0, 0, 0);
-        ComponentUtilities.outfitPanelWithTitle(weaponPickPanel, insets, StringValues.PICKED_FOR_INSTALL);
+        ComponentUtilities.outfitPanelWithTitle(weaponPickPanel, insets, StringManager.getString("PICKED_FOR_INSTALL"));
 
         return weaponPickPanel;
     }
 
     @Override
     public String toString() {
-        String displayedName = rowData.get(StringConstants.NAME);
-        if (displayedName.isEmpty()) {
+        String displayedName = rowData != null ? rowData.get(StringConstants.NAME) : null;
+        if (displayedName == null || displayedName.isBlank()) {
             displayedName = this.getWeaponID();
         }
-        return displayedName;
+        return displayedName != null ? displayedName : "Unknown Weapon";
     }
 
 }

@@ -346,7 +346,7 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
         }
         String slotID = weaponSlotPoint.getId();
         Map<String, WeaponSlotOverride> weaponSlotChanges = skin.getWeaponSlotChanges();
-        WeaponSlotOverride matchingOverride = weaponSlotChanges.get(slotID);
+        WeaponSlotOverride matchingOverride = weaponSlotChanges != null ? weaponSlotChanges.get(slotID) : null;
         weaponSlotPoint.setSkinOverride(matchingOverride);
     }
 
@@ -526,6 +526,45 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
     }
 
     @Override
+    public void updateHoverStates(Point2D rawCursor, java.awt.geom.AffineTransform worldToScreen) {
+        if (!this.isSlotSelectionEnabled()) {
+            for (BaseWorldPoint point : this.getPointsIndex()) {
+                point.setCursorInBounds(false);
+            }
+            return;
+        }
+        for (BaseWorldPoint point : this.getPointsIndex()) {
+            point.updateCursorHitState(rawCursor, worldToScreen);
+        }
+    }
+
+    private void paintSlotLabels(SpriteRenderer spriteRenderer, Matrix4f projection) {
+        double zoomLevel = StaticController.getZoomLevel();
+        java.awt.Font font = Utility.getOrbitron(12);
+
+        for (WeaponSlotPoint slot : this.getPointsIndex()) {
+            boolean isSelected = slot.isPointSelected();
+            boolean isHovered = slot.isCursorInBounds();
+
+            if (isSelected || isHovered || zoomLevel > 22) {
+                float alpha = (isSelected || isHovered) ? 1.0f : (float) Math.min(1.0, (zoomLevel - 22.0) / 10.0);
+                if (alpha <= 0.05f) continue;
+
+                String text = slot.getId();
+                String builtIn = slot.getBuiltInWeaponName();
+                if (builtIn != null && (isSelected || isHovered)) {
+                    text = text + " [" + builtIn + "]";
+                }
+
+                java.awt.Color textColor = isSelected ? java.awt.Color.WHITE : (isHovered ? new java.awt.Color(255, 235, 130) : slot.getWeaponType().getColor());
+                Point2D pos = slot.getPosition();
+                Point2D labelPos = new Point2D.Double(pos.getX(), pos.getY() + 0.35);
+                shipeditor.utility.graphics.opengl.TextRenderer.drawTextGL(spriteRenderer, projection, text, font, textColor, labelPos, alpha);
+            }
+        }
+    }
+
+    @Override
     public void paint(SpriteRenderer spriteRenderer, ShapeRenderer shapeRenderer, Matrix4f projection, Matrix4f view) {
         var visibility = this.getVisibilityMode();
         boolean isRightMode = visibility == ALWAYS_SHOWN || visibility == SHOWN_WHEN_EDITED;
@@ -536,6 +575,7 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
             this.handleSelectionHighlight();
             this.paintDelegates(spriteRenderer, shapeRenderer, projection, view);
             shapeRenderer.end();
+            this.paintSlotLabels(spriteRenderer, projection);
             this.paintWeaponPreview(spriteRenderer, shapeRenderer, projection, view);
         } else if (visibleForRelatedMode) {
             shapeRenderer.begin(projection, IDENTITY_MATRIX);
@@ -543,6 +583,7 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
             List<WeaponSlotPoint> activePoints = this.getEligibleForSelection();
             this.paintSlots(spriteRenderer, shapeRenderer, projection, view, activePoints);
             shapeRenderer.end();
+            this.paintSlotLabels(spriteRenderer, projection);
             this.paintWeaponPreview(spriteRenderer, shapeRenderer, projection, view);
         }
     }

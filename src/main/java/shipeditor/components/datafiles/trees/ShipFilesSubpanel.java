@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.datafiles.entities.HullmodCSVEntry;
 import shipeditor.components.datafiles.entities.ShipCSVEntry;
 import shipeditor.parsing.loading.FileLoading;
@@ -12,8 +14,6 @@ import shipeditor.utility.Utility;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.MouseoverLabelListener;
 import shipeditor.utility.graphics.Sprite;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
@@ -103,7 +103,7 @@ class ShipFilesSubpanel extends JPanel {
     private static JPanel createFilesPanel(ShipCSVEntry selected, HullsTreePanel parent) {
         JPanel filesPanel = new JPanel(new java.awt.GridBagLayout());
         filesPanel.setAlignmentX(LEFT_ALIGNMENT);
-        ComponentUtilities.outfitPanelWithTitle(filesPanel, new Insets(1, 0, 0, 0), StringValues.FILES);
+        ComponentUtilities.outfitPanelWithTitle(filesPanel, new Insets(1, 0, 0, 0), StringManager.getString("FILES"));
 
         java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
         gbc.gridx = 0; gbc.gridy = 0;
@@ -173,7 +173,7 @@ class ShipFilesSubpanel extends JPanel {
             JPanel chooserPanel = new JPanel();
             chooserPanel.setLayout(new BoxLayout(chooserPanel, BoxLayout.X_AXIS));
             chooserPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            JLabel skinLabel = new JLabel("Skin: ");
+            JLabel skinLabel = new JLabel(StringManager.getString("SKIN"));
             chooserPanel.add(skinLabel);
             chooserPanel.add(skinChooser);
             chooserPanel.setBorder(new EmptyBorder(2, 0, 2, 0));
@@ -216,9 +216,8 @@ class ShipFilesSubpanel extends JPanel {
 
         if (hullmodIDs.isEmpty()) return;
 
-        Map<String, HullmodCSVEntry> allHullmods = gameData.getAllHullmodEntries();
         for (String id : hullmodIDs) {
-            HullmodCSVEntry entry = allHullmods.get(id);
+            HullmodCSVEntry entry = GameDataRepository.retrieveHullmodCSVEntryByID(id);
             if (entry != null) {
                 JLabel imageLabel = entry.getIconLabel();
                 hullmodsPanel.add(imageLabel);

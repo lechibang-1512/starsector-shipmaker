@@ -301,9 +301,9 @@ public class LayerManager {
         String hullID = data.getHullID();
         if (!hullID.equals(skinSpecFile.getBaseHullId())) {
             Path skinFilePath = skinSpecFile.getFilePath();
+            String pathString = skinFilePath != null ? skinFilePath.toString() : skinSpecFile.toString();
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
-                    "Hull ID of active layer does not equal base hull ID of skin: " +
-                            Optional.of(skinFilePath.toString()).orElse(skinSpecFile.toString()),
+                    "Hull ID of active layer does not equal base hull ID of skin: " + pathString,
                     "Ship ID mismatch!",
                     JOptionPane.ERROR_MESSAGE);
             throw new IllegalStateException("Illegal skin file opening operation!");

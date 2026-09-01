@@ -65,4 +65,58 @@ public final class DialogUtilities {
         return null;
     }
 
+    public static shipeditor.components.datafiles.entities.HullmodCSVEntry showHullmodPickerDialog(shipeditor.representation.RepresentationEnums.HullSize hullSize, shipeditor.components.viewer.layers.ship.ShipLayer shipLayer) {
+        java.nio.file.Path shipPackage = resolveShipPackage(shipLayer);
+        return showHullmodPickerDialog(hullSize, shipPackage);
+    }
+
+    public static java.nio.file.Path resolveShipPackage(shipeditor.components.viewer.layers.ship.ShipLayer shipLayer) {
+        if (shipLayer == null) return null;
+        var shipPainter = shipLayer.getPainter();
+        if (shipPainter != null) {
+            var activeSkin = shipPainter.getActiveSkin();
+            if (activeSkin != null && !activeSkin.isBase()) {
+                return activeSkin.getContainingPackage();
+            }
+        }
+        var shipHull = shipLayer.getHull();
+        if (shipHull != null) {
+            var shipEntry = shipeditor.representation.GameDataRepository.retrieveShipCSVEntryByID(shipHull.getHullID());
+            if (shipEntry != null) {
+                return shipEntry.getPackageFolderPath();
+            }
+        }
+        return null;
+    }
+
+    public static shipeditor.components.datafiles.entities.HullmodCSVEntry showHullmodPickerDialog(shipeditor.representation.RepresentationEnums.HullSize hullSize, java.nio.file.Path shipPackage) {
+        final JDialog[] dialogRef = new JDialog[1];
+
+        PickHullmodDialog dialogPanel = new PickHullmodDialog(hullSize, shipPackage, () -> {
+            if (dialogRef[0] != null) {
+                dialogRef[0].dispose();
+            }
+        });
+
+        JOptionPane optionPane = new JOptionPane(dialogPanel, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+        JDialog dialog = optionPane.createDialog(null, "Select Hullmod");
+        dialog.setResizable(true);
+        dialogRef[0] = dialog;
+
+        dialog.setVisible(true);
+
+        Object selectedValue = optionPane.getValue();
+        if (selectedValue != null && selectedValue.equals(JOptionPane.OK_OPTION)) {
+            return dialogPanel.getSelectedHullmod();
+        } else if (selectedValue == null && dialogPanel.getSelectedHullmod() != null) {
+            return dialogPanel.getSelectedHullmod();
+        }
+        return null;
+    }
+
+    public static void showSlotCreationDialog() {
+        SlotCreationDialog dialog = new SlotCreationDialog(shipeditor.PrimaryWindow.getInstance());
+        dialog.setVisible(true);
+    }
+
 }

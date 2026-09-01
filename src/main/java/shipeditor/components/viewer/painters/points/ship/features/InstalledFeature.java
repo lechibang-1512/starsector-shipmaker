@@ -172,7 +172,7 @@ public final class InstalledFeature implements InstallableEntry {
                     boolean weaponIsMissile = weaponCSVEntry.getType() == WeaponType.MISSILE;
 
                     WeaponSpecFile specFile = weaponCSVEntry.getSpecFile();
-                    List<String> renderHints = specFile.getRenderHints();
+                    List<String> renderHints = specFile != null ? specFile.getRenderHints() : null;
                     boolean hasTargetHint = false;
                     if (renderHints != null && !renderHints.isEmpty()) {
                         hasTargetHint = renderHints.contains(StringConstants.RENDER_LOADED_MISSILES)
@@ -192,8 +192,8 @@ public final class InstalledFeature implements InstallableEntry {
             CSVEntry entry = this.getDataEntry();
             if (entry != null) {
                 Map<String, String> rowData = entry.getRowData();
-                String hints = rowData.get(StringConstants.HINTS);
-                if (!hints.contains("UNDER_PARENT")) {
+                String hints = rowData != null ? rowData.get(StringConstants.HINTS) : null;
+                if (hints == null || !hints.contains("UNDER_PARENT")) {
                     result = Integer.MIN_VALUE + 1;
                 }
             } else {
@@ -245,9 +245,11 @@ public final class InstalledFeature implements InstallableEntry {
             layerPainter.setSpriteOpacity(opacity);
 
             ShipVariant variant = shipPainter.getActiveVariant();
-            variant.setOpacityForAllFitted(opacity);
+            if (variant != null) {
+                variant.setOpacityForAllFitted(opacity);
+            }
 
-            VariantFile rawVariant = GameDataRepository.getVariantByID(variant.getVariantId());
+            VariantFile rawVariant = variant != null ? GameDataRepository.getVariantByID(variant.getVariantId()) : null;
             if (rawVariant == null || rawVariant.isEmpty()) {
                 rawVariant = GameDataRepository.getVariantByID(this.getFeatureID());
             }

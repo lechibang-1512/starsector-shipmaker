@@ -1,5 +1,7 @@
 package shipeditor.parsing.loading;
 
+import shipeditor.utility.text.StringManager;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 import shipeditor.parsing.FileUtilities;
@@ -8,8 +10,6 @@ import shipeditor.persistence.SettingsManager;
 import shipeditor.persistence.database.DatabaseManager;
 import shipeditor.persistence.database.DatabaseQueryService;
 import shipeditor.utility.text.StringConstants;
-import shipeditor.utility.text.StringValues;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -186,12 +186,12 @@ public final class IndexScannerTask {
 
         Settings settings = SettingsManager.getSettings();
         if (settings == null) {
-            log.error(StringValues.SETTINGS_NOT_INITIALIZED_INDEX_CANCEL);
+            log.error(StringManager.getString("SETTINGS_NOT_INITIALIZED_INDEX_CANCEL"));
             return;
         }
 
         if (!isUpdateNeeded(firstRun, settings)) {
-            log.info(StringValues.DB_INDEX_UP_TO_DATE_SKIP);
+            log.info(StringManager.getString("DB_INDEX_UP_TO_DATE_SKIP"));
             return;
         }
 
@@ -251,6 +251,19 @@ public final class IndexScannerTask {
                 } catch (IOException e) {
                     log.warn("Failed to check last modified times for mod folder: {}", folder, e);
                     needsScan = true;
+                }
+            }
+            // Migration check: detect stale entity names (old format used filenames instead of hullName).
+            if (!needsScan) {
+                List<shipeditor.persistence.database.IndexedFile> modShipFiles =
+                        DatabaseQueryService.getFilesByModAndType(modId, StringConstants.SHIP_TYPE);
+                if (!modShipFiles.isEmpty()) {
+                    shipeditor.persistence.database.IndexedFile sample = modShipFiles.get(0);
+                    if (sample.getEntityName() != null && sample.getEntityId() != null
+                            && sample.getEntityName().equals(sample.getEntityId())) {
+                        log.info("Detected stale entity name format for mod '{}', triggering re-scan.", modId);
+                        needsScan = true;
+                    }
                 }
             }
 
@@ -376,7 +389,9 @@ public final class IndexScannerTask {
                 .map(req -> {
                     try {
                         EntityMetadata metadata = extractEntityMetadata(req.file, req.type, mapper);
-                        String entityName = req.file.getName().replace("." + req.ext, "");
+                        String fileBaseName = req.file.getName().replace("." + req.ext, "");
+                        String entityName = metadata.hullName() != null && !metadata.hullName().isBlank()
+                                ? metadata.hullName() : fileBaseName;
                         return new ParsedFileEntry(req.absPath, req.diskLastModified, metadata,
                                 entityName, req.type, req.file.getName(), req.uuid);
                     } catch (Exception e) {
@@ -482,24 +497,28 @@ public final class IndexScannerTask {
         }
     }
 
-    public record EntityMetadata(String id, String spritePath, String designation) {}
+    public record EntityMetadata(String id, String spritePath, String designation, String hullName) {}
 
     public static EntityMetadata extractEntityMetadata(File file, String type, ObjectMapper mapper) {
         String keyToFind;
         String spriteKey = null;
         String designationKey = "designation";
+        String hullNameKey = null;
         
         switch (type) {
             case StringConstants.SHIP_TYPE:
                 keyToFind = "hullId";
                 spriteKey = "spriteName";
+                hullNameKey = "hullName";
                 break;
             case StringConstants.SKIN_TYPE:
                 keyToFind = "skinHullId";
                 spriteKey = "spriteName";
+                hullNameKey = "hullName";
                 break;
             case StringConstants.VARIANT_TYPE:
                 keyToFind = "variantId";
+                hullNameKey = "displayName";
                 break;
             case StringConstants.WEAPON_TYPE:
                 keyToFind = "id";
@@ -513,6 +532,7 @@ public final class IndexScannerTask {
         String id = null;
         String spritePath = null;
         String designation = null;
+        String hullName = null;
 
         try (com.fasterxml.jackson.core.JsonParser parser = mapper.getFactory().createParser(shipeditor.parsing.JsonProcessor.straightenMalformed(file))) {
             while (parser.nextToken() != null) {
@@ -527,10 +547,14 @@ public final class IndexScannerTask {
                     } else if (designationKey.equals(currentName) && designation == null) {
                         parser.nextToken();
                         designation = parser.getText();
+                    } else if (hullNameKey != null && hullNameKey.equals(currentName) && hullName == null) {
+                        parser.nextToken();
+                        hullName = parser.getText();
                     }
                 }
                 // Early exit once all needed fields are found
-                if (id != null && (spriteKey == null || spritePath != null) && designation != null) {
+                if (id != null && (spriteKey == null || spritePath != null) && designation != null
+                        && (hullNameKey == null || hullName != null)) {
                     break;
                 }
             }
@@ -547,7 +571,7 @@ public final class IndexScannerTask {
                 .replace(".proj", "");
         }
         
-        return new EntityMetadata(id, spritePath, designation);
+        return new EntityMetadata(id, spritePath, designation, hullName);
     }
 
     public static Map<String, List<File>> fetchFilesWithExtensions(Path target, Set<String> exts) {
@@ -573,7 +597,7 @@ public final class IndexScannerTask {
                         }
                     });
         } catch (IOException exception) {
-            log.error(StringValues.FAILED_WALK_FILES_INDEXING, target, exception);
+            log.error(StringManager.getString("FAILED_WALK_FILES_INDEXING"), target, exception);
         }
         return filesMap;
     }

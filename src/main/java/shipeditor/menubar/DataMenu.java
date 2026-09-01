@@ -1,5 +1,7 @@
 package shipeditor.menubar;
 
+import shipeditor.utility.text.StringManager;
+
 import lombok.extern.log4j.Log4j2;
 import org.kordamp.ikonli.boxicons.BoxiconsRegular;
 import org.kordamp.ikonli.swing.FontIcon;
@@ -28,7 +30,7 @@ class DataMenu extends JMenu {
     }
 
     void initialize() {
-        JMenuItem reloadAllGameData = new JMenuItem("Reload Game Data");
+        JMenuItem reloadAllGameData = new JMenuItem(StringManager.getString("RELOAD_GAME_DATA"));
         reloadAllGameData.setIcon(FontIcon.of(BoxiconsRegular.REFRESH, 16, Themes.getIconColor()));
         reloadAllGameData.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
         reloadAllGameData.addActionListener(event -> FileLoading.loadGameData());
@@ -39,7 +41,7 @@ class DataMenu extends JMenu {
 
         this.addSeparator();
 
-        JMenuItem reindexData = new JMenuItem("Re-index Mod Folders & Reload");
+        JMenuItem reindexData = new JMenuItem(StringManager.getString("RE_INDEX_MOD_FOLDERS_RELOAD"));
         reindexData.setIcon(FontIcon.of(BoxiconsRegular.REFRESH, 16, Themes.getIconColor()));
         reindexData.addActionListener(event -> {
             if (FileLoading.isLoadingInProgress()) {
@@ -57,7 +59,7 @@ class DataMenu extends JMenu {
 
         this.addSeparator();
 
-        JMenuItem selectMods = new JMenuItem("Select Mods to Load...");
+        JMenuItem selectMods = new JMenuItem(StringManager.getString("SELECT_MODS_TO_LOAD"));
         selectMods.setIcon(FontIcon.of(BoxiconsRegular.LIST_CHECK, 16, Themes.getIconColor()));
         selectMods.addActionListener(event -> {
             if (FileLoading.isLoadingInProgress()) {
@@ -74,7 +76,7 @@ class DataMenu extends JMenu {
         });
         this.add(selectMods);
 
-        JMenuItem dataFilters = new JMenuItem("Data Filters...");
+        JMenuItem dataFilters = new JMenuItem(StringManager.getString("DATA_FILTERS_1"));
         dataFilters.setIcon(FontIcon.of(BoxiconsRegular.FILTER, 16, Themes.getIconColor()));
         dataFilters.addActionListener(event -> shipeditor.components.datafiles.trees.FilterDialogs.showCombinedFilters(null));
         this.add(dataFilters);
@@ -86,19 +88,27 @@ class DataMenu extends JMenu {
 
         this.addSeparator();
 
-        JMenuItem qaReport = new JMenuItem("Weapon Offset QA Report...");
+        JMenuItem qaReport = new JMenuItem(StringManager.getString("WEAPON_OFFSET_QA_REPORT"));
         qaReport.setIcon(FontIcon.of(BoxiconsRegular.SHIELD_QUARTER, 16, Themes.getIconColor()));
         qaReport.addActionListener(event -> {
             shipeditor.utility.components.dialog.WeaponQAReportDialog dialog = new shipeditor.utility.components.dialog.WeaponQAReportDialog();
             dialog.setVisible(true);
         });
         this.add(qaReport);
+
+        JMenuItem hullQaReport = new JMenuItem(StringManager.getString("HULL_QA_REPORT"));
+        hullQaReport.setIcon(FontIcon.of(BoxiconsRegular.SHIELD_QUARTER, 16, Themes.getIconColor()));
+        hullQaReport.addActionListener(event -> {
+            shipeditor.utility.components.dialog.HullQAReportDialog dialog = new shipeditor.utility.components.dialog.HullQAReportDialog();
+            dialog.setVisible(true);
+        });
+        this.add(hullQaReport);
     }
 
     private static JMenuItem getJSONCorrector() {
-        JMenuItem jsonCorrector = new JMenuItem("Repair Malformed JSON...");
+        JMenuItem jsonCorrector = new JMenuItem(StringManager.getString("REPAIR_MALFORMED_JSON"));
         jsonCorrector.setIcon(FontIcon.of(BoxiconsRegular.WRENCH, 16, Themes.getIconColor()));
-        jsonCorrector.setToolTipText("Fixes semantically incorrect JSON, then saves a corrected copy to the same location");
+        jsonCorrector.setToolTipText(StringManager.getString("FIXES_SEMANTICALLY_INCORRECT_JSON_THEN_SAVES_A_CORRECTED_COPY_TO_THE_SAME_LOCATION"));
         jsonCorrector.addActionListener(e -> {
             JFileChooser fileChooser = FileUtilities.getFileChooser();
 

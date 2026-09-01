@@ -1,5 +1,7 @@
 package shipeditor.utility.components.dialog;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.components.viewer.ViewerEnums.FireMode;
 import shipeditor.components.viewer.painters.points.ship.features.FittedWeaponGroup;
@@ -59,7 +61,7 @@ class WeaponGroupTableDialog extends JPanel {
 
     private JPanel createPropertiesPanel() {
         JPanel propertiesPanel = new JPanel(new GridBagLayout());
-        propertiesPanel.setBorder(BorderFactory.createTitledBorder("Group Properties"));
+        propertiesPanel.setBorder(BorderFactory.createTitledBorder(StringManager.getString("GROUP_PROPERTIES")));
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(2, 5, 2, 5);
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -67,24 +69,24 @@ class WeaponGroupTableDialog extends JPanel {
         c.gridy = 0;
         c.gridx = 0;
         c.weightx = 0.2;
-        propertiesPanel.add(new JLabel("Group"), c);
+        propertiesPanel.add(new JLabel(StringManager.getString("GROUP_1")), c);
         c.gridx = 1;
         c.weightx = 0.4;
-        propertiesPanel.add(new JLabel("Autofire"), c);
+        propertiesPanel.add(new JLabel(StringManager.getString("AUTOFIRE_1")), c);
         c.gridx = 2;
         c.weightx = 0.4;
-        propertiesPanel.add(new JLabel("Fire Mode"), c);
+        propertiesPanel.add(new JLabel(StringManager.getString("FIRE_MODE")), c);
 
         for (int i = 0; i < MAX_WEAPON_GROUPS; i++) {
             c.gridy = i + 1;
 
             c.gridx = 0;
             c.weightx = 0.2;
-            propertiesPanel.add(new JLabel("Group " + (i + 1) + ":"), c);
+            propertiesPanel.add(new JLabel(StringManager.getString("GROUP_2") + (i + 1) + ":"), c);
 
             c.gridx = 1;
             c.weightx = 0.4;
-            JCheckBox autofireCb = new JCheckBox("Autofire");
+            JCheckBox autofireCb = new JCheckBox(StringManager.getString("AUTOFIRE_1"));
             autofireCb.setSelected(groupAutofire[i]);
             final int index = i;
             autofireCb.addActionListener(e -> groupAutofire[index] = autofireCb.isSelected());
@@ -107,7 +109,7 @@ class WeaponGroupTableDialog extends JPanel {
         JScrollPane scrollPane = new JScrollPane(table);
 
         JPanel container = new JPanel(new BorderLayout());
-        container.setBorder(BorderFactory.createTitledBorder("Weapon Assignments"));
+        container.setBorder(BorderFactory.createTitledBorder(StringManager.getString("WEAPON_ASSIGNMENTS")));
         container.add(scrollPane, BorderLayout.CENTER);
 
         return container;
@@ -220,8 +222,8 @@ class WeaponGroupTableDialog extends JPanel {
             super(model);
 
             Dimension preferredSize = this.getPreferredSize();
-            int width = Math.min(preferredSize.width, 400);
-            int height = Math.min(preferredSize.height, 300);
+            int width = Math.max(preferredSize.width, 600);
+            int height = Math.max(preferredSize.height, 400);
 
             this.setPreferredScrollableViewportSize(new Dimension(width, height));
 

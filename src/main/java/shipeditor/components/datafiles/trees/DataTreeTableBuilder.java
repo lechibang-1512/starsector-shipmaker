@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.components.ComponentEvents.CSVEntryIDChanged;
 import shipeditor.components.datafiles.entities.CSVEntry;
@@ -120,6 +122,12 @@ public class DataTreeTableBuilder {
             }
             case "type" -> {
                 if (csvEntry instanceof shipeditor.components.datafiles.entities.WeaponCSVEntry) {
+                    yield new DefaultCellEditor(new JComboBox<>(new String[]{"BALLISTIC", "ENERGY", "MISSILE", "COMPOSITE", "SYNERGY", "HYBRID", "UNIVERSAL", "DECORATIVE", "SYSTEM", "BUILT_IN", "LAUNCH_BAY"}));
+                }
+                yield null;
+            }
+            case "damage type" -> {
+                if (csvEntry instanceof shipeditor.components.datafiles.entities.WeaponCSVEntry) {
                     yield new DefaultCellEditor(new JComboBox<>(new String[]{"KINETIC", "HIGH_EXPLOSIVE", "FRAGMENTATION", "ENERGY", "OTHER"}));
                 }
                 yield null;
@@ -153,14 +161,14 @@ public class DataTreeTableBuilder {
         JPanel buttonsContainer = new JPanel();
         buttonsContainer.setLayout(new GridLayout(1, 3));
 
-        JButton openTableButton = new JButton("Open table");
+        JButton openTableButton = new JButton(StringManager.getString("OPEN_TABLE"));
         openTableButton.addActionListener(e -> {
             Path toOpen = entry.getTableFilePath();
             FileUtilities.openPathInDesktop(toOpen);
         });
         buttonsContainer.add(openTableButton);
 
-        JButton openFolderButton = new JButton("Open folder");
+        JButton openFolderButton = new JButton(StringManager.getString("OPEN_FOLDER"));
         openFolderButton.addActionListener(e -> {
             Path toOpen = entry.getTableFilePath().getParent();
             if (toOpen != null) {
@@ -169,7 +177,7 @@ public class DataTreeTableBuilder {
         });
         buttonsContainer.add(openFolderButton);
 
-        JButton saveCsvButton = new JButton("Save CSV");
+        JButton saveCsvButton = new JButton(StringManager.getString("SAVE_CSV"));
         saveCsvButton.addActionListener(e -> shipeditor.communication.EventBus.publish(
                 new shipeditor.communication.events.files.FileEvents.CSVSaveQueued(entry)
         ));

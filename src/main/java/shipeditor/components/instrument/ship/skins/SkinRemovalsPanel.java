@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.skins;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.layers.LayerEvents.ActiveLayerUpdated;
 import shipeditor.communication.events.viewer.layers.LayerEvents.LayerWasSelected;
@@ -35,7 +37,7 @@ public class SkinRemovalsPanel extends JPanel {
     public SkinRemovalsPanel() {
         this.setLayout(new BorderLayout());
 
-        statusLabel = new JLabel("No skin active");
+        statusLabel = new JLabel(StringManager.getString("NO_SKIN_ACTIVE"));
         statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
         statusLabel.setBorder(new EmptyBorder(8, 8, 8, 8));
 
@@ -86,7 +88,7 @@ public class SkinRemovalsPanel extends JPanel {
         contentContainer.removeAll();
 
         if (cachedPainter == null || cachedPainter.isUninitialized()) {
-            statusLabel.setText("No ship layer selected");
+            statusLabel.setText(StringManager.getString("NO_SHIP_LAYER_SELECTED"));
             contentContainer.revalidate();
             contentContainer.repaint();
             return;
@@ -94,13 +96,13 @@ public class SkinRemovalsPanel extends JPanel {
 
         ShipSkin activeSkin = cachedPainter.getActiveSkin();
         if (activeSkin == null || activeSkin.isBase()) {
-            statusLabel.setText("No skin active — select a skin in the Skin Data tab");
+            statusLabel.setText(StringManager.getString("NO_SKIN_ACTIVE_SELECT_A_SKIN_IN_THE_SKIN_DATA_TAB"));
             contentContainer.revalidate();
             contentContainer.repaint();
             return;
         }
 
-        statusLabel.setText("Skin: " + activeSkin);
+        statusLabel.setText(StringManager.getString("SKIN") + activeSkin);
 
         contentContainer.add(createRemovalListPanel("Remove Weapon Slots", activeSkin,
                 activeSkin::getRemoveWeaponSlots, activeSkin::setRemoveWeaponSlots,
@@ -156,8 +158,8 @@ public class SkinRemovalsPanel extends JPanel {
         JPanel controlPanel = new JPanel(new BorderLayout(4, 0));
         JTextField inputField = new JTextField();
         inputField.setToolTipText(inputHint);
-        JButton addButton = new JButton("Add");
-        JButton removeButton = new JButton("Remove");
+        JButton addButton = new JButton(StringManager.getString("ADD_1"));
+        JButton removeButton = new JButton(StringManager.getString("REMOVE"));
 
         addButton.addActionListener(e -> {
             String text = inputField.getText().trim();
@@ -212,15 +214,13 @@ public class SkinRemovalsPanel extends JPanel {
                 return null;
             }
         } else if (typeClass == HullmodCSVEntry.class) {
-            GameDataRepository gameData = SettingsManager.getGameData();
-            HullmodCSVEntry entry = gameData.getAllHullmodEntries().get(input);
+            HullmodCSVEntry entry = GameDataRepository.retrieveHullmodCSVEntryByID(input);
             if (entry == null) {
                 JOptionPane.showMessageDialog(this, "Unknown Hullmod ID: " + input, "Error", JOptionPane.ERROR_MESSAGE);
             }
             return (T) entry;
         } else if (typeClass == WingCSVEntry.class) {
-            GameDataRepository gameData = SettingsManager.getGameData();
-            WingCSVEntry entry = gameData.getAllWingEntries().get(input);
+            WingCSVEntry entry = GameDataRepository.retrieveWingCSVEntryByID(input);
             if (entry == null) {
                 JOptionPane.showMessageDialog(this, "Unknown Wing ID: " + input, "Error", JOptionPane.ERROR_MESSAGE);
             }

@@ -1,5 +1,7 @@
 package shipeditor.components.datafiles.trees;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.Setter;
@@ -80,7 +82,7 @@ public class WeaponFilterPanel extends JPanel {
         gbc.gridx = 0;
         
         gbc.gridy = 0;
-        filterBySlotBox = new JCheckBox("Filter by selected slot");
+        filterBySlotBox = new JCheckBox(StringManager.getString("FILTER_BY_SELECTED_SLOT"));
         filterBySlotBox.setSelected(filterBySelectedSlot);
         filterBySlotBox.addActionListener(e -> {
             filterBySelectedSlot = filterBySlotBox.isSelected();
@@ -89,7 +91,7 @@ public class WeaponFilterPanel extends JPanel {
         this.add(filterBySlotBox, gbc);
 
         gbc.gridy = 1;
-        this.add(new JLabel("Tech / Manufacturer:"), gbc);
+        this.add(new JLabel(StringManager.getString("TECH_MANUFACTURER")), gbc);
         
         gbc.gridy = 2;
         techCombo = new JComboBox<>();
@@ -103,7 +105,7 @@ public class WeaponFilterPanel extends JPanel {
         this.add(techCombo, gbc);
 
         gbc.gridy = 3;
-        this.add(new JLabel("Weapon Type:"), gbc);
+        this.add(new JLabel(StringManager.getString("WEAPON_TYPE")), gbc);
         
         gbc.gridy = 4;
         typeCombo = new JComboBox<>();
@@ -120,7 +122,7 @@ public class WeaponFilterPanel extends JPanel {
         this.add(typeCombo, gbc);
 
         gbc.gridy = 5;
-        this.add(new JLabel("Weapon Size:"), gbc);
+        this.add(new JLabel(StringManager.getString("WEAPON_SIZE")), gbc);
         
         gbc.gridy = 6;
         sizeCombo = new JComboBox<>();
@@ -137,7 +139,7 @@ public class WeaponFilterPanel extends JPanel {
         this.add(sizeCombo, gbc);
 
         gbc.gridy = 7;
-        this.add(new JLabel("OP Cost:"), gbc);
+        this.add(new JLabel(StringManager.getString("OP_COST")), gbc);
         
         gbc.gridy = 8;
         opCostCombo = new JComboBox<>();
@@ -154,6 +156,23 @@ public class WeaponFilterPanel extends JPanel {
         this.add(opCostCombo, gbc);
 
         gbc.gridy = 9;
+        JButton clearButton = new JButton(StringManager.getString("CLEAR_FILTERS"));
+        clearButton.addActionListener(e -> {
+            filterBySlotBox.setSelected(false);
+            filterBySelectedSlot = false;
+            techCombo.setSelectedIndex(0);
+            typeCombo.setSelectedIndex(0);
+            sizeCombo.setSelectedIndex(0);
+            opCostCombo.setSelectedIndex(0);
+            selectedTech = null;
+            selectedType = null;
+            selectedSize = null;
+            selectedOPCost = null;
+            applyFilters();
+        });
+        this.add(clearButton, gbc);
+        
+        gbc.gridy = 10;
         gbc.weighty = 1.0;
         this.add(new JPanel(), gbc);
         
