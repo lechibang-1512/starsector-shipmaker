@@ -81,6 +81,7 @@ spotbugs/
 
 ### Archives & Releases ###
 *.zip
+*.rpm
 releases/
 
 ### JRE Distributions ###
@@ -89,7 +90,7 @@ jre_linux/
 jre_mac/
 jre_windows/
 
-### Python ###
+### Python & Experiments ###
 __pycache__/
 *.py[cod]
 *$py.class
@@ -98,7 +99,23 @@ __pycache__/
 venv/
 env/
 .env
+.pytest_cache/
+.coverage
+htmlcov/
+*.psd
+*.pkl
+experiments/output/
+experiments/depth_test/
+experiments/output_masks/
+experiments/output_*/
+output/
+depth_test/
+output_masks/
 
 ### AI ###
 .serena/
 .gemini/
+
+### Runtime ###
+.ship_editor.lock
+ship_editor_database.sqlite*
