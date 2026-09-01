@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.centers;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.ShieldCenterPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
@@ -12,8 +14,6 @@ import shipeditor.utility.UtilityEnums.IncrementType;
 import shipeditor.utility.components.widgets.PointLocationWidget;
 import shipeditor.utility.components.widgets.Spinners;
 import shipeditor.utility.objects.Pair;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -86,7 +86,63 @@ public class ShieldPanel extends AbstractCenterPanel {
         centerWidgetsPanel.setBorder(bottomPadding);
         centerContainer.add(centerWidgetsPanel, BorderLayout.PAGE_START);
 
+        JPanel buttonsPanel = new JPanel(new java.awt.GridLayout(0, 2, 4, 4));
+        buttonsPanel.setBorder(new EmptyBorder(4, 0, 4, 0));
+        javax.swing.JButton autoCalcBtn = new javax.swing.JButton("<html><center>Auto-Calculate<br>Radius</center></html>");
+        autoCalcBtn.addActionListener(e -> autoCalculateShieldRadius());
+        
+        javax.swing.JButton spriteCenterBtn = new javax.swing.JButton("<html><center>Set to<br>Sprite Center</center></html>");
+        spriteCenterBtn.addActionListener(e -> setShieldSpriteCenter());
+        
+        buttonsPanel.add(autoCalcBtn);
+        buttonsPanel.add(spriteCenterBtn);
+        centerContainer.add(buttonsPanel, BorderLayout.PAGE_END);
+
         this.add(centerContainer, BorderLayout.CENTER);
+    }
+
+    private void autoCalculateShieldRadius() {
+        LayerPainter layerPainter = getCachedLayerPainter();
+        if (!(layerPainter instanceof ShipPainter shipPainter)) return;
+        
+        shipeditor.components.viewer.painters.points.ship.ShieldPointPainter shieldPointPainter = shipPainter.getShieldPointPainter();
+        shipeditor.components.viewer.entities.ShieldCenterPoint shieldCenterPoint = shieldPointPainter.getShieldCenterPoint();
+        java.awt.geom.Point2D center = shieldCenterPoint.getPosition();
+        
+        java.util.List<shipeditor.components.viewer.entities.BoundPoint> bounds = shipPainter.getBoundsPainter().getPointsIndex();
+        float maxDistSq = 0;
+        if (!bounds.isEmpty()) {
+            for (shipeditor.components.viewer.entities.BoundPoint bp : bounds) {
+                float distSq = (float) center.distanceSq(bp.getPosition());
+                if (distSq > maxDistSq) maxDistSq = distSq;
+            }
+            float radius = (float) Math.ceil(Math.sqrt(maxDistSq));
+            EditDispatch.postShieldRadiusChanged(shieldCenterPoint, radius);
+            processChange();
+        } else if (shipPainter.getSprite() != null && shipPainter.getSprite().getImage() != null) {
+            float w = shipPainter.getSprite().getImage().getWidth();
+            float h = shipPainter.getSprite().getImage().getHeight();
+            float radius = (float) Math.ceil(Math.hypot(w, h) / 2.0);
+            EditDispatch.postShieldRadiusChanged(shieldCenterPoint, radius);
+            processChange();
+        }
+    }
+
+    private void setShieldSpriteCenter() {
+        LayerPainter layerPainter = getCachedLayerPainter();
+        if (!(layerPainter instanceof ShipPainter shipPainter)) return;
+        if (shipPainter.getSprite() == null || shipPainter.getSprite().getImage() == null) return;
+        
+        float w = shipPainter.getSprite().getImage().getWidth();
+        float h = shipPainter.getSprite().getImage().getHeight();
+        java.awt.geom.Point2D anchor = shipPainter.getAnchor();
+        
+        java.awt.geom.Point2D newCenter = new java.awt.geom.Point2D.Double(anchor.getX() + w / 2.0, anchor.getY() + h / 2.0);
+        
+        shipeditor.components.viewer.painters.points.ship.ShieldPointPainter shieldPointPainter = shipPainter.getShieldPointPainter();
+        shipeditor.components.viewer.entities.ShieldCenterPoint shieldCenterPoint = shieldPointPainter.getShieldCenterPoint();
+        EditDispatch.postPointDragged(shieldCenterPoint, newCenter);
+        processChange();
     }
 
     private Pair<JLabel, JSlider> createShieldOpacityWidget() {
@@ -112,7 +168,7 @@ public class ShieldPanel extends AbstractCenterPanel {
                 opacityGetter, opacitySetter, clearerListener, refresherListener);
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText("Shield opacity:");
+        opacityLabel.setText(StringManager.getString("SHIELD_OPACITY"));
 
         return opacityWidget;
     }
@@ -141,7 +197,7 @@ public class ShieldPanel extends AbstractCenterPanel {
         );
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText("Shield view");
+        opacityLabel.setText(StringManager.getString("SHIELD_VIEW"));
 
         return opacityWidget;
     }
@@ -154,7 +210,7 @@ public class ShieldPanel extends AbstractCenterPanel {
 
         JSpinner radiusSpinner = Spinners.createWheelable(numberModel, IncrementType.CHUNK);
         radiusSpinner.setEnabled(false);
-        JLabel radiusLabel = new JLabel(StringValues.SHIELD_RADIUS);
+        JLabel radiusLabel = new JLabel(StringManager.getString("SHIELD_RADIUS"));
 
         radiusSpinner.addChangeListener(e -> {
             if (!isWidgetsReadyForInput()) return;

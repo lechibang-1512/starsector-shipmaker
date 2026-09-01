@@ -43,7 +43,8 @@ public final class ShipLayerInfoPanel extends AbstractLayerInfoPanel {
 
         weaponSlotsSummaryPanel = new JPanel();
         weaponSlotsSummaryPanel.setLayout(new BoxLayout(weaponSlotsSummaryPanel, BoxLayout.PAGE_AXIS));
-        dataContainer.add(weaponSlotsSummaryPanel, BorderLayout.CENTER);
+        shipeditor.utility.components.CollapsibleSection summarySection = new shipeditor.utility.components.CollapsibleSection("Weapon Slots Summary", weaponSlotsSummaryPanel, true);
+        dataContainer.add(summarySection, BorderLayout.CENTER);
 
         this.add(dataContainer, BorderLayout.CENTER);
     }
@@ -78,8 +79,7 @@ public final class ShipLayerInfoPanel extends AbstractLayerInfoPanel {
         container.setAlignmentX(0.5f);
         container.setAlignmentY(0);
 
-        ComponentUtilities.outfitPanelWithTitle(container,
-                new Insets(1, 0, 0, 0), "Weapon slots summary");
+
 
         WeaponSlotPainter slotPainter = shipPainter.getWeaponSlotPainter();
         List<WeaponSlotPoint> slotPointList = slotPainter.getSlotPoints();

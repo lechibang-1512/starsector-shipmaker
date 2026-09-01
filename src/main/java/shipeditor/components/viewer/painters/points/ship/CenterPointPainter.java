@@ -1,5 +1,7 @@
 package shipeditor.components.viewer.painters.points.ship;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import lombok.Getter;
@@ -19,7 +21,6 @@ import shipeditor.representation.weapon.WeaponEnums.WeaponType;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.Utility;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.graphics.opengl.SpriteRenderer;
 import shipeditor.utility.graphics.opengl.ShapeRenderer;
 import org.joml.Matrix4f;
@@ -27,12 +28,14 @@ import org.joml.Matrix4f;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
+import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
 
 /** * Also intended to handle collision radii and their painting.*/
 @Log4j2
@@ -68,6 +71,22 @@ public class CenterPointPainter extends SinglePointPainter {
         super.cleanupListeners();
     }
 
+    private void updateCollisionRadiusFromMouseEvent(MouseEvent me) {
+        if (this.centerPoint == null) return;
+        AffineTransform screenToWorld = StaticController.getScreenToWorld();
+        Point2D transformed = screenToWorld.transform(me.getPoint(), null);
+        if (ControlPredicates.isCursorSnappingEnabled()) {
+            transformed = screenToWorld.transform(StaticController.getAdjustedCursor(), null);
+        }
+        Point2D centerPointPosition = this.centerPoint.getPosition();
+        float radius = (float) centerPointPosition.distance(transformed);
+        float result = radius;
+        if (ControlPredicates.isCursorSnappingEnabled()) {
+            result = Math.round(radius * 2) / 2.0f;
+        }
+        EditDispatch.postCollisionRadiusChanged(this.centerPoint, result);
+    }
+
     private void initModeListening() {
         BusEventListener modeListener = event -> {
             if (event instanceof InstrumentModeChanged checked) {
@@ -77,26 +96,42 @@ public class CenterPointPainter extends SinglePointPainter {
             }
         };
         EventBus.subscribe(this, modeListener);
-        // Subscribe to raw mouse moved and compute radius drag internally.
-        BusEventListener rawMouseMovedListener = event -> {
-            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseMoved checked && isInteractionEnabled()) {
-                if (!collisionRadiusHotkeyPressed) return;
-                java.awt.geom.AffineTransform screenToWorld = shipeditor.utility.overseers.StaticController.getScreenToWorld();
-                java.awt.event.MouseEvent me = checked.mouseEvent();
-                Point2D transformed = screenToWorld.transform(me.getPoint(), null);
-                if (ControlPredicates.isCursorSnappingEnabled()) {
-                    transformed = screenToWorld.transform(shipeditor.utility.overseers.StaticController.getAdjustedCursor(), null);
+
+        // Adjust radius on Ctrl + LMB (press or drag)
+        BusEventListener rawMouseDraggedListener = event -> {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseDragged checked && isInteractionEnabled()) {
+                MouseEvent me = checked.mouseEvent();
+                if ((me.isControlDown() || collisionRadiusHotkeyPressed) && javax.swing.SwingUtilities.isLeftMouseButton(me)) {
+                    updateCollisionRadiusFromMouseEvent(me);
                 }
-                Point2D centerPointPosition = this.centerPoint.getPosition();
-                float radius = (float) centerPointPosition.distance(transformed);
-                float result = radius;
-                if (ControlPredicates.isCursorSnappingEnabled()) {
-                    result = Math.round(radius * 2) / 2.0f;
-                }
-                EditDispatch.postCollisionRadiusChanged(this.centerPoint, result);
             }
         };
-        EventBus.subscribe(this, rawMouseMovedListener);
+        EventBus.subscribe(this, rawMouseDraggedListener);
+
+        BusEventListener rawMousePressedListener = event -> {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMousePressed checked && isInteractionEnabled()) {
+                MouseEvent me = checked.mouseEvent();
+                if ((me.isControlDown() || collisionRadiusHotkeyPressed) && javax.swing.SwingUtilities.isLeftMouseButton(me)) {
+                    updateCollisionRadiusFromMouseEvent(me);
+                }
+            }
+        };
+        EventBus.subscribe(this, rawMousePressedListener);
+
+        // Set point position on LMB click (without Ctrl)
+        BusEventListener pointCreationListener = event -> {
+            if (event instanceof PointCreationQueued checked && isInteractionEnabled()) {
+                if (collisionRadiusHotkeyPressed) return;
+                Point2D position = checked.position();
+                if (this.centerPoint != null) {
+                    EditDispatch.postPointDragged(this.centerPoint, position);
+                    this.centerPoint.setPosition(position);
+                    EventBus.publish(new InstrumentRepaintQueued(EditorInstrument.COLLISION));
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
+            }
+        };
+        EventBus.subscribe(this, pointCreationListener);
     }
 
     private void initHotkeys() {
@@ -166,7 +201,7 @@ public class CenterPointPainter extends SinglePointPainter {
         shapeRenderer.drawLine(vertStart, vertEnd, colorVec);
 
         Point2D toDisplay = Utility.getPointCoordinatesForDisplay(resultAnchorLocation);
-        String coords = StringValues.MODULE_ANCHOR + " (" + toDisplay.getX() + ", " + toDisplay.getY() + ")";
+        String coords = StringManager.getString("MODULE_ANCHOR") + " (" + toDisplay.getX() + ", " + toDisplay.getY() + ")";
 
         // Conditionally paint coords text using drawTextGL (replaces drawWithConditionalOpacity)
         double zoomLevel = StaticController.getZoomLevel();

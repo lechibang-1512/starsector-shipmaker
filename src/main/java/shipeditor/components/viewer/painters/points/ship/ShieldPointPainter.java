@@ -20,11 +20,14 @@ import shipeditor.utility.graphics.ColorUtilities;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import shipeditor.communication.events.components.ComponentEvents.InstrumentRepaintQueued;
 import shipeditor.communication.events.viewer.points.PointEvents.InstrumentModeChanged;
+import shipeditor.communication.events.viewer.points.PointEvents.PointCreationQueued;
 
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class ShieldPointPainter extends SinglePointPainter {
@@ -78,6 +81,22 @@ public class ShieldPointPainter extends SinglePointPainter {
         this.shieldCenterPoint.setAssociatedStyle(style);
     }
 
+    private void updateShieldRadiusFromMouseEvent(MouseEvent me) {
+        if (this.shieldCenterPoint == null) return;
+        AffineTransform screenToWorld = StaticController.getScreenToWorld();
+        Point2D transformed = screenToWorld.transform(me.getPoint(), null);
+        if (ControlPredicates.isCursorSnappingEnabled()) {
+            transformed = screenToWorld.transform(StaticController.getAdjustedCursor(), null);
+        }
+        Point2D pointPosition = this.shieldCenterPoint.getPosition();
+        float radius = (float) pointPosition.distance(transformed);
+        float result = radius;
+        if (ControlPredicates.isCursorSnappingEnabled()) {
+            result = Math.round(radius * 2) / 2.0f;
+        }
+        EditDispatch.postShieldRadiusChanged(this.shieldCenterPoint, result);
+    }
+
     private void initModeListening() {
         BusEventListener modeListener = event -> {
             if (event instanceof InstrumentModeChanged checked) {
@@ -87,26 +106,42 @@ public class ShieldPointPainter extends SinglePointPainter {
             }
         };
         EventBus.subscribe(this, modeListener);
-        // Subscribe to raw mouse moved and compute radius drag internally.
-        BusEventListener rawMouseMovedListener = event -> {
-            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseMoved checked && isInteractionEnabled()) {
-                if (!shieldRadiusHotkeyPressed) return;
-                java.awt.geom.AffineTransform screenToWorld = shipeditor.utility.overseers.StaticController.getScreenToWorld();
-                java.awt.event.MouseEvent me = checked.mouseEvent();
-                Point2D transformed = screenToWorld.transform(me.getPoint(), null);
-                if (ControlPredicates.isCursorSnappingEnabled()) {
-                    transformed = screenToWorld.transform(shipeditor.utility.overseers.StaticController.getAdjustedCursor(), null);
+
+        // Adjust radius on Ctrl + LMB (press or drag)
+        BusEventListener rawMouseDraggedListener = event -> {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMouseDragged checked && isInteractionEnabled()) {
+                MouseEvent me = checked.mouseEvent();
+                if ((me.isControlDown() || shieldRadiusHotkeyPressed) && javax.swing.SwingUtilities.isLeftMouseButton(me)) {
+                    updateShieldRadiusFromMouseEvent(me);
                 }
-                Point2D pointPosition = this.shieldCenterPoint.getPosition();
-                float radius = (float) pointPosition.distance(transformed);
-                float result = radius;
-                if (ControlPredicates.isCursorSnappingEnabled()) {
-                    result = Math.round(radius * 2) / 2.0f;
-                }
-                EditDispatch.postShieldRadiusChanged(this.shieldCenterPoint, result);
             }
         };
-        EventBus.subscribe(this, rawMouseMovedListener);
+        EventBus.subscribe(this, rawMouseDraggedListener);
+
+        BusEventListener rawMousePressedListener = event -> {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawMousePressed checked && isInteractionEnabled()) {
+                MouseEvent me = checked.mouseEvent();
+                if ((me.isControlDown() || shieldRadiusHotkeyPressed) && javax.swing.SwingUtilities.isLeftMouseButton(me)) {
+                    updateShieldRadiusFromMouseEvent(me);
+                }
+            }
+        };
+        EventBus.subscribe(this, rawMousePressedListener);
+
+        // Set point position on LMB click (without Ctrl)
+        BusEventListener pointCreationListener = event -> {
+            if (event instanceof PointCreationQueued checked && isInteractionEnabled()) {
+                if (shieldRadiusHotkeyPressed) return;
+                Point2D position = checked.position();
+                if (this.shieldCenterPoint != null) {
+                    EditDispatch.postPointDragged(this.shieldCenterPoint, position);
+                    this.shieldCenterPoint.setPosition(position);
+                    EventBus.publish(new InstrumentRepaintQueued(EditorInstrument.SHIELD));
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
+            }
+        };
+        EventBus.subscribe(this, pointCreationListener);
     }
 
     private void initHotkeys() {

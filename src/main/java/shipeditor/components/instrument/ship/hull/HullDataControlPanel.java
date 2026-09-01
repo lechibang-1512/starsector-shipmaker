@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.hull;
 
+import shipeditor.utility.text.StringManager;
+
 import com.formdev.flatlaf.ui.FlatLineBorder;
 import shipeditor.communication.EventBus;
 import shipeditor.components.ComponentEnums.OpenDataTarget;
@@ -21,7 +23,6 @@ import shipeditor.utility.graphics.SmartColorPaste;
 import shipeditor.utility.graphics.Sprite;
 import shipeditor.utility.overseers.EventScheduler;
 import shipeditor.utility.overseers.StaticController;
-import shipeditor.utility.text.StringValues;
 import shipeditor.utility.themes.Themes;
 
 import javax.swing.DefaultComboBoxModel;
@@ -54,9 +55,9 @@ public class HullDataControlPanel extends JPanel {
 
     private JLabel coversColorValue;
 
-    private JLabel spritePathValue;
+    private javax.swing.JTextField spritePathValue;
 
-    private JLabel spriteNameValue;
+    private javax.swing.JTextField spriteNameValue;
 
     private JLabel spritePathLabel;
 
@@ -94,10 +95,10 @@ public class HullDataControlPanel extends JPanel {
     }
 
     private void addHullNamePanel() {
-        JLabel label = new JLabel("Hull name:");
+        JLabel label = new JLabel(StringManager.getString("HULL_NAME"));
 
         hullNameEditor = new JTextField();
-        hullNameEditor.setToolTipText(StringValues.ENTER_TO_SAVE_CHANGES);
+        hullNameEditor.setToolTipText(StringManager.getString("ENTER_TO_SAVE_CHANGES"));
         hullNameEditor.setColumns(10);
         hullNameEditor.addActionListener(e -> {
             if (readyForInput) {
@@ -116,10 +117,10 @@ public class HullDataControlPanel extends JPanel {
     }
 
     private void addHullIDPanel() {
-        JLabel label = new JLabel("Hull ID:");
+        JLabel label = new JLabel(StringManager.getString("HULL_ID"));
 
         hullIDEditor = new JTextField();
-        hullIDEditor.setToolTipText(StringValues.ENTER_TO_SAVE_CHANGES);
+        hullIDEditor.setToolTipText(StringManager.getString("ENTER_TO_SAVE_CHANGES"));
         hullIDEditor.setColumns(10);
         hullIDEditor.addActionListener(e -> {
             if (readyForInput) {
@@ -145,7 +146,7 @@ public class HullDataControlPanel extends JPanel {
     }
 
     private void addSizeSelector() {
-        JLabel selectorLabel = new JLabel("Hull size:");
+        JLabel selectorLabel = new JLabel(StringManager.getString("HULL_SIZE_1"));
         ComboBoxModel<HullSize> sizeModel = new DefaultComboBoxModel<>(HullSize.values());
         sizeSelector  = new JComboBox<>(sizeModel);
         sizeSelector.setRenderer(new HullSizeListCellRenderer());
@@ -168,7 +169,7 @@ public class HullDataControlPanel extends JPanel {
     }
 
     private void addStyleSelector() {
-        JLabel selectorLabel = new JLabel("Hull style:");
+        JLabel selectorLabel = new JLabel(StringManager.getString("HULL_STYLE"));
         styleSelector  = new JComboBox<>();
         styleSelector.setRenderer(new HullStyleListCellRenderer());
 
@@ -188,11 +189,16 @@ public class HullDataControlPanel extends JPanel {
     }
 
     private void addSpriteNameLabel() {
-        spritePathValue = new JLabel();
-        spritePathLabel = new JLabel("Sprite path:");
+        spritePathValue = new JTextField("");
+        spritePathValue.setColumns(10);
+        spritePathValue.setEditable(false);
+        spritePathValue.setBorder(new EmptyBorder(0, 0, 0, 0));
+        spritePathValue.setOpaque(false);
+        spritePathValue.setBackground(new java.awt.Color(0,0,0,0));
+        spritePathLabel = new JLabel(StringManager.getString("SPRITE_PATH"));
         spritePathLabel.setBorder(new EmptyBorder(5, 0, 2, 0));
 
-        spritePathLabel.setToolTipText(StringValues.RIGHT_CLICK_TO_CHANGE_SPRITE);
+        spritePathLabel.setToolTipText(StringManager.getString("RIGHT_CLICK_TO_CHANGE_SPRITE"));
 
         JPopupMenu spriteChooserMenu = HullDataControlPanel.getSpriteChooserMenu();
 
@@ -205,8 +211,13 @@ public class HullDataControlPanel extends JPanel {
         ComponentUtilities.addLabelAndComponent(this, spritePathLabel,
                 spritePathValue, 0, 4, 0, 5);
 
-        spriteNameValue = new JLabel();
-        JLabel spriteNameLabel = new JLabel("Sprite name:");
+        spriteNameValue = new JTextField("");
+        spriteNameValue.setColumns(10);
+        spriteNameValue.setEditable(false);
+        spriteNameValue.setBorder(new EmptyBorder(0, 0, 0, 0));
+        spriteNameValue.setOpaque(false);
+        spriteNameValue.setBackground(new java.awt.Color(0,0,0,0));
+        JLabel spriteNameLabel = new JLabel(StringManager.getString("SPRITE_NAME"));
         spriteNameLabel.setBorder(new EmptyBorder(5, 0, 6, 0));
 
         ComponentUtilities.addLabelAndComponent(this, spriteNameLabel,
@@ -216,7 +227,7 @@ public class HullDataControlPanel extends JPanel {
     private static JPopupMenu getSpriteChooserMenu() {
         JPopupMenu spriteChooserMenu = new JPopupMenu();
 
-        JMenuItem changeSprite = new JMenuItem("Change sprite");
+        JMenuItem changeSprite = new JMenuItem(StringManager.getString("CHANGE_SPRITE"));
         changeSprite.addActionListener(event -> {
             var activeLayer = StaticController.getActiveLayer();
             if (activeLayer instanceof ShipLayer shipLayer) {
@@ -230,10 +241,10 @@ public class HullDataControlPanel extends JPanel {
 
         spriteChooserMenu.addSeparator();
 
-        JMenuItem openSourceFile = new JMenuItem(StringValues.OPEN_SOURCE_FILE);
+        JMenuItem openSourceFile = new JMenuItem(StringManager.getString("OPEN_SOURCE_FILE"));
         openSourceFile.addActionListener(e -> HullDataControlPanel.openSpritePath(OpenDataTarget.FILE));
         spriteChooserMenu.add(openSourceFile);
-        JMenuItem openInExplorer = new JMenuItem(StringValues.OPEN_CONTAINING_FOLDER);
+        JMenuItem openInExplorer = new JMenuItem(StringManager.getString("OPEN_CONTAINING_FOLDER"));
         openInExplorer.addActionListener(e -> HullDataControlPanel.openSpritePath(OpenDataTarget.CONTAINER));
         spriteChooserMenu.add(openInExplorer);
 
@@ -258,9 +269,9 @@ public class HullDataControlPanel extends JPanel {
 
     private void addCoversColorChooser() {
         coversColorValue = new JLabel();
-        coversColorLabel = new JLabel("Covers color:");
+        coversColorLabel = new JLabel(StringManager.getString("COVERS_COLOR"));
 
-        coversColorLabel.setToolTipText(StringValues.RIGHT_CLICK_TO_CHANGE_COLOR);
+        coversColorLabel.setToolTipText(StringManager.getString("RIGHT_CLICK_TO_CHANGE_COLOR"));
         JPopupMenu colorChooserMenu = HullDataControlPanel.getColorChooserMenu();
         coversColorLabel.addMouseListener(new MouseoverLabelListener(colorChooserMenu, coversColorLabel));
 
@@ -284,13 +295,13 @@ public class HullDataControlPanel extends JPanel {
 
         readyForInput = false;
 
-        spritePathValue.setText(StringValues.NOT_INITIALIZED);
+        spritePathValue.setText(StringManager.getString("NOT_INITIALIZED"));
         spritePathValue.setForeground(Themes.getDisabledTextColor());
-        spritePathValue.setToolTipText(StringValues.NOT_INITIALIZED);
+        spritePathValue.setToolTipText(StringManager.getString("NOT_INITIALIZED"));
 
-        spriteNameValue.setText(StringValues.NOT_INITIALIZED);
+        spriteNameValue.setText(StringManager.getString("NOT_INITIALIZED"));
         spriteNameValue.setForeground(Themes.getDisabledTextColor());
-        spriteNameValue.setToolTipText(StringValues.NOT_INITIALIZED);
+        spriteNameValue.setToolTipText(StringManager.getString("NOT_INITIALIZED"));
 
         spritePathLabel.setEnabled(false);
         spritePathLabel.setToolTipText(null);
@@ -306,7 +317,7 @@ public class HullDataControlPanel extends JPanel {
         coversColorValue.setBackground(null);
         coversColorValue.setToolTipText(null);
         coversColorValue.setForeground(Themes.getDisabledTextColor());
-        coversColorValue.setText(StringValues.NOT_INITIALIZED);
+        coversColorValue.setText(StringManager.getString("NOT_INITIALIZED"));
 
         styleSelector.setSelectedItem(null);
         styleSelector.setEnabled(false);
@@ -314,10 +325,10 @@ public class HullDataControlPanel extends JPanel {
         sizeSelector.setSelectedItem(null);
         sizeSelector.setEnabled(false);
 
-        hullIDEditor.setText(StringValues.NOT_INITIALIZED);
+        hullIDEditor.setText(StringManager.getString("NOT_INITIALIZED"));
         hullIDEditor.setEnabled(false);
 
-        hullNameEditor.setText(StringValues.NOT_INITIALIZED);
+        hullNameEditor.setText(StringManager.getString("NOT_INITIALIZED"));
         hullNameEditor.setEnabled(false);
     }
 
@@ -354,11 +365,11 @@ public class HullDataControlPanel extends JPanel {
         });
 
         spritePathLabel.setEnabled(true);
-        spritePathLabel.setToolTipText(StringValues.RIGHT_CLICK_TO_CHANGE_SPRITE);
+        spritePathLabel.setToolTipText(StringManager.getString("RIGHT_CLICK_TO_CHANGE_SPRITE"));
         spritePathLabel.setBackground(Themes.getPanelBackgroundColor());
 
         coversColorLabel.setEnabled(true);
-        coversColorLabel.setToolTipText(StringValues.RIGHT_CLICK_TO_CHANGE_COLOR);
+        coversColorLabel.setToolTipText(StringManager.getString("RIGHT_CLICK_TO_CHANGE_COLOR"));
         coversColorLabel.setBackground(Themes.getPanelBackgroundColor());
 
         String relativeSpritePath = layer.getRelativeSpritePath();
@@ -400,7 +411,7 @@ public class HullDataControlPanel extends JPanel {
     @SuppressWarnings("ExtractMethodRecommender")
     private static JPopupMenu getColorChooserMenu() {
         JPopupMenu colorChooserMenu = new JPopupMenu();
-        JMenuItem adjustColor = new JMenuItem(StringValues.ADJUST_VALUE);
+        JMenuItem adjustColor = new JMenuItem(StringManager.getString("ADJUST_VALUE"));
         adjustColor.addActionListener(event -> {
             var activeLayer = StaticController.getActiveLayer();
             if (activeLayer instanceof ShipLayer shipLayer) {
@@ -427,7 +438,7 @@ public class HullDataControlPanel extends JPanel {
         });
         colorChooserMenu.add(adjustColor);
 
-        JMenuItem removeColor = new JMenuItem("Clear value");
+        JMenuItem removeColor = new JMenuItem(StringManager.getString("CLEAR_VALUE"));
         removeColor.addActionListener(event -> {
             var activeLayer = StaticController.getActiveLayer();
             if (activeLayer instanceof ShipLayer shipLayer) {
@@ -466,7 +477,7 @@ public class HullDataControlPanel extends JPanel {
             if (size != null) {
                 setText(size.getDisplayedName());
             } else {
-                setText(StringValues.NOT_INITIALIZED);
+                setText(StringManager.getString("NOT_INITIALIZED"));
             }
             return this;
         }
@@ -482,7 +493,7 @@ public class HullDataControlPanel extends JPanel {
             if (style != null) {
                 setText(style.getHullStyleID());
             } else {
-                setText(StringValues.NOT_INITIALIZED);
+                setText(StringManager.getString("NOT_INITIALIZED"));
             }
             return this;
         }

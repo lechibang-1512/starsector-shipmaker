@@ -206,6 +206,25 @@ public final class LayerViewerControls implements ViewerControl {
 
     @Override
     public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2 && javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+            EditorInstrument mode = StaticController.getEditorMode();
+            if (mode == EditorInstrument.VARIANT_WEAPONS) {
+                LayerPainter activePainter = parentViewer.getSelectedLayer();
+                if (activePainter instanceof shipeditor.components.viewer.layers.ship.ShipPainter shipPainter) {
+                    shipeditor.components.viewer.entities.weapon.WeaponSlotPoint slot = shipPainter.getWeaponSlotPainter().getSelected();
+                    if (slot != null && slot.isCursorInBounds() && slot.isFittable()) {
+                        var layer = StaticController.getActiveLayer();
+                        if (layer instanceof shipeditor.components.viewer.layers.ship.ShipLayer shipLayer) {
+                            shipeditor.components.datafiles.entities.WeaponCSVEntry picked = 
+                                    shipeditor.utility.components.dialog.DialogUtilities.showWeaponPickerDialog(slot);
+                            if (picked != null) {
+                                shipLayer.getFeaturesOverseer().installWeapon(slot, picked);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -266,8 +285,11 @@ public final class LayerViewerControls implements ViewerControl {
                 }
             } else {
                 // Clicked on empty space: save marquee start
-                this.marqueeStartPoint = e.getPoint();
-                this.marqueeEndPoint = e.getPoint();
+                EditorInstrument mode = StaticController.getEditorMode();
+                if (mode != EditorInstrument.COLLISION && mode != EditorInstrument.SHIELD && !e.isControlDown()) {
+                    this.marqueeStartPoint = e.getPoint();
+                    this.marqueeEndPoint = e.getPoint();
+                }
             }
         }
 
@@ -307,8 +329,9 @@ public final class LayerViewerControls implements ViewerControl {
             Point2D screenPoint = this.getAdjustedCursor();
             position = Utility.correctAdjustedCursor(screenPoint, screenToWorld);
         }
-        EventBus.publish(new PointCreationQueued(position));
-        if (event.isControlDown()) {
+        if (!event.isControlDown()) {
+            EventBus.publish(new PointCreationQueued(position));
+        } else {
             EventBus.publish(new FeatureInstallQueued(position));
         }
     }

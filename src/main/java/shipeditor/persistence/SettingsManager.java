@@ -170,9 +170,20 @@ public final class SettingsManager {
     }
 
     static void writeSettingsToFile(ObjectMapper mapper, File settingsFile, Settings writable) {
+        Path targetPath = settingsFile.toPath();
+        Path tempPath = targetPath.resolveSibling(settingsFile.getName() + ".tmp");
         try {
-            mapper.writeValue(settingsFile, writable);
+            mapper.writeValue(tempPath.toFile(), writable);
+            try {
+                Files.move(tempPath, targetPath, java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException atomicEx) {
+                Files.move(tempPath, targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (IOException e) {
+            try {
+                Files.deleteIfExists(tempPath);
+            } catch (IOException ignored) {
+            }
             throw new UncheckedIOException("Failed to write settings file!", e);
         }
     }

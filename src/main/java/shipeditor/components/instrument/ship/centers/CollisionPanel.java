@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.centers;
 
+import shipeditor.utility.text.StringManager;
+
 import shipeditor.components.ComponentEnums.EditorInstrument;
 import shipeditor.components.viewer.entities.ShipCenterPoint;
 import shipeditor.components.viewer.layers.LayerPainter;
@@ -13,8 +15,6 @@ import shipeditor.utility.UtilityEnums.IncrementType;
 import shipeditor.utility.components.widgets.PointLocationWidget;
 import shipeditor.utility.components.widgets.Spinners;
 import shipeditor.utility.objects.Pair;
-import shipeditor.utility.text.StringValues;
-
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -99,7 +99,63 @@ public class CollisionPanel extends AbstractCenterPanel {
         moduleAnchorWrapper.add(moduleAnchorWidget, BorderLayout.PAGE_START);
         centerContainer.add(moduleAnchorWrapper, BorderLayout.CENTER);
 
+        JPanel buttonsPanel = new JPanel(new java.awt.GridLayout(0, 2, 4, 4));
+        buttonsPanel.setBorder(new EmptyBorder(4, 0, 4, 0));
+        javax.swing.JButton autoCalcBtn = new javax.swing.JButton("<html><center>Auto-Calculate<br>Radius</center></html>");
+        autoCalcBtn.addActionListener(e -> autoCalculateCollisionRadius());
+        
+        javax.swing.JButton spriteCenterBtn = new javax.swing.JButton("<html><center>Set to<br>Sprite Center</center></html>");
+        spriteCenterBtn.addActionListener(e -> setSpriteCenter());
+        
+        buttonsPanel.add(autoCalcBtn);
+        buttonsPanel.add(spriteCenterBtn);
+        centerContainer.add(buttonsPanel, BorderLayout.PAGE_END);
+
         this.add(centerContainer, BorderLayout.CENTER);
+    }
+
+    private void autoCalculateCollisionRadius() {
+        LayerPainter layerPainter = getCachedLayerPainter();
+        if (!(layerPainter instanceof ShipPainter shipPainter)) return;
+        
+        CenterPointPainter centerPointPainter = shipPainter.getCenterPointPainter();
+        shipeditor.components.viewer.entities.ShipCenterPoint shipCenterPoint = centerPointPainter.getCenterPoint();
+        java.awt.geom.Point2D center = shipCenterPoint.getPosition();
+        
+        java.util.List<shipeditor.components.viewer.entities.BoundPoint> bounds = shipPainter.getBoundsPainter().getPointsIndex();
+        float maxDistSq = 0;
+        if (!bounds.isEmpty()) {
+            for (shipeditor.components.viewer.entities.BoundPoint bp : bounds) {
+                float distSq = (float) center.distanceSq(bp.getPosition());
+                if (distSq > maxDistSq) maxDistSq = distSq;
+            }
+            float radius = (float) Math.ceil(Math.sqrt(maxDistSq));
+            EditDispatch.postCollisionRadiusChanged(shipCenterPoint, radius);
+            processChange();
+        } else if (shipPainter.getSprite() != null && shipPainter.getSprite().getImage() != null) {
+            float w = shipPainter.getSprite().getImage().getWidth();
+            float h = shipPainter.getSprite().getImage().getHeight();
+            float radius = (float) Math.ceil(Math.hypot(w, h) / 2.0);
+            EditDispatch.postCollisionRadiusChanged(shipCenterPoint, radius);
+            processChange();
+        }
+    }
+
+    private void setSpriteCenter() {
+        LayerPainter layerPainter = getCachedLayerPainter();
+        if (!(layerPainter instanceof ShipPainter shipPainter)) return;
+        if (shipPainter.getSprite() == null || shipPainter.getSprite().getImage() == null) return;
+        
+        float w = shipPainter.getSprite().getImage().getWidth();
+        float h = shipPainter.getSprite().getImage().getHeight();
+        java.awt.geom.Point2D anchor = shipPainter.getAnchor();
+        
+        java.awt.geom.Point2D newCenter = new java.awt.geom.Point2D.Double(anchor.getX() + w / 2.0, anchor.getY() + h / 2.0);
+        
+        CenterPointPainter centerPointPainter = shipPainter.getCenterPointPainter();
+        shipeditor.components.viewer.entities.ShipCenterPoint shipCenterPoint = centerPointPainter.getCenterPoint();
+        EditDispatch.postPointDragged(shipCenterPoint, newCenter);
+        processChange();
     }
 
     private Pair<JLabel, JSlider> createCollisionOpacityWidget() {
@@ -125,7 +181,7 @@ public class CollisionPanel extends AbstractCenterPanel {
                 opacityGetter, opacitySetter, clearerListener, refresherListener);
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText("Collision opacity:");
+        opacityLabel.setText(StringManager.getString("COLLISION_OPACITY"));
 
         return opacityWidget;
     }
@@ -141,7 +197,7 @@ public class CollisionPanel extends AbstractCenterPanel {
         var opacityWidget = createVisibilityWidget(painterGetter);
 
         JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText(StringValues.COLLISION_VIEW);
+        opacityLabel.setText(StringManager.getString("COLLISION_VIEW"));
 
         return opacityWidget;
     }
@@ -154,7 +210,7 @@ public class CollisionPanel extends AbstractCenterPanel {
 
         JSpinner radiusSpinner = Spinners.createWheelable(numberModel, IncrementType.CHUNK);
         radiusSpinner.setEnabled(false);
-        JLabel radiusLabel = new JLabel(StringValues.COLLISION_RADIUS);
+        JLabel radiusLabel = new JLabel(StringManager.getString("COLLISION_RADIUS"));
 
         radiusSpinner.addChangeListener(e -> {
             if (!isWidgetsReadyForInput()) return;

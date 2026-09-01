@@ -1,5 +1,7 @@
 package shipeditor.components.instrument.ship.slots;
 
+import shipeditor.utility.text.StringManager;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import shipeditor.components.instrument.ship.shared.AbstractSlotValuesPanel;
@@ -51,8 +53,10 @@ public class SlotDataControlPane extends AbstractSlotValuesPanel {
         boolean layerContainsPoint = false;
         if (layerPainter instanceof ShipPainter shipPainter) {
             WeaponSlotPainter weaponSlotPainter = shipPainter.getWeaponSlotPainter();
-            List<WeaponSlotPoint> pointsIndex = weaponSlotPainter.getPointsIndex();
-            layerContainsPoint = pointsIndex.contains(cachedSelected);
+            if (weaponSlotPainter != null) {
+                List<WeaponSlotPoint> pointsIndex = weaponSlotPainter.getPointsIndex();
+                layerContainsPoint = pointsIndex.contains(cachedSelected);
+            }
         }
         if (cachedSelected != null && layerContainsPoint) {
             return cachedSelected;
@@ -101,9 +105,13 @@ public class SlotDataControlPane extends AbstractSlotValuesPanel {
     protected Consumer<Double> getAngleSetter() {
         return angle -> {
             ShipPainter slotParent = getCachedLayerPainter();
+            if (slotParent == null) return;
             WeaponSlotPainter weaponSlotPainter = slotParent.getWeaponSlotPainter();
+            if (weaponSlotPainter == null) return;
             WeaponSlotPoint selectedFromLayer = getSelectedFromLayer(slotParent);
-            weaponSlotPainter.changePointAngleWithMirrorCheck(selectedFromLayer, angle);
+            if (selectedFromLayer != null) {
+                weaponSlotPainter.changePointAngleWithMirrorCheck(selectedFromLayer, angle);
+            }
         };
     }
 
@@ -111,9 +119,13 @@ public class SlotDataControlPane extends AbstractSlotValuesPanel {
     protected Consumer<Double> getArcSetter() {
         return arc -> {
             ShipPainter slotParent = getCachedLayerPainter();
+            if (slotParent == null) return;
             WeaponSlotPainter weaponSlotPainter = slotParent.getWeaponSlotPainter();
+            if (weaponSlotPainter == null) return;
             WeaponSlotPoint selectedFromLayer = getSelectedFromLayer(slotParent);
-            weaponSlotPainter.changeArcWithMirrorCheck(selectedFromLayer, arc);
+            if (selectedFromLayer != null) {
+                weaponSlotPainter.changeArcWithMirrorCheck(selectedFromLayer, arc);
+            }
         };
     }
 
@@ -121,11 +133,14 @@ public class SlotDataControlPane extends AbstractSlotValuesPanel {
     protected Consumer<Double> getRenderOrderSetter() {
         return renderOrder -> {
             ShipPainter slotParent = getCachedLayerPainter();
+            if (slotParent == null) return;
             WeaponSlotPainter weaponSlotPainter = slotParent.getWeaponSlotPainter();
+            if (weaponSlotPainter == null) return;
             WeaponSlotPoint selectedFromLayer = getSelectedFromLayer(slotParent);
-            int renderOrderValue = renderOrder.intValue();
-            weaponSlotPainter.changeRenderOrderWithMirrorCheck(selectedFromLayer, renderOrderValue);
-
+            if (selectedFromLayer != null) {
+                int renderOrderValue = renderOrder.intValue();
+                weaponSlotPainter.changeRenderOrderWithMirrorCheck(selectedFromLayer, renderOrderValue);
+            }
         };
     }
 
@@ -138,77 +153,109 @@ public class SlotDataControlPane extends AbstractSlotValuesPanel {
     }
 
     private JPanel createBuiltInFeaturePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout(6, 4));
         shipeditor.utility.components.ComponentUtilities.outfitPanelWithTitle(panel, "Built-In Feature");
 
-        JPanel content = new JPanel(new BorderLayout());
+        JPanel content = new JPanel(new BorderLayout(6, 0));
 
-        JLabel infoLabel = new JLabel("None");
-        JButton actionButton = new JButton("Install...");
+        JLabel iconLabel = new JLabel();
+        JLabel infoLabel = new JLabel(StringManager.getString("NONE"));
+        infoLabel.setBorder(new javax.swing.border.EmptyBorder(0, 4, 0, 0));
 
-        actionButton.addActionListener(e -> {
+        JPanel buttonPanel = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.TRAILING, 4, 0));
+        JButton installButton = new JButton(StringManager.getString("INSTALL"));
+        JButton removeButton = new JButton(StringManager.getString("REMOVE"));
+        removeButton.setEnabled(false);
+
+        installButton.addActionListener(e -> {
             if (cachedSelected == null)
                 return;
-            var shipPainter = cachedSelected.getParent();
-            if (shipPainter == null)
-                return;
-
-            boolean hasFeature = false;
-            var activeSkin = shipPainter.getActiveSkin();
-            if (activeSkin != null && !activeSkin.isBase()) {
-                hasFeature = activeSkin.getBuiltInWeapons().containsKey(cachedSelected.getId());
-            } else {
-                hasFeature = shipPainter.getBuiltInWeapons().containsKey(cachedSelected.getId());
-            }
-
             var layer = StaticController.getActiveLayer();
             if (layer instanceof ShipLayer shipLayer) {
-                if (hasFeature) {
-                    shipLayer.getFeaturesOverseer().uninstallBuiltIn(cachedSelected);
-                } else {
-                    shipeditor.components.datafiles.entities.WeaponCSVEntry picked = shipeditor.utility.components.dialog.DialogUtilities
-                            .showWeaponPickerDialog(cachedSelected);
-                    if (picked != null) {
-                        shipLayer.getFeaturesOverseer().installBuiltIn(cachedSelected, picked);
-                    }
+                shipeditor.components.datafiles.entities.WeaponCSVEntry picked = shipeditor.utility.components.dialog.DialogUtilities
+                        .showWeaponPickerDialog(cachedSelected);
+                if (picked != null) {
+                    shipLayer.getFeaturesOverseer().installBuiltIn(cachedSelected, picked);
                 }
             }
         });
 
-        registerWidgetListeners(actionButton, layerPainter -> {
-            actionButton.setEnabled(false);
-            infoLabel.setText("None");
+        removeButton.addActionListener(e -> {
+            if (cachedSelected == null)
+                return;
+            var layer = StaticController.getActiveLayer();
+            if (layer instanceof ShipLayer shipLayer) {
+                shipLayer.getFeaturesOverseer().uninstallBuiltIn(cachedSelected);
+            }
+        });
+
+        buttonPanel.add(installButton);
+        buttonPanel.add(removeButton);
+
+        registerWidgetListeners(installButton, layerPainter -> {
+            installButton.setEnabled(false);
+            removeButton.setEnabled(false);
+            infoLabel.setText(StringManager.getString("NONE"));
+            iconLabel.setIcon(null);
         }, layerPainter -> {
             if (cachedSelected != null) {
-                actionButton.setEnabled(true);
+                installButton.setEnabled(true);
                 var shipPainter = cachedSelected.getParent();
                 String featureName = null;
+                String featureId = null;
+                shipeditor.utility.graphics.Sprite featureSprite = null;
+
                 var activeSkin = shipPainter.getActiveSkin();
                 if (activeSkin != null && !activeSkin.isBase()) {
                     var w = activeSkin.getBuiltInWeapons().get(cachedSelected.getId());
-                    if (w != null)
+                    if (w != null) {
                         featureName = w.toString();
+                        featureId = w.getWeaponID();
+                        featureSprite = w.getWeaponImage();
+                    }
                 } else {
                     var f = shipPainter.getBuiltInWeapons().get(cachedSelected.getId());
-                    if (f != null)
+                    if (f != null) {
                         featureName = f.getName();
+                        featureId = f.getID();
+                        if (f.getDataEntry() instanceof shipeditor.components.datafiles.entities.WeaponCSVEntry wEntry) {
+                            featureSprite = wEntry.getWeaponImage();
+                        }
+                    }
                 }
 
-                if (featureName != null) {
-                    infoLabel.setText(featureName);
-                    actionButton.setText("Remove");
+                if (featureName != null || featureId != null) {
+                    String displayName = featureName != null ? featureName : featureId;
+                    infoLabel.setText(StringManager.getString("HTML_B") + displayName + "</b> <span style='color:gray;'>(" + featureId + ")</span></html>");
+                    installButton.setText(StringManager.getString("CHANGE"));
+                    removeButton.setEnabled(true);
+
+                    if (featureSprite != null && featureSprite.getImage() != null) {
+                        java.awt.Image scaled = shipeditor.utility.components.ComponentUtilities.resizeImageToSquareLimit(featureSprite.getImage(), 22);
+                        iconLabel.setIcon(new javax.swing.ImageIcon(scaled));
+                    } else {
+                        iconLabel.setIcon(null);
+                    }
                 } else {
-                    infoLabel.setText("None");
-                    actionButton.setText("Install...");
+                    infoLabel.setText(StringManager.getString("NONE_EMPTY_SLOT"));
+                    installButton.setText(StringManager.getString("INSTALL"));
+                    removeButton.setEnabled(false);
+                    iconLabel.setIcon(null);
                 }
             } else {
-                actionButton.setEnabled(false);
-                infoLabel.setText("None");
+                installButton.setEnabled(false);
+                removeButton.setEnabled(false);
+                infoLabel.setText(StringManager.getString("NONE"));
+                iconLabel.setIcon(null);
             }
         });
 
-        content.add(infoLabel, BorderLayout.CENTER);
-        content.add(actionButton, BorderLayout.LINE_END);
+        JPanel infoContainer = new JPanel(new BorderLayout(4, 0));
+        infoContainer.add(iconLabel, BorderLayout.LINE_START);
+        infoContainer.add(infoLabel, BorderLayout.CENTER);
+
+        content.add(infoContainer, BorderLayout.CENTER);
+        content.add(buttonPanel, BorderLayout.LINE_END);
         panel.add(content, BorderLayout.CENTER);
 
         return panel;
