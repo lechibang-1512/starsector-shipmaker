@@ -258,34 +258,36 @@ public final class DatabaseQueryService {
         if (entityId == null || type == null) {
             return "";
         }
-        IndexedFile coreFile = CoreIndexManager.getFileByEntityId(entityId, type);
-        if (coreFile != null) return coreFile.getFileName();
 
         List<String> activeMods = getActiveModIds();
-        if (activeMods.isEmpty()) return "";
+        if (!activeMods.isEmpty()) {
+            StringBuilder sql = new StringBuilder("SELECT file_name FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
+            sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
+            sql.append(") LIMIT 1;");
 
-        StringBuilder sql = new StringBuilder("SELECT file_name FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
-        sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
-        sql.append(") LIMIT 1;");
-
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-            
-            pstmt.setString(1, entityId);
-            pstmt.setString(2, type);
-            int paramIndex = 3;
-            for (String modId : activeMods) {
-                pstmt.setString(paramIndex++, modId);
-            }
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("file_name");
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+                
+                pstmt.setString(1, entityId);
+                pstmt.setString(2, type);
+                int paramIndex = 3;
+                for (String modId : activeMods) {
+                    pstmt.setString(paramIndex++, modId);
                 }
+                
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getString("file_name");
+                    }
+                }
+            } catch (SQLException e) {
+                log.error("Failed to lookup filename for entity: {} ({})", entityId, type, e);
             }
-        } catch (SQLException e) {
-            log.error("Failed to lookup filename for entity: {} ({})", entityId, type, e);
         }
+        
+        IndexedFile coreFile = CoreIndexManager.getFileByEntityId(entityId, type);
+        if (coreFile != null) return coreFile.getFileName();
+        
         return "";
     }
 
@@ -293,69 +295,70 @@ public final class DatabaseQueryService {
         if (entityId == null || type == null) {
             return null;
         }
-        IndexedFile coreFile = CoreIndexManager.getFileByEntityId(entityId, type);
-        if (coreFile != null) return coreFile;
 
         List<String> activeMods = getActiveModIds();
-        if (activeMods.isEmpty()) return null;
+        if (!activeMods.isEmpty()) {
+            StringBuilder sql = new StringBuilder("SELECT * FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
+            sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
+            sql.append(") LIMIT 1;");
 
-        StringBuilder sql = new StringBuilder("SELECT * FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
-        sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
-        sql.append(") LIMIT 1;");
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-
-            pstmt.setString(1, entityId);
-            pstmt.setString(2, type);
-            int paramIndex = 3;
-            for (String modId : activeMods) {
-                pstmt.setString(paramIndex++, modId);
-            }
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapRowToIndexedFile(rs);
+                pstmt.setString(1, entityId);
+                pstmt.setString(2, type);
+                int paramIndex = 3;
+                for (String modId : activeMods) {
+                    pstmt.setString(paramIndex++, modId);
                 }
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return mapRowToIndexedFile(rs);
+                    }
+                }
+            } catch (SQLException e) {
+                log.error("Failed to lookup file by entity: {} ({})", entityId, type, e);
             }
-        } catch (SQLException e) {
-            log.error("Failed to lookup file by entity: {} ({})", entityId, type, e);
         }
-        return null;
+        
+        return CoreIndexManager.getFileByEntityId(entityId, type);
     }
 
     public static Path getFilePathForEntity(String entityId, String type) {
         if (entityId == null || type == null) {
             return null;
         }
-        IndexedFile coreFile = CoreIndexManager.getFileByEntityId(entityId, type);
-        if (coreFile != null) return coreFile.getFilePath();
 
         List<String> activeMods = getActiveModIds();
-        if (activeMods.isEmpty()) return null;
+        if (!activeMods.isEmpty()) {
+            StringBuilder sql = new StringBuilder("SELECT file_path FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
+            sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
+            sql.append(") LIMIT 1;");
 
-        StringBuilder sql = new StringBuilder("SELECT file_path FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
-        sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
-        sql.append(") LIMIT 1;");
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-
-            pstmt.setString(1, entityId);
-            pstmt.setString(2, type);
-            int paramIndex = 3;
-            for (String modId : activeMods) {
-                pstmt.setString(paramIndex++, modId);
-            }
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return Path.of(rs.getString("file_path"));
+                pstmt.setString(1, entityId);
+                pstmt.setString(2, type);
+                int paramIndex = 3;
+                for (String modId : activeMods) {
+                    pstmt.setString(paramIndex++, modId);
                 }
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return Path.of(rs.getString("file_path"));
+                    }
+                }
+            } catch (SQLException e) {
+                log.error("Failed to lookup path for entity: {} ({})", entityId, type, e);
             }
-        } catch (SQLException e) {
-            log.error("Failed to lookup path for entity: {} ({})", entityId, type, e);
         }
+        
+        IndexedFile coreFile = CoreIndexManager.getFileByEntityId(entityId, type);
+        if (coreFile != null) return coreFile.getFilePath();
+        
         return null;
     }
 
@@ -454,7 +457,11 @@ public final class DatabaseQueryService {
         Map<String, IndexedFile> deduplicated = new LinkedHashMap<>();
         for (IndexedFile coreFile : CoreIndexManager.getFilesByType(type)) {
             if (coreFile != null && coreFile.getFilePath() != null) {
-                deduplicated.put(coreFile.getFilePath().toString(), coreFile);
+                try {
+                    deduplicated.put(coreFile.getFilePath().toFile().getCanonicalPath(), coreFile);
+                } catch (java.io.IOException e) {
+                    deduplicated.put(coreFile.getFilePath().toAbsolutePath().normalize().toString(), coreFile);
+                }
             }
         }
 
@@ -477,7 +484,11 @@ public final class DatabaseQueryService {
                     while (rs.next()) {
                         IndexedFile file = mapRowToIndexedFile(rs);
                         if (file != null && file.getFilePath() != null) {
-                            deduplicated.put(file.getFilePath().toString(), file);
+                            try {
+                                deduplicated.put(file.getFilePath().toFile().getCanonicalPath(), file);
+                            } catch (java.io.IOException e) {
+                                deduplicated.put(file.getFilePath().toAbsolutePath().normalize().toString(), file);
+                            }
                         }
                     }
                 }

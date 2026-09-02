@@ -124,26 +124,11 @@ public class PickHullmodDialog extends JPanel {
         allIndexedHullmods = new ArrayList<>();
         hullmodPackageNameMap.clear();
 
-        Set<String> seenIds = new HashSet<>();
+        Set<String> seenIds = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         GameDataRepository gameData = SettingsManager.getGameData();
 
-        // 1. Load from GameDataRepository package mapping
+        // 1. Load aggregated hullmods from GameDataRepository
         if (gameData != null) {
-            Map<Path, List<HullmodCSVEntry>> byPackage = gameData.getHullmodEntriesByPackage();
-            if (byPackage != null) {
-                for (Map.Entry<Path, List<HullmodCSVEntry>> entry : byPackage.entrySet()) {
-                    Path packagePath = entry.getKey();
-                    String packageName = resolvePackageName(packagePath);
-                    for (HullmodCSVEntry mod : entry.getValue()) {
-                        if (mod.getID() != null && seenIds.add(mod.getID())) {
-                            allIndexedHullmods.add(mod);
-                            hullmodPackageNameMap.put(mod, packageName);
-                        }
-                    }
-                }
-            }
-
-            // 2. Load from allHullmodEntries map
             Map<String, HullmodCSVEntry> allMap = gameData.getAllHullmodEntries();
             if (allMap != null) {
                 for (HullmodCSVEntry mod : allMap.values()) {
@@ -156,23 +141,12 @@ public class PickHullmodDialog extends JPanel {
             }
         }
 
-        // 3. Query all indexed hullmod files from CoreIndexManager and DatabaseQueryService
-        List<IndexedFile> coreFiles = CoreIndexManager.getFilesByType(StringConstants.HULLMOD_CSV_TYPE);
-        if (coreFiles != null && gameData != null) {
-            for (IndexedFile file : coreFiles) {
-                if (file.getEntityId() != null && !seenIds.contains(file.getEntityId())) {
-                    HullmodCSVEntry entry = gameData.getOrCreateHullmodEntry(file.getEntityId());
-                    if (entry != null && seenIds.add(entry.getID())) {
-                        allIndexedHullmods.add(entry);
-                        hullmodPackageNameMap.put(entry, "Starsector Core");
-                    }
-                }
-            }
-        }
-
+        // 2. Query all indexed hullmod files from DatabaseQueryService
+        // dbFiles already includes CoreIndexManager files. We process in reverse to let mods take precedence.
         List<IndexedFile> dbFiles = DatabaseQueryService.getFilesByType(StringConstants.HULLMOD_CSV_TYPE);
         if (dbFiles != null && gameData != null) {
-            for (IndexedFile file : dbFiles) {
+            for (int i = dbFiles.size() - 1; i >= 0; i--) {
+                IndexedFile file = dbFiles.get(i);
                 if (file.getEntityId() != null && !seenIds.contains(file.getEntityId())) {
                     HullmodCSVEntry entry = gameData.getOrCreateHullmodEntry(file.getEntityId());
                     if (entry != null && seenIds.add(entry.getID())) {

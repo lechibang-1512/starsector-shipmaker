@@ -148,26 +148,11 @@ public class PickWeaponDialog extends JPanel {
         allIndexedWeapons = new ArrayList<>();
         weaponPackageNameMap.clear();
 
-        Set<String> seenWeaponIds = new HashSet<>();
+        Set<String> seenWeaponIds = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         GameDataRepository gameData = SettingsManager.getGameData();
 
-        // 1. Load weapons by package from GameDataRepository
+        // 1. Load aggregated weapons from GameDataRepository
         if (gameData != null) {
-            Map<Path, List<WeaponCSVEntry>> weaponEntriesByPackage = gameData.getWeaponEntriesByPackage();
-            if (weaponEntriesByPackage != null) {
-                for (Map.Entry<Path, List<WeaponCSVEntry>> entry : weaponEntriesByPackage.entrySet()) {
-                    Path packagePath = entry.getKey();
-                    String packageName = resolvePackageName(packagePath);
-                    for (WeaponCSVEntry weapon : entry.getValue()) {
-                        if (weapon.getWeaponID() != null && seenWeaponIds.add(weapon.getWeaponID())) {
-                            allIndexedWeapons.add(weapon);
-                            weaponPackageNameMap.put(weapon, packageName);
-                        }
-                    }
-                }
-            }
-
-            // 2. Also check allWeaponEntries map
             Map<String, WeaponCSVEntry> allMap = gameData.getAllWeaponEntries();
             if (allMap != null) {
                 for (WeaponCSVEntry weapon : allMap.values()) {
@@ -180,23 +165,13 @@ public class PickWeaponDialog extends JPanel {
             }
         }
 
-        // 3. Query all indexed weapon files from CoreIndexManager and DatabaseQueryService
-        List<IndexedFile> coreWeaponFiles = CoreIndexManager.getFilesByType(StringConstants.WEAPON_TYPE);
-        if (coreWeaponFiles != null && gameData != null) {
-            for (IndexedFile file : coreWeaponFiles) {
-                if (file.getEntityId() != null && !seenWeaponIds.contains(file.getEntityId())) {
-                    WeaponCSVEntry entry = gameData.getOrCreateWeaponEntry(file);
-                    if (entry != null && seenWeaponIds.add(entry.getWeaponID())) {
-                        allIndexedWeapons.add(entry);
-                        weaponPackageNameMap.put(entry, "Starsector Core");
-                    }
-                }
-            }
-        }
-
+        // 3. Query all indexed weapon files from DatabaseQueryService
+        // dbWeaponFiles already includes CoreIndexManager files.
+        // We process in reverse order so mod files (appended last) take precedence over core files (added first).
         List<IndexedFile> dbWeaponFiles = DatabaseQueryService.getFilesByType(StringConstants.WEAPON_TYPE);
         if (dbWeaponFiles != null && gameData != null) {
-            for (IndexedFile file : dbWeaponFiles) {
+            for (int i = dbWeaponFiles.size() - 1; i >= 0; i--) {
+                IndexedFile file = dbWeaponFiles.get(i);
                 if (file.getEntityId() != null && !seenWeaponIds.contains(file.getEntityId())) {
                     WeaponCSVEntry entry = gameData.getOrCreateWeaponEntry(file);
                     if (entry != null && seenWeaponIds.add(entry.getWeaponID())) {
