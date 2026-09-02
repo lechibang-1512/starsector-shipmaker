@@ -79,11 +79,7 @@ public final class FileLoading {
                 log.info(StringManager.getString("DB_INDEX_SCAN_COMPLETED"));
             }
         } catch (RuntimeException e) {
-            if (SettingsManager.isDeveloperModeEnabled()) {
-                log.error(StringManager.getString("DB_INDEX_SCAN_FAILED"), e);
-            } else {
-                log.error(StringManager.getString("DB_INDEX_SCAN_FAILED"));
-            }
+            log.error(StringManager.getString("DB_INDEX_SCAN_FAILED"), e);
         }
     }
 
@@ -180,11 +176,7 @@ public final class FileLoading {
                     return allOf.thenApply(val -> futures.stream().map(a -> a.join()).toList());
                 }).whenComplete((runnables, ex) -> {
                     if (ex != null) {
-                        if (SettingsManager.isDeveloperModeEnabled()) {
-                            log.error(StringManager.getString("ERROR_LOADING_GAME_DATA"), ex);
-                        } else {
-                            log.error(StringManager.getString("ERROR_LOADING_GAME_DATA"));
-                        }
+                        log.error(StringManager.getString("ERROR_LOADING_GAME_DATA"), ex);
                     } else if (runnables != null) {
                         Runnable completionTasks = () -> {
                             clearDirectoryCache();
@@ -221,11 +213,7 @@ public final class FileLoading {
         try {
             task.run();
         } catch (Throwable t) {
-            if (SettingsManager.isDeveloperModeEnabled()) {
-                log.error(StringManager.getString("STAGGERED_UI_ERROR"), t);
-            } else {
-                log.error(StringManager.getString("STAGGERED_UI_ERROR"));
-            }
+            log.error(StringManager.getString("STAGGERED_UI_ERROR"), t);
         }
         SwingUtilities.invokeLater(() -> executeStaggered(tasks, onComplete));
     }

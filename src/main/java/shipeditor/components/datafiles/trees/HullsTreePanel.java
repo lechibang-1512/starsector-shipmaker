@@ -112,15 +112,6 @@ public class HullsTreePanel extends DataTreePanel {
         return SettingsManager.getGameData().isShipDataLoaded();
     }
 
-    @Override
-    protected javax.swing.Action getLoadDataAction() {
-        return new javax.swing.AbstractAction("Reload") { @Override public void actionPerformed(java.awt.event.ActionEvent e) { queueReload(); } };
-    }
-
-    @Override
-    protected JPanel createTopPanel() {
-        return new JPanel();
-    }
 
     protected JPanel createSearchContainer() {
         JPanel searchContainer = new JPanel(new GridBagLayout());

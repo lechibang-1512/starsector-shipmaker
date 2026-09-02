@@ -32,7 +32,7 @@ class EditMenu extends JMenu {
     private JCheckBoxMenuItem toggleRotationRounding;
 
     EditMenu() {
-        super("Edit");
+        super(StringManager.getString("MENU_EDIT"));
         this.setMnemonic(KeyEvent.VK_E);
     }
 
@@ -74,7 +74,7 @@ class EditMenu extends JMenu {
         JMenu snappingMenu = new JMenu(StringManager.getString("SNAPPING_ROUNDING"));
         snappingMenu.setIcon(FontIcon.of(BoxiconsRegular.MAGNET, 16, Themes.getIconColor()));
 
-        JCheckBoxMenuItem toggleSelectionHold = new JCheckBoxMenuItem("Enable Selection Holding (Ctrl-Hold)");
+        JCheckBoxMenuItem toggleSelectionHold = new JCheckBoxMenuItem(StringManager.getString("ENABLE_SELECTION_HOLDING"));
         toggleSelectionHold.setSelected(true);
         toggleSelectionHold.setToolTipText(StringManager.getString("ENABLES_CTRL_HOLD_TO_PREVENT_MOUSE_MOTION_FROM_CHANGING_SELECTION"));
         toggleSelectionHold.addActionListener(event ->
@@ -82,7 +82,7 @@ class EditMenu extends JMenu {
         );
         snappingMenu.add(toggleSelectionHold);
 
-        toggleCursorSnap = new JCheckBoxMenuItem("Enable Cursor Snapping");
+        toggleCursorSnap = new JCheckBoxMenuItem(StringManager.getString("ENABLE_CURSOR_SNAPPING"));
         toggleCursorSnap.setSelected(true);
         toggleCursorSnap.addActionListener(event ->
                 EventBus.publish(new CursorSnappingToggled(toggleCursorSnap.isSelected()))
@@ -94,7 +94,7 @@ class EditMenu extends JMenu {
         });
         snappingMenu.add(toggleCursorSnap);
 
-        toggleRotationRounding = new JCheckBoxMenuItem("Enable Rotation Rounding (15°)");
+        toggleRotationRounding = new JCheckBoxMenuItem(StringManager.getString("ENABLE_ROTATION_ROUNDING"));
         toggleRotationRounding.setSelected(true);
         toggleRotationRounding.addActionListener(event ->
                 EventBus.publish(new RotationRoundingToggled(toggleRotationRounding.isSelected()))
@@ -120,12 +120,12 @@ class EditMenu extends JMenu {
         JMenu newSubmenu = new JMenu(StringManager.getString("POINT_SELECTION_MODE"));
         newSubmenu.setIcon(FontIcon.of(BoxiconsRegular.POINTER, 16, Themes.getIconColor()));
 
-        JMenuItem selectHovered = new JRadioButtonMenuItem("Select Clicked Point");
+        JMenuItem selectHovered = new JRadioButtonMenuItem(StringManager.getString("SELECT_CLICKED_POINT"));
         selectHovered.addActionListener(e ->
                 EventBus.publish(new PointSelectionModeChange(PointSelectionMode.STRICT)));
         newSubmenu.add(selectHovered);
 
-        JMenuItem selectClosest = new JRadioButtonMenuItem("Select Closest Point");
+        JMenuItem selectClosest = new JRadioButtonMenuItem(StringManager.getString("SELECT_CLOSEST_POINT"));
         selectClosest.addActionListener(e ->
                 EventBus.publish(new PointSelectionModeChange(PointSelectionMode.CLOSEST)));
         newSubmenu.add(selectClosest);

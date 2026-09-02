@@ -58,10 +58,6 @@ public class ProjectilesTreePanel extends DataTreePanel {
         return SettingsManager.getGameData().isWeaponsDataLoaded();
     }
 
-    @Override
-    protected javax.swing.Action getLoadDataAction() {
-        return new javax.swing.AbstractAction("Reload") { @Override public void actionPerformed(java.awt.event.ActionEvent e) { queueReload(); } };
-    }
 
     @Override
     protected void initTreePanelListeners(JPanel passedTreePanel) {

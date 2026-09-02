@@ -26,7 +26,7 @@ import java.io.File;
 public class PreferencesDialog extends JDialog {
 
     public PreferencesDialog(Frame owner) {
-        super(owner, "Preferences", true);
+        super(owner, StringManager.getString("PREFERENCES_TITLE"), true);
         this.initUI();
     }
 
@@ -37,9 +37,9 @@ public class PreferencesDialog extends JDialog {
 
         JTabbedPane tabbedPane = new JTabbedPane();
         
-        tabbedPane.addTab("General", this.createGeneralPanel());
-        tabbedPane.addTab("Theme", this.createThemePanel());
-        tabbedPane.addTab("About", this.createAboutPanel());
+        tabbedPane.addTab(StringManager.getString("TAB_GENERAL"), this.createGeneralPanel());
+        tabbedPane.addTab(StringManager.getString("TAB_THEME"), this.createThemePanel());
+        tabbedPane.addTab(StringManager.getString("TAB_ABOUT"), this.createAboutPanel());
 
         this.add(tabbedPane, BorderLayout.CENTER);
 

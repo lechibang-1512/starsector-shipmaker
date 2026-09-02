@@ -39,8 +39,8 @@ public final class SmartColorPaste {
                 if (text.length() == 3 || text.length() == 4) {
                     // Expand #RGB to #RRGGBB and #RGBA to #RRGGBBAA
                     StringBuilder expanded = new StringBuilder();
-                    for (int i = 0; i < text.length(); i++) {
-                        expanded.append(text.charAt(i)).append(text.charAt(i));
+                    for (char c : text.toCharArray()) {
+                        expanded.append(c).append(c);
                     }
                     text = expanded.toString();
                 }

@@ -25,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 class DataMenu extends JMenu {
 
     DataMenu() {
-        super("Data");
+        super(StringManager.getString("MENU_DATA"));
         this.setMnemonic(KeyEvent.VK_D);
     }
 
@@ -47,7 +47,7 @@ class DataMenu extends JMenu {
             if (FileLoading.isLoadingInProgress()) {
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                         StringManager.getString("CANNOT_RE_INDEX_WHILE_DATA_IS_CURRENTLY_MSG"),
-                        "Loading in Progress", JOptionPane.WARNING_MESSAGE);
+                        StringManager.getString("LOADING_IN_PROGRESS_TITLE"), JOptionPane.WARNING_MESSAGE);
                 return;
             }
             FileLoading.forceReindexAndLoadGameData();
@@ -65,7 +65,7 @@ class DataMenu extends JMenu {
             if (FileLoading.isLoadingInProgress()) {
                 JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                         StringManager.getString("CANNOT_MODIFY_MOD_SELECTION_WHILE_DATA_I_MSG"),
-                        "Loading in Progress", JOptionPane.WARNING_MESSAGE);
+                        StringManager.getString("LOADING_IN_PROGRESS_TITLE"), JOptionPane.WARNING_MESSAGE);
                 return;
             }
             shipeditor.components.dialogs.ModSelectionDialog modDialog = new shipeditor.components.dialogs.ModSelectionDialog(shipeditor.PrimaryWindow.getInstance());
@@ -140,12 +140,12 @@ class DataMenu extends JMenu {
             }
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                     StringManager.getString("CORRECTED_FILE_SAVED_AS_N_MSG") + targetFilePath,
-                    "JSON Corrected", JOptionPane.INFORMATION_MESSAGE);
+                    StringManager.getString("JSON_CORRECTED_TITLE"), JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
             log.error("Failed to correct malformed JSON file: " + file.getPath(), ex);
             JOptionPane.showMessageDialog(shipeditor.PrimaryWindow.getInstance(),
                     StringManager.getString("FAILED_TO_PROCESS_JSON_FILE_N_MSG") + ex.getMessage(),
-                    "Error Correcting JSON", JOptionPane.ERROR_MESSAGE);
+                    StringManager.getString("ERROR_CORRECTING_JSON_TITLE"), JOptionPane.ERROR_MESSAGE);
         }
     }
 

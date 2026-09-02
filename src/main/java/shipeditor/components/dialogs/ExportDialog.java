@@ -64,20 +64,20 @@ public class ExportDialog extends JDialog {
     private Color scBgColor = new Color(40, 40, 50, 255);
 
     public ExportDialog(int initialTabIndex) {
-        super(PrimaryWindow.getInstance(), "Export Manager", true);
+        super(PrimaryWindow.getInstance(), StringManager.getString("EXPORT_MANAGER_TITLE"), true);
         this.setLayout(new BorderLayout());
 
         tabbedPane = new JTabbedPane();
         
         // Tab 1: Viewport Snapshot
-        tabbedPane.addTab("Viewport Snapshot", FontIcon.of(BoxiconsRegular.IMAGE, 16, Themes.getIconColor()), createViewportSnapshotPanel());
+        tabbedPane.addTab(StringManager.getString("TAB_VIEWPORT_SNAPSHOT"), FontIcon.of(BoxiconsRegular.IMAGE, 16, Themes.getIconColor()), createViewportSnapshotPanel());
         
         // Tab 2: Sprite Print
         JPanel spritePrintPanel = createSpritePrintPanel();
-        tabbedPane.addTab("Sprite Print", FontIcon.of(BoxiconsRegular.PRINTER, 16, Themes.getIconColor()), spritePrintPanel);
+        tabbedPane.addTab(StringManager.getString("TAB_SPRITE_PRINT"), FontIcon.of(BoxiconsRegular.PRINTER, 16, Themes.getIconColor()), spritePrintPanel);
         
         // Tab 3: Entity Showcase
-        tabbedPane.addTab("Entity Showcase", FontIcon.of(BoxiconsRegular.GRID, 16, Themes.getIconColor()), createEntityShowcasePanel());
+        tabbedPane.addTab(StringManager.getString("TAB_ENTITY_SHOWCASE"), FontIcon.of(BoxiconsRegular.GRID, 16, Themes.getIconColor()), createEntityShowcasePanel());
 
         if (initialTabIndex >= 0 && initialTabIndex < tabbedPane.getTabCount()) {
             tabbedPane.setSelectedIndex(initialTabIndex);
@@ -124,7 +124,7 @@ public class ExportDialog extends JDialog {
         vsColorButton.setBackground(Color.BLACK);
         vsColorButton.setForeground(Color.WHITE);
         vsColorButton.addActionListener(e -> {
-            Color c = JColorChooser.showDialog(this, "Select Background Color", vsBgColor);
+            Color c = JColorChooser.showDialog(this, StringManager.getString("SELECT_BACKGROUND_COLOR_TITLE"), vsBgColor);
             if (c != null) {
                 vsBgColor = new Color(c.getRed(), c.getGreen(), c.getBlue(), 255);
                 vsColorButton.setBackground(vsBgColor);
@@ -330,7 +330,7 @@ public class ExportDialog extends JDialog {
         scColorButton.setBackground(scBgColor);
         scColorButton.setForeground(Color.WHITE);
         scColorButton.addActionListener(e -> {
-            Color c = JColorChooser.showDialog(this, "Select Background Color", scBgColor);
+            Color c = JColorChooser.showDialog(this, StringManager.getString("SELECT_BACKGROUND_COLOR_TITLE"), scBgColor);
             if (c != null) {
                 scBgColor = c;
                 scColorButton.setBackground(scBgColor);
@@ -376,7 +376,7 @@ public class ExportDialog extends JDialog {
         boolean isPng = "PNG".equals(format);
         
         JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Export Viewport");
+        chooser.setDialogTitle(StringManager.getString("EXPORT_VIEWPORT_TITLE"));
         String ext = isPng ? "png" : "jpg";
         chooser.setFileFilter(new FileNameExtensionFilter(format + " Images", ext));
         
@@ -405,7 +405,7 @@ public class ExportDialog extends JDialog {
         if (directory != null) {
             chooser.setCurrentDirectory(directory);
         }
-        chooser.setDialogTitle("Save Sprite Image");
+        chooser.setDialogTitle(StringManager.getString("SAVE_SPRITE_IMAGE_TITLE"));
         
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             FileUtilities.setLastGeneralDirectory(chooser.getCurrentDirectory());
@@ -444,7 +444,7 @@ public class ExportDialog extends JDialog {
 
     private void executeEntityShowcase() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Save Showcase Image");
+        fileChooser.setDialogTitle(StringManager.getString("SAVE_SHOWCASE_IMAGE_TITLE"));
         String type = (String) scTypeComboBox.getSelectedItem();
         String defaultName = type != null ? type.toLowerCase(java.util.Locale.ROOT) + "_catalog.png" : "catalog.png";
         fileChooser.setSelectedFile(new File(defaultName));
@@ -472,7 +472,7 @@ public class ExportDialog extends JDialog {
                         JOptionPane.showMessageDialog(ExportDialog.this, StringManager.getString("SHOWCASE_GENERATED_SUCCESSFULLY_N_MSG") + dest.getAbsolutePath(), "Success", JOptionPane.INFORMATION_MESSAGE);
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(ExportDialog.this, StringManager.getString("FAILED_TO_GENERATE_SHOWCASE_N_MSG") + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                        ex.printStackTrace();
+                        log.error("Failed to generate showcase", ex);
                     }
                 }
             };

@@ -60,7 +60,7 @@ public final class CsvLoader {
             } catch (Throwable fallbackException) {
                 log.error(StringManager.getString("CSV_FALLBACK_LOAD_FAILED"), csvFile.getAbsolutePath(), fallbackException);
                 if (SettingsManager.isDeveloperModeEnabled()) {
-                    Errors.printToStream(fallbackException);
+                    log.trace("Exception trace:", fallbackException);
                 }
                 if (SettingsManager.areFileErrorPopupsEnabled()) {
                     Errors.showFileError(StringManager.getString("CSV_PARSE_FAILED") + csvFile, fallbackException);

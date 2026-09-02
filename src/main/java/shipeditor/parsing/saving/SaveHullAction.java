@@ -236,11 +236,7 @@ final class SaveHullAction {
         EngineSlotPainter enginePainter = shipPainter.getEnginePainter();
         var enginePoints = enginePainter.getPointsIndex();
 
-        EngineSlot[] serializableEngines = new EngineSlot[enginePoints.size()];
-
-        for (int i = 0; i < enginePoints.size(); i++) {
-            EnginePoint enginePoint = enginePoints.get(i);
-
+        return enginePoints.stream().map(enginePoint -> {
             EngineSlot serializableSlot = new EngineSlot();
 
             Point2D locationRelativeToCenter = Utility.getPointCoordinatesForDisplay(enginePoint.getPosition(),
@@ -273,10 +269,8 @@ final class SaveHullAction {
                 }
             }
 
-            serializableEngines[i] = serializableSlot;
-        }
-
-        return serializableEngines;
+            return serializableSlot;
+        }).toArray(EngineSlot[]::new);
     }
 
     private static WeaponSlot[] rebuildWeaponSlots(ShipPainter shipPainter) {
@@ -293,11 +287,7 @@ final class SaveHullAction {
         WeaponSlotPainter slotPainter = shipPainter.getWeaponSlotPainter();
         var slotPoints = slotPainter.getPointsIndex();
 
-        WeaponSlot[] serializableSlots = new WeaponSlot[slotPoints.size()];
-
-        for (int i = 0; i < slotPoints.size(); i++) {
-            WeaponSlotPoint slotPoint = slotPoints.get(i);
-
+        return slotPoints.stream().map(slotPoint -> {
             WeaponSlot serializableSlot = SaveHullAction.createSerializable(slotPoint);
 
             Point2D locationRelativeToCenter = Utility.getPointCoordinatesForDisplay(slotPoint.getPosition(),
@@ -310,10 +300,8 @@ final class SaveHullAction {
                 serializableSlot.setRenderOrderMod(renderOrderMod);
             }
 
-            serializableSlots[i] = serializableSlot;
-        }
-
-        return serializableSlots;
+            return serializableSlot;
+        }).toArray(WeaponSlot[]::new);
     }
 
     private static WeaponSlot createSerializable(SlotData slotData) {
@@ -350,11 +338,7 @@ final class SaveHullAction {
         LaunchBayPainter bayPainter = shipPainter.getBayPainter();
         var bays = bayPainter.getBaysList();
 
-        WeaponSlot[] serializableSlots = new WeaponSlot[bays.size()];
-
-        for (int i = 0; i < bays.size(); i++) {
-            LaunchBay launchBay = bays.get(i);
-
+        return bays.stream().map(launchBay -> {
             WeaponSlot serializableSlot = SaveHullAction.createSerializable(launchBay);
 
             List<Point2D.Double> portPositions = new ArrayList<>();
@@ -377,10 +361,8 @@ final class SaveHullAction {
                 serializableSlot.setRenderOrderMod(renderOrderMod);
             }
 
-            serializableSlots[i] = serializableSlot;
-        }
-
-        return serializableSlots;
+            return serializableSlot;
+        }).toArray(WeaponSlot[]::new);
     }
 
     private static String[] rebuildBuiltInWings(ShipHull shipHull) {

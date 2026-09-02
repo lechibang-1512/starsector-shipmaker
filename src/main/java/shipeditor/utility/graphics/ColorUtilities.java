@@ -23,6 +23,11 @@ public final class ColorUtilities {
     private ColorUtilities() {
     }
 
+    public static java.awt.image.BufferedImageOp createHueFilter(Color color) {
+        float[] hue = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+        return new com.jhlabs.image.HSBAdjustFilter(hue[0], hue[1], hue[2]);
+    }
+
     public static Color darken(Color color, double factor) {
         double darkenFactor = ColorUtilities.clampValue(factor, 0, 1);
         int red = color.getRed();

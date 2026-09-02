@@ -147,12 +147,7 @@ public final class JsonSpecLoader {
         try (JsonParser parser = objectMapper.createParser(content)) {
             result = objectMapper.readValue(parser, targetType);
         } catch (IOException e) {
-            if (SettingsManager.isDeveloperModeEnabled()) {
-                log.error(StringManager.getString("CORRECTED_JSON_PARSE_FAILED"), file.getName(), e);
-                Errors.printToStream(e);
-            } else {
-                log.error(StringManager.getString("CORRECTED_JSON_PARSE_FAILED"), file.getName());
-            }
+            log.error(StringManager.getString("CORRECTED_JSON_PARSE_FAILED"), file.getName(), e);
             result = null;
         }
         return result;

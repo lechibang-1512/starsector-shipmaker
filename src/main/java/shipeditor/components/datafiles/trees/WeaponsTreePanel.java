@@ -55,10 +55,6 @@ public class WeaponsTreePanel extends DataTreePanel {
         super("Weapon file packages");
     }
 
-    @Override
-    protected Action getLoadDataAction() {
-        return new javax.swing.AbstractAction("Reload") { @Override public void actionPerformed(java.awt.event.ActionEvent e) { reload(); } };
-    }
 
     @Override
     protected boolean isDataLoaded() {

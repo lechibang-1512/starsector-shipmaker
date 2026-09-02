@@ -74,20 +74,24 @@ public final class JsonProcessor {
                 int curr = i;
                 boolean hasDigit = false;
 
+                loop:
                 while (curr < len) {
                     char nc = input.charAt(curr);
-                    if (nc >= '0' && nc <= '9') {
-                        hasDigit = true;
-                        curr++;
-                    } else if (nc == '.') {
-                        curr++;
-                    } else if (nc == 'e' || nc == 'E') {
-                        curr++;
-                        if (curr < len && (input.charAt(curr) == '+' || input.charAt(curr) == '-')) {
+                    switch (nc) {
+                        case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
+                            hasDigit = true;
                             curr++;
                         }
-                    } else {
-                        break;
+                        case '.' -> curr++;
+                        case 'e', 'E' -> {
+                            curr++;
+                            if (curr < len && (input.charAt(curr) == '+' || input.charAt(curr) == '-')) {
+                                curr++;
+                            }
+                        }
+                        default -> {
+                            break loop;
+                        }
                     }
                 }
 

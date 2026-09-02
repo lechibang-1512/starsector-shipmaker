@@ -97,7 +97,14 @@ public abstract class DataTreePanel extends JPanel {
 
     protected abstract boolean isDataLoaded();
 
-    protected abstract javax.swing.Action getLoadDataAction();
+    protected javax.swing.Action getLoadDataAction() {
+        return new javax.swing.AbstractAction("Reload") {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                queueReload();
+            }
+        };
+    }
 
     public void queueReload() {
         if (this.isDataLoaded()) {
@@ -140,7 +147,9 @@ public abstract class DataTreePanel extends JPanel {
         return skin == null || skin.isBase();
     }
 
-    protected abstract JPanel createTopPanel();
+    protected JPanel createTopPanel() {
+        return new JPanel();
+    }
 
     void expandAllNodes() {
         for (int i = 0; i < tree.getRowCount(); i++) {

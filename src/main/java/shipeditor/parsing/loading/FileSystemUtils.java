@@ -139,7 +139,7 @@ public final class FileSystemUtils {
                     .map(p -> p.toFile())
                     .forEach(files::add);
         } catch (IOException exception) {
-            Errors.printToStream(exception);
+            log.error("Failed to fetch files with extension: {}", dotlessExtension, exception);
         }
         return files;
     }

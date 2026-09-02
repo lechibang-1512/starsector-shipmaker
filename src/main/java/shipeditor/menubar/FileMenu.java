@@ -24,7 +24,7 @@ import java.nio.file.Files;
 class FileMenu extends JMenu {
 
     FileMenu() {
-        super("File");
+        super(StringManager.getString("MENU_FILE"));
         this.setMnemonic(KeyEvent.VK_F);
     }
 
@@ -86,7 +86,7 @@ class FileMenu extends JMenu {
             int result = JOptionPane.showConfirmDialog(
                     shipeditor.PrimaryWindow.getInstance(),
                     StringManager.getString("ARE_YOU_SURE_YOU_WANT_TO_DELETE_ALL_APPL_MSG"),
-                    "Clear Data & Reinitialize",
+                    StringManager.getString("CLEAR_DATA_TITLE"),
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.WARNING_MESSAGE
             );

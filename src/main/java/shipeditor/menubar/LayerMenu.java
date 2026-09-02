@@ -25,7 +25,7 @@ class LayerMenu extends JMenu {
     private JMenuItem removeLayer;
 
     LayerMenu() {
-        super("Layer");
+        super(StringManager.getString("MENU_LAYER"));
         this.setMnemonic(KeyEvent.VK_L);
     }
 

@@ -32,7 +32,7 @@ class ViewMenu extends JMenu {
     private JMenuItem toggleSpriteCenter;
 
     ViewMenu() {
-        super("View");
+        super(StringManager.getString("MENU_VIEW"));
         this.setMnemonic(KeyEvent.VK_V);
     }
 
@@ -45,7 +45,7 @@ class ViewMenu extends JMenu {
 
         this.addSeparator();
 
-        toggleRotate = new JCheckBoxMenuItem("Enable View Rotation");
+        toggleRotate = new JCheckBoxMenuItem(StringManager.getString("ENABLE_VIEW_ROTATION"));
         toggleRotate.setSelected(true);
         toggleRotate.addActionListener(event ->
                 EventBus.publish(new ViewerRotationToggled(toggleRotate.isSelected(), true))
@@ -72,7 +72,7 @@ class ViewMenu extends JMenu {
         });
         bgSubmenu.add(changeBackground);
 
-        JMenuItem displayBackgroundImage = new JCheckBoxMenuItem("Show Background Grid / Image");
+        JMenuItem displayBackgroundImage = new JCheckBoxMenuItem(StringManager.getString("SHOW_BACKGROUND_GRID_IMAGE"));
         displayBackgroundImage.setSelected(true);
         displayBackgroundImage.addActionListener(e ->
                 PaintOrderController.setShowBackgroundImage(displayBackgroundImage.isSelected()));
@@ -85,7 +85,7 @@ class ViewMenu extends JMenu {
 
         this.addSeparator();
 
-        JMenuItem hideNonBuiltIn = new JCheckBoxMenuItem("Hide Non-Built-in Weapons");
+        JMenuItem hideNonBuiltIn = new JCheckBoxMenuItem(StringManager.getString("HIDE_NON_BUILT_IN_WEAPONS"));
         hideNonBuiltIn.setSelected(false);
         hideNonBuiltIn.addActionListener(e -> {
             PaintOrderController.setHideNonBuiltInWeapons(hideNonBuiltIn.isSelected());
@@ -103,17 +103,17 @@ class ViewMenu extends JMenu {
         JMenu guidesSubmenu = new JMenu(StringManager.getString("TOGGLE_GUIDES"));
         guidesSubmenu.setIcon(FontIcon.of(BoxiconsRegular.GRID_ALT, 16, Themes.getIconColor()));
 
-        toggleCursorGuides = new JCheckBoxMenuItem("Show Cursor Guides");
+        toggleCursorGuides = new JCheckBoxMenuItem(StringManager.getString("SHOW_CURSOR_GUIDES"));
         toggleCursorGuides.setSelected(true);
         toggleCursorGuides.addActionListener(e -> this.notifyGuidesToggled());
         guidesSubmenu.add(toggleCursorGuides);
 
-        toggleBorders = new JCheckBoxMenuItem("Show Sprite Bounds");
+        toggleBorders = new JCheckBoxMenuItem(StringManager.getString("SHOW_SPRITE_BOUNDS"));
         toggleBorders.setSelected(true);
         toggleBorders.addActionListener(e -> this.notifyGuidesToggled());
         guidesSubmenu.add(toggleBorders);
 
-        toggleSpriteCenter = new JCheckBoxMenuItem("Show Sprite Center Marker");
+        toggleSpriteCenter = new JCheckBoxMenuItem(StringManager.getString("SHOW_SPRITE_CENTER_MARKER"));
         toggleSpriteCenter.setSelected(true);
         toggleSpriteCenter.addActionListener(e -> this.notifyGuidesToggled());
         guidesSubmenu.add(toggleSpriteCenter);

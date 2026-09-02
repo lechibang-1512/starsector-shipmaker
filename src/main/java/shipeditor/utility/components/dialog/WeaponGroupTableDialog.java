@@ -141,7 +141,7 @@ class WeaponGroupTableDialog extends JPanel {
         }
 
         Object[] columnNames = new Object[MAX_WEAPON_GROUPS + 1];
-        columnNames[0] = "Weapon";
+        columnNames[0] = StringManager.getString("COLUMN_WEAPON");
         for (int i = 0; i < MAX_WEAPON_GROUPS; i++) {
             columnNames[i + 1] = String.valueOf(i + 1);
         }

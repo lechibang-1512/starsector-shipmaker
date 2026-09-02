@@ -137,7 +137,7 @@ public class WeaponTreeContextMenuController extends MouseAdapter {
         JMenu modeSubmenu = getModeSubmenu(weaponGroup);
         contextMenu.add(modeSubmenu);
 
-        JCheckBoxMenuItem autofire = new JCheckBoxMenuItem("Toggle autofire");
+        JCheckBoxMenuItem autofire = new JCheckBoxMenuItem(StringManager.getString("TOGGLE_AUTOFIRE"));
         autofire.setSelected(weaponGroup.isAutofire());
         autofire.addActionListener(e -> {
             weaponGroup.setAutofire(autofire.isSelected());
@@ -156,7 +156,7 @@ public class WeaponTreeContextMenuController extends MouseAdapter {
     private JMenu getModeSubmenu(FittedWeaponGroup weaponGroup) {
         JMenu modeSubmenu = new JMenu(StringManager.getString("FIRING_MODE"));
 
-        JMenuItem linkedMode = new JRadioButtonMenuItem("Mode: Linked");
+        JMenuItem linkedMode = new JRadioButtonMenuItem(StringManager.getString("MODE_LINKED"));
         linkedMode.setSelected(weaponGroup.getMode() == FireMode.LINKED);
         linkedMode.addActionListener(e -> {
             weaponGroup.setMode(FireMode.LINKED);
@@ -164,7 +164,7 @@ public class WeaponTreeContextMenuController extends MouseAdapter {
         });
         modeSubmenu.add(linkedMode);
 
-        JMenuItem alternatingMode = new JRadioButtonMenuItem("Mode: Alternating");
+        JMenuItem alternatingMode = new JRadioButtonMenuItem(StringManager.getString("MODE_ALTERNATING"));
         alternatingMode.setSelected(weaponGroup.getMode() == FireMode.ALTERNATING);
         alternatingMode.addActionListener(e -> {
             weaponGroup.setMode(FireMode.ALTERNATING);
