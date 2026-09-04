@@ -32,12 +32,11 @@ public final class JsonProcessor {
 
             // 1. Quoted block state processing
             if (inQuotes) {
-                if (c == '\\' && !escape) {
-                    escape = true;
-                } else {
+                if (escape) {
                     escape = false;
-                }
-                if (c == '"' && !escape) {
+                } else if (c == '\\') {
+                    escape = true;
+                } else if (c == '"') {
                     inQuotes = false;
                 }
                 sb.append(c);

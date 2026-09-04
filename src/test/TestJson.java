@@ -12,8 +12,9 @@ public class TestJson {
         for (int i = 0; i < len; ) {
             char c = input.charAt(i);
             if (inQuotes) {
-                if (c == '\\' && !escape) { escape = true; } else { escape = false; }
-                if (c == '"' && !escape) { inQuotes = false; }
+                if (escape) { escape = false; }
+                else if (c == '\\') { escape = true; }
+                else if (c == '"') { inQuotes = false; }
                 sb.append(c);
                 i++;
                 continue;

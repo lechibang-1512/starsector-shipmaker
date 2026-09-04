@@ -594,6 +594,23 @@ class SpecFileSerializationTest {
             assertTrue(empty.isBase());
             assertEquals("Base hull", empty.toString());
         }
+
+        @Test
+        void testSkinWithEscapedQuotesInDescription() throws IOException {
+            String json = """
+                    {
+                        "baseHullId": "els_mistral",
+                        "skinHullId": "els_mistral_m",
+                        "hullName": "Mistral (M)",
+                        "descriptionPrefix": "Hulls modified in this manner are usually tagged with an \\"M\\", for \\"military spec\\".",
+                        "spriteName": "graphics/ELS/ships/els_mistral_m.png"
+                    }
+                    """;
+            SkinSpecFile skin = parseStarsectorJson(json, SkinSpecFile.class);
+            assertNotNull(skin);
+            assertEquals("els_mistral_m", skin.getSkinHullId());
+            assertEquals("Hulls modified in this manner are usually tagged with an \"M\", for \"military spec\".", skin.getDescriptionPrefix());
+        }
     }
 
     // ============================================================
@@ -1407,6 +1424,14 @@ class SpecFileSerializationTest {
             ProjectileSpecFile proj = parseStarsectorJson(json, ProjectileSpecFile.class);
             assertEquals("trailing_test", proj.getId());
             assertEquals(10, proj.getSize()[0]);
+        }
+
+        @Test
+        void testEscapedQuotesPreservedInStrings() {
+            String input = "{\"prefix\": \"tagged with an \\\"M\\\", for \\\"military spec\\\".\", \"name\": \"test\"}";
+            String result = JsonProcessor.straightenMalformedText(input);
+            assertTrue(result.contains("\"tagged with an \\\"M\\\", for \\\"military spec\\\".\""));
+            assertTrue(result.contains("\"name\""));
         }
 
         @Test

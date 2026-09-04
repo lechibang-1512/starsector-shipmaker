@@ -177,14 +177,21 @@ public class InstalledFeatureCellRenderer extends BoxPanelCellRenderer<Installed
         } else {
             // Read the pre-computed override state from the feature itself.
             FeatureOverrideState state = value.getOverrideState();
-            if (state == FeatureOverrideState.REMOVED) {
-                Color warnColor = Color.ORANGE;
-                this.setWarningText("[Removed]", warnColor);
-                setToolTipText("Overridden: slot install removed");
-            } else if (state == FeatureOverrideState.OVERRIDDEN) {
-                Color warnColor = Color.GREEN;
-                this.setWarningText("[Overridden]", warnColor);
-                setToolTipText("Overridden: slot install superseded");
+            if (state != null) {
+                switch (state) {
+                    case REMOVED -> {
+                        Color warnColor = Color.ORANGE;
+                        this.setWarningText("[Removed]", warnColor);
+                        setToolTipText("Overridden: slot install removed");
+                    }
+                    case OVERRIDDEN -> {
+                        Color warnColor = Color.GREEN;
+                        this.setWarningText("[Overridden]", warnColor);
+                        setToolTipText("Overridden: slot install superseded");
+                    }
+                    default -> {
+                    }
+                }
             }
         }
         return foregroundColor;
