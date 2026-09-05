@@ -1,7 +1,9 @@
 # Ship-Editor 
 **Developed and maintained by:** thevolkflower
 
-Visualizer and editor of object data in JSON and CSV format. Developed as utility tool for the purposes of working with data files of a game Starsector.
+Visualizer and editor of object data in JSON and CSV format. Developed as utility tool for the purposes of working with data files of a game Starsector. 
+
+Forum thread: fractalsoftworks.com/forum/index.php?topic=35466.30
 
 Clean repository based on ontheheaven's original repo: https://github.com/Ontheheavens/Ship-Editor/
 
