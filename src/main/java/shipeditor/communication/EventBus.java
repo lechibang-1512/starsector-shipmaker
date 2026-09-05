@@ -5,6 +5,7 @@ import shipeditor.communication.events.BusEvent;
 import shipeditor.utility.Errors;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
 /** * This is a very simple implementation of EventBus-type Observer pattern, meant to decouple different parts of the app.
  * <p>
@@ -95,6 +96,26 @@ public final class EventBus {
             EVENT_BUS.lifecycleSubscribers.computeIfAbsent(lifecycleParent, k -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(new WeakListenerWrapper(listener));
         }
         return listener;
+    }
+
+    /**
+     * Subscribes a typed consumer whose lifecycle is bound to the provided parent object.
+     * The consumer is only invoked when an event of the specified class (or subclass) is published.
+     *
+     * @param lifecycleParent the lifecycle parent object
+     * @param eventType       the class of event to filter on
+     * @param handler         the consumer callback
+     * @param <T>             the event type
+     * @return the registered listener handle
+     */
+    public static <T extends BusEvent> BusEventListener subscribe(Object lifecycleParent,
+                                                                   Class<T> eventType,
+                                                                   Consumer<T> handler) {
+        return subscribe(lifecycleParent, event -> {
+            if (eventType.isInstance(event)) {
+                handler.accept(eventType.cast(event));
+            }
+        });
     }
 
     public static void unsubscribe(BusEventListener listener) {

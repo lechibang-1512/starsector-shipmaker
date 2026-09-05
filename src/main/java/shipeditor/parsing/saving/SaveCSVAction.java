@@ -41,14 +41,7 @@ public class SaveCSVAction {
         String cleanRowId = rowId != null ? rowId.trim() : null;
         boolean found = false;
         for (Map<String, String> row : rawData) {
-            String rowIdValue = null;
-            for (Map.Entry<String, String> cell : row.entrySet()) {
-                String cleanKey = cell.getKey().replace("\uFEFF", "").trim().toLowerCase(java.util.Locale.ROOT);
-                if ("id".equals(cleanKey)) {
-                    rowIdValue = cell.getValue();
-                    break;
-                }
-            }
+            String rowIdValue = findRowId(row);
             if (rowIdValue != null && cleanRowId != null && rowIdValue.trim().equalsIgnoreCase(cleanRowId)) {
                 row.putAll(entry.getRowData());
                 found = true;
@@ -143,14 +136,7 @@ public class SaveCSVAction {
         if (rawData == null || rawData.isEmpty()) return null;
 
         for (Map<String, String> row : rawData) {
-            String rowIdValue = null;
-            for (Map.Entry<String, String> cell : row.entrySet()) {
-                String cleanKey = cell.getKey().replace("\uFEFF", "").trim().toLowerCase(java.util.Locale.ROOT);
-                if ("id".equals(cleanKey)) {
-                    rowIdValue = cell.getValue();
-                    break;
-                }
-            }
+            String rowIdValue = findRowId(row);
             if (rowIdValue != null && !rowIdValue.trim().isEmpty()) {
                 String cleanId = rowIdValue.trim();
                 if (!seenIds.add(cleanId)) {
@@ -193,5 +179,27 @@ public class SaveCSVAction {
             return warningMsg.toString();
         }
         return null;
+    }
+
+    public static String findRowId(Map<String, String> row) {
+        if (row == null) return null;
+        for (Map.Entry<String, String> cell : row.entrySet()) {
+            String cleanKey = cell.getKey().replace("\uFEFF", "").trim().toLowerCase(java.util.Locale.ROOT);
+            if ("id".equals(cleanKey)) {
+                return cell.getValue();
+            }
+        }
+        return null;
+    }
+
+    public static String findRowIdKey(Map<String, String> row) {
+        if (row == null) return "id";
+        for (String key : row.keySet()) {
+            String cleanKey = key.replace("\uFEFF", "").trim().toLowerCase(java.util.Locale.ROOT);
+            if ("id".equals(cleanKey)) {
+                return key;
+            }
+        }
+        return "id";
     }
 }

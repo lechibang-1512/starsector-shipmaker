@@ -35,15 +35,17 @@ public final class PointEdits {
     private PointEdits() {
     }
 
-    public static class BoundsSortEdit extends AbstractEdit {
+    public static class BoundsListEdit extends AbstractEdit {
         private final BoundPointsPainter pointPainter;
         private final List<BoundPoint> oldList;
         private final List<BoundPoint> newList;
+        private final String actionName;
 
-        public BoundsSortEdit(BoundPointsPainter painter, List<BoundPoint> old, List<BoundPoint> changed) {
+        public BoundsListEdit(BoundPointsPainter painter, List<BoundPoint> old, List<BoundPoint> changed, String actionName) {
             this.pointPainter = painter;
             this.oldList = old;
             this.newList = changed;
+            this.actionName = actionName;
         }
 
         @Override
@@ -60,36 +62,19 @@ public final class PointEdits {
 
         @Override
         public String getName() {
-            return "Sort Bounds";
+            return actionName;
         }
     }
 
-    public static class BoundsReplaceEdit extends AbstractEdit {
-        private final BoundPointsPainter pointPainter;
-        private final List<BoundPoint> oldList;
-        private final List<BoundPoint> newList;
+    public static class BoundsSortEdit extends BoundsListEdit {
+        public BoundsSortEdit(BoundPointsPainter painter, List<BoundPoint> old, List<BoundPoint> changed) {
+            super(painter, old, changed, "Sort Bounds");
+        }
+    }
 
+    public static class BoundsReplaceEdit extends BoundsListEdit {
         public BoundsReplaceEdit(BoundPointsPainter painter, List<BoundPoint> old, List<BoundPoint> changed) {
-            this.pointPainter = painter;
-            this.oldList = old;
-            this.newList = changed;
-        }
-
-        @Override
-        public void undo() {
-            pointPainter.setBoundPoints(oldList);
-            Events.repaintShipView();
-        }
-
-        @Override
-        public void redo() {
-            pointPainter.setBoundPoints(newList);
-            Events.repaintShipView();
-        }
-
-        @Override
-        public String getName() {
-            return "Auto-Generate Bounds";
+            super(painter, old, changed, "Auto-Generate Bounds");
         }
     }
 

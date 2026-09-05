@@ -101,14 +101,11 @@ public final class CSVIDSyncHandler {
         if (rawData == null) return;
 
         for (Map<String, String> row : rawData) {
-            for (Map.Entry<String, String> cell : row.entrySet()) {
-                String cleanKey = cell.getKey().replace("\uFEFF", "").trim().toLowerCase(java.util.Locale.ROOT);
-                if ("id".equals(cleanKey)
-                        && cell.getValue() != null
-                        && oldID.equalsIgnoreCase(cell.getValue().trim())) {
-                    row.put(cell.getKey(), newID);
-                    return;
-                }
+            String rowId = SaveCSVAction.findRowId(row);
+            if (rowId != null && oldID.equalsIgnoreCase(rowId.trim())) {
+                String key = SaveCSVAction.findRowIdKey(row);
+                row.put(key, newID);
+                return;
             }
         }
         log.warn("Raw CSV row with ID '{}' not found for path: {}", oldID, tablePath);

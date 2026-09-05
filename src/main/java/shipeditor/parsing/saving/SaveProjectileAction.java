@@ -54,17 +54,7 @@ final class SaveProjectileAction {
             String errorMessage = "Projectile file saving failed: {}";
             
             try {
-                if (result.isFile()) {
-                    try {
-                        ProjectileSpecFile existingFile = objectMapper.readValue(result, ProjectileSpecFile.class);
-                        if (existingFile != null && existingFile.getUnrecognizedProperties() != null) {
-                            existingFile.getUnrecognizedProperties().forEach(
-                                    projectileSpecFile.getUnrecognizedProperties()::putIfAbsent);
-                        }
-                    } catch (Exception e) {
-                        log.trace("Could not read existing projectile file for unrecognized properties: {}", result, e);
-                    }
-                }
+                SaveActionUtilities.mergeUnrecognizedProperties(result, projectileSpecFile.getUnrecognizedProperties(), ProjectileSpecFile.class);
 
                 projectileSpecFile.setProjectileSpecFilePath(result.toPath());
                 objectMapper.writeValue(result, projectileSpecFile);

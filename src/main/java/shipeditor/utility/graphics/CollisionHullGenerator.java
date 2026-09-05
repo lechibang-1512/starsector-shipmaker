@@ -63,11 +63,11 @@ public final class CollisionHullGenerator {
         if (blob == null) return Collections.emptyList();
 
         // 3. Trace boundary using Moore-Neighbor
-        List<int[]> contour = traceBoundary(blob, width, height);
+        List<int[]> contour = SpriteContourTracer.traceBoundary(blob, width, height);
         if (contour.isEmpty()) return Collections.emptyList();
 
         // 4. Simplify with RDP
-        List<Point2D> simplified = simplifyPolygon(contour, SIMPLIFICATION_EPSILON);
+        List<Point2D> simplified = PolygonSimplifier.simplifyPolygon(contour, SIMPLIFICATION_EPSILON);
 
         // 5. Inset bounds to undo dilation and trim by an extra ~5-10% as requested
         List<Point2D> insetPoints = insetPolygon(simplified, 5.0);
@@ -177,145 +177,7 @@ public final class CollisionHullGenerator {
         return blob;
     }
 
-    /**
-     * Moore-Neighbor boundary tracing using direct grid lookups.
-     * Returns contour as list of [x, y] int pairs — no Point object allocation.
-     */
-    private static List<int[]> traceBoundary(boolean[][] blob, int width, int height) {
-        // Find starting pixel (top-leftmost) — first true cell in row-major order
-        int startX = -1;
-        int startY = -1;
-        outer:
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                if (blob[y][x]) {
-                    startX = x;
-                    startY = y;
-                    break outer;
-                }
-            }
-        }
 
-        if (startX < 0) return Collections.emptyList();
-
-        List<int[]> contour = new ArrayList<>();
-
-        // Directions: Clockwise from N
-        int[] dxDir = { 0, 1, 1, 1, 0, -1, -1, -1 };
-        int[] dyDir = { -1, -1, 0, 1, 1, 1, 0, -1 };
-
-        int curX = startX;
-        int curY = startY;
-        int enterDir = 6; // West, since start is top-leftmost
-
-        int secondX = -1;
-        int secondY = -1;
-
-        int safetyLimit = width * height * 2;
-
-        while (true) {
-            contour.add(new int[]{curX, curY});
-            boolean found = false;
-
-            int checkDir = enterDir;
-
-            for (int i = 0; i < 8; i++) {
-                int nx = curX + dxDir[checkDir];
-                int ny = curY + dyDir[checkDir];
-
-                if (nx >= 0 && nx < width && ny >= 0 && ny < height && blob[ny][nx]) {
-                    curX = nx;
-                    curY = ny;
-                    enterDir = (checkDir + 5) % 8; // Start searching next from relative "behind-left"
-                    found = true;
-                    break;
-                }
-                checkDir = (checkDir + 1) % 8;
-            }
-
-            if (!found) {
-                break;
-            }
-
-            if (secondX < 0) {
-                secondX = curX;
-                secondY = curY;
-            } else if (contour.size() > 1) {
-                int[] last = contour.get(contour.size() - 1);
-                if (last[0] == startX && last[1] == startY && curX == secondX && curY == secondY) {
-                    contour.remove(contour.size() - 1);
-                    break; // Jacob's stopping criterion met
-                }
-            }
-
-            if (contour.size() > safetyLimit) break; // Infinite loop safety
-        }
-
-        return contour;
-    }
-
-    private static List<Point2D> simplifyPolygon(List<int[]> points, double epsilon) {
-        if (points.size() < 3) {
-            List<Point2D> res = new ArrayList<>();
-            for (int[] p : points) res.add(new Point2D.Double(p[0], p[1]));
-            return res;
-        }
-
-        double maxDistance = 0.0;
-        int index = 0;
-        int end = points.size() - 1;
-
-        int[] first = points.get(0);
-        int[] last = points.get(end);
-
-        for (int i = 1; i < end; i++) {
-            double distance = perpendicularDistance(points.get(i), first, last);
-            if (distance > maxDistance) {
-                index = i;
-                maxDistance = distance;
-            }
-        }
-
-        List<Point2D> result = new ArrayList<>();
-        if (maxDistance > epsilon) {
-            List<int[]> firstLine = points.subList(0, index + 1);
-            List<int[]> secondLine = points.subList(index, end + 1);
-
-            List<Point2D> firstResult = simplifyPolygon(firstLine, epsilon);
-            List<Point2D> secondResult = simplifyPolygon(secondLine, epsilon);
-
-            firstResult.remove(firstResult.size() - 1);
-            result.addAll(firstResult);
-            result.addAll(secondResult);
-        } else {
-            result.add(new Point2D.Double(first[0], first[1]));
-            result.add(new Point2D.Double(last[0], last[1]));
-        }
-
-        return result;
-    }
-
-    private static double perpendicularDistance(int[] pt, int[] lineStart, int[] lineEnd) {
-        double dx = lineEnd[0] - lineStart[0];
-        double dy = lineEnd[1] - lineStart[1];
-
-        if (dx == 0 && dy == 0) {
-            return Math.hypot(pt[0] - lineStart[0], pt[1] - lineStart[1]);
-        }
-
-        double t = ((pt[0] - lineStart[0]) * dx + (pt[1] - lineStart[1]) * dy) / (dx * dx + dy * dy);
-
-        if (t < 0) {
-            return Math.hypot(pt[0] - lineStart[0], pt[1] - lineStart[1]);
-        } else if (t > 1) {
-            return Math.hypot(pt[0] - lineEnd[0], pt[1] - lineEnd[1]);
-        }
-
-        double closestX = lineStart[0] + t * dx;
-        double closestY = lineStart[1] + t * dy;
-
-        return Math.hypot(pt[0] - closestX, pt[1] - closestY);
-    }
 
     private static List<Point2D> insetPolygon(List<Point2D> poly, double insetAmount) {
         if (poly.size() < 3) return poly;

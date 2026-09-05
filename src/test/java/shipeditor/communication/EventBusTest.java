@@ -225,4 +225,26 @@ class EventBusTest {
             EventBus.TRACE_ENABLED = false;
         }
     }
+
+    @Test
+    void testTypedSubscribe() {
+        Object parent = new Object();
+        AtomicInteger receivedTestEvents = new AtomicInteger(0);
+        AtomicInteger receivedAnotherEvents = new AtomicInteger(0);
+
+        EventBus.subscribe(parent, TestEvent.class, e -> receivedTestEvents.incrementAndGet());
+        EventBus.subscribe(parent, AnotherEvent.class, e -> receivedAnotherEvents.incrementAndGet());
+
+        EventBus.publish(new TestEvent());
+        waitForEDT();
+
+        assertEquals(1, receivedTestEvents.get());
+        assertEquals(0, receivedAnotherEvents.get());
+
+        EventBus.publish(new AnotherEvent());
+        waitForEDT();
+
+        assertEquals(1, receivedTestEvents.get());
+        assertEquals(1, receivedAnotherEvents.get());
+    }
 }

@@ -1,16 +1,17 @@
 package shipeditor.utility.components.dialog;
 
-import shipeditor.utility.text.StringManager;
-
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.files.FileEvents.HullSaveQueued;
 import shipeditor.communication.events.files.FileEvents.VariantSaveQueued;
-import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.LayerManager;
+import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
+import shipeditor.persistence.SettingsManager;
+import shipeditor.utility.text.StringManager;
 
 import javax.swing.JOptionPane;
+import java.nio.file.Path;
 
 public final class DialogHelper {
 
@@ -137,6 +138,36 @@ public final class DialogHelper {
                 }
             }
         }
+    }
+
+    /**
+     * Resolves the human-readable display name for a package folder path.
+     *
+     * @param packagePath the directory path of the package/mod
+     * @return "Starsector Core", the folder name, or "Unknown" if null
+     */
+    public static String resolvePackageName(Path packagePath) {
+        if (packagePath == null) {
+            return "Unknown";
+        }
+        if (SettingsManager.isCoreFolder(packagePath)) {
+            return "Starsector Core";
+        }
+        Path fileName = packagePath.getFileName();
+        return fileName != null ? fileName.toString() : packagePath.toString();
+    }
+
+    /**
+     * Resolves the display name for a mod ID string.
+     *
+     * @param modId the mod ID string
+     * @return "Starsector Core" if core/blank, otherwise the mod ID
+     */
+    public static String resolveModIdName(String modId) {
+        if (modId == null || modId.isBlank() || "starsector-core".equals(modId)) {
+            return "Starsector Core";
+        }
+        return modId;
     }
 
 }

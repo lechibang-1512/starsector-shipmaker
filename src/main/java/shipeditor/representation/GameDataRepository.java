@@ -274,19 +274,25 @@ public class GameDataRepository {
         return rows;
     }
 
+    private static <T extends CSVEntry> Map<String, T> flattenPackageEntries(Map<Path, List<T>> packageMap) {
+        Map<String, T> local = new ConcurrentHashMap<>();
+        if (packageMap != null) {
+            for (List<T> list : packageMap.values()) {
+                for (T entry : list) {
+                    if (entry.getID() != null && !entry.getID().isEmpty()) {
+                        local.put(entry.getID(), entry);
+                    }
+                }
+            }
+        }
+        return local;
+    }
+
     public Map<String, ShipCSVEntry> getAllShipEntries() {
         if (allShipEntries == null) {
             synchronized(this) {
                 if (allShipEntries == null) {
-                    Map<String, ShipCSVEntry> local = new ConcurrentHashMap<>();
-                    for (List<ShipCSVEntry> list : getShipEntriesByPackage().values()) {
-                        for (ShipCSVEntry entry : list) {
-                            if (entry.getID() != null && !entry.getID().isEmpty()) {
-                                local.put(entry.getID(), entry);
-                            }
-                        }
-                    }
-                    allShipEntries = local;
+                    allShipEntries = flattenPackageEntries(getShipEntriesByPackage());
                 }
             }
         }
@@ -308,15 +314,7 @@ public class GameDataRepository {
         if (allWeaponEntries == null) {
             synchronized(this) {
                 if (allWeaponEntries == null) {
-                    Map<String, WeaponCSVEntry> local = new ConcurrentHashMap<>();
-                    for (List<WeaponCSVEntry> list : getWeaponEntriesByPackage().values()) {
-                        for (WeaponCSVEntry entry : list) {
-                            if (entry.getID() != null && !entry.getID().isEmpty()) {
-                                local.put(entry.getID(), entry);
-                            }
-                        }
-                    }
-                    allWeaponEntries = local;
+                    allWeaponEntries = flattenPackageEntries(getWeaponEntriesByPackage());
                 }
             }
         }
@@ -338,15 +336,7 @@ public class GameDataRepository {
         if (allHullmodEntries == null) {
             synchronized(this) {
                 if (allHullmodEntries == null) {
-                    Map<String, HullmodCSVEntry> local = new ConcurrentHashMap<>();
-                    for (List<HullmodCSVEntry> list : getHullmodEntriesByPackage().values()) {
-                        for (HullmodCSVEntry entry : list) {
-                            if (entry.getID() != null && !entry.getID().isEmpty()) {
-                                local.put(entry.getID(), entry);
-                            }
-                        }
-                    }
-                    allHullmodEntries = local;
+                    allHullmodEntries = flattenPackageEntries(getHullmodEntriesByPackage());
                 }
             }
         }
@@ -368,15 +358,7 @@ public class GameDataRepository {
         if (allShipsystemEntries == null) {
             synchronized(this) {
                 if (allShipsystemEntries == null) {
-                    Map<String, ShipSystemCSVEntry> local = new ConcurrentHashMap<>();
-                    for (List<ShipSystemCSVEntry> list : getShipSystemEntriesByPackage().values()) {
-                        for (ShipSystemCSVEntry entry : list) {
-                            if (entry.getID() != null && !entry.getID().isEmpty()) {
-                                local.put(entry.getID(), entry);
-                            }
-                        }
-                    }
-                    allShipsystemEntries = local;
+                    allShipsystemEntries = flattenPackageEntries(getShipSystemEntriesByPackage());
                 }
             }
         }
@@ -398,15 +380,7 @@ public class GameDataRepository {
         if (allWingEntries == null) {
             synchronized(this) {
                 if (allWingEntries == null) {
-                    Map<String, WingCSVEntry> local = new ConcurrentHashMap<>();
-                    for (List<WingCSVEntry> list : getWingEntriesByPackage().values()) {
-                        for (WingCSVEntry entry : list) {
-                            if (entry.getID() != null && !entry.getID().isEmpty()) {
-                                local.put(entry.getID(), entry);
-                            }
-                        }
-                    }
-                    allWingEntries = local;
+                    allWingEntries = flattenPackageEntries(getWingEntriesByPackage());
                 }
             }
         }

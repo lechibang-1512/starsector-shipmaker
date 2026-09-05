@@ -87,7 +87,7 @@ public final class EditDispatch {
     public static void postBoundsRearranged(BoundPointsPainter pointPainter,
                                             List<BoundPoint> old,
                                             List<BoundPoint> changed) {
-        Edit rearrangeEdit = new BoundsSortEdit(pointPainter, old, changed);
+        Edit rearrangeEdit = new BoundsListEdit(pointPainter, old, changed, "Sort Bounds");
         UndoOverseer.post(rearrangeEdit);
         pointPainter.setBoundPoints(changed);
         Events.repaintShipView();
@@ -96,7 +96,7 @@ public final class EditDispatch {
     public static void postBoundsReplaced(BoundPointsPainter pointPainter,
                                           List<BoundPoint> old,
                                           List<BoundPoint> changed) {
-        Edit replaceEdit = new BoundsReplaceEdit(pointPainter, old, changed);
+        Edit replaceEdit = new BoundsListEdit(pointPainter, old, changed, "Auto-Generate Bounds");
         UndoOverseer.post(replaceEdit);
         pointPainter.setBoundPoints(changed);
         Events.repaintShipView();

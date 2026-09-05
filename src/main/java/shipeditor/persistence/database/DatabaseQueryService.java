@@ -98,19 +98,30 @@ public final class DatabaseQueryService {
         }
     }
 
+    public static void deleteFilesByModId(String modId) {
+        if (modId == null) {
+            return;
+        }
+        String deleteFilesSql = "DELETE FROM indexed_files WHERE mod_id = ?;";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(deleteFilesSql)) {
+            pstmt.setString(1, modId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            log.error("Failed to delete files for mod: {}", modId, e);
+        }
+    }
+
     public static void deleteMod(String id) {
         if (id == null) {
             return;
         }
-        String deleteFilesSql = "DELETE FROM indexed_files WHERE mod_id = ?;";
+        deleteFilesByModId(id);
         String sql = "DELETE FROM mods WHERE id = ?;";
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt1 = conn.prepareStatement(deleteFilesSql);
-             PreparedStatement pstmt2 = conn.prepareStatement(sql)) {
-            pstmt1.setString(1, id);
-            pstmt1.executeUpdate();
-            pstmt2.setString(1, id);
-            pstmt2.executeUpdate();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, id);
+            pstmt.executeUpdate();
             log.info("Deleted mod package from database: {}", id);
         } catch (SQLException e) {
             log.error("Failed to delete mod: {}", id, e);
@@ -260,37 +271,8 @@ public final class DatabaseQueryService {
         if (entityId == null || type == null) {
             return "";
         }
-
-        List<String> activeMods = getActiveModIds();
-        if (!activeMods.isEmpty()) {
-            StringBuilder sql = new StringBuilder("SELECT file_name FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
-            sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
-            sql.append(") LIMIT 1;");
-
-            try (Connection conn = DatabaseManager.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-                
-                pstmt.setString(1, entityId);
-                pstmt.setString(2, type);
-                int paramIndex = 3;
-                for (String modId : activeMods) {
-                    pstmt.setString(paramIndex++, modId);
-                }
-                
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        return rs.getString("file_name");
-                    }
-                }
-            } catch (SQLException e) {
-                log.error("Failed to lookup filename for entity: {} ({})", entityId, type, e);
-            }
-        }
-        
-        IndexedFile coreFile = CoreIndexManager.getFileByEntityId(entityId, type);
-        if (coreFile != null) return coreFile.getFileName();
-        
-        return "";
+        IndexedFile file = getFileByEntityId(entityId, type);
+        return file != null ? file.getFileName() : "";
     }
 
     public static IndexedFile getFileByEntityId(String entityId, String type) {
@@ -331,37 +313,8 @@ public final class DatabaseQueryService {
         if (entityId == null || type == null) {
             return null;
         }
-
-        List<String> activeMods = getActiveModIds();
-        if (!activeMods.isEmpty()) {
-            StringBuilder sql = new StringBuilder("SELECT file_path FROM indexed_files WHERE entity_id = ? AND entity_type = ? AND mod_id IN (");
-            sql.append(String.join(",", java.util.Collections.nCopies(activeMods.size(), "?")));
-            sql.append(") LIMIT 1;");
-
-            try (Connection conn = DatabaseManager.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-
-                pstmt.setString(1, entityId);
-                pstmt.setString(2, type);
-                int paramIndex = 3;
-                for (String modId : activeMods) {
-                    pstmt.setString(paramIndex++, modId);
-                }
-
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        return Path.of(rs.getString("file_path"));
-                    }
-                }
-            } catch (SQLException e) {
-                log.error("Failed to lookup path for entity: {} ({})", entityId, type, e);
-            }
-        }
-        
-        IndexedFile coreFile = CoreIndexManager.getFileByEntityId(entityId, type);
-        if (coreFile != null) return coreFile.getFilePath();
-        
-        return null;
+        IndexedFile file = getFileByEntityId(entityId, type);
+        return file != null ? file.getFilePath() : null;
     }
 
     public static IndexedFile getFileByPath(String path) {

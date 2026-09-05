@@ -469,11 +469,30 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
         }
     }
 
-    protected abstract void addPointToIndex(BaseWorldPoint point);
+    @SuppressWarnings("unchecked")
+    protected void addPointToIndex(BaseWorldPoint point) {
+        if (getTypeReference().isInstance(point)) {
+            ((List<BaseWorldPoint>) this.getPointsIndex()).add(point);
+        } else {
+            throwIllegalPoint();
+        }
+    }
 
-    protected abstract void removePointFromIndex(BaseWorldPoint point);
+    protected void removePointFromIndex(BaseWorldPoint point) {
+        if (getTypeReference().isInstance(point)) {
+            this.getPointsIndex().remove(point);
+        } else {
+            throwIllegalPoint();
+        }
+    }
 
-    public abstract int getIndexOfPoint(BaseWorldPoint point);
+    public int getIndexOfPoint(BaseWorldPoint point) {
+        if (getTypeReference().isInstance(point)) {
+            return this.getPointsIndex().indexOf(point);
+        }
+        throwIllegalPoint();
+        return -1;
+    }
 
     protected abstract WorldPoint getMirroredCounterpart(WorldPoint inputPoint);
 

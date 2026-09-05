@@ -1,51 +1,15 @@
 package shipeditor.components.instrument.ship.centers;
 
-import shipeditor.utility.text.StringManager;
-
 import shipeditor.components.ComponentEnums.EditorInstrument;
+import shipeditor.components.viewer.entities.BaseWorldPoint;
 import shipeditor.components.viewer.entities.ShieldCenterPoint;
-import shipeditor.components.viewer.layers.LayerPainter;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
-import shipeditor.components.viewer.ViewerEnums.PainterVisibility;
+import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 import shipeditor.components.viewer.painters.points.ship.ShieldPointPainter;
 import shipeditor.undo.EditDispatch;
-import shipeditor.utility.components.ComponentUtilities;
-import shipeditor.utility.UtilityEnums.IncrementType;
 import shipeditor.utility.components.widgets.PointLocationWidget;
-import shipeditor.utility.components.widgets.Spinners;
-import shipeditor.utility.objects.Pair;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import java.awt.BorderLayout;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class ShieldPanel extends AbstractCenterPanel {
-
-    private PointLocationWidget shieldCenterWidget;
-
-    @Override
-    public void refreshContent(LayerPainter layerPainter) {
-        if (!(layerPainter instanceof ShipPainter shipPainter) || shipPainter.isUninitialized()) {
-            fireClearingListeners(layerPainter);
-            shieldCenterWidget.refresh(null);
-            return;
-        }
-
-        fireRefresherListeners(layerPainter);
-        shieldCenterWidget.refresh(layerPainter);
-    }
 
     @Override
     protected EditorInstrument getMode() {
@@ -53,196 +17,43 @@ public class ShieldPanel extends AbstractCenterPanel {
     }
 
     @Override
-    protected void populateContent() {
-        this.setLayout(new BorderLayout());
-
-        JPanel topContainer = new JPanel(new BorderLayout());
-
-        Map<JLabel, JComponent> topWidgets = new LinkedHashMap<>();
-
-        var collisionOpacityWidget = createShieldOpacityWidget();
-        topWidgets.put(collisionOpacityWidget.getFirst(), collisionOpacityWidget.getSecond());
-
-        var collisionVisibilityWidget = createShieldVisibilityWidget();
-        topWidgets.put(collisionVisibilityWidget.getFirst(), collisionVisibilityWidget.getSecond());
-
-        Border bottomPadding = new EmptyBorder(0, 0, 4, 0);
-
-        JPanel topWidgetsPanel = createWidgetsPanel(topWidgets);
-        topWidgetsPanel.setBorder(bottomPadding);
-        topContainer.add(topWidgetsPanel, BorderLayout.PAGE_START);
-        shieldCenterWidget = createShieldCenterLocationWidget();
-        topContainer.add(shieldCenterWidget, BorderLayout.CENTER);
-        this.add(topContainer, BorderLayout.PAGE_START);
-
-        JPanel centerContainer = new JPanel(new BorderLayout());
-
-        var collisionRadiusWidget = createShieldRadiusSpinner();
-        Map<JLabel, JComponent> centerWidgets = Map.of(
-                collisionRadiusWidget.getFirst(), collisionRadiusWidget.getSecond()
-        );
-
-        JPanel centerWidgetsPanel = createWidgetsPanel(centerWidgets);
-        centerWidgetsPanel.setBorder(bottomPadding);
-        centerContainer.add(centerWidgetsPanel, BorderLayout.PAGE_START);
-
-        JPanel buttonsPanel = new JPanel(new java.awt.GridLayout(0, 2, 4, 4));
-        buttonsPanel.setBorder(new EmptyBorder(4, 0, 4, 0));
-        javax.swing.JButton autoCalcBtn = new javax.swing.JButton("<html><center>Auto-Calculate<br>Radius</center></html>");
-        autoCalcBtn.addActionListener(e -> autoCalculateShieldRadius());
-        
-        javax.swing.JButton spriteCenterBtn = new javax.swing.JButton("<html><center>Set to<br>Sprite Center</center></html>");
-        spriteCenterBtn.addActionListener(e -> setShieldSpriteCenter());
-        
-        buttonsPanel.add(autoCalcBtn);
-        buttonsPanel.add(spriteCenterBtn);
-        centerContainer.add(buttonsPanel, BorderLayout.PAGE_END);
-
-        this.add(centerContainer, BorderLayout.CENTER);
+    protected String getOpacityLabelKey() {
+        return "SHIELD_OPACITY";
     }
 
-    private void autoCalculateShieldRadius() {
-        LayerPainter layerPainter = getCachedLayerPainter();
-        if (!(layerPainter instanceof ShipPainter shipPainter)) return;
-        
-        shipeditor.components.viewer.painters.points.ship.ShieldPointPainter shieldPointPainter = shipPainter.getShieldPointPainter();
-        shipeditor.components.viewer.entities.ShieldCenterPoint shieldCenterPoint = shieldPointPainter.getShieldCenterPoint();
-        java.awt.geom.Point2D center = shieldCenterPoint.getPosition();
-        
-        java.util.List<shipeditor.components.viewer.entities.BoundPoint> bounds = shipPainter.getBoundsPainter().getPointsIndex();
-        float maxDistSq = 0;
-        if (!bounds.isEmpty()) {
-            for (shipeditor.components.viewer.entities.BoundPoint bp : bounds) {
-                float distSq = (float) center.distanceSq(bp.getPosition());
-                if (distSq > maxDistSq) maxDistSq = distSq;
-            }
-            float radius = (float) Math.ceil(Math.sqrt(maxDistSq));
-            EditDispatch.postShieldRadiusChanged(shieldCenterPoint, radius);
-            processChange();
-        } else if (shipPainter.getSprite() != null && shipPainter.getSprite().getImage() != null) {
-            float w = shipPainter.getSprite().getImage().getWidth();
-            float h = shipPainter.getSprite().getImage().getHeight();
-            float radius = (float) Math.ceil(Math.hypot(w, h) / 2.0);
-            EditDispatch.postShieldRadiusChanged(shieldCenterPoint, radius);
-            processChange();
-        }
+    @Override
+    protected String getVisibilityLabelKey() {
+        return "SHIELD_VIEW";
     }
 
-    private void setShieldSpriteCenter() {
-        LayerPainter layerPainter = getCachedLayerPainter();
-        if (!(layerPainter instanceof ShipPainter shipPainter)) return;
-        if (shipPainter.getSprite() == null || shipPainter.getSprite().getImage() == null) return;
-        
-        float w = shipPainter.getSprite().getImage().getWidth();
-        float h = shipPainter.getSprite().getImage().getHeight();
-        java.awt.geom.Point2D anchor = shipPainter.getAnchor();
-        
-        java.awt.geom.Point2D newCenter = new java.awt.geom.Point2D.Double(anchor.getX() + w / 2.0, anchor.getY() + h / 2.0);
-        
-        shipeditor.components.viewer.painters.points.ship.ShieldPointPainter shieldPointPainter = shipPainter.getShieldPointPainter();
-        shipeditor.components.viewer.entities.ShieldCenterPoint shieldCenterPoint = shieldPointPainter.getShieldCenterPoint();
-        EditDispatch.postPointDragged(shieldCenterPoint, newCenter);
-        processChange();
+    @Override
+    protected String getRadiusLabelKey() {
+        return "SHIELD_RADIUS";
     }
 
-    private Pair<JLabel, JSlider> createShieldOpacityWidget() {
-        BooleanSupplier readinessChecker = this::isWidgetsReadyForInput;
-        Consumer<Float> opacitySetter = changedValue -> {
-            LayerPainter cachedLayerPainter = getCachedLayerPainter();
-            if (cachedLayerPainter != null) {
-                ShieldPointPainter shieldPointPainter = ((ShipPainter) cachedLayerPainter).getShieldPointPainter();
-                shieldPointPainter.setPaintOpacity(changedValue);
-                processChange();
-            }
-        };
-
-        BiConsumer<JComponent, Consumer<LayerPainter>> clearerListener = this::registerWidgetClearer;
-        BiConsumer<JComponent, Consumer<LayerPainter>> refresherListener = this::registerWidgetRefresher;
-
-        Function<LayerPainter, Float> opacityGetter = layerPainter -> {
-            ShieldPointPainter shieldPointPainter = ((ShipPainter) layerPainter).getShieldPointPainter();
-            return shieldPointPainter.getPaintOpacity();
-        };
-
-        Pair<JLabel, JSlider> opacityWidget = ComponentUtilities.createOpacityWidget(readinessChecker,
-                opacityGetter, opacitySetter, clearerListener, refresherListener);
-
-        JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText(StringManager.getString("SHIELD_OPACITY"));
-
-        return opacityWidget;
+    @Override
+    protected AbstractPointPainter getPointPainter(ShipPainter shipPainter) {
+        return shipPainter != null ? shipPainter.getShieldPointPainter() : null;
     }
 
-    private Pair<JLabel, JComboBox<PainterVisibility>> createShieldVisibilityWidget() {
-        BooleanSupplier readinessChecker = this::isWidgetsReadyForInput;
-        Consumer<PainterVisibility> visibilitySetter = changedValue -> {
-            LayerPainter cachedLayerPainter = getCachedLayerPainter();
-            if (cachedLayerPainter != null) {
-                ShieldPointPainter shieldPointPainter = ((ShipPainter) cachedLayerPainter).getShieldPointPainter();
-                shieldPointPainter.setVisibilityMode(changedValue);
-                processChange();
-            }
-        };
-
-        BiConsumer<JComponent, Consumer<LayerPainter>> clearerListener = this::registerWidgetClearer;
-        BiConsumer<JComponent, Consumer<LayerPainter>> refresherListener = this::registerWidgetRefresher;
-
-        Function<LayerPainter, PainterVisibility> visibilityGetter = layerPainter -> {
-            ShieldPointPainter shieldPointPainter = ((ShipPainter) layerPainter).getShieldPointPainter();
-            return shieldPointPainter.getVisibilityMode();
-        };
-
-        var opacityWidget = PainterVisibility.createVisibilityWidget(
-                readinessChecker, visibilityGetter, visibilitySetter, clearerListener, refresherListener
-        );
-
-        JLabel opacityLabel = opacityWidget.getFirst();
-        opacityLabel.setText(StringManager.getString("SHIELD_VIEW"));
-
-        return opacityWidget;
+    @Override
+    protected BaseWorldPoint getTargetCenterPoint(ShipPainter shipPainter) {
+        ShieldPointPainter painter = shipPainter != null ? shipPainter.getShieldPointPainter() : null;
+        return painter != null ? painter.getShieldCenterPoint() : null;
     }
 
-    private Pair<JLabel, JSpinner> createShieldRadiusSpinner() {
-        double minimum = 0.0d;
-        double maximum = Double.MAX_VALUE;
-        double initial = 0.0d;
-        SpinnerNumberModel numberModel = new SpinnerNumberModel(initial, minimum, maximum, 1.0d);
-
-        JSpinner radiusSpinner = Spinners.createWheelable(numberModel, IncrementType.CHUNK);
-        radiusSpinner.setEnabled(false);
-        JLabel radiusLabel = new JLabel(StringManager.getString("SHIELD_RADIUS"));
-
-        radiusSpinner.addChangeListener(e -> {
-            if (!isWidgetsReadyForInput()) return;
-            Number modelNumber = numberModel.getNumber();
-            double newRadius = modelNumber.doubleValue();
-
-            LayerPainter layerPainter = getCachedLayerPainter();
-            ShipPainter shipPainter = (ShipPainter) layerPainter;
-            ShieldPointPainter shieldPointPainter = shipPainter.getShieldPointPainter();
-            ShieldCenterPoint shieldCenterPoint = shieldPointPainter.getShieldCenterPoint();
-            EditDispatch.postShieldRadiusChanged(shieldCenterPoint, (float) newRadius);
-            processChange();
-        });
-
-        registerWidgetListeners(radiusSpinner, layer -> {
-            numberModel.setValue(0.0d);
-            radiusSpinner.setEnabled(false);
-        }, layerPainter -> {
-            ShipPainter shipPainter = (ShipPainter) layerPainter;
-            ShieldPointPainter shieldPointPainter = shipPainter.getShieldPointPainter();
-            ShieldCenterPoint shieldCenterPoint = shieldPointPainter.getShieldCenterPoint();
-            double currentRadius = shieldCenterPoint.getShieldRadius();
-
-            numberModel.setValue(currentRadius);
-            radiusSpinner.setEnabled(true);
-        });
-
-        return new Pair<>(radiusLabel, radiusSpinner);
+    @Override
+    protected double getCurrentRadius(BaseWorldPoint centerPoint) {
+        return ((ShieldCenterPoint) centerPoint).getShieldRadius();
     }
 
-    private PointLocationWidget createShieldCenterLocationWidget() {
+    @Override
+    protected void postRadiusChanged(BaseWorldPoint centerPoint, float radius) {
+        EditDispatch.postShieldRadiusChanged((ShieldCenterPoint) centerPoint, radius);
+    }
+
+    @Override
+    protected PointLocationWidget createCenterLocationWidget() {
         return new ShieldCenterLocationWidget(this);
     }
-
 }

@@ -77,17 +77,7 @@ final class SaveVariantAction {
                 return;
             }
             try {
-                if (result.isFile()) {
-                    try {
-                        VariantFile onDisk = objectMapper.readValue(result, VariantFile.class);
-                        if (onDisk != null && onDisk.getUnrecognizedProperties() != null) {
-                            onDisk.getUnrecognizedProperties().forEach(
-                                    toSerialize.getUnrecognizedProperties()::putIfAbsent);
-                        }
-                    } catch (Exception e) {
-                        log.trace("Could not read existing variant file for unrecognized properties: {}", result, e);
-                    }
-                }
+                SaveActionUtilities.mergeUnrecognizedProperties(result, toSerialize.getUnrecognizedProperties(), VariantFile.class);
                 toSerialize.setVariantFilePath(result.toPath());
                 objectMapper.writeValue(result, toSerialize);
                 GameDataRepository.putVariant(toSerialize);

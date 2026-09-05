@@ -188,19 +188,11 @@ public class PickWeaponDialog extends JPanel {
     }
 
     private String resolvePackageName(Path packagePath) {
-        if (packagePath == null) return "Unknown";
-        if (SettingsManager.isCoreFolder(packagePath)) {
-            return "Starsector Core";
-        }
-        Path fileName = packagePath.getFileName();
-        return fileName != null ? fileName.toString() : packagePath.toString();
+        return DialogHelper.resolvePackageName(packagePath);
     }
 
     private String resolveModIdName(String modId) {
-        if (modId == null || modId.isBlank() || "starsector-core".equals(modId)) {
-            return "Starsector Core";
-        }
-        return modId;
+        return DialogHelper.resolveModIdName(modId);
     }
 
     private JPanel createFilterPanel() {

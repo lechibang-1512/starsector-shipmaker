@@ -98,17 +98,7 @@ final class SaveHullAction {
                 return;
             }
             try {
-                if (result.isFile()) {
-                    try {
-                        HullSpecFile existingFile = shipeditor.parsing.loading.JsonSpecLoader.loadHullFile(result);
-                        if (existingFile != null && existingFile.getUnrecognizedProperties() != null) {
-                            existingFile.getUnrecognizedProperties().forEach(
-                                    toSerialize.getUnrecognizedProperties()::putIfAbsent);
-                        }
-                    } catch (Exception e) {
-                        log.trace("Could not read existing hull file for unrecognized properties: {}", result, e);
-                    }
-                }
+                SaveActionUtilities.mergeUnrecognizedProperties(result, toSerialize.getUnrecognizedProperties(), HullSpecFile.class);
                 toSerialize.setFilePath(result.toPath());
                 objectMapper.writeValue(result, toSerialize);
                 GameDataRepository.putSpec(toSerialize);

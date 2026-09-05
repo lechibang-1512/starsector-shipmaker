@@ -58,24 +58,7 @@ public final class Initializations {
         Class<? extends PrimaryWindow> windowClass = window.getClass();
         ClassLoader classLoader = windowClass.getClassLoader();
         String iconName = "gamefolder_icon64.png";
-
-        File iconFile;
-        BufferedImage iconImage = null;
-        URL iconPath = classLoader != null ? classLoader.getResource(iconName) : Initializations.class.getResource("/" + iconName);
-        if (iconPath != null) {
-            URI checked = iconPath.toURI();
-            if (checked.isOpaque()) {
-                try (InputStream inputStream = Initializations.class.getResourceAsStream("/" + iconName)) {
-                    if (inputStream != null) {
-                        iconImage = ImageIO.read(inputStream);
-                    }
-                }
-            } else {
-                iconFile = new File(checked);
-                log.info("Loading game folder icon...");
-                iconImage = ImageIO.read(iconFile);
-            }
-        }
+        BufferedImage iconImage = loadResourceImage(iconName, classLoader, "Loading game folder icon...");
 
         Settings settings = SettingsManager.getSettings();
         String folderPath = settings != null ? settings.getGameFolderPath() : null;
@@ -110,28 +93,36 @@ public final class Initializations {
         ClassLoader classLoader = windowClass.getClassLoader();
         String iconName = "icon.png";
 
-        File iconFile;
-        BufferedImage iconImage = null;
-        URL iconPath = classLoader != null ? classLoader.getResource(iconName) : Initializations.class.getResource("/" + iconName);
-        if (iconPath != null) {
-            URI checked = iconPath.toURI();
-            if (checked.isOpaque()) {
-                try (InputStream inputStream = Initializations.class.getResourceAsStream("/" + iconName)) {
-                    if (inputStream != null) {
-                        iconImage = ImageIO.read(inputStream);
-                    }
-                }
-            } else {
-                iconFile = new File(checked);
-                log.info("Loading window icon...");
-                iconImage = ImageIO.read(iconFile);
-            }
-        }
+        BufferedImage iconImage = loadResourceImage(iconName, classLoader, "Loading window icon...");
 
         if (iconImage != null) {
             ImageIcon icon = new ImageIcon(iconImage);
             window.setIconImage(icon.getImage());
         }
+    }
+
+    private static BufferedImage loadResourceImage(String resourceName, ClassLoader classLoader, String logMessage)
+            throws URISyntaxException, IOException {
+        URL iconPath = classLoader != null ? classLoader.getResource(resourceName)
+                : Initializations.class.getResource("/" + resourceName);
+        if (iconPath == null) {
+            return null;
+        }
+        URI checked = iconPath.toURI();
+        if (checked.isOpaque()) {
+            try (InputStream inputStream = Initializations.class.getResourceAsStream("/" + resourceName)) {
+                if (inputStream != null) {
+                    return ImageIO.read(inputStream);
+                }
+            }
+        } else {
+            File iconFile = new File(checked);
+            if (logMessage != null) {
+                log.info(logMessage);
+            }
+            return ImageIO.read(iconFile);
+        }
+        return null;
     }
 
     private static class GameFolderIcon extends FlatAbstractIcon {

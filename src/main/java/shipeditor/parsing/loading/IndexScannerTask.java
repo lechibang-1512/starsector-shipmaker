@@ -103,25 +103,7 @@ public final class IndexScannerTask {
             return true;
         }
 
-        List<Path> targetsToScan = new ArrayList<>();
-
-        // Core folder is managed in-memory by CoreIndexManager now.
-
-        // Add active Mod folders
-        List<Path> modFolders = SettingsManager.getAllModFolders();
-        for (Path modFolder : modFolders) {
-            if (LibModFilter.isLibMod(modFolder)) {
-                continue;
-            }
-            Path fileNamePath = modFolder.getFileName();
-            if (fileNamePath != null) {
-                String folderName = fileNamePath.toString();
-                if (!SettingsManager.isModActive(folderName)) {
-                    continue;
-                }
-            }
-            targetsToScan.add(modFolder);
-        }
+        List<Path> targetsToScan = getActiveNonLibModFolders();
 
         Map<String, DatabaseQueryService.ModInfo> existingModsMap = DatabaseQueryService.getScannedModsMap();
 
@@ -170,6 +152,25 @@ public final class IndexScannerTask {
         return false;
     }
 
+    private static List<Path> getActiveNonLibModFolders() {
+        List<Path> targets = new ArrayList<>();
+        List<Path> modFolders = SettingsManager.getAllModFolders();
+        for (Path modFolder : modFolders) {
+            if (LibModFilter.isLibMod(modFolder)) {
+                continue;
+            }
+            Path fileNamePath = modFolder.getFileName();
+            if (fileNamePath != null) {
+                String folderName = fileNamePath.toString();
+                if (!SettingsManager.isModActive(folderName)) {
+                    continue;
+                }
+            }
+            targets.add(modFolder);
+        }
+        return targets;
+    }
+
     /**
      * Executes the scanning process. To be run asynchronously during startup.
      */
@@ -202,24 +203,7 @@ public final class IndexScannerTask {
         // Silently resolve and log instead of prompting the user
         log.info(firstRun ? "Initial database indexing scan starting..." : "Changes detected in mod folders. Updating database index in the background...");
 
-        List<Path> targetsToScan = new ArrayList<>();
-
-        // Core folder is managed in-memory by CoreIndexManager now.
-
-        List<Path> modFolders = SettingsManager.getAllModFolders();
-        for (Path modFolder : modFolders) {
-            if (LibModFilter.isLibMod(modFolder)) {
-                continue;
-            }
-            Path fileNamePath = modFolder.getFileName();
-            if (fileNamePath != null) {
-                String folderName = fileNamePath.toString();
-                if (!SettingsManager.isModActive(folderName)) {
-                    continue;
-                }
-            }
-            targetsToScan.add(modFolder);
-        }
+        List<Path> targetsToScan = getActiveNonLibModFolders();
 
         Map<String, DatabaseQueryService.ModInfo> existingModsMap = DatabaseQueryService.getScannedModsMap();
 

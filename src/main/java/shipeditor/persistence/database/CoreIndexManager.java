@@ -206,29 +206,8 @@ public class CoreIndexManager {
 
     private static void persistToDatabase(Path coreFolder, List<IndexedFile> files) {
         try {
-            // Delete existing records to prevent UNIQUE constraint failures on file_path since we generate new UUIDs
-            try (java.sql.Connection conn = shipeditor.persistence.database.DatabaseManager.getConnection();
-                 java.sql.PreparedStatement pstmt = conn.prepareStatement("DELETE FROM indexed_files WHERE mod_id = ?;")) {
-                pstmt.setString(1, "starsector-core");
-                pstmt.executeUpdate();
-            }
-
-            // Update the mods table with a starsector-core entry first to satisfy foreign key constraint.
-            try (java.sql.Connection conn = shipeditor.persistence.database.DatabaseManager.getConnection();
-                 java.sql.PreparedStatement pstmt = conn.prepareStatement("""
-                         INSERT INTO mods (id, name, folder_path, last_scanned)
-                         VALUES (?, ?, ?, ?)
-                         ON CONFLICT(id) DO UPDATE SET
-                             name = excluded.name,
-                             folder_path = excluded.folder_path,
-                             last_scanned = excluded.last_scanned;
-                         """)) {
-                pstmt.setString(1, "starsector-core");
-                pstmt.setString(2, "Starsector Core");
-                pstmt.setString(3, coreFolder.toAbsolutePath().toString());
-                pstmt.setLong(4, System.currentTimeMillis());
-                pstmt.executeUpdate();
-            }
+            DatabaseQueryService.deleteFilesByModId("starsector-core");
+            DatabaseQueryService.upsertMod("starsector-core", "Starsector Core", coreFolder.toAbsolutePath().toString(), System.currentTimeMillis());
 
             shipeditor.persistence.database.DatabaseQueryService.upsertFiles(files);
         } catch (Exception e) {
