@@ -368,6 +368,7 @@ public class ExportDialog extends JDialog {
             case 0 -> executeViewportSnapshot();
             case 1 -> executeSpritePrint();
             case 2 -> executeEntityShowcase();
+            default -> {}
         }
     }
 

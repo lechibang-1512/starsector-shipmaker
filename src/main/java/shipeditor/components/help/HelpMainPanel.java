@@ -33,37 +33,76 @@ public class HelpMainPanel extends JPanel {
         this.add(articlePanel, BorderLayout.CENTER);
     }
 
+    private static final String[][] BUILT_IN_ARTICLES = {
+        {"General", "getting_started.json"},
+        {"General", "keyboard_shortcuts.json"},
+        {"Guides", "station_modules.json"},
+        {"User Documentation", "creating_help_articles.json"}
+    };
+
     private void populateArticles() {
         DefaultMutableTreeNode rootNode = articlePanel.getRootNode();
         rootNode.removeAllChildren();
 
+        java.util.Map<String, DefaultMutableTreeNode> sectionMap = new java.util.LinkedHashMap<>();
+
+        loadClasspathArticles(rootNode, sectionMap);
+
         File articlesRoot = SettingsManager.getApplicationDirectory().resolve("help").toFile();
-
-        if (!articlesRoot.exists() || !articlesRoot.isDirectory()) return;
-        File[] sectionFolders = articlesRoot.listFiles(a -> a.isDirectory());
-
-        if (sectionFolders == null) return;
-        for (File sectionFolder : sectionFolders) {
-            addArticleSection(sectionFolder);
+        if (articlesRoot.exists() && articlesRoot.isDirectory()) {
+            File[] sectionFolders = articlesRoot.listFiles(a -> a.isDirectory());
+            if (sectionFolders != null) {
+                for (File sectionFolder : sectionFolders) {
+                    addArticleSection(sectionFolder, rootNode, sectionMap);
+                }
+            }
         }
     }
 
-    private void addArticleSection(File sectionFolder) {
-        DefaultMutableTreeNode sectionNode = new DefaultMutableTreeNode(sectionFolder.getName());
-        DefaultMutableTreeNode rootNode = articlePanel.getRootNode();
-        rootNode.add(sectionNode);
+    private void loadClasspathArticles(DefaultMutableTreeNode rootNode,
+                                       java.util.Map<String, DefaultMutableTreeNode> sectionMap) {
+        ObjectMapper objectMapper = FileUtilities.getConfigured();
+        for (String[] entry : BUILT_IN_ARTICLES) {
+            String sectionName = entry[0];
+            String fileName = entry[1];
+            String path = "/help/" + sectionName + "/" + fileName;
+            try (java.io.InputStream is = HelpMainPanel.class.getResourceAsStream(path)) {
+                if (is != null) {
+                    HelpArticle article = objectMapper.readValue(is, HelpArticle.class);
+                    DefaultMutableTreeNode sectionNode = sectionMap.computeIfAbsent(sectionName, s -> {
+                        DefaultMutableTreeNode node = new DefaultMutableTreeNode(s);
+                        rootNode.add(node);
+                        return node;
+                    });
+                    sectionNode.add(new DefaultMutableTreeNode(article));
+                }
+            } catch (Exception e) {
+                log.warn("Failed to load packaged help article: {}", path, e);
+            }
+        }
+    }
+
+    private void addArticleSection(File sectionFolder, DefaultMutableTreeNode rootNode,
+                                   java.util.Map<String, DefaultMutableTreeNode> sectionMap) {
+        String sectionName = sectionFolder.getName();
+        DefaultMutableTreeNode sectionNode = sectionMap.computeIfAbsent(sectionName, s -> {
+            DefaultMutableTreeNode node = new DefaultMutableTreeNode(s);
+            rootNode.add(node);
+            return node;
+        });
 
         File[] articleFiles = sectionFolder.listFiles((dir, name) -> name.endsWith(".json"));
 
         if (articleFiles != null) {
             for (File articleFile : articleFiles) {
                 HelpArticle article = this.readArticleFromFile(articleFile);
-                sectionNode.add(new DefaultMutableTreeNode(article));
+                if (article != null) {
+                    sectionNode.add(new DefaultMutableTreeNode(article));
+                }
             }
         }
     }
 
-    @SuppressWarnings({"CallToPrintStackTrace"})
     private HelpArticle readArticleFromFile(File file) {
         ObjectMapper objectMapper = FileUtilities.getConfigured();
         try {

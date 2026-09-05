@@ -37,6 +37,7 @@ public final class WeaponSlotCreationController {
                     created.setWeaponSize(SlotCreationPane.getDefaultSize());
                     created.setAngle(SlotCreationPane.getDefaultAngle());
                     created.setArc(SlotCreationPane.getDefaultArc());
+                    created.setRenderOrderMod(SlotCreationPane.getDefaultRenderOrderMod());
                 }
                 created.setId(uniqueID);
             }
@@ -48,6 +49,7 @@ public final class WeaponSlotCreationController {
                 created.setWeaponSize(SlotCreationPane.getDefaultSize());
                 created.setAngle(SlotCreationPane.getDefaultAngle());
                 created.setArc(SlotCreationPane.getDefaultArc());
+                created.setRenderOrderMod(SlotCreationPane.getDefaultRenderOrderMod());
             }
         }
 

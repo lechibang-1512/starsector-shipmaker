@@ -60,12 +60,22 @@ public final class UndoOverseer {
         @Override
         public void actionPerformed(ActionEvent e) {
             Deque<Edit> undo = UndoOverseer.getUndoStack();
+            if (undo.isEmpty()) {
+                return;
+            }
             Edit head = undo.pop();
-            head.undo();
-            Deque<Edit> redo = UndoOverseer.getRedoStack();
-            redo.push(head);
-            markActiveLayerDirty(head);
-            updateActionState();
+            try {
+                log.debug("Executing undo: {}", head.getName());
+                head.undo();
+                Deque<Edit> redo = UndoOverseer.getRedoStack();
+                redo.push(head);
+                markActiveLayerDirty(head);
+            } catch (Exception ex) {
+                log.error("Failed to undo edit: {}", head.getName(), ex);
+                undo.push(head);
+            } finally {
+                updateActionState();
+            }
         }
     };
 
@@ -73,12 +83,22 @@ public final class UndoOverseer {
         @Override
         public void actionPerformed(ActionEvent e) {
             Deque<Edit> redo = getRedoStack();
+            if (redo.isEmpty()) {
+                return;
+            }
             Edit head = redo.pop();
-            head.redo();
-            Deque<Edit> undo = getUndoStack();
-            undo.push(head);
-            markActiveLayerDirty(head);
-            updateActionState();
+            try {
+                log.debug("Executing redo: {}", head.getName());
+                head.redo();
+                Deque<Edit> undo = getUndoStack();
+                undo.push(head);
+                markActiveLayerDirty(head);
+            } catch (Exception ex) {
+                log.error("Failed to redo edit: {}", head.getName(), ex);
+                redo.push(head);
+            } finally {
+                updateActionState();
+            }
         }
     };
 

@@ -13,7 +13,9 @@ import shipeditor.utility.Errors;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -110,8 +112,23 @@ public class SaveCSVAction {
                     .build();
 
             File targetFile = path.toFile();
-            mapper.writer(customFormat).writeValue(targetFile, rawData);
-            log.info("Saved CSV to {}", targetFile);
+            Path tempPath = path.resolveSibling(targetFile.getName() + ".tmp");
+            try {
+                mapper.writer(customFormat).writeValue(tempPath.toFile(), rawData);
+                try {
+                    Files.move(tempPath, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException atomicEx) {
+                    log.debug("Atomic move failed for {}, falling back to standard replace: {}", path, atomicEx.getMessage());
+                    Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
+                }
+                log.info("Saved CSV to {}", targetFile);
+            } finally {
+                try {
+                    Files.deleteIfExists(tempPath);
+                } catch (IOException cleanupEx) {
+                    log.debug("Temporary file cleanup for {}: {}", tempPath, cleanupEx.getMessage());
+                }
+            }
         } catch (java.io.IOException e) {
             log.error("Failed to save CSV to {}", path, e);
             Errors.printToStream(e);

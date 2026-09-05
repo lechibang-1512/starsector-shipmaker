@@ -9,6 +9,8 @@ import shipeditor.representation.weapon.ProjectileSpecFile;
 import shipeditor.representation.weapon.WeaponSpecFile;
 import shipeditor.utility.text.StringConstants;
 
+import lombok.extern.log4j.Log4j2;
+
 import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.Font;
@@ -22,6 +24,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+@Log4j2
 public class ShowcaseGenerator {
 
     private static final int MIN_FONT_SIZE = 10;
@@ -249,7 +252,7 @@ public class ShowcaseGenerator {
                 return ImageIO.read(resolved);
             }
         } catch (Exception e) {
-            // Ignore
+            log.debug("Failed to load showcase sprite '{}': {}", path, e.getMessage(), e);
         }
         return null;
     }

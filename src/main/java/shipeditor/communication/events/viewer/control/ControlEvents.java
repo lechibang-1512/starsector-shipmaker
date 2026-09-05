@@ -107,6 +107,10 @@ public class ControlEvents {
 
     public static record CoordsModeChanged(CoordsDisplayMode newMode) implements BusEvent {
 
-}
+    }
+
+    public static record CycleWeaponFrameQueued() implements ViewerEvent {
+
+    }
 
 }

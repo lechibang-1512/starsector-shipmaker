@@ -172,23 +172,32 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
             WeaponSpecFile weaponSpecFile = this.getSpecFile();
 
             if (weaponSpecFile != null) {
+                int numFrames = weaponSpecFile.getNumFrames();
                 String turretSprite = weaponSpecFile.getTurretSprite();
-                setSpecSpriteFromPath(turretSprite, spriteHolder::setTurretSprite);
+                setSpecSpriteWithFrames(turretSprite, numFrames,
+                        spriteHolder::setTurretSprite, spriteHolder::setTurretSpriteFrames);
                 String turretGunSprite = weaponSpecFile.getTurretGunSprite();
-                setSpecSpriteFromPath(turretGunSprite, spriteHolder::setTurretGunSprite);
+                setSpecSpriteWithFrames(turretGunSprite, numFrames,
+                        spriteHolder::setTurretGunSprite, spriteHolder::setTurretGunSpriteFrames);
                 String turretGlowSprite = weaponSpecFile.getTurretGlowSprite();
-                setSpecSpriteFromPath(turretGlowSprite, spriteHolder::setTurretGlowSprite);
+                setSpecSpriteWithFrames(turretGlowSprite, numFrames,
+                        spriteHolder::setTurretGlowSprite, spriteHolder::setTurretGlowSpriteFrames);
                 String turretUnderSprite = weaponSpecFile.getTurretUnderSprite();
-                setSpecSpriteFromPath(turretUnderSprite, spriteHolder::setTurretUnderSprite);
+                setSpecSpriteWithFrames(turretUnderSprite, numFrames,
+                        spriteHolder::setTurretUnderSprite, spriteHolder::setTurretUnderSpriteFrames);
 
                 String hardpointSprite = weaponSpecFile.getHardpointSprite();
-                setSpecSpriteFromPath(hardpointSprite, spriteHolder::setHardpointSprite);
+                setSpecSpriteWithFrames(hardpointSprite, numFrames,
+                        spriteHolder::setHardpointSprite, spriteHolder::setHardpointSpriteFrames);
                 String hardpointGunSprite = weaponSpecFile.getHardpointGunSprite();
-                setSpecSpriteFromPath(hardpointGunSprite, spriteHolder::setHardpointGunSprite);
+                setSpecSpriteWithFrames(hardpointGunSprite, numFrames,
+                        spriteHolder::setHardpointGunSprite, spriteHolder::setHardpointGunSpriteFrames);
                 String hardpointGlowSprite = weaponSpecFile.getHardpointGlowSprite();
-                setSpecSpriteFromPath(hardpointGlowSprite, spriteHolder::setHardpointGlowSprite);
+                setSpecSpriteWithFrames(hardpointGlowSprite, numFrames,
+                        spriteHolder::setHardpointGlowSprite, spriteHolder::setHardpointGlowSpriteFrames);
                 String hardpointUnderSprite = weaponSpecFile.getHardpointUnderSprite();
-                setSpecSpriteFromPath(hardpointUnderSprite, spriteHolder::setHardpointUnderSprite);
+                setSpecSpriteWithFrames(hardpointUnderSprite, numFrames,
+                        spriteHolder::setHardpointUnderSprite, spriteHolder::setHardpointUnderSpriteFrames);
             }
 
             sprites = spriteHolder;
@@ -394,6 +403,50 @@ public class WeaponCSVEntry implements LayerableEntry, InstallableEntry {
         }
         Sprite sprite = Utility.loadSpriteFromPath(pathInPackage, this.packageFolderPath);
         setter.accept(sprite);
+    }
+
+    private void setSpecSpriteWithFrames(String pathInPackage, int numFrames,
+                                         Consumer<Sprite> singleSetter,
+                                         Consumer<List<Sprite>> framesSetter) {
+        if (pathInPackage == null || pathInPackage.isEmpty()) {
+            return;
+        }
+        Sprite baseSprite = Utility.loadSpriteFromPath(pathInPackage, this.packageFolderPath);
+        if (baseSprite != null) {
+            singleSetter.accept(baseSprite);
+        }
+        if (numFrames <= 1) {
+            if (baseSprite != null) {
+                List<Sprite> singleList = new ArrayList<>();
+                singleList.add(baseSprite);
+                framesSetter.accept(singleList);
+            }
+            return;
+        }
+        List<Sprite> frames = new ArrayList<>();
+        if (baseSprite != null) {
+            frames.add(baseSprite);
+        }
+        for (int i = 1; i < numFrames; i++) {
+            String framePath = Utility.getFrameSpritePath(pathInPackage, i);
+            if (framePath != null && !framePath.equals(pathInPackage)) {
+                Path filePath = Path.of(framePath);
+                File spriteFile = FileLoading.fetchDataFile(filePath, this.packageFolderPath);
+                if (spriteFile != null && spriteFile.exists()) {
+                    Sprite frameSprite = FileLoading.loadSprite(spriteFile);
+                    if (frameSprite != null) {
+                        frames.add(frameSprite);
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        framesSetter.accept(frames);
     }
 
     public JPanel createPickedWeaponPanel() {

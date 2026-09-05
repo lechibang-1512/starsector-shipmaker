@@ -5,6 +5,8 @@ import shipeditor.representation.RepresentationEnums.ShipTypeHints;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -24,6 +26,7 @@ import shipeditor.utility.text.StringConstants;
 import java.awt.Color;
 
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -199,6 +202,19 @@ public class SkinSpecFile implements ShipSpecFile {
     @Override
     public String getHullId() {
         return skinHullId;
+    }
+
+    @JsonIgnore
+    private final Map<String, Object> unrecognizedProperties = new LinkedHashMap<>();
+
+    @JsonAnyGetter
+    public Map<String, Object> getUnrecognizedProperties() {
+        return unrecognizedProperties;
+    }
+
+    @JsonAnySetter
+    public void setUnrecognizedProperty(String name, Object value) {
+        unrecognizedProperties.put(name, value);
     }
 
 }

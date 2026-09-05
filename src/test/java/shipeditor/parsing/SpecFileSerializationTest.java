@@ -1665,4 +1665,142 @@ class SpecFileSerializationTest {
             assertEquals(-0.25, weapon.getTurretOffsets()[0].getY(), 0.001);
         }
     }
+
+    // ============================================================
+    // Section 7: Non-Destructive JSON Preservation Tests
+    // ============================================================
+
+    @Nested
+    class NonDestructiveJsonTests {
+
+        @Test
+        void testWeaponUnrecognizedPropertiesPreserved() throws IOException {
+            String json = """
+                    {
+                        id: "test_weapon_custom";
+                        specClass: "projectile";
+                        type: "BALLISTIC";
+                        size: "SMALL";
+                        customModProperty: "special_value";
+                        customConfig: {
+                            spinUpTime: 1.5;
+                            laserColor: "red";
+                        };
+                        turretOffsets: [0, 0];
+                        turretAngleOffsets: [0];
+                        hardpointOffsets: [0, 0];
+                        hardpointAngleOffsets: [0];
+                    }
+                    """;
+            WeaponSpecFile weapon = parseStarsectorJson(json, WeaponSpecFile.class);
+            assertNotNull(weapon.getUnrecognizedProperties());
+            assertEquals("special_value", weapon.getUnrecognizedProperties().get("customModProperty"));
+            assertNotNull(weapon.getUnrecognizedProperties().get("customConfig"));
+
+            WeaponSpecFile roundTripped = roundTrip(weapon, WeaponSpecFile.class);
+            assertNotNull(roundTripped.getUnrecognizedProperties());
+            assertEquals("special_value", roundTripped.getUnrecognizedProperties().get("customModProperty"));
+            assertNotNull(roundTripped.getUnrecognizedProperties().get("customConfig"));
+        }
+
+        @Test
+        void testHullUnrecognizedPropertiesPreserved() throws IOException {
+            String json = """
+                    {
+                        hullName: "Custom Data Ship";
+                        hullId: "custom_ship";
+                        hullSize: "CRUISER";
+                        style: "HIGH_TECH";
+                        spriteName: "graphics/ships/custom.png";
+                        height: 100;
+                        width: 100;
+                        center: [50, 50];
+                        collisionRadius: 80;
+                        shieldCenter: [0, 0];
+                        shieldRadius: 90;
+                        viewOffset: 0;
+                        customHullModPayload: {
+                            overloadThreshold: 1200;
+                        };
+                        customFleetCost: 25;
+                        weaponSlots: [];
+                        engineSlots: [];
+                        bounds: []
+                    }
+                    """;
+            HullSpecFile hull = parseStarsectorJson(json, HullSpecFile.class);
+            assertNotNull(hull.getUnrecognizedProperties());
+            assertEquals(25, ((Number) hull.getUnrecognizedProperties().get("customFleetCost")).intValue());
+            assertNotNull(hull.getUnrecognizedProperties().get("customHullModPayload"));
+
+            HullSpecFile roundTripped = roundTrip(hull, HullSpecFile.class);
+            assertNotNull(roundTripped.getUnrecognizedProperties());
+            assertEquals(25, ((Number) roundTripped.getUnrecognizedProperties().get("customFleetCost")).intValue());
+            assertNotNull(roundTripped.getUnrecognizedProperties().get("customHullModPayload"));
+        }
+
+        @Test
+        void testVariantUnrecognizedPropertiesPreserved() throws IOException {
+            String json = """
+                    {
+                        displayName: "Elite Variant";
+                        hullId: "test_hull";
+                        variantId: "test_hull_elite";
+                        fluxCapacitors: 10;
+                        fluxVents: 10;
+                        goalVariant: true;
+                        customTag: "faction_flagship";
+                        customNumericParam: 42.5;
+                        hullMods: [];
+                        weaponGroups: []
+                    }
+                    """;
+            VariantFile variant = parseStarsectorJson(json, VariantFile.class);
+            assertNotNull(variant.getUnrecognizedProperties());
+            assertEquals("faction_flagship", variant.getUnrecognizedProperties().get("customTag"));
+            assertEquals(42.5, ((Number) variant.getUnrecognizedProperties().get("customNumericParam")).doubleValue(), 0.001);
+
+            VariantFile roundTripped = roundTrip(variant, VariantFile.class);
+            assertNotNull(roundTripped.getUnrecognizedProperties());
+            assertEquals("faction_flagship", roundTripped.getUnrecognizedProperties().get("customTag"));
+            assertEquals(42.5, ((Number) roundTripped.getUnrecognizedProperties().get("customNumericParam")).doubleValue(), 0.001);
+        }
+
+        @Test
+        void testSkinUnrecognizedPropertiesPreserved() throws IOException {
+            String json = """
+                    {
+                        baseHullId: "test_hull";
+                        skinHullId: "test_hull_skin";
+                        hullName: "Skin Name";
+                        customSkinData: "preserved_attribute";
+                    }
+                    """;
+            SkinSpecFile skin = parseStarsectorJson(json, SkinSpecFile.class);
+            assertNotNull(skin.getUnrecognizedProperties());
+            assertEquals("preserved_attribute", skin.getUnrecognizedProperties().get("customSkinData"));
+
+            SkinSpecFile roundTripped = roundTrip(skin, SkinSpecFile.class);
+            assertNotNull(roundTripped.getUnrecognizedProperties());
+            assertEquals("preserved_attribute", roundTripped.getUnrecognizedProperties().get("customSkinData"));
+        }
+
+        @Test
+        void testProjectileUnrecognizedPropertiesPreserved() throws IOException {
+            String json = """
+                    {
+                        id: "test_proj_custom";
+                        specClass: "projectile";
+                        customTrailShader: "shader_plasma_v2";
+                    }
+                    """;
+            ProjectileSpecFile proj = parseStarsectorJson(json, ProjectileSpecFile.class);
+            assertNotNull(proj.getUnrecognizedProperties());
+            assertEquals("shader_plasma_v2", proj.getUnrecognizedProperties().get("customTrailShader"));
+
+            ProjectileSpecFile roundTripped = roundTrip(proj, ProjectileSpecFile.class);
+            assertNotNull(roundTripped.getUnrecognizedProperties());
+            assertEquals("shader_plasma_v2", roundTripped.getUnrecognizedProperties().get("customTrailShader"));
+        }
+    }
 }

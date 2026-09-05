@@ -29,7 +29,7 @@ public final class EventBus {
     }
 
     private static ExceptionHandler exceptionHandler = (throwable, receiver, event) -> {
-        log.error("Error in listener {} handling event {}", getListenerName(receiver), event.getClass().getSimpleName());
+        log.error("Error in listener {} handling event {}", getListenerName(receiver), event.getClass().getSimpleName(), throwable);
         Errors.printToStream(throwable);
     };
 
@@ -204,7 +204,7 @@ public final class EventBus {
         }
         TRACE_ENABLED = false;
         exceptionHandler = (throwable, receiver, event) -> {
-            log.error("Error in listener {} handling event {}", getListenerName(receiver), event.getClass().getSimpleName());
+            log.error("Error in listener {} handling event {}", getListenerName(receiver), event.getClass().getSimpleName(), throwable);
             Errors.printToStream(throwable);
         };
     }

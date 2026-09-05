@@ -18,7 +18,9 @@ import java.awt.Color;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 @Log4j2
@@ -46,6 +48,8 @@ public class ShipHull {
 
     private String hullFileName;
 
+    private Map<String, Object> unrecognizedProperties = new LinkedHashMap<>();
+
     public void setHullStyle(HullStyle style) {
         this.hullStyle = style;
         if (style != null) {
@@ -58,6 +62,7 @@ public class ShipHull {
             log.error("Attempted to initialize ShipHull with null HullSpecFile!");
             return;
         }
+        this.unrecognizedProperties = new LinkedHashMap<>(specFile.getUnrecognizedProperties());
         this.hullName = specFile.getHullName();
         this.hullID = specFile.getHullId();
         if (specFile.getHullSize() == null) {

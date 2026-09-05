@@ -1,8 +1,12 @@
 package shipeditor.undo.edits;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import shipeditor.components.viewer.layers.LayerPainter;
 
 public interface LayerEdit {
+
+    Logger log = LogManager.getLogger(LayerEdit.class);
 
     default LayerPainter getLayerPainter() {
         for (java.lang.reflect.Field f : this.getClass().getDeclaredFields()) {
@@ -18,9 +22,13 @@ public interface LayerEdit {
                         java.lang.reflect.Method m = val.getClass().getMethod("getParentLayer");
                         Object res = m.invoke(val);
                         if (res instanceof LayerPainter lp) return lp;
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                        log.trace("Reflection lookup for getParentLayer() failed on {}: {}", val.getClass().getName(), ignored.getMessage());
+                    }
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                log.trace("Field inspection failed on field {}: {}", f.getName(), e.getMessage());
+            }
         }
         return null;
     }

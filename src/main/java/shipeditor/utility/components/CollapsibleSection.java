@@ -65,9 +65,23 @@ public class CollapsibleSection extends JPanel {
         header.setBorder(bottomLine);
 
         header.addMouseListener(new MouseAdapter() {
+            private java.awt.Point pressPt;
+
             @Override
-            public void mouseClicked(MouseEvent e) {
-                toggleCollapsed(title);
+            public void mousePressed(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    pressPt = e.getPoint();
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1 && pressPt != null) {
+                    if (pressPt.distanceSq(e.getPoint()) <= 100) {
+                        toggleCollapsed(title);
+                    }
+                    pressPt = null;
+                }
             }
         });
 

@@ -104,6 +104,22 @@ public class WeaponPainter extends LayerPainter {
         return weaponSprites.getMainSprite(mount);
     }
 
+    public void cycleNextFrame() {
+        if (weaponSprites != null) {
+            weaponSprites.cycleNextFrame();
+        }
+    }
+
+    public int getCurrentFrame() {
+        return weaponSprites != null ? weaponSprites.getCurrentFrame() : 0;
+    }
+
+    public void setCurrentFrame(int frame) {
+        if (weaponSprites != null) {
+            weaponSprites.setCurrentFrame(frame);
+        }
+    }
+
     @SuppressWarnings("SameParameterValue")
     private boolean hasHint(WeaponRenderHints hint) {
         if (renderHints == null || renderHints.isEmpty()) return false;

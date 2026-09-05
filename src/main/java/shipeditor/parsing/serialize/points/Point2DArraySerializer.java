@@ -24,18 +24,20 @@ public class Point2DArraySerializer extends JsonSerializer<Point2D.Double[]> {
         prettyPrinter.beforeArrayValues(gen);
 
         int length = value.length;
-        for (int i = 0; i < length; i++) {
-            Point2D.Double point = value[i];
+        int count = 0;
+        for (Point2D.Double point : value) {
+            count++;
+            boolean isLast = (count == length);
 
             SerializationUtilities.writePoint2DForArray(point, gen);
 
-            if (i == length - 1) {
+            if (isLast) {
                 writeClosure(gen, length);
             } else {
                 prettyPrinter.writeArrayValueSeparator(gen);
             }
 
-            if ((i + 1) % 5 == 0 && i != length - 1) {
+            if (count % 5 == 0 && !isLast) {
                 gen.writeRaw(BasicPrettyPrinter.LINEFEED);
                 gen.writeRaw(BasicPrettyPrinter.INDENT);
                 gen.writeRaw(BasicPrettyPrinter.INDENT);

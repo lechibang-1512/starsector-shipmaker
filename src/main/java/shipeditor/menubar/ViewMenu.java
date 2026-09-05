@@ -43,6 +43,12 @@ class ViewMenu extends JMenu {
         centerView.addActionListener(event -> EventBus.publish(new ViewerTransformsReset()));
         this.add(centerView);
 
+        JMenuItem cycleFrame = new JMenuItem(StringManager.getString("CYCLE_WEAPON_FRAME"));
+        cycleFrame.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0));
+        cycleFrame.addActionListener(event -> EventBus.publish(
+                new shipeditor.communication.events.viewer.control.ControlEvents.CycleWeaponFrameQueued()));
+        this.add(cycleFrame);
+
         this.addSeparator();
 
         toggleRotate = new JCheckBoxMenuItem(StringManager.getString("ENABLE_VIEW_ROTATION"));

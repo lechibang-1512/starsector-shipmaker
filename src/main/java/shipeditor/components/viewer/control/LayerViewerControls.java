@@ -157,49 +157,77 @@ public final class LayerViewerControls implements ViewerControl {
                 this.rotateExact(checked.degrees());
             }
         });
+        EventBus.subscribe(this, event -> {
+            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.CycleWeaponFrameQueued) {
+                LayerPainter active = parentViewer.getSelectedLayer();
+                if (active instanceof shipeditor.components.viewer.layers.ship.ShipPainter shipPainter) {
+                    shipPainter.cycleWeaponFrames();
+                    EventBus.publish(new ViewerRepaintQueued());
+                } else if (active instanceof shipeditor.components.viewer.layers.weapon.WeaponPainter weaponPainter) {
+                    weaponPainter.cycleNextFrame();
+                    EventBus.publish(new ViewerRepaintQueued());
+                }
+            }
+        });
     }
 
     private void initKeystrokeListener() {
         EventBus.subscribe(this, event -> {
-            if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed pressedEvent) {
-                int keyCode = pressedEvent.keyEvent().getKeyCode();
-                boolean isCtrlDown = pressedEvent.keyEvent().isControlDown();
-                java.awt.Component focusOwner = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-                boolean isTextFieldFocused = focusOwner instanceof javax.swing.text.JTextComponent;
+            switch (event.getClass().getSimpleName()) {
+                case "ViewerRawKeyPressed" -> {
+                    var pressedEvent = (shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed) event;
+                    int keyCode = pressedEvent.keyEvent().getKeyCode();
+                    boolean isCtrlDown = pressedEvent.keyEvent().isControlDown();
+                    java.awt.Component focusOwner = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                    boolean isTextFieldFocused = focusOwner instanceof javax.swing.text.JTextComponent;
 
-                if (keyCode == LAYER_DRAG_HOTKEY) {
-                    this.parentViewer.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
-                    this.parentViewer.setRepaintQueued();
-                } else if (!isTextFieldFocused) {
-                    if (keyCode == KeyEvent.VK_BACK_SPACE) {
-                        EventBus.publish(new PointRemoveQueued(null, false));
-                        EventBus.publish(new DeleteButtonPressed());
-                    } else if (keyCode == KeyEvent.VK_C && isCtrlDown) {
-                        if (StaticController.getEditorMode() == EditorInstrument.WEAPON_SLOTS) {
-                            WeaponSlotPainter painter = StaticController.getSelectedSlotPainter();
-                            if (painter != null) {
-                                WeaponSlotPoint selected = painter.getSelected();
-                                if (selected != null) {
-                                    WeaponSlotClipboard.copy(java.util.List.of(selected));
+                    if (keyCode == LAYER_DRAG_HOTKEY) {
+                        this.parentViewer.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+                        this.parentViewer.setRepaintQueued();
+                    } else if (!isTextFieldFocused) {
+                        switch (keyCode) {
+                            case KeyEvent.VK_BACK_SPACE -> {
+                                EventBus.publish(new PointRemoveQueued(null, false));
+                                EventBus.publish(new DeleteButtonPressed());
+                            }
+                            case KeyEvent.VK_C -> {
+                                if (isCtrlDown && StaticController.getEditorMode() == EditorInstrument.WEAPON_SLOTS) {
+                                    WeaponSlotPainter painter = StaticController.getSelectedSlotPainter();
+                                    if (painter != null) {
+                                        WeaponSlotPoint selected = painter.getSelected();
+                                        if (selected != null) {
+                                            WeaponSlotClipboard.copy(java.util.List.of(selected));
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    } else if (keyCode == KeyEvent.VK_V && isCtrlDown) {
-                        if (StaticController.getEditorMode() == EditorInstrument.WEAPON_SLOTS) {
-                            WeaponSlotPainter painter = StaticController.getSelectedSlotPainter();
-                            if (painter != null && WeaponSlotClipboard.hasData()) {
-                                Point2D target = StaticController.getFinalWorldCursor();
-                                painter.pasteSlots(WeaponSlotClipboard.getClipboard(), target);
+                            case KeyEvent.VK_V -> {
+                                if (isCtrlDown && StaticController.getEditorMode() == EditorInstrument.WEAPON_SLOTS) {
+                                    WeaponSlotPainter painter = StaticController.getSelectedSlotPainter();
+                                    if (painter != null && WeaponSlotClipboard.hasData()) {
+                                        Point2D target = StaticController.getFinalWorldCursor();
+                                        painter.pasteSlots(WeaponSlotClipboard.getClipboard(), target);
+                                    }
+                                }
                             }
+                            case KeyEvent.VK_F6 -> {
+                                EventBus.publish(
+                                        new shipeditor.communication.events.viewer.control.ControlEvents
+                                                .CycleWeaponFrameQueued());
+                            }
+                            default -> {}
                         }
                     }
                 }
-            } else if (event instanceof shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased releasedEvent) {
-                int keyCode = releasedEvent.keyEvent().getKeyCode();
-                if (keyCode == LAYER_DRAG_HOTKEY) {
-                    this.parentViewer.setCursor(Cursor.getDefaultCursor());
-                    this.parentViewer.setRepaintQueued();
+                case "ViewerRawKeyReleased" -> {
+                    var releasedEvent = (shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased) event;
+                    int keyCode = releasedEvent.keyEvent().getKeyCode();
+                    if (keyCode == LAYER_DRAG_HOTKEY) {
+                        this.parentViewer.setCursor(Cursor.getDefaultCursor());
+                        this.parentViewer.setRepaintQueued();
+                    }
                 }
+                default -> {}
             }
         });
     }

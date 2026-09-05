@@ -28,6 +28,7 @@ import shipeditor.components.viewer.layers.ship.data.ActiveShipSpec;
 import shipeditor.components.viewer.layers.ship.data.ShipSkin;
 import shipeditor.components.viewer.layers.ship.data.ShipVariant;
 import shipeditor.components.viewer.layers.ship.data.Variant;
+import shipeditor.components.viewer.layers.weapon.WeaponPainter;
 
 import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 import shipeditor.components.viewer.painters.points.ship.*;
@@ -122,17 +123,33 @@ public class ShipPainter extends LayerPainter {
 
             activeVariant.initialize(file);
 
-            // Validate that the variant's fitted weapons actually match the hull's slot restrictions
+            // Validate that the variant's fitted weapons match the hull's slot restrictions without corrupting or stripping data
             var slotPainter = this.getWeaponSlotPainter();
             var fittedWeapons = activeVariant.getAllFittedWeapons();
+            var builtIns = this.getBuiltInsWithSkin(true, true);
             fittedWeapons.forEach((slotID, feature) -> {
+                // Built-in weapons defined on the hull or skin are always valid for their assigned slot
+                if (feature.isContainedInBuiltIns() || (builtIns != null && builtIns.containsKey(slotID))) {
+                    return;
+                }
                 var slotPoint = slotPainter.getSlotByID(slotID);
-                if (slotPoint == null || !shipeditor.representation.weapon.WeaponEnums.WeaponType.isValidForSlot(slotPoint, feature.getDataEntry())) {
-                    log.warn("Variant {} specifies invalid weapon {} for slot {}, removing from group.", variantId, feature.getDataEntry().getID(), slotID);
-                    var parentGroup = feature.getParentGroup();
-                    if (parentGroup != null) {
-                        parentGroup.getWeapons().remove(slotID);
+                if (slotPoint == null) {
+                    // Check if this slot belongs to a fitted module
+                    var modules = activeVariant.getFittedModules();
+                    if (modules != null) {
+                        for (InstalledFeature module : modules.values()) {
+                            LayerPainter modulePainter = module.getFeaturePainter();
+                            if (modulePainter instanceof ShipPainter shipModulePainter
+                                    && shipModulePainter.getWeaponSlotPainter().getSlotByID(slotID) != null) {
+                                return;
+                            }
+                        }
                     }
+                    log.debug("Variant {} specifies weapon {} for non-hull slot {}.", variantId, feature.getDataEntry().getID(), slotID);
+                    return;
+                }
+                if (!shipeditor.representation.weapon.WeaponEnums.WeaponType.isValidForSlot(slotPoint, feature.getDataEntry())) {
+                    log.debug("Variant {} weapon {} does not match slot {} type/size restrictions.", variantId, feature.getDataEntry().getID(), slotID);
                 }
             });
 
@@ -215,6 +232,7 @@ public class ShipPainter extends LayerPainter {
             this.activeSkin = skin;
         }
         this.selectVariant(VariantFile.empty());
+        this.notifyLayerUpdate();
     }
 
     private void notifyLayerUpdate() {
@@ -224,6 +242,8 @@ public class ShipPainter extends LayerPainter {
         }
         EventBus.publish(new InstrumentRepaintQueued(EditorInstrument.SKIN_DATA));
         EventBus.publish(new InstrumentRepaintQueued(EditorInstrument.SKIN_SLOTS));
+        EventBus.publish(new InstrumentRepaintQueued(EditorInstrument.SKIN_ENGINES));
+        EventBus.publish(new InstrumentRepaintQueued(EditorInstrument.SKIN_REMOVALS));
         Events.repaintShipView();
     }
 
@@ -518,6 +538,27 @@ public class ShipPainter extends LayerPainter {
             installedFeaturePainter.paintUnderParent(spriteRenderer, shapeRenderer, projection, view);
             super.paint(spriteRenderer, shapeRenderer, projection, view);
             installedFeaturePainter.paintNormal(spriteRenderer, shapeRenderer, projection, view);
+        }
+    }
+
+    public void cycleWeaponFrames() {
+        if (activeVariant != null && !activeVariant.isEmpty()) {
+            var allWeapons = activeVariant.getAllFittedWeapons();
+            if (allWeapons != null) {
+                allWeapons.values().forEach(feature -> {
+                    if (feature.getFeaturePainter() instanceof WeaponPainter weaponPainter) {
+                        weaponPainter.cycleNextFrame();
+                    }
+                });
+            }
+        }
+        var builtIns = getBuiltInsWithSkin(true, true);
+        if (builtIns != null) {
+            builtIns.values().forEach(feature -> {
+                if (feature.getFeaturePainter() instanceof WeaponPainter weaponPainter) {
+                    weaponPainter.cycleNextFrame();
+                }
+            });
         }
     }
 

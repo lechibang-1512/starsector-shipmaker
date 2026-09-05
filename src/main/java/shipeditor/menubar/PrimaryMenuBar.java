@@ -63,11 +63,11 @@ public final class PrimaryMenuBar extends JMenuBar {
         helpItem.setIcon(FontIcon.of(BoxiconsRegular.HELP_CIRCLE, 16, Themes.getIconColor()));
         helpItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
         helpItem.addActionListener(e -> {
-            JDialog dialog = new JDialog();
+            JDialog dialog = new JDialog(shipeditor.PrimaryWindow.getInstance());
             dialog.setTitle(StringManager.getString("HELP"));
             dialog.setModal(false);
-            dialog.setSize(600, 400);
-            dialog.setLocationRelativeTo(null);
+            dialog.setSize(900, 650);
+            dialog.setLocationRelativeTo(shipeditor.PrimaryWindow.getInstance());
             dialog.add(new shipeditor.components.help.HelpMainPanel());
             dialog.setVisible(true);
         });

@@ -147,13 +147,20 @@ public final class ColorUtilities {
      * @param colorString expected to be comma-separated RGBA values, e.g. "255,255,255,255".
      */
     public static Color convertStringToColor(String colorString) {
+        if (colorString == null || colorString.trim().isEmpty()) {
+            return Color.WHITE;
+        }
         String[] components = colorString.split(",");
-        int r = components.length > 0 ? Utility.parseIntegerOrDefault(components[0], 255) : 255;
-        int g = components.length > 1 ? Utility.parseIntegerOrDefault(components[1], 255) : 255;
-        int b = components.length > 2 ? Utility.parseIntegerOrDefault(components[2], 255) : 255;
-        int a = components.length > 3 ? Utility.parseIntegerOrDefault(components[3], 255) : 255;
+        int r = clampColor(components.length > 0 ? Utility.parseIntegerOrDefault(components[0].trim(), 255) : 255);
+        int g = clampColor(components.length > 1 ? Utility.parseIntegerOrDefault(components[1].trim(), 255) : 255);
+        int b = clampColor(components.length > 2 ? Utility.parseIntegerOrDefault(components[2].trim(), 255) : 255);
+        int a = clampColor(components.length > 3 ? Utility.parseIntegerOrDefault(components[3].trim(), 255) : 255);
 
         return new Color(r, g, b, a);
+    }
+
+    private static int clampColor(int value) {
+        return Math.max(0, Math.min(255, value));
     }
 
     public static String convertColorToString(Color color) {

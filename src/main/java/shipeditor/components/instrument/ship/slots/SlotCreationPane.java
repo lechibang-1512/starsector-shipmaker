@@ -54,6 +54,9 @@ public class SlotCreationPane extends JPanel {
     private static double defaultArc;
 
     @Getter @Setter
+    private static int defaultRenderOrderMod;
+
+    @Getter @Setter
     private static SlotCreationMode mode = SlotCreationMode.BY_DEFAULT;
 
     public SlotCreationPane() {
@@ -123,6 +126,10 @@ public class SlotCreationPane extends JPanel {
 
         Spinners.addLabelWithDegreeSpinner(container, "Default arc:",
                 defaultArc, aDouble -> defaultArc = aDouble, 1);
+
+        Spinners.addLabelWithIntegerSpinner(container, "Default render order:",
+                defaultRenderOrderMod, -1000, 1000, 1,
+                aInt -> defaultRenderOrderMod = aInt, 2);
 
         JPanel wrapper = new JPanel();
         wrapper.setLayout(new BorderLayout());

@@ -168,6 +168,8 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
         String minimizePrompt = getMinimizePrompt();
         int size = this.getTabCount();
         for (int i = 0; i < size; i++) {
+            String outerTitle = this.getTitleAt(i);
+            this.setToolTipTextAt(i, Utility.getWithLinebreaks(outerTitle, minimizePrompt));
             java.awt.Component comp = this.getComponentAt(i);
             if (comp instanceof JTabbedPane subPane) {
                 int subSize = subPane.getTabCount();
@@ -175,7 +177,7 @@ public final class ShipInstrumentsPane extends AbstractInstrumentsPane {
                     String mnemonic = KeyEvent.getKeyText(subPane.getMnemonicAt(j)).toUpperCase(Locale.ROOT);
                     EditorInstrument mode = panelMode.get((JPanel) subPane.getComponentAt(j));
                     String title = mode != null ? mode.getTitle() : "";
-                    String tooltip = Utility.getWithLinebreaks(title, minimizePrompt, "Hotkey: ALT + " + mnemonic);
+                    String tooltip = Utility.getWithLinebreaks(title, "Hotkey: ALT + " + mnemonic);
                     subPane.setToolTipTextAt(j, tooltip);
                 }
             }

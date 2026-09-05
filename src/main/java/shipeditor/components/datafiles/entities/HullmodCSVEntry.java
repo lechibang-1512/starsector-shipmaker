@@ -132,7 +132,7 @@ public class HullmodCSVEntry implements OrdnancedCSVEntry {
     }
 
     private JLabel cachedIconLabel;
-    private boolean isIconLoading = false;
+    private volatile boolean isIconLoading = false;
 
     @Override
     public JLabel getIconLabel(int maxSize) {

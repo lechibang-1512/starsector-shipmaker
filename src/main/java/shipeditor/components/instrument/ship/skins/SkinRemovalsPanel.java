@@ -1,5 +1,6 @@
 package shipeditor.components.instrument.ship.skins;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import shipeditor.utility.text.StringManager;
 
 import shipeditor.communication.EventBus;
@@ -11,6 +12,7 @@ import shipeditor.components.datafiles.entities.WingCSVEntry;
 import shipeditor.components.viewer.layers.ViewerLayer;
 import shipeditor.components.viewer.layers.ship.ShipLayer;
 import shipeditor.components.viewer.layers.ship.ShipPainter;
+import shipeditor.components.viewer.layers.ship.data.ActiveShipSpec;
 import shipeditor.components.viewer.layers.ship.data.ShipSkin;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
@@ -28,18 +30,40 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "MS_EXPOSE_REP"})
 public class SkinRemovalsPanel extends JPanel {
 
+    private final JComboBox<ShipSkin> skinChooser;
     private final JLabel statusLabel;
     private final JPanel contentContainer;
     private ShipPainter cachedPainter;
+    private boolean isUpdatingSkinChooser;
 
     public SkinRemovalsPanel() {
         this.setLayout(new BorderLayout());
 
+        JPanel headerPanel = new JPanel(new BorderLayout(6, 0));
+        headerPanel.setBorder(new EmptyBorder(4, 6, 2, 6));
+        JLabel skinLabel = new JLabel("Skin:");
+        skinChooser = new JComboBox<>();
+        skinChooser.addActionListener(e -> {
+            if (isUpdatingSkinChooser || cachedPainter == null || cachedPainter.isUninitialized()) {
+                return;
+            }
+            ShipSkin chosen = (ShipSkin) skinChooser.getSelectedItem();
+            ActiveShipSpec spec = (chosen != null && !chosen.isBase()) ? ActiveShipSpec.SKIN : ActiveShipSpec.HULL;
+            cachedPainter.setActiveSpec(spec, chosen);
+        });
+        headerPanel.add(skinLabel, BorderLayout.LINE_START);
+        headerPanel.add(skinChooser, BorderLayout.CENTER);
+
         statusLabel = new JLabel(StringManager.getString("NO_SKIN_ACTIVE"));
         statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        statusLabel.setBorder(new EmptyBorder(8, 8, 8, 8));
+        statusLabel.setBorder(new EmptyBorder(4, 8, 4, 8));
+
+        JPanel topContainer = new JPanel(new BorderLayout());
+        topContainer.add(headerPanel, BorderLayout.PAGE_START);
+        topContainer.add(statusLabel, BorderLayout.CENTER);
 
         contentContainer = new JPanel();
         contentContainer.setLayout(new BoxLayout(contentContainer, BoxLayout.Y_AXIS));
@@ -48,7 +72,7 @@ public class SkinRemovalsPanel extends JPanel {
         scrollPane.setBorder(UIConstants.EMPTY_BORDER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-        this.add(statusLabel, BorderLayout.PAGE_START);
+        this.add(topContainer, BorderLayout.PAGE_START);
         this.add(scrollPane, BorderLayout.CENTER);
 
         this.initEventListening();
@@ -84,7 +108,28 @@ public class SkinRemovalsPanel extends JPanel {
         refreshContent();
     }
 
+    private void updateSkinChooser() {
+        isUpdatingSkinChooser = true;
+        skinChooser.removeAllItems();
+        if (cachedPainter != null && !cachedPainter.isUninitialized()) {
+            ShipLayer parentLayer = cachedPainter.getParentLayer();
+            if (parentLayer != null && parentLayer.getSkins() != null) {
+                for (ShipSkin skin : parentLayer.getSkins()) {
+                    skinChooser.addItem(skin);
+                }
+                skinChooser.setSelectedItem(cachedPainter.getActiveSkin());
+                skinChooser.setEnabled(skinChooser.getItemCount() > 0);
+            } else {
+                skinChooser.setEnabled(false);
+            }
+        } else {
+            skinChooser.setEnabled(false);
+        }
+        isUpdatingSkinChooser = false;
+    }
+
     private void refreshContent() {
+        updateSkinChooser();
         contentContainer.removeAll();
 
         if (cachedPainter == null || cachedPainter.isUninitialized()) {
@@ -95,34 +140,38 @@ public class SkinRemovalsPanel extends JPanel {
         }
 
         ShipSkin activeSkin = cachedPainter.getActiveSkin();
-        if (activeSkin == null || activeSkin.isBase()) {
+        boolean isSkinActive = activeSkin != null && !activeSkin.isBase();
+
+        if (isSkinActive) {
+            statusLabel.setText(StringManager.getString("SKIN") + activeSkin);
+        } else {
             statusLabel.setText(StringManager.getString("NO_SKIN_ACTIVE_SELECT_A_SKIN_IN_THE_SKIN_DATA_TAB"));
-            contentContainer.revalidate();
-            contentContainer.repaint();
-            return;
         }
 
-        statusLabel.setText(StringManager.getString("SKIN") + activeSkin);
-
         contentContainer.add(createRemovalListPanel("Remove Weapon Slots", activeSkin,
-                activeSkin::getRemoveWeaponSlots, activeSkin::setRemoveWeaponSlots,
-                String.class, "Enter Slot ID"));
+                isSkinActive ? activeSkin::getRemoveWeaponSlots : () -> null,
+                isSkinActive ? activeSkin::setRemoveWeaponSlots : list -> {},
+                String.class, "Enter Slot ID", isSkinActive));
 
         contentContainer.add(createRemovalListPanel("Remove Engine Slots", activeSkin,
-                activeSkin::getRemoveEngineSlots, activeSkin::setRemoveEngineSlots,
-                Integer.class, "Enter Engine Index (e.g. 0)"));
+                isSkinActive ? activeSkin::getRemoveEngineSlots : () -> null,
+                isSkinActive ? activeSkin::setRemoveEngineSlots : list -> {},
+                Integer.class, "Enter Engine Index (e.g. 0)", isSkinActive));
 
         contentContainer.add(createRemovalListPanel("Remove Built-in Weapons", activeSkin,
-                activeSkin::getRemoveBuiltInWeapons, activeSkin::setRemoveBuiltInWeapons,
-                String.class, "Enter Slot ID"));
+                isSkinActive ? activeSkin::getRemoveBuiltInWeapons : () -> null,
+                isSkinActive ? activeSkin::setRemoveBuiltInWeapons : list -> {},
+                String.class, "Enter Slot ID", isSkinActive));
 
         contentContainer.add(createRemovalListPanel("Remove Built-in Hullmods", activeSkin,
-                activeSkin::getRemoveBuiltInMods, activeSkin::setRemoveBuiltInMods,
-                HullmodCSVEntry.class, "Enter Hullmod ID"));
+                isSkinActive ? activeSkin::getRemoveBuiltInMods : () -> null,
+                isSkinActive ? activeSkin::setRemoveBuiltInMods : list -> {},
+                HullmodCSVEntry.class, "Enter Hullmod ID", isSkinActive));
 
         contentContainer.add(createRemovalListPanel("Remove Built-in Wings", activeSkin,
-                activeSkin::getRemoveBuiltInWings, activeSkin::setRemoveBuiltInWings,
-                WingCSVEntry.class, "Enter Wing ID"));
+                isSkinActive ? activeSkin::getRemoveBuiltInWings : () -> null,
+                isSkinActive ? activeSkin::setRemoveBuiltInWings : list -> {},
+                WingCSVEntry.class, "Enter Wing ID", isSkinActive));
 
         contentContainer.add(Box.createVerticalGlue());
         contentContainer.revalidate();
@@ -131,7 +180,8 @@ public class SkinRemovalsPanel extends JPanel {
 
     private <T> JPanel createRemovalListPanel(String title, ShipSkin skin,
                                               Supplier<List<T>> getter, Consumer<List<T>> setter,
-                                              Class<T> typeClass, String inputHint) {
+                                              Class<T> typeClass, String inputHint,
+                                              boolean isSkinActive) {
         JPanel panel = new JPanel(new BorderLayout());
         ComponentUtilities.outfitPanelWithTitle(panel, title);
 
@@ -152,16 +202,21 @@ public class SkinRemovalsPanel extends JPanel {
         JList<String> jList = new JList<>(listModel);
         jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         jList.setVisibleRowCount(4);
+        jList.setEnabled(isSkinActive);
         JScrollPane scrollPane = new JScrollPane(jList);
         panel.add(scrollPane, BorderLayout.CENTER);
 
         JPanel controlPanel = new JPanel(new BorderLayout(4, 0));
         JTextField inputField = new JTextField();
         inputField.setToolTipText(inputHint);
+        inputField.setEnabled(isSkinActive);
         JButton addButton = new JButton(StringManager.getString("ADD_1"));
+        addButton.setEnabled(isSkinActive);
         JButton removeButton = new JButton(StringManager.getString("REMOVE"));
+        removeButton.setEnabled(isSkinActive && !listModel.isEmpty());
 
         addButton.addActionListener(e -> {
+            if (!isSkinActive || skin == null) return;
             String text = inputField.getText().trim();
             if (text.isEmpty() || listModel.contains(text)) return;
 
@@ -177,6 +232,7 @@ public class SkinRemovalsPanel extends JPanel {
         });
 
         removeButton.addActionListener(e -> {
+            if (!isSkinActive || skin == null) return;
             int selected = jList.getSelectedIndex();
             if (selected != -1) {
                 List<T> newList = new ArrayList<>(getter.get());
@@ -186,6 +242,12 @@ public class SkinRemovalsPanel extends JPanel {
                 var edit = new SkinListOverrideEdit<>(setter, getter.get(), newList, EditorInstrument.SKIN_REMOVALS, skin);
                 UndoOverseer.post(edit);
                 edit.redo();
+            }
+        });
+
+        jList.addListSelectionListener(e -> {
+            if (isSkinActive) {
+                removeButton.setEnabled(jList.getSelectedIndex() != -1);
             }
         });
 

@@ -1,5 +1,6 @@
 package shipeditor.persistence.database;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.log4j.Log4j2;
 
 import java.nio.file.Path;
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Shadow
  */
 @Log4j2
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2", "SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING"})
 public final class DatabaseQueryService {
 
     public record FileInfo(long lastModified, String fileHash) {}

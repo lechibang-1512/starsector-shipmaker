@@ -191,6 +191,11 @@ public final class Initializations {
     @SuppressFBWarnings("DMI_HARDCODED_ABSOLUTE_FILENAME")
     private static List<Path> getPotentialGameFolders() {
         List<Path> paths = new ArrayList<>();
+        for (Path local : getLocalCandidateFolders()) {
+            if (!paths.contains(local)) {
+                paths.add(local);
+            }
+        }
 
         String os = System.getProperty("os.name").toLowerCase(java.util.Locale.ROOT);
         boolean isWindows = os.contains("win");
@@ -294,6 +299,16 @@ public final class Initializations {
                 settings.setGameFolderPath("");
             }
         }
+        // Auto-detect if current working directory or application location is already a Starsector folder
+        Path[] localCandidates = getLocalCandidateFolders();
+        for (Path localPath : localCandidates) {
+            if (localPath != null && Files.isDirectory(localPath) && checkGameFolderEligibility(localPath, settings)) {
+                String absPath = localPath.toAbsolutePath().toString();
+                log.info("Auto-detected Starsector folder at launch location: {}", absPath);
+                settings.setGameFolderPath(absPath);
+                return;
+            }
+        }
 
         List<Path> potentialPaths = Initializations.getPotentialGameFolders();
         List<String> candidatePaths = new ArrayList<>();
@@ -386,6 +401,45 @@ public final class Initializations {
         }
 
         return true;
+    }
+
+    private static Path[] getLocalCandidateFolders() {
+        List<Path> list = new ArrayList<>();
+        try {
+            Path cwd = Paths.get("").toAbsolutePath();
+            addFolderAndParents(list, cwd);
+        } catch (Exception e) {
+            log.debug("Error checking cwd for game folder: {}", e.getMessage());
+        }
+        try {
+            var codeSource = Initializations.class.getProtectionDomain().getCodeSource();
+            if (codeSource != null && codeSource.getLocation() != null) {
+                Path codePath = Paths.get(codeSource.getLocation().toURI());
+                Path appDir = Files.isRegularFile(codePath) ? codePath.getParent() : codePath;
+                addFolderAndParents(list, appDir);
+            }
+        } catch (Exception e) {
+            log.debug("Error checking code source for game folder: {}", e.getMessage());
+        }
+        return list.toArray(new Path[0]);
+    }
+
+    private static void addFolderAndParents(List<Path> list, Path folder) {
+        if (folder != null) {
+            if (!list.contains(folder)) {
+                list.add(folder);
+            }
+            Path p1 = folder.getParent();
+            if (p1 != null && !list.contains(p1)) {
+                list.add(p1);
+            }
+            if (p1 != null) {
+                Path p2 = p1.getParent();
+                if (p2 != null && !list.contains(p2)) {
+                    list.add(p2);
+                }
+            }
+        }
     }
 
 }

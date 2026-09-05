@@ -102,10 +102,10 @@ public final class PrimaryWindow extends JFrame {
                 if (e.getKeyCode() == KeyEvent.VK_ALT) {
                     return true;
                 }
-                if (e.getID() == java.awt.event.KeyEvent.KEY_PRESSED) {
-                    shipeditor.communication.EventBus.publish(new shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed(e));
-                } else if (e.getID() == java.awt.event.KeyEvent.KEY_RELEASED) {
-                    shipeditor.communication.EventBus.publish(new shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased(e));
+                switch (e.getID()) {
+                    case java.awt.event.KeyEvent.KEY_PRESSED -> shipeditor.communication.EventBus.publish(new shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyPressed(e));
+                    case java.awt.event.KeyEvent.KEY_RELEASED -> shipeditor.communication.EventBus.publish(new shipeditor.communication.events.viewer.control.ControlEvents.ViewerRawKeyReleased(e));
+                    default -> {}
                 }
                 return false;
             };

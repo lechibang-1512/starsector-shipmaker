@@ -38,6 +38,40 @@ public final class Spinners {
         Spinners.addLabelWithSpinner(container, labelText, spinnerEffect, spinnerNumberModel, y);
     }
 
+    public static void addLabelWithIntegerSpinner(JPanel container, String labelText,
+                                                  int initialValue, int min, int max, int step,
+                                                  Consumer<Integer> spinnerEffect, int y) {
+        SpinnerNumberModel spinnerNumberModel = new SpinnerNumberModel(initialValue, min, max, step);
+        GridBagConstraints constraints = new GridBagConstraints();
+
+        constraints.insets = new Insets(3, 3, 0, 3);
+        constraints.gridx = 0;
+        constraints.gridy = y;
+        constraints.weightx = 0.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.NONE;
+        constraints.anchor = GridBagConstraints.LINE_START;
+
+        JLabel selectorLabel = new JLabel(labelText);
+        container.add(selectorLabel, constraints);
+
+        constraints.gridx = 1;
+        constraints.weightx = 1.0;
+        constraints.gridy = y;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.insets = new Insets(3, 3, 0, 2);
+        constraints.anchor = GridBagConstraints.LINE_END;
+
+        JSpinner spinner = Spinners.createWheelable(spinnerNumberModel);
+        if (spinnerEffect != null) {
+            spinner.addChangeListener(e -> {
+                Number val = (Number) spinner.getValue();
+                spinnerEffect.accept(val.intValue());
+            });
+        }
+        container.add(spinner, constraints);
+    }
+
     /**
      * @param container expected to have GridBagLayout.
      * @param y         vertical grid position in layout, 0 corresponds to first/top.

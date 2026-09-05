@@ -84,6 +84,7 @@ public final class IndexScannerTask {
                         String weaponType = row.get("type");
                         if (weaponType != null) rowNode.put("type", weaponType);
                     }
+                    default -> {}
                 }
             }
             return SettingsManager.getMapperForSettingsFile().writeValueAsString(rootNode);

@@ -80,6 +80,7 @@ public class WeaponSlotPoint extends AngledPoint implements SlotPoint {
             this.setWeaponMount(valuesSource.weaponMount);
             this.setAngle(valuesSource.angle);
             this.setArc(valuesSource.arc);
+            this.setRenderOrderMod(valuesSource.renderOrderMod);
         }
     }
 

@@ -64,6 +64,18 @@ final class SaveWeaponAction {
                     // continue saving, but offsets may be missing or corrupt
                 }
 
+                if (result.isFile()) {
+                    try {
+                        WeaponSpecFile existingFile = shipeditor.parsing.loading.JsonSpecLoader.loadWeaponFile(result);
+                        if (existingFile != null && existingFile.getUnrecognizedProperties() != null) {
+                            existingFile.getUnrecognizedProperties().forEach(
+                                    weaponSpecFile.getUnrecognizedProperties()::putIfAbsent);
+                        }
+                    } catch (Exception e) {
+                        log.trace("Could not read existing weapon file for unrecognized properties: {}", result, e);
+                    }
+                }
+
                 objectMapper.writeValue(result, weaponSpecFile);
                 
                 StaticController.getViewer().getLayerManager().markSaved(weaponLayer, "weapon");

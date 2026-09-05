@@ -15,6 +15,7 @@ import shipeditor.representation.GameDataRepository;
 import shipeditor.utility.text.StringConstants;
 
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -126,6 +127,19 @@ public class VariantFile implements Variant {
     @Override
     public String getShipHullId() {
         return hullId;
+    }
+
+    @JsonIgnore
+    private final Map<String, Object> unrecognizedProperties = new LinkedHashMap<>();
+
+    @JsonAnyGetter
+    public Map<String, Object> getUnrecognizedProperties() {
+        return unrecognizedProperties;
+    }
+
+    @JsonAnySetter
+    public void setUnrecognizedProperty(String name, Object value) {
+        unrecognizedProperties.put(name, value);
     }
 
 }

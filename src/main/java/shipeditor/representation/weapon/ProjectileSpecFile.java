@@ -2,6 +2,8 @@ package shipeditor.representation.weapon;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -17,7 +19,9 @@ import shipeditor.utility.text.StringConstants;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("ClassWithTooManyFields")
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -165,5 +169,18 @@ public class ProjectileSpecFile {
 
     @JsonProperty("explosionSpec")
     private JsonNode explosionSpec;
+
+    @JsonIgnore
+    private final Map<String, Object> unrecognizedProperties = new LinkedHashMap<>();
+
+    @JsonAnyGetter
+    public Map<String, Object> getUnrecognizedProperties() {
+        return unrecognizedProperties;
+    }
+
+    @JsonAnySetter
+    public void setUnrecognizedProperty(String name, Object value) {
+        unrecognizedProperties.put(name, value);
+    }
 
 }

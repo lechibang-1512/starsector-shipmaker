@@ -65,6 +65,13 @@ public class VariantFileSerializer extends StdSerializer<VariantFile> {
             provider.defaultSerializeField(StringConstants.WINGS, wings, gen);
         }
 
+        Map<String, Object> unrecognized = value.getUnrecognizedProperties();
+        if (unrecognized != null && !unrecognized.isEmpty()) {
+            for (Map.Entry<String, Object> entry : unrecognized.entrySet()) {
+                provider.defaultSerializeField(entry.getKey(), entry.getValue(), gen);
+            }
+        }
+
         gen.writeEndObject();
     }
 

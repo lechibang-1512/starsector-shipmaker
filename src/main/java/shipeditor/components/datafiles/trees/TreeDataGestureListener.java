@@ -53,6 +53,7 @@ public class TreeDataGestureListener implements DragGestureListener {
                         var map = gameData != null ? gameData.getAllWingEntries() : null;
                         if (map != null) userObject = map.get(file.getEntityId());
                     }
+                    default -> {}
                 }
             }
 

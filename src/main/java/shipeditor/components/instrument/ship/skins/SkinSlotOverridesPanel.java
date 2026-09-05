@@ -58,34 +58,39 @@ public class SkinSlotOverridesPanel extends AbstractSkinOverridesPanel<SkinSlotO
         super(new SlotOverrideTableModel(), EditorInstrument.SKIN_SLOTS, "Selected Slot Override");
     }
 
+    @Override
     protected void refreshContent() {
+        updateSkinChooser();
         tableModel.clear();
-        editorPanel.setVisible(false);
 
         if (cachedPainter == null || cachedPainter.isUninitialized()) {
             statusLabel.setText(StringManager.getString("NO_SHIP_LAYER_SELECTED"));
-            return;
-        }
-
-        ShipSkin activeSkin = cachedPainter.getActiveSkin();
-        if (activeSkin == null || activeSkin.isBase()) {
-            statusLabel.setText(StringManager.getString("NO_SKIN_ACTIVE_SELECT_A_SKIN_IN_THE_SKIN_DATA_TAB"));
+            editorPanel.setVisible(false);
             return;
         }
 
         WeaponSlotPainter slotPainter = cachedPainter.getWeaponSlotPainter();
-        List<WeaponSlotPoint> slots = slotPainter.getPointsIndex();
+        List<WeaponSlotPoint> slots = slotPainter != null ? slotPainter.getPointsIndex() : List.of();
 
         if (slots.isEmpty()) {
             statusLabel.setText(StringManager.getString("NO_WEAPON_SLOTS_DEFINED_ON_THIS_HULL"));
+            editorPanel.setVisible(false);
             return;
         }
 
-        Map<String, WeaponSlotOverride> overrides = activeSkin.getWeaponSlotChanges();
-        int overrideCount = (overrides != null) ? overrides.size() : 0;
-        statusLabel.setText(StringManager.getString("SKIN") + activeSkin + "  —  " + overrideCount + " slot override(s)");
+        ShipSkin activeSkin = cachedPainter.getActiveSkin();
+        boolean isSkinActive = activeSkin != null && !activeSkin.isBase();
 
-        tableModel.populate(slots, overrides);
+        Map<String, WeaponSlotOverride> overrides = isSkinActive ? activeSkin.getWeaponSlotChanges() : null;
+        int overrideCount = (overrides != null) ? overrides.size() : 0;
+
+        if (isSkinActive) {
+            statusLabel.setText(StringManager.getString("SKIN") + activeSkin + "  —  " + overrideCount + " slot override(s)");
+        } else {
+            statusLabel.setText(StringManager.getString("NO_SKIN_ACTIVE_SELECT_A_SKIN_IN_THE_SKIN_DATA_TAB"));
+        }
+
+        tableModel.populate(slots, overrides != null ? overrides : Map.of());
         editorPanel.setVisible(true);
         refreshEditorPanel();
     }
@@ -97,18 +102,7 @@ public class SkinSlotOverridesPanel extends AbstractSkinOverridesPanel<SkinSlotO
 
         int selectedRow = overridesTable.getSelectedRow();
         if (selectedRow < 0 || selectedRow >= tableModel.getRowCount()) {
-            JLabel hint = new JLabel(StringManager.getString("SELECT_A_SLOT_FROM_THE_TABLE_TO_VIEW_ITS_OVERRIDE"));
-            hint.setHorizontalAlignment(SwingConstants.CENTER);
-            hint.setForeground(UIManager.getColor("Label.disabledForeground"));
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.weightx = 1;
-            gbc.insets = new Insets(8, 4, 8, 4);
-            innerEditor.add(hint, gbc);
-            innerEditor.revalidate();
-            innerEditor.repaint();
+            showNoSelectionHint(innerEditor, StringManager.getString("SELECT_A_SLOT_FROM_THE_TABLE_TO_VIEW_ITS_OVERRIDE"));
             return;
         }
 
@@ -197,8 +191,16 @@ public class SkinSlotOverridesPanel extends AbstractSkinOverridesPanel<SkinSlotO
             commitOverride(row.slotId, builder.build());
         });
 
+        ShipSkin activeSkin = cachedPainter != null ? cachedPainter.getActiveSkin() : null;
+        boolean isSkinActive = activeSkin != null && !activeSkin.isBase();
+
+        applyButton.setEnabled(isSkinActive);
+        if (!isSkinActive) {
+            applyButton.setToolTipText("Select a skin in the chooser above to apply overrides");
+        }
+
         JButton clearButton = new JButton(StringManager.getString("CLEAR_OVERRIDE"));
-        clearButton.setEnabled(row.hasOverride);
+        clearButton.setEnabled(isSkinActive && row.hasOverride);
         clearButton.addActionListener(e -> {
             commitOverride(row.slotId, null);
         });
@@ -216,72 +218,7 @@ public class SkinSlotOverridesPanel extends AbstractSkinOverridesPanel<SkinSlotO
     }
 
     private void commitOverride(String slotId, WeaponSlotOverride override) {
-        ShipSkin activeSkin = cachedPainter.getActiveSkin();
-        Map<String, WeaponSlotOverride> oldMap = activeSkin.getWeaponSlotChanges();
-        if (oldMap == null) {
-            oldMap = new LinkedHashMap<>();
-        } else {
-            oldMap = new LinkedHashMap<>(oldMap);
-        }
-
-        Map<String, WeaponSlotOverride> newMap = new LinkedHashMap<>(oldMap);
-        if (override == null) {
-            newMap.remove(slotId);
-        } else {
-            newMap.put(slotId, override);
-        }
-
-        if (newMap.isEmpty()) {
-            newMap = null;
-        }
-
-        var edit = new SkinMapOverrideEdit<>(
-                activeSkin::setWeaponSlotChanges,
-                activeSkin.getWeaponSlotChanges(),
-                newMap,
-                EditorInstrument.SKIN_SLOTS,
-                activeSkin
-        );
-        UndoOverseer.post(edit);
-        edit.redo();
-    }
-
-    private static void addReadOnlyField(JPanel panel, String labelText, String value,
-                                          GridBagConstraints labelGbc, GridBagConstraints fieldGbc, int row) {
-        labelGbc.gridx = 0;
-        labelGbc.gridy = row;
-        panel.add(new JLabel(labelText), labelGbc);
-
-        fieldGbc.gridx = 1;
-        fieldGbc.gridy = row;
-        JTextField field = new JTextField(value);
-        field.setEditable(false);
-        field.setColumns(12);
-        panel.add(field, fieldGbc);
-    }
-
-    private static void addField(JPanel panel, String labelText, java.awt.Component comp,
-                                 GridBagConstraints labelGbc, GridBagConstraints fieldGbc, int row) {
-        labelGbc.gridx = 0;
-        labelGbc.gridy = row;
-        panel.add(new JLabel(labelText), labelGbc);
-
-        fieldGbc.gridx = 1;
-        fieldGbc.gridy = row;
-        panel.add(comp, fieldGbc);
-    }
-
-    private static void addColoredField(JPanel panel, String labelText, String value, Color color,
-                                          GridBagConstraints labelGbc, GridBagConstraints fieldGbc, int row) {
-        labelGbc.gridx = 0;
-        labelGbc.gridy = row;
-        panel.add(new JLabel(labelText), labelGbc);
-
-        fieldGbc.gridx = 1;
-        fieldGbc.gridy = row;
-        JLabel valueLabel = new JLabel(value);
-        valueLabel.setForeground(color);
-        panel.add(valueLabel, fieldGbc);
+        commitOverride(slotId, override, ShipSkin::getWeaponSlotChanges, ShipSkin::setWeaponSlotChanges);
     }
 
     // ======== Table Model ========

@@ -114,7 +114,7 @@ public abstract class AbstractInstrumentsPane extends JTabbedPane {
             }
             
             if (minimizer.isMinimized()) {
-                minimizer.setRestorationQueued(true);
+                minimizer.maximize();
             }
             minimizer.setPanelSwitched(true);
         });
@@ -122,12 +122,29 @@ public abstract class AbstractInstrumentsPane extends JTabbedPane {
     }
 
     protected void addInnerTabChangeListener(JTabbedPane innerPane) {
+        innerPane.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseReleased(java.awt.event.MouseEvent e) {
+                if (e.getButton() == java.awt.event.MouseEvent.BUTTON1 && minimizer.isMinimized()) {
+                    minimizer.maximize();
+                }
+            }
+        });
         innerPane.addChangeListener(e -> {
             if (getSelectedComponent() == innerPane) {
                 Component subSelected = innerPane.getSelectedComponent();
                 if (subSelected instanceof JPanel panel) {
                     activePanel = panel;
                     this.dispatchModeChange(activePanel);
+                } else if (subSelected instanceof javax.swing.JScrollPane scrollPane) {
+                    Component view = scrollPane.getViewport().getView();
+                    if (view instanceof JPanel panel) {
+                        activePanel = panel;
+                        this.dispatchModeChange(activePanel);
+                    }
+                }
+                if (minimizer.isMinimized()) {
+                    minimizer.maximize();
                 }
             }
         });
@@ -139,6 +156,7 @@ public abstract class AbstractInstrumentsPane extends JTabbedPane {
             Dimension preferred = this.getPreferredSize();
             Dimension minimizedSize = new Dimension(0, preferred.height);
             this.setPreferredSize(minimizedSize);
+            this.setMinimumSize(new Dimension(0, 0));
             updateTooltipText();
             EventBus.publish(new InstrumentSplitterResized(this, true));
         };
@@ -148,6 +166,7 @@ public abstract class AbstractInstrumentsPane extends JTabbedPane {
         return () -> {
             minimizer.setMinimized(false);
             this.setPreferredSize(preferredSize);
+            this.setMinimumSize(new Dimension(150, 0));
             updateTooltipText();
             EventBus.publish(new InstrumentSplitterResized(this, false));
         };

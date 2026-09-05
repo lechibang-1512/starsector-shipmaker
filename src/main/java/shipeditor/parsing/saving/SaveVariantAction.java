@@ -77,6 +77,17 @@ final class SaveVariantAction {
                 return;
             }
             try {
+                if (result.isFile()) {
+                    try {
+                        VariantFile onDisk = objectMapper.readValue(result, VariantFile.class);
+                        if (onDisk != null && onDisk.getUnrecognizedProperties() != null) {
+                            onDisk.getUnrecognizedProperties().forEach(
+                                    toSerialize.getUnrecognizedProperties()::putIfAbsent);
+                        }
+                    } catch (Exception e) {
+                        log.trace("Could not read existing variant file for unrecognized properties: {}", result, e);
+                    }
+                }
                 toSerialize.setVariantFilePath(result.toPath());
                 objectMapper.writeValue(result, toSerialize);
                 GameDataRepository.putVariant(toSerialize);
@@ -140,6 +151,11 @@ final class SaveVariantAction {
             });
         }
         result.setModules(modules);
+
+        VariantFile existing = GameDataRepository.getVariantByID(shipVariant.getVariantId());
+        if (existing != null && existing.getUnrecognizedProperties() != null) {
+            result.getUnrecognizedProperties().putAll(existing.getUnrecognizedProperties());
+        }
 
         return result;
     }

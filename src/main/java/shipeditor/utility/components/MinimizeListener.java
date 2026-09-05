@@ -16,6 +16,8 @@ public class MinimizeListener extends MouseAdapter {
 
     private final JTabbedPane parent;
     private final MinimizerWidget minimizer;
+    private int pressTabIndex = -1;
+    private java.awt.Point pressPoint;
 
     public MinimizeListener(JTabbedPane pane, MinimizerWidget widget) {
         this.parent = pane;
@@ -23,27 +25,43 @@ public class MinimizeListener extends MouseAdapter {
     }
 
     @Override
-    public void mouseClicked(MouseEvent e) {
+    public void mousePressed(MouseEvent e) {
         if (e.getButton() != MouseEvent.BUTTON1) return;
-        int tabIndex = parent.indexAtLocation(e.getX(), e.getY());
-        if (tabIndex != -1 && !minimizer.isPanelSwitched()) {
-            if (minimizer.isMinimized()) {
-                minimizer.maximize();
-            } else {
-                minimizer.minimize();
-            }
-        }
-        minimizer.setPanelSwitched(false);
+        pressPoint = e.getPoint();
+        pressTabIndex = parent.indexAtLocation(e.getX(), e.getY());
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (!minimizer.isRestorationQueued()) return;
-        int tabIndex = parent.indexAtLocation(e.getX(), e.getY());
-        if (tabIndex != -1) {
-            minimizer.maximize();
+        if (e.getButton() != MouseEvent.BUTTON1) return;
+        if (pressTabIndex == -1) {
+            minimizer.setPanelSwitched(false);
+            return;
         }
-        minimizer.setRestorationQueued(false);
+
+        boolean withinDistance = true;
+        if (pressPoint != null) {
+            double distanceSq = pressPoint.distanceSq(e.getPoint());
+            withinDistance = (distanceSq <= 100); // 10px drag threshold
+        }
+
+        if (withinDistance) {
+            if (minimizer.isPanelSwitched()) {
+                if (minimizer.isMinimized()) {
+                    minimizer.maximize();
+                }
+            } else {
+                if (minimizer.isMinimized()) {
+                    minimizer.maximize();
+                } else {
+                    minimizer.minimize();
+                }
+            }
+        }
+
+        minimizer.setPanelSwitched(false);
+        pressTabIndex = -1;
+        pressPoint = null;
     }
 
 }

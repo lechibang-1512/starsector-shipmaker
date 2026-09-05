@@ -96,5 +96,6 @@
     "LOCKED_SIZE_OVERRIDDEN_BY_SKIN": "Locked: size overridden by skin",
     "LOCKED_ANGLE_OVERRIDDEN_BY_SKIN": "Locked: angle overridden by skin",
     "LOCKED_ARC_OVERRIDDEN_BY_SKIN": "Locked: arc overridden by skin",
-    "LOCKED_RENDER_ORDER_OVERRIDDEN_BY_SKIN": "Locked: render order overridden by skin"
+    "LOCKED_RENDER_ORDER_OVERRIDDEN_BY_SKIN": "Locked: render order overridden by skin",
+    "CYCLE_WEAPON_FRAME": "Cycle Weapon Frame"
 }

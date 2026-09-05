@@ -29,7 +29,10 @@ import shipeditor.utility.overseers.StaticController;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import shipeditor.communication.events.viewer.control.ControlEvents.ViewerMouseReleased;
 import shipeditor.communication.events.viewer.points.PointEvents.PointAddConfirmed;
 import shipeditor.communication.events.viewer.points.PointEvents.PointSelectQueued;
 import shipeditor.communication.events.viewer.points.PointEvents.PointRemovedConfirmed;
@@ -45,6 +48,8 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
 
     private WorldPoint selected;
     private final java.util.Set<BaseWorldPoint> selectedPoints = new java.util.LinkedHashSet<>();
+    private final Map<BaseWorldPoint, BaseWorldPoint> dragMirrorPartners = new HashMap<>();
+    private boolean isDraggingPoints = false;
 
     public WorldPoint getSelected() {
         return this.selected;
@@ -57,6 +62,8 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
                 p.setPointSelected(false);
             }
             selectedPoints.clear();
+            isDraggingPoints = false;
+            dragMirrorPartners.clear();
         } else {
             if (point instanceof BaseWorldPoint checked) {
                 if (!selectedPoints.contains(checked)) {
@@ -83,6 +90,8 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
             p.setPointSelected(false);
         }
         selectedPoints.clear();
+        this.isDraggingPoints = false;
+        this.dragMirrorPartners.clear();
     }
 
     public void addPointToSelection(BaseWorldPoint point) {
@@ -214,6 +223,12 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
             }
         };
         EventBus.subscribe(this, painterOpacityListener);
+        EventBus.subscribe(this, event -> {
+            if (event instanceof ViewerMouseReleased) {
+                this.isDraggingPoints = false;
+                this.dragMirrorPartners.clear();
+            }
+        });
     }
 
     public void dragPointWithMirrorCheck(Point2D changedPosition) {
@@ -226,6 +241,21 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
 
         boolean mirroringEnabled = ControlPredicates.isMirrorModeEnabled();
 
+        // Lock in mirror partners at the start of the drag gesture so asymmetrical
+        // points cannot dynamically snap bystanders mid-drag
+        if (!isDraggingPoints) {
+            isDraggingPoints = true;
+            dragMirrorPartners.clear();
+            if (isMirrorable() && mirroringEnabled) {
+                for (BaseWorldPoint p : selectedPoints) {
+                    BaseWorldPoint counterpart = (BaseWorldPoint) getMirroredCounterpart(p);
+                    if (counterpart != null) {
+                        dragMirrorPartners.put(p, counterpart);
+                    }
+                }
+            }
+        }
+
         for (BaseWorldPoint point : new java.util.ArrayList<>(selectedPoints)) {
             Point2D pos = point.getPosition();
             Point2D newPos = new Point2D.Double(pos.getX() + dx, pos.getY() + dy);
@@ -233,7 +263,7 @@ public abstract class AbstractPointPainter implements OpenGLPainter {
             EditDispatch.postPointDragged(point, newPos);
 
             if (isMirrorable() && mirroringEnabled) {
-                WorldPoint counterpart = getMirroredCounterpart(point);
+                BaseWorldPoint counterpart = dragMirrorPartners.get(point);
                 if (counterpart != null) {
                     Point2D counterpartNewPosition = createCounterpartPosition(newPos);
                     EditDispatch.postPointDragged(counterpart, counterpartNewPosition);

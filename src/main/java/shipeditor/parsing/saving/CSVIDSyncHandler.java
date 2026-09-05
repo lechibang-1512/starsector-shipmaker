@@ -41,27 +41,41 @@ public final class CSVIDSyncHandler {
         updateRawCSVRow(entry.getTableFilePath(), oldID, newID);
 
         // 2. Update mutable ID field + re-index repository
-        if (entry instanceof ShipCSVEntry shipEntry) {
-            shipEntry.setHullID(newID);
-            repo.reindexShipEntry(oldID, newID, shipEntry);
-            repo.reindexSpecEntry(oldID, newID);
-            // Also update the HullSpecFile's hullId so JSON save is consistent
-            ShipSpecFile spec = GameDataRepository.retrieveSpecByID(newID);
-            if (spec instanceof HullSpecFile hullSpec) {
-                hullSpec.setHullId(newID);
+        if (entry != null) {
+            switch (entry.getClass().getSimpleName()) {
+                case "ShipCSVEntry" -> {
+                    ShipCSVEntry shipEntry = (ShipCSVEntry) entry;
+                    shipEntry.setHullID(newID);
+                    repo.reindexShipEntry(oldID, newID, shipEntry);
+                    repo.reindexSpecEntry(oldID, newID);
+                    // Also update the HullSpecFile's hullId so JSON save is consistent
+                    ShipSpecFile spec = GameDataRepository.retrieveSpecByID(newID);
+                    if (spec instanceof HullSpecFile hullSpec) {
+                        hullSpec.setHullId(newID);
+                    }
+                }
+                case "WeaponCSVEntry" -> {
+                    WeaponCSVEntry weaponEntry = (WeaponCSVEntry) entry;
+                    weaponEntry.setWeaponID(newID);
+                    repo.reindexWeaponEntry(oldID, newID, weaponEntry);
+                }
+                case "HullmodCSVEntry" -> {
+                    HullmodCSVEntry hullmodEntry = (HullmodCSVEntry) entry;
+                    hullmodEntry.setHullmodID(newID);
+                    repo.reindexHullmodEntry(oldID, newID, hullmodEntry);
+                }
+                case "WingCSVEntry" -> {
+                    WingCSVEntry wingEntry = (WingCSVEntry) entry;
+                    wingEntry.setWingID(newID);
+                    repo.reindexWingEntry(oldID, newID, wingEntry);
+                }
+                case "ShipSystemCSVEntry" -> {
+                    ShipSystemCSVEntry systemEntry = (ShipSystemCSVEntry) entry;
+                    systemEntry.setShipSystemID(newID);
+                    repo.reindexShipSystemEntry(oldID, newID, systemEntry);
+                }
+                default -> {}
             }
-        } else if (entry instanceof WeaponCSVEntry weaponEntry) {
-            weaponEntry.setWeaponID(newID);
-            repo.reindexWeaponEntry(oldID, newID, weaponEntry);
-        } else if (entry instanceof HullmodCSVEntry hullmodEntry) {
-            hullmodEntry.setHullmodID(newID);
-            repo.reindexHullmodEntry(oldID, newID, hullmodEntry);
-        } else if (entry instanceof WingCSVEntry wingEntry) {
-            wingEntry.setWingID(newID);
-            repo.reindexWingEntry(oldID, newID, wingEntry);
-        } else if (entry instanceof ShipSystemCSVEntry systemEntry) {
-            systemEntry.setShipSystemID(newID);
-            repo.reindexShipSystemEntry(oldID, newID, systemEntry);
         }
 
         log.info("CSV entry ID re-indexed: '{}' -> '{}'", oldID, newID);

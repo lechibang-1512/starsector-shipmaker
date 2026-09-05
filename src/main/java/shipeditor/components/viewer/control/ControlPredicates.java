@@ -45,16 +45,13 @@ public final class ControlPredicates {
 
     public static void initSelectionModeListening() {
         EventBus.subscribe(ControlPredicates.class, event -> {
-            if (event instanceof PointSelectionModeChange checked) {
-                selectionMode = checked.newMode();
-            } else if (event instanceof MirrorModeChange checked) {
-                mirrorModeEnabled = checked.enabled();
-            } else if (event instanceof CursorSnappingToggled checked) {
-                cursorSnappingEnabled = checked.toggled();
-            } else if (event instanceof RotationRoundingToggled checked) {
-                rotationRoundingEnabled = checked.toggled();
-            } else if (event instanceof PointLinkageToleranceChanged checked) {
-                mirrorPointLinkageTolerance = checked.changed();
+            switch (event.getClass().getSimpleName()) {
+                case "PointSelectionModeChange" -> selectionMode = ((PointSelectionModeChange) event).newMode();
+                case "MirrorModeChange" -> mirrorModeEnabled = ((MirrorModeChange) event).enabled();
+                case "CursorSnappingToggled" -> cursorSnappingEnabled = ((CursorSnappingToggled) event).toggled();
+                case "RotationRoundingToggled" -> rotationRoundingEnabled = ((RotationRoundingToggled) event).toggled();
+                case "PointLinkageToleranceChanged" -> mirrorPointLinkageTolerance = ((PointLinkageToleranceChanged) event).changed();
+                default -> {}
             }
         });
     }

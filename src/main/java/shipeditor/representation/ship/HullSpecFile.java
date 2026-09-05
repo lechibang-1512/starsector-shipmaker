@@ -3,6 +3,8 @@ package shipeditor.representation.ship;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,6 +24,7 @@ import shipeditor.utility.text.StringConstants;
 
 import java.awt.geom.Point2D;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** * This is a serialization/deserialization class, not intended for edit through viewer at runtime.
@@ -120,5 +123,18 @@ public class HullSpecFile implements ShipSpecFile {
     @JsonDeserialize(using = Point2DArrayDeserializer.class)
     @JsonSerialize(using = Point2DArraySerializer.class)
     Point2D.Double[] bounds = new Point2D.Double[0];
+
+    @JsonIgnore
+    private final Map<String, Object> unrecognizedProperties = new LinkedHashMap<>();
+
+    @JsonAnyGetter
+    public Map<String, Object> getUnrecognizedProperties() {
+        return unrecognizedProperties;
+    }
+
+    @JsonAnySetter
+    public void setUnrecognizedProperty(String name, Object value) {
+        unrecognizedProperties.put(name, value);
+    }
 
 }

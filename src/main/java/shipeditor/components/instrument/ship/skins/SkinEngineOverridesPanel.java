@@ -15,8 +15,6 @@ import shipeditor.components.viewer.layers.ship.data.ShipSkin;
 import shipeditor.components.viewer.painters.points.ship.EngineSlotPainter;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.ship.HullStyle;
-import shipeditor.undo.UndoOverseer;
-import shipeditor.undo.edits.features.SkinOverrideEdits.SkinMapOverrideEdit;
 import shipeditor.utility.components.ComponentUtilities;
 import shipeditor.utility.components.UIConstants;
 import shipeditor.utility.components.UIFactory;
@@ -29,7 +27,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -40,34 +37,39 @@ public class SkinEngineOverridesPanel extends AbstractSkinOverridesPanel<SkinEng
         super(new EngineOverrideTableModel(), EditorInstrument.SKIN_ENGINES, "Selected Engine Override");
     }
 
+    @Override
     protected void refreshContent() {
+        updateSkinChooser();
         tableModel.clear();
-        editorPanel.setVisible(false);
 
         if (cachedPainter == null || cachedPainter.isUninitialized()) {
             statusLabel.setText(StringManager.getString("NO_SHIP_LAYER_SELECTED"));
-            return;
-        }
-
-        ShipSkin activeSkin = cachedPainter.getActiveSkin();
-        if (activeSkin == null || activeSkin.isBase()) {
-            statusLabel.setText(StringManager.getString("NO_SKIN_ACTIVE_SELECT_A_SKIN_IN_THE_SKIN_DATA_TAB"));
+            editorPanel.setVisible(false);
             return;
         }
 
         EngineSlotPainter slotPainter = cachedPainter.getEnginePainter();
-        List<EnginePoint> slots = slotPainter.getPointsIndex();
+        List<EnginePoint> slots = slotPainter != null ? slotPainter.getPointsIndex() : List.of();
 
         if (slots.isEmpty()) {
             statusLabel.setText(StringManager.getString("NO_ENGINE_SLOTS_DEFINED_ON_THIS_HULL"));
+            editorPanel.setVisible(false);
             return;
         }
 
-        Map<Integer, EngineDataOverride> overrides = activeSkin.getEngineSlotChanges();
-        int overrideCount = (overrides != null) ? overrides.size() : 0;
-        statusLabel.setText(StringManager.getString("SKIN") + activeSkin + "  —  " + overrideCount + " engine override(s)");
+        ShipSkin activeSkin = cachedPainter.getActiveSkin();
+        boolean isSkinActive = activeSkin != null && !activeSkin.isBase();
 
-        tableModel.populate(slots, overrides);
+        Map<Integer, EngineDataOverride> overrides = isSkinActive ? activeSkin.getEngineSlotChanges() : null;
+        int overrideCount = (overrides != null) ? overrides.size() : 0;
+
+        if (isSkinActive) {
+            statusLabel.setText(StringManager.getString("SKIN") + activeSkin + "  —  " + overrideCount + " engine override(s)");
+        } else {
+            statusLabel.setText(StringManager.getString("NO_SKIN_ACTIVE_SELECT_A_SKIN_IN_THE_SKIN_DATA_TAB"));
+        }
+
+        tableModel.populate(slots, overrides != null ? overrides : Map.of());
         editorPanel.setVisible(true);
         refreshEditorPanel();
     }
@@ -79,18 +81,7 @@ public class SkinEngineOverridesPanel extends AbstractSkinOverridesPanel<SkinEng
 
         int selectedRow = overridesTable.getSelectedRow();
         if (selectedRow < 0 || selectedRow >= tableModel.getRowCount()) {
-            JLabel hint = UIFactory.createLabel("Select an engine slot from the table to view/edit its override");
-            hint.setHorizontalAlignment(SwingConstants.CENTER);
-            hint.setForeground(UIManager.getColor("Label.disabledForeground"));
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.weightx = 1;
-            gbc.insets = new Insets(8, 4, 8, 4);
-            innerEditor.add(hint, gbc);
-            innerEditor.revalidate();
-            innerEditor.repaint();
+            showNoSelectionHint(innerEditor, "Select an engine slot from the table to view/edit its override");
             return;
         }
 
@@ -170,8 +161,16 @@ public class SkinEngineOverridesPanel extends AbstractSkinOverridesPanel<SkinEng
             commitOverride(row.index, builder.build());
         });
 
+        ShipSkin activeSkin = cachedPainter != null ? cachedPainter.getActiveSkin() : null;
+        boolean isSkinActive = activeSkin != null && !activeSkin.isBase();
+
+        applyButton.setEnabled(isSkinActive);
+        if (!isSkinActive) {
+            applyButton.setToolTipText("Select a skin in the chooser above to apply overrides");
+        }
+
         JButton clearButton = UIFactory.createButton("Clear Override");
-        clearButton.setEnabled(row.hasOverride);
+        clearButton.setEnabled(isSkinActive && row.hasOverride);
         clearButton.addActionListener(e -> {
             commitOverride(row.index, null);
         });
@@ -189,72 +188,7 @@ public class SkinEngineOverridesPanel extends AbstractSkinOverridesPanel<SkinEng
     }
 
     private void commitOverride(Integer index, EngineDataOverride override) {
-        ShipSkin activeSkin = cachedPainter.getActiveSkin();
-        Map<Integer, EngineDataOverride> oldMap = activeSkin.getEngineSlotChanges();
-        if (oldMap == null) {
-            oldMap = new LinkedHashMap<>();
-        } else {
-            oldMap = new LinkedHashMap<>(oldMap);
-        }
-
-        Map<Integer, EngineDataOverride> newMap = new LinkedHashMap<>(oldMap);
-        if (override == null) {
-            newMap.remove(index);
-        } else {
-            newMap.put(index, override);
-        }
-
-        if (newMap.isEmpty()) {
-            newMap = null; // Clear out if empty
-        }
-
-        var edit = new SkinMapOverrideEdit<>(
-                activeSkin::setEngineSlotChanges,
-                activeSkin.getEngineSlotChanges(),
-                newMap,
-                EditorInstrument.SKIN_ENGINES,
-                activeSkin
-        );
-        UndoOverseer.post(edit);
-        edit.redo();
-    }
-
-    private static void addReadOnlyField(JPanel panel, String labelText, String value,
-                                          GridBagConstraints labelGbc, GridBagConstraints fieldGbc, int row) {
-        labelGbc.gridx = 0;
-        labelGbc.gridy = row;
-        panel.add(UIFactory.createLabel(labelText), labelGbc);
-
-        fieldGbc.gridx = 1;
-        fieldGbc.gridy = row;
-        JTextField field = new JTextField(value);
-        field.setEditable(false);
-        field.setColumns(12);
-        panel.add(field, fieldGbc);
-    }
-
-    private static void addField(JPanel panel, String labelText, Component comp,
-                                 GridBagConstraints labelGbc, GridBagConstraints fieldGbc, int row) {
-        labelGbc.gridx = 0;
-        labelGbc.gridy = row;
-        panel.add(UIFactory.createLabel(labelText), labelGbc);
-
-        fieldGbc.gridx = 1;
-        fieldGbc.gridy = row;
-        panel.add(comp, fieldGbc);
-    }
-
-    private static void addColoredField(JPanel panel, String labelText, String value, Color color,
-                                          GridBagConstraints labelGbc, GridBagConstraints fieldGbc, int row) {
-        labelGbc.gridx = 0;
-        labelGbc.gridy = row;
-        panel.add(UIFactory.createLabel(labelText), labelGbc);
-
-        fieldGbc.gridx = 1;
-        fieldGbc.gridy = row;
-        JLabel valueLabel = UIFactory.createLabel(value);
-        valueLabel.setForeground(color);
-        panel.add(valueLabel, fieldGbc);
+        commitOverride(index, override, ShipSkin::getEngineSlotChanges, ShipSkin::setEngineSlotChanges);
     }
 
     private static final class EngineOverrideRow {

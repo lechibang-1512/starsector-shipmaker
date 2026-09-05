@@ -22,33 +22,34 @@ public final class SaveCoordinator {
     private SaveCoordinator() {
     }
 
-    @SuppressWarnings("ChainOfInstanceofChecks")
     public static void init() {
         EventBus.subscribe(SaveCoordinator.class, event -> {
-            if (event instanceof VariantSaveQueued checked) {
-                SaveVariantAction.saveVariant(checked.variant());
-            } else if (event instanceof HullSaveQueued checked) {
-                SaveHullAction.saveHullFromLayer(checked.shipLayer());
-            } else if (event instanceof WeaponSaveQueued checked) {
-                SaveWeaponAction.saveWeaponFromLayer(checked.weaponLayer());
-            } else if (event instanceof ProjectileSaveQueued checked) {
-                SaveProjectileAction.saveProjectileFromLayer(checked.projectileLayer());
-            } else if (event instanceof shipeditor.communication.events.files.FileEvents.CSVSaveQueued checked) {
-                SaveCSVAction.saveCSVEntry(checked.entry());
+            switch (event.getClass().getSimpleName()) {
+                case "VariantSaveQueued" -> SaveVariantAction.saveVariant(((VariantSaveQueued) event).variant());
+                case "HullSaveQueued" -> SaveHullAction.saveHullFromLayer(((HullSaveQueued) event).shipLayer());
+                case "WeaponSaveQueued" -> SaveWeaponAction.saveWeaponFromLayer(((WeaponSaveQueued) event).weaponLayer());
+                case "ProjectileSaveQueued" -> SaveProjectileAction.saveProjectileFromLayer(((ProjectileSaveQueued) event).projectileLayer());
+                case "CSVSaveQueued" -> SaveCSVAction.saveCSVEntry(((shipeditor.communication.events.files.FileEvents.CSVSaveQueued) event).entry());
+                default -> {}
             }
         });
     }
 
     public static void saveLayer(ViewerLayer layer) {
-        if (layer instanceof ShipLayer shipLayer) {
-            EventBus.publish(new HullSaveQueued(shipLayer));
-            if (shipLayer.getPainter() != null && shipLayer.getPainter().getActiveVariant() != null && !shipLayer.getPainter().getActiveVariant().isEmpty()) {
-                EventBus.publish(new VariantSaveQueued(shipLayer.getPainter().getActiveVariant()));
+        if (layer == null) {
+            return;
+        }
+        switch (layer.getClass().getSimpleName()) {
+            case "ShipLayer" -> {
+                ShipLayer shipLayer = (ShipLayer) layer;
+                EventBus.publish(new HullSaveQueued(shipLayer));
+                if (shipLayer.getPainter() != null && shipLayer.getPainter().getActiveVariant() != null && !shipLayer.getPainter().getActiveVariant().isEmpty()) {
+                    EventBus.publish(new VariantSaveQueued(shipLayer.getPainter().getActiveVariant()));
+                }
             }
-        } else if (layer instanceof WeaponLayer weaponLayer) {
-            EventBus.publish(new WeaponSaveQueued(weaponLayer));
-        } else if (layer instanceof ProjectileLayer projLayer) {
-            EventBus.publish(new ProjectileSaveQueued(projLayer));
+            case "WeaponLayer" -> EventBus.publish(new WeaponSaveQueued((WeaponLayer) layer));
+            case "ProjectileLayer" -> EventBus.publish(new ProjectileSaveQueued((ProjectileLayer) layer));
+            default -> {}
         }
     }
 

@@ -217,6 +217,38 @@ public class WeaponSlotPainter extends AbstractSlotPainter {
         return parentLayer.generateUniqueSlotID(prefix);
     }
 
+    @Override
+    public BaseWorldPoint getMirroredCounterpart(WorldPoint inputPoint) {
+        if (!(inputPoint instanceof WeaponSlotPoint inputSlot)) {
+            return super.getMirroredCounterpart(inputPoint);
+        }
+        Point2D pointPosition = inputSlot.getPosition();
+        Point2D counterpartPosition = this.createCounterpartPosition(pointPosition);
+        double threshold = ControlPredicates.getMirrorPointLinkageTolerance();
+
+        WeaponSlotPoint bestMatch = null;
+        double bestDist = Double.MAX_VALUE;
+
+        for (WeaponSlotPoint slot : this.getPointsIndex()) {
+            if (slot == inputSlot) {
+                continue;
+            }
+            if (slot.getWeaponType() != inputSlot.getWeaponType()) {
+                continue;
+            }
+            if (slot.getWeaponSize() != inputSlot.getWeaponSize()) {
+                continue;
+            }
+
+            double dist = counterpartPosition.distance(slot.getPosition());
+            if (dist <= threshold && dist < bestDist) {
+                bestDist = dist;
+                bestMatch = slot;
+            }
+        }
+        return bestMatch;
+    }
+
     private Set<WeaponSlotPoint> getSlotsWithCounterparts(Iterable<WeaponSlotPoint> slots) {
         Set<WeaponSlotPoint> resultSet = new HashSet<>();
         for (WeaponSlotPoint point : slots) {
