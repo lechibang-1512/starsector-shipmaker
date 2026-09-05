@@ -125,5 +125,7 @@
     "COLUMN_WEAPON": "Weapon",
     "MODE_ALTERNATING": "Alternating",
     "MODE_LINKED": "Linked",
-    "TOGGLE_AUTOFIRE": "Toggle Autofire"
+    "TOGGLE_AUTOFIRE": "Toggle Autofire",
+    "STATION_MODULES_ONLY": "Station modules only",
+    "FILTER_MODULES_BY_NAME": "Filter modules by name or ID..."
 }

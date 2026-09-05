@@ -4,6 +4,7 @@ import shipeditor.utility.text.StringManager;
 
 import shipeditor.communication.EventBus;
 import shipeditor.communication.events.viewer.control.ControlEvents.FeatureInstallQueued;
+import shipeditor.components.datafiles.entities.ShipCSVEntry;
 import shipeditor.components.instrument.LayerPropertiesPanel;
 import shipeditor.components.instrument.ship.centers.ModuleAnchorPanel;
 import shipeditor.components.viewer.layers.LayerPainter;
@@ -14,22 +15,36 @@ import shipeditor.components.viewer.painters.points.AbstractPointPainter;
 import shipeditor.components.viewer.painters.points.ship.features.InstalledFeature;
 import shipeditor.persistence.SettingsManager;
 import shipeditor.representation.GameDataRepository;
+import shipeditor.representation.RepresentationEnums.ShipTypeHints;
+import shipeditor.representation.ship.HullSpecFile;
 import shipeditor.representation.ship.VariantFile;
 import shipeditor.undo.EditDispatch;
 import shipeditor.utility.Utility;
 import shipeditor.utility.objects.Pair;
+import shipeditor.utility.themes.Themes;
+import org.kordamp.ikonli.boxicons.BoxiconsRegular;
+import org.kordamp.ikonli.swing.FontIcon;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -191,29 +206,146 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
         }
     }
 
+    public static boolean isStationModuleVariant(VariantFile variant) {
+        if (variant == null || variant.isEmpty()) {
+            return false;
+        }
+        String hullId = variant.getHullId();
+        if (hullId == null || hullId.isEmpty()) {
+            return false;
+        }
+
+        // 1. Check HullSpecFile for moduleAnchor and hullSize
+        var spec = GameDataRepository.retrieveSpecByID(hullId);
+        if (spec instanceof HullSpecFile hullSpec) {
+            if (hullSpec.getModuleAnchor() != null) {
+                return true;
+            }
+            String hullSize = hullSpec.getHullSize();
+            if (hullSize != null && "MODULE".equalsIgnoreCase(hullSize)) {
+                return true;
+            }
+        }
+
+        // 2. Check ShipCSVEntry for hints and tags
+        ShipCSVEntry csvEntry = GameDataRepository.retrieveShipCSVEntryByID(hullId);
+        if (csvEntry != null) {
+            List<ShipTypeHints> hints = csvEntry.getBaseHullHints();
+            if (hints != null) {
+                for (ShipTypeHints hint : hints) {
+                    if (hint == ShipTypeHints.MODULE || hint == ShipTypeHints.STATION
+                            || hint == ShipTypeHints.UNDER_PARENT || hint == ShipTypeHints.INDEPENDENT_ROTATION) {
+                        return true;
+                    }
+                }
+            }
+            Map<String, String> row = csvEntry.getRowData();
+            if (row != null) {
+                String tags = row.get("tags");
+                if (tags != null) {
+                    String lowerTags = tags.toLowerCase(Locale.ROOT);
+                    if (lowerTags.contains("station") || lowerTags.contains("module")) {
+                        return true;
+                    }
+                }
+                String hintsStr = row.get("hints");
+                if (hintsStr != null) {
+                    String lowerHints = hintsStr.toLowerCase(Locale.ROOT);
+                    if (lowerHints.contains("module") || lowerHints.contains("station")) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // 3. Check variant ID / hull ID naming heuristics
+        String lowerHull = hullId.toLowerCase(Locale.ROOT);
+        String lowerVar = variant.getVariantId() != null ? variant.getVariantId().toLowerCase(Locale.ROOT) : "";
+        return lowerHull.contains("module") || lowerHull.contains("station") || lowerVar.contains("module") || lowerVar.contains("station");
+    }
+
     private JPanel createModuleActionsPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(new EmptyBorder(4, 0, 4, 0));
+        JPanel panel = new JPanel(new BorderLayout(0, 4));
+        panel.setBorder(new EmptyBorder(6, 0, 4, 0));
 
+        JPanel headerRow = new JPanel(new BorderLayout());
         JLabel pickerLabel = new JLabel(StringManager.getString("MODULE_VARIANT"));
-        panel.add(pickerLabel, BorderLayout.PAGE_START);
+        pickerLabel.setFont(pickerLabel.getFont().deriveFont(Font.BOLD, 12f));
+        headerRow.add(pickerLabel, BorderLayout.WEST);
 
+        JLabel countLabel = new JLabel();
+        countLabel.setFont(countLabel.getFont().deriveFont(11f));
+        countLabel.setForeground(Themes.getDisabledTextColor());
+        headerRow.add(countLabel, BorderLayout.EAST);
+        panel.add(headerRow, BorderLayout.NORTH);
+
+        // Filter Controls: Search box + "Station only" checkbox
+        JPanel filterRow = new JPanel(new BorderLayout(4, 0));
+        JTextField searchField = new JTextField();
+        searchField.setToolTipText(StringManager.getString("FILTER_MODULES_BY_NAME"));
+        searchField.putClientProperty("JTextField.placeholderText", "Filter modules...");
+
+        JCheckBox stationOnlyCheckBox = new JCheckBox(StringManager.getString("STATION_MODULES_ONLY"), true);
+        stationOnlyCheckBox.setToolTipText("Filter out variants that are not designated as station modules");
+
+        filterRow.add(searchField, BorderLayout.CENTER);
+        filterRow.add(stationOnlyCheckBox, BorderLayout.EAST);
+
+        // Action row: Variant Combobox + Install Button + Clear Button
         JPanel controlsRow = new JPanel(new BorderLayout(4, 0));
 
         JComboBox<VariantFile> variantPicker = new JComboBox<>();
         variantPicker.setEnabled(false);
 
-        // Populate the picker with available variants from game data.
-        GameDataRepository dataRepository = SettingsManager.getGameData();
-        if (dataRepository != null) {
-            Map<String, VariantFile> allVariants = dataRepository.getAllVariants();
-            if (allVariants != null) {
-                for (VariantFile variant : allVariants.values()) {
-                    variantPicker.addItem(variant);
-                    variantPicker.setEnabled(true);
+        Runnable refreshVariants = () -> {
+            String search = searchField.getText().toLowerCase(Locale.ROOT).trim();
+            boolean stationOnly = stationOnlyCheckBox.isSelected();
+
+            VariantFile prevSelected = (VariantFile) variantPicker.getSelectedItem();
+            variantPicker.removeAllItems();
+
+            GameDataRepository dataRepository = SettingsManager.getGameData();
+            int totalCount = 0;
+            if (dataRepository != null) {
+                Map<String, VariantFile> allVariants = dataRepository.getAllVariants();
+                if (allVariants != null) {
+                    for (VariantFile variant : allVariants.values()) {
+                        if (stationOnly && !isStationModuleVariant(variant)) {
+                            continue;
+                        }
+                        if (!search.isEmpty()) {
+                            String displayName = variant.getDisplayName() != null ? variant.getDisplayName().toLowerCase(Locale.ROOT) : "";
+                            String varId = variant.getVariantId() != null ? variant.getVariantId().toLowerCase(Locale.ROOT) : "";
+                            String hullId = variant.getHullId() != null ? variant.getHullId().toLowerCase(Locale.ROOT) : "";
+                            String toString = variant.toString().toLowerCase(Locale.ROOT);
+                            if (!displayName.contains(search) && !varId.contains(search) && !hullId.contains(search) && !toString.contains(search)) {
+                                continue;
+                            }
+                        }
+                        variantPicker.addItem(variant);
+                        totalCount++;
+                    }
                 }
             }
-        }
+
+            variantPicker.setEnabled(totalCount > 0);
+            if (totalCount > 0) {
+                if (prevSelected != null && variantPicker.getItemCount() > 0) {
+                    variantPicker.setSelectedItem(prevSelected);
+                }
+                countLabel.setText("(" + totalCount + " available)");
+            } else {
+                countLabel.setText("(0 available)");
+            }
+        };
+
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { refreshVariants.run(); }
+            @Override public void removeUpdate(DocumentEvent e) { refreshVariants.run(); }
+            @Override public void changedUpdate(DocumentEvent e) { refreshVariants.run(); }
+        });
+
+        stationOnlyCheckBox.addActionListener(e -> refreshVariants.run());
 
         variantPicker.addActionListener(e -> {
             VariantFile selected = (VariantFile) variantPicker.getSelectedItem();
@@ -222,7 +354,8 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
             }
         });
 
-        JButton installButton = new JButton(StringManager.getString("INSTALL_1"));
+        JButton installButton = new JButton(StringManager.getString("INSTALL_1"),
+                FontIcon.of(BoxiconsRegular.PLUS_CIRCLE, 16, Themes.getIconColor()));
         installButton.setToolTipText(StringManager.getString("INSTALL_SELECTED_VARIANT_AS_MODULE_TO_THE_SELECTED_SLOT"));
         installButton.addActionListener(e -> {
             VariantFile selected = (VariantFile) variantPicker.getSelectedItem();
@@ -232,7 +365,8 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
             }
         });
 
-        JButton clearButton = new JButton(StringManager.getString("CLEAR"));
+        JButton clearButton = new JButton(StringManager.getString("CLEAR"),
+                FontIcon.of(BoxiconsRegular.TRASH, 16, Themes.getIconColor()));
         clearButton.setToolTipText(StringManager.getString("REMOVE_SELECTED_MODULE_FROM_VARIANT"));
         clearButton.addActionListener(e -> {
             if (moduleList == null) return;
@@ -252,12 +386,21 @@ public class ModuleControlPanel extends LayerPropertiesPanel {
 
         controlsRow.add(variantPicker, BorderLayout.CENTER);
 
-        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         buttonsPanel.add(installButton);
         buttonsPanel.add(clearButton);
         controlsRow.add(buttonsPanel, BorderLayout.LINE_END);
 
-        panel.add(controlsRow, BorderLayout.CENTER);
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.add(filterRow);
+        contentPanel.add(Box.createVerticalStrut(4));
+        contentPanel.add(controlsRow);
+
+        panel.add(contentPanel, BorderLayout.CENTER);
+
+        // Initial population
+        refreshVariants.run();
 
         return panel;
     }
