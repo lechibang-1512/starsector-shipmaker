@@ -36,4 +36,32 @@ class StringManagerTest {
     void testContainsKey() {
         assertTrue(StringManager.containsKey("DEFAULT"));
     }
+
+    @Test
+    @DisplayName("Check for missing keys in codebase")
+    void testAllKeysPresent() throws Exception {
+        java.nio.file.Path srcDir = java.nio.file.Paths.get("src/main/java");
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("StringManager\\.getString\\(\\s*\"([^\"]+)\"");
+        java.util.Set<String> missingKeys = new java.util.TreeSet<>();
+        try (java.util.stream.Stream<java.nio.file.Path> stream = java.nio.file.Files.walk(srcDir)) {
+            stream.filter(p -> p.toString().endsWith(".java")).forEach(path -> {
+                try {
+                    String content = java.nio.file.Files.readString(path);
+                    java.util.regex.Matcher m = pattern.matcher(content);
+                    while (m.find()) {
+                        String key = m.group(1);
+                        if (!StringManager.containsKey(key)) {
+                            missingKeys.add(key + " (in " + srcDir.relativize(path) + ")");
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+        for (String mk : missingKeys) {
+            System.err.println("MISSING_KEY: " + mk);
+        }
+        assertTrue(missingKeys.isEmpty(), "Found missing keys: " + missingKeys);
+    }
 }

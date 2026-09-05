@@ -96,5 +96,13 @@
     "EMPTY_STRING_3": "-",
     "PACKAGE": "Package: ",
     "TAGS": "Tags: ",
-    "D_MOD": "[D-Mod]"
+    "D_MOD": "[D-Mod]",
+    "EXPORT_MANAGER_TITLE": "Export Manager",
+    "EXPORT_VIEWPORT_TITLE": "Export Viewport",
+    "SAVE_SHOWCASE_IMAGE_TITLE": "Save Showcase Image",
+    "SAVE_SPRITE_IMAGE_TITLE": "Save Sprite Image",
+    "SELECT_BACKGROUND_COLOR_TITLE": "Select Background Color",
+    "TAB_VIEWPORT_SNAPSHOT": "Viewport Snapshot",
+    "TAB_SPRITE_PRINT": "Sprite Print",
+    "TAB_ENTITY_SHOWCASE": "Entity Showcase"
 }
